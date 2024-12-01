@@ -1,0 +1,121 @@
+<?php
+/**
+ * Class QuillBooking
+ *
+ * @since 1.0.0
+ * @package QuillBooking
+ */
+
+namespace QuillBooking;
+
+use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Events\Dispatcher;
+use Illuminate\Container\Container;
+use QuillBooking\REST_API\REST_API;
+use QuillBooking\Capabilities;
+use QuillBooking\Availabilities;
+use QuillBooking\Booking;
+
+/**
+ * Main QuillBooking Class
+ * The main class that initiates the plugin
+ *
+ * @since 1.0.0
+ */
+class QuillBooking {
+
+	/**
+	 * Instance
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var QuillBooking
+	 */
+	private static $instance;
+
+	/**
+	 * Get Instance
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return QuillBooking
+	 */
+	public static function instance() {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * Constructor
+	 *
+	 * @since 1.0.0
+	 */
+	public function __construct() {
+		$this->init_illuminate();
+		$this->load_dependencies();
+		$this->init_objects();
+		$this->init_hooks();
+	}
+
+	/**
+	 * This method for illuminate events
+	 *
+	 * @since 1.0.0
+	 */
+	private function init_illuminate() {
+		$capsule = new Capsule();
+
+		$capsule->addConnection(
+			array(
+				'driver'    => 'mysql',
+				'host'      => DB_HOST,
+				'database'  => DB_NAME,
+				'username'  => DB_USER,
+				'password'  => DB_PASSWORD,
+				'charset'   => DB_CHARSET,
+				'collation' => DB_COLLATE,
+				'prefix'    => '',
+			)
+		);
+
+		$capsule->setEventDispatcher( new Dispatcher( new Container ) );
+
+		$capsule->setAsGlobal();
+
+		$capsule->bootEloquent();
+	}
+
+	/**
+	 * Load Dependencies
+	 *
+	 * @since 1.0.0
+	 */
+	private function load_dependencies() {
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/event-locations/loader.php';
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/integrations/loader.php';
+	}
+
+	/**
+	 * Initialize Objects
+	 *
+	 * @since 1.0.0
+	 */
+	private function init_objects() {
+		REST_API::instance();
+		Capabilities::assign_capabilities_for_user_roles();
+		Booking::instance();
+	}
+
+	/**
+	 * Initialize Hooks
+	 *
+	 * @since 1.0.0
+	 */
+	private function init_hooks() {
+		add_action( 'init', array( Capabilities::class, 'assign_capabilities_for_user_roles' ) );
+		add_action( 'init', array( Availabilities::class, 'add_default_availability' ) );
+	}
+}

@@ -1,0 +1,70 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "main": "webpack.config.js",
+  "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@types/validator": "^13.12.2",
+    "@woocommerce/navigation": "^8.2.0",
+    "@woocommerce/settings": "^1.0.0",
+    "@wordpress/api-fetch": "^7.3.0",
+    "@wordpress/components": "^28.3.0",
+    "@wordpress/core-data": "^7.3.0",
+    "@wordpress/data": "^10.3.0",
+    "@wordpress/element": "^6.3.0",
+    "@wordpress/hooks": "^4.3.0",
+    "@wordpress/i18n": "^5.3.0",
+    "@wordpress/notices": "^5.3.0",
+    "@wordpress/prettier-config": "^4.3.0",
+    "@wordpress/scripts": "^27.0.0",
+    "antd": "^5.19.2",
+    "chart.js": "^4.4.4",
+    "classnames": "^2.5.1",
+    "lodash": "^4.17.21",
+    "qs": "^6.12.3",
+    "quill": "^2.0.2",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.3.1",
+    "react-email-editor": "^1.7.11",
+    "react-loader-spinner": "^6.1.6",
+    "react-router": "^6.25.1",
+    "react-router-dom": "^6.25.1",
+    "react-select": "^5.8.0",
+    "rtlcss-webpack-plugin": "^4.0.7",
+    "ts-loader": "^9.5.1",
+    "utility-types": "^3.11.0",
+    "validator": "^13.12.0"
+  },
+  "scripts": {
+    "dev": "wp-scripts start src/client/index.tsx --output-path=build/client",
+    "build": "wp-scripts build src/client/index.tsx --output-path=build/client",
+    "dev-config": "wp-scripts start src/config/index.ts --output-path=build/config",
+    "build-config": "wp-scripts build src/config/index.ts --output-path=build/config"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.7",
+    "@types/react-beautiful-dnd": "^13.1.8",
+    "@types/react-bootstrap": "^0.32.36",
+    "@types/react-datepicker": "^6.2.0",
+    "@types/react-redux": "^7.1.33",
+    "@types/react-slick": "^0.23.13"
+  }
+}

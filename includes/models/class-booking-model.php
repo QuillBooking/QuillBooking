@@ -65,7 +65,7 @@ class Booking_Model extends Model {
 	 *
 	 * @var array
 	 */
-	protected $appends = array( 'timezone' );
+	protected $appends = array( 'timezone', 'fields', 'location' );
 
 	/**
 	 * Casts
@@ -155,6 +155,27 @@ class Booking_Model extends Model {
 	 */
 	public function logs() {
 		return $this->hasMany( Booking_Log_Model::class, 'booking_id', 'id' );
+	}
+
+	/**
+	 * Orders
+	 *
+	 * @param \Illuminate\Database\Eloquent\Relations\HasOne
+	 */
+	public function order() {
+		return $this->hasOne( Booking_Order_Model::class, 'booking_id', 'id' );
+	}
+
+	/**
+	 * Change status
+	 *
+	 * @param string $status Status.
+	 *
+	 * @return void
+	 */
+	public function changeStatus( $status ) {
+		$this->status = $status;
+		$this->save();
 	}
 
 	/**
@@ -308,6 +329,84 @@ class Booking_Model extends Model {
 	}
 
 	/**
+	 * Is cancelled
+	 *
+	 * @return bool
+	 */
+	public function isCancelled() {
+		return 'cancelled' === $this->status;
+	}
+
+	/**
+	 * Get cancel URL
+	 *
+	 * @return string
+	 */
+	public function getCancelUrl() {
+		return add_query_arg(
+			array(
+				'quillbooking_action' => 'cancel',
+				'id'                  => $this->hash_id,
+			),
+			$this->event_url
+		);
+	}
+
+	/**
+	 * Get reschedule URL
+	 *
+	 * @return string
+	 */
+	public function getRescheduleUrl() {
+		return add_query_arg(
+			array(
+				'quillbooking_action' => 'reschedule',
+				'id'                  => $this->hash_id,
+			),
+			$this->event_url
+		);
+	}
+
+	/**
+	 * Get Details URL
+	 *
+	 * @return string
+	 */
+	public function getDetailsUrl() {
+		return admin_url( 'admin.php?page=quillbooking&path=bookings&id=' . $this->id );
+	}
+
+	/**
+	 * Get confirmation URL
+	 *
+	 * @return string
+	 */
+	public function getConfirmUrl() {
+		return add_query_arg(
+			array(
+				'quillbooking_action' => 'confirm',
+				'id'                  => $this->hash_id,
+			),
+			$this->event_url
+		);
+	}
+
+	/**
+	 * Get reject URL
+	 *
+	 * @return string
+	 */
+	public function getRejectUrl() {
+		return add_query_arg(
+			array(
+				'quillbooking_action' => 'reject',
+				'id'                  => $this->hash_id,
+			),
+			$this->event_url
+		);
+	}
+
+	/**
 	 * Override the save method to add validation.
 	 *
 	 * @param array $options
@@ -348,6 +447,7 @@ class Booking_Model extends Model {
 				do_action( 'quillbooking_booking_cancelled', $booking );
 				$booking->meta()->delete();
 				$booking->logs()->delete();
+				$booking->guest()->delete();
 			}
 		);
 	}

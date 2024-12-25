@@ -9,26 +9,14 @@
 
 namespace QuillBooking\Abstracts;
 
-use QuillBooking\Managers\Fields_Manager;
+use QuillBooking\Traits\Entity_Properties;
 
 /**
  * Field_Type class
  */
 abstract class Field_Type {
 
-	/**
-	 * Name
-	 *
-	 * @var string
-	 */
-	public $name;
-
-	/**
-	 * Slug
-	 *
-	 * @var string
-	 */
-	public $slug;
+	use Entity_Properties;
 
 	/**
 	 * Is Valid

@@ -10,55 +10,16 @@
 
 namespace QuillBooking\Managers;
 
-use Exception;
+use QuillBooking\Abstracts\Manager;
 use QuillBooking\Integration\Integration;
+use QuillBooking\Traits\Singleton;
 
 /**
- * Integrations class
+ * Integrations Manager class
  */
-final class Integrations_Manager {
+final class Integrations_Manager extends Manager {
 
-	/**
-	 * Registed integrations
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var Integration[]
-	 */
-	protected $integrations = array();
-
-	/**
-	 * Options
-	 *
-	 * @var array
-	 */
-	protected $options = array();
-
-	/**
-	 * Class Instance.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var Integrations_Manager
-	 */
-	private static $instance;
-
-	/**
-	 * Manager Instance.
-	 *
-	 * Instantiates or reuses an instance of Manager.
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return Integrations_Manager
-	 */
-	public static function instance() {
-		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
+	use Singleton;
 
 	/**
 	 * Register Integration
@@ -67,21 +28,18 @@ final class Integrations_Manager {
 	 *
 	 * @param Integration $integration
 	 * @return void
+	 * @throws \Exception
 	 */
-	public function register( Integration $integration ) {
-		if ( ! $integration instanceof Integration ) {
-			throw new Exception( __( 'Invalid integration', 'quillbooking' ) );
-		}
-
-		if ( isset( $this->integrations[ $integration->slug ] ) ) {
-			return;
-		}
-
-		$this->integrations[ $integration->slug ] = $integration;
-		$this->options[ $integration->slug ]      = array(
-			'label'       => $integration->name,
-			'description' => $integration->description,
-			'settings'    => $integration->get_settings(),
+	public function register_integration( Integration $integration ) {
+		$this->register(
+			$integration,
+			Integration::class,
+			'slug',
+			array(
+				'label'       => 'name',
+				'description' => 'description',
+				'settings'    => 'get_settings',
+			)
 		);
 	}
 
@@ -91,14 +49,10 @@ final class Integrations_Manager {
 	 * @since 1.0.0
 	 *
 	 * @param string $slug
-	 * @return Integration
+	 * @return Integration|null
 	 */
 	public function get_integration( $slug ) {
-		if ( isset( $this->integrations[ $slug ] ) ) {
-			return $this->integrations[ $slug ];
-		}
-
-		throw new Exception( sprintf( __( 'Integration %s not found', 'quillbooking' ), $slug ) );
+		return $this->get_item( $slug );
 	}
 
 	/**
@@ -109,17 +63,6 @@ final class Integrations_Manager {
 	 * @return array
 	 */
 	public function get_integrations() {
-		return $this->integrations;
-	}
-
-	/**
-	 * Get Options
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_options() {
-		return $this->options;
+		return $this->get_items();
 	}
 }

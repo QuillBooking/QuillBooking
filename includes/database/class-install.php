@@ -19,6 +19,8 @@ use QuillBooking\Database\Migrations\Bookings_Table;
 use QuillBooking\Database\Migrations\Booking_Meta_Table;
 use QuillBooking\Database\Migrations\Booking_Log_Table;
 use QuillBooking\Database\Migrations\Guests_Table;
+use QuillBooking\Database\Migrations\Tasks_Meta_Table;
+use QuillBooking\Database\Migrations\Booking_Orders_Table;
 use QuillBooking\Availabilities;
 
 /**
@@ -51,6 +53,8 @@ class Install {
 				Booking_Meta_Table::class,
 				Booking_Log_Table::class,
 				Guests_Table::class,
+				Tasks_Meta_Table::class,
+				Booking_Orders_Table::class,
 			)
 		);
 

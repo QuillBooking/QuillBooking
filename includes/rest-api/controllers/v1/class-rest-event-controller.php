@@ -412,6 +412,9 @@ class REST_Event_Controller extends REST_Controller {
 			$event->limits              = Event_Fields::instance()->get_default_limit_settings();
 			$event->email_notifications = Event_Fields::instance()->get_default_email_notification_settings();
 			$event->additional_settings = Event_Fields::instance()->get_default_additional_settings( $type );
+			$event->advanced_settings   = Event_Fields::instance()->get_default_advanced_settings();
+			$event->sms_notifications   = Event_Fields::instance()->get_default_sms_notification_settings();
+			$event->payments_settings   = Event_Fields::instance()->get_default_payments_settings();
 			if ( 'group' === $type ) {
 				$event->group_settings = array(
 					'max_invites'    => 2,
@@ -592,6 +595,11 @@ class REST_Event_Controller extends REST_Controller {
 			$additional_settings = $request->get_param( 'additional_settings' );
 			$group_settings      = $request->get_param( 'group_settings' );
 			$event_range         = $request->get_param( 'event_range' );
+			$advanced_settings   = $request->get_param( 'advanced_settings' );
+			$email_notifications = $request->get_param( 'email_notifications' );
+			$sms_notifications   = $request->get_param( 'sms_notifications' );
+			$payments_settings   = $request->get_param( 'payments_settings' );
+			$webhook_feeds       = $request->get_param( 'webhook_feeds' );
 
 			$event = Event_Model::find( $id );
 
@@ -613,6 +621,11 @@ class REST_Event_Controller extends REST_Controller {
 				'group_settings'      => $group_settings,
 				'event_range'         => $event_range,
 				'availability'        => $availability,
+				'advanced_settings'   => $advanced_settings,
+				'email_notifications' => $email_notifications,
+				'sms_notifications'   => $sms_notifications,
+				'payments_settings'   => $payments_settings,
+				'webhook_feeds'       => $webhook_feeds,
 			);
 
 			if ( $user_id ) {

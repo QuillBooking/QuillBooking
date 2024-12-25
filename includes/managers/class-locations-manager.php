@@ -1,7 +1,6 @@
 <?php
 /**
- * Class Locations_Manager
- *
+ * Class Locations Manager
  * This class is responsible for handling the locations manager
  *
  * @since 1.0.0
@@ -11,111 +10,58 @@
 
 namespace QuillBooking\Managers;
 
+use QuillBooking\Abstracts\Manager;
 use QuillBooking\Abstracts\Location;
+use QuillBooking\Traits\Singleton;
 
 /**
  * Locations Manager class
  */
-class Locations_Manager {
+class Locations_Manager extends Manager {
+
+	use Singleton;
 
 	/**
-	 * Registed locations
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var array
-	 */
-	protected $locations = array();
-
-	/**
-	 * Options
-	 *
-	 * @var array
-	 */
-	protected $options = array();
-
-	/**
-	 * Class Instance.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var Locations_Manager
-	 */
-	private static $instance;
-
-	/**
-	 * Manager Instance.
-	 *
-	 * Instantiates or reuses an instance of Manager.
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return Locations_Manager
-	 */
-	public static function instance() {
-		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
-
-	/**
-	 * Register location
+	 * Register Location
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param Location $location
+	 * @throws \Exception
 	 */
-	public function register( Location $location ) {
-		if ( ! $location instanceof Location ) {
-			throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
-		}
-
-		if ( isset( $this->locations[ $location->slug ] ) ) {
-			throw new \Exception( __( 'Location already registered', 'quillbooking' ) );
-		}
-
-		$this->locations[ $location->slug ] = $location;
-		$this->options[ $location->slug ]   = array(
-			'title'          => $location->title,
-			'is_integration' => $location->is_integration,
-			'fields'         => $location->get_admin_fields(),
+	public function register_location( Location $location ) {
+		$this->register(
+			$location,
+			Location::class,
+			'slug',
+			array(
+				'title'          => 'title',
+				'is_integration' => 'is_integration',
+				'fields'         => 'get_admin_fields',
+			)
 		);
 	}
 
 	/**
-	 * Get location
+	 * Get Location
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param string $slug
-	 *
-	 * @return Location
+	 * @return Location|null
 	 */
 	public function get_location( $slug ) {
-		return isset( $this->locations[ $slug ] ) ? $this->locations[ $slug ] : null;
+		return $this->get_item( $slug );
 	}
 
 	/**
-	 * Get locations
+	 * Get Locations
 	 *
 	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
 	public function get_locations() {
-		return $this->locations;
-	}
-
-	/**
-	 * Get location options
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_location_options() {
-		return $this->options;
+		return $this->get_items();
 	}
 }

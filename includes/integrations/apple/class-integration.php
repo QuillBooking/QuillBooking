@@ -14,6 +14,7 @@ namespace QuillBooking\Integrations\Apple;
 use Illuminate\Support\Arr;
 use QuillBooking\Integration\Integration as Abstract_Integration;
 use QuillBooking\Models\Event_Model;
+use QuillBooking\Models\Booking_Model;
 use QuillBooking\Integrations\Apple\REST_API\REST_API;
 use QuillBooking\Utils;
 
@@ -66,7 +67,8 @@ class Integration extends Abstract_Integration {
 	public function __construct() {
 		parent::__construct();
 		add_filter( 'quillbooking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
-		add_filter( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		// add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		// add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
 		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
 	}
@@ -85,45 +87,84 @@ class Integration extends Abstract_Integration {
 		$host  = $event->calendar->id;
 		$this->set_host( $host );
 
-		$apple_event = $booking->get_meta( 'apple_event_details', array() );
-		if ( empty( $apple_event ) ) {
+		$apple_events = $booking->get_meta( 'apple_events_details', array() );
+		if ( empty( $apple_events ) ) {
 			return;
 		}
 
-		$event = Arr::get( $apple_event, 'event', array() );
-		if ( empty( $event ) ) {
-			return;
-		}
+		foreach ( $apple_events as $id => $apple_event ) {
+			$event = Arr::get( $apple_event, 'event', array() );
+			if ( empty( $event ) ) {
+				return;
+			}
 
-		$calendar_id = Arr::get( $apple_event, 'calendar_id', '' );
-		$account_id  = Arr::get( $apple_event, 'account_id', '' );
+			$calendar_id = Arr::get( $apple_event, 'calendar_id', '' );
+			$account_id  = Arr::get( $apple_event, 'account_id', '' );
 
-		$start_date = new \DateTime( $booking->start_time );
-		$end_date   = new \DateTime( $booking->end_time );
+			$start_date = new \DateTime( $booking->start_time );
+			$end_date   = new \DateTime( $booking->end_time );
 
-		$event_data            = $event;
-		$event_data['DTSTART'] = $start_date;
-		$event_data['DTEND']   = $end_date;
+			$event_data            = $event;
+			$event_data['DTSTART'] = $start_date;
+			$event_data['DTEND']   = $end_date;
 
-		$api = $this->connect( $host, $account_id );
-		if ( ! $api ) {
-			return;
-		}
+			$api = $this->connect( $host, $account_id );
+			if ( ! $api ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Apple Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
+				return;
+			}
 
-		$response = $this->client->update_event( $account_id, $calendar_id, $event_data );
-		if ( ! $response['success'] ) {
-			return;
-		}
+			$response = $api->update_event( $account_id, $calendar_id, $event_data );
+			if ( ! $response['success'] ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Failed to reschedule event in Apple Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Failed to reschedule event %1$s in Apple Calendar %2$s.', 'quillbooking' ),
+							$event['UID'],
+							$calendar_id
+						),
+					)
+				);
+				continue;
+			}
 
-		$event = Arr::get( $response, 'data' );
-		$booking->update_meta(
-			'apple_event_details',
-			array(
-				'event'       => $event,
+			// Update meta.
+			$meta                  = $booking->get_meta( 'apple_events_details', array() );
+			$meta[ $event['UID'] ] = array(
+				'event'       => $event_data,
 				'calendar_id' => $calendar_id,
 				'account_id'  => $account_id,
-			)
-		);
+			);
+
+			$booking->update_meta(
+				'apple_events_details',
+				$meta
+			);
+
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Event rescheduled in Apple Calendar.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Event %1$s rescheduled in Apple Calendar %2$s.', 'quillbooking' ),
+						$event['UID'],
+						$calendar_id
+					),
+				)
+			);
+		}
 	}
 
 	/**
@@ -140,26 +181,73 @@ class Integration extends Abstract_Integration {
 		$host  = $event->calendar->id;
 		$this->set_host( $host );
 
-		$apple_event = $booking->get_meta( 'apple_event_details', array() );
-		if ( empty( $apple_event ) ) {
+		$apple_events = $booking->get_meta( 'apple_events_details', array() );
+		if ( empty( $apple_events ) ) {
 			return;
 		}
 
-		$event = Arr::get( $apple_event, 'event', array() );
-		if ( empty( $event ) ) {
-			return;
+		foreach ( $apple_events as $apple_event ) {
+			$event = Arr::get( $apple_event, 'event', array() );
+			if ( empty( $event ) ) {
+				return;
+			}
+
+			$calendar_id = Arr::get( $apple_event, 'calendar_id', '' );
+			$account_id  = Arr::get( $apple_event, 'account_id', '' );
+
+			$api = $this->connect( $host, $account_id );
+			if ( ! $api ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Apple Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
+				return;
+			}
+
+			$response = $api->delete_event( $account_id, $calendar_id, $event['UID'] );
+			if ( ! $response['success'] ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Failed to remove event from Apple Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Failed to remove event %1$s from Apple Calendar %2$s.', 'quillbooking' ),
+							$event['UID'],
+							$calendar_id
+						),
+					)
+				);
+				continue;
+			}
+
+			// Update meta.
+			$meta = $booking->get_meta( 'apple_events_details', array() );
+			Arr::forget( $meta, $event['UID'] );
+
+			$booking->update_meta(
+				'apple_events_details',
+				$meta
+			);
+
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Event removed from Apple Calendar.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Event %1$s removed from Apple Calendar %2$s.', 'quillbooking' ),
+						$event['UID'],
+						$calendar_id
+					),
+				)
+			);
 		}
-
-		$calendar_id = Arr::get( $apple_event, 'calendar_id', '' );
-		$account_id  = Arr::get( $apple_event, 'account_id', '' );
-
-		$api = $this->connect( $host, $account_id );
-		if ( ! $api ) {
-			return;
-		}
-
-		$response = $this->client->delete_event( $account_id, $calendar_id, $event['UID'] );
-		error_log( 'Apple Integration Delete: ' . wp_json_encode( $response ) );
 	}
 
 	/**
@@ -187,6 +275,17 @@ class Integration extends Abstract_Integration {
 		foreach ( $apple_integration as $account_id => $data ) {
 			$api = $this->connect( $host, $account_id );
 			if ( ! $api ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Apple Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
 				continue;
 			}
 
@@ -205,24 +304,53 @@ class Integration extends Abstract_Integration {
 				'SUMMARY'        => sprintf( __( '%1$s: %2$s', 'quillbooking' ), $booking->guest->name, $event->name ),
 				'ORGANIZER'      => "mailto:{$email}",
 				'ORGANIZER_NAME' => $event->calendar->name,
-				'ATTENDEE'       => "mailto:{$booking->guest->email}",
-				'ATTENDEE_NAME'  => $booking->guest->name,
-				'UID'            => md5( $booking->hash_id ) . '-' . wp_generate_uuid4(),
+				'ATTENDEES'      => array(
+					array(
+						'CN'   => $booking->guest->name,
+						'MAIL' => $booking->guest->email,
+					),
+				),
 			);
 
 			foreach ( $calendars as $calendar_id ) {
-				$response = $this->client->create_event( $account_id, $calendar_id, $event_data );
+				$event_data['UID'] = md5( $booking->hash_id . '-' . $calendar_id ) . '-' . wp_generate_uuid4();
+				$response          = $api->create_event( $account_id, $calendar_id, $event_data );
 				if ( ! $response['success'] ) {
+					$booking->logs()->create(
+						array(
+							'type'    => 'error',
+							'message' => __( 'Failed to add event to Apple Calendar.', 'quillbooking' ),
+							'details' => sprintf(
+								__( 'Failed to add event %1$s to Apple Calendar %2$s.', 'quillbooking' ),
+								$event_data['UID'],
+								$calendar_id
+							),
+						)
+					);
 					continue;
 				}
 
-				$event = Arr::get( $response, 'data' );
+				$event                 = Arr::get( $response, 'data' );
+				$meta                  = $booking->get_meta( 'apple_events_details', array() );
+				$meta[ $event['UID'] ] = array(
+					'event'       => $event,
+					'calendar_id' => $calendar_id,
+					'account_id'  => $account_id,
+				);
 				$booking->update_meta(
-					'apple_event_details',
+					'apple_events_details',
+					$meta
+				);
+
+				$booking->logs()->create(
 					array(
-						'event'       => $event,
-						'calendar_id' => $calendar_id,
-						'account_id'  => $account_id,
+						'type'    => 'info',
+						'message' => __( 'Event added to Apple Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Event %1$s added to Apple Calendar %2$s.', 'quillbooking' ),
+							$event['UID'],
+							$calendar_id
+						),
 					)
 				);
 			}
@@ -325,10 +453,10 @@ class Integration extends Abstract_Integration {
 
 			foreach ( $cached_data as $calendar_id => $events ) {
 				foreach ( $events as $event ) {
-					$start = Arr::get( $event, 'start.dateTime' );
-					$end   = Arr::get( $event, 'end.dateTime' );
-
-					$slots = $this->remove_booked_slot( $slots, $start, $end, $timezone );
+					$start          = Arr::get( $event, 'DTSTART' );
+					$end            = Arr::get( $event, 'DTEND' );
+					$event_timezone = Arr::get( $event, 'TZID' );
+					$slots          = $this->remove_booked_slot( $slots, $start, $end, $timezone, $event_timezone );
 				}
 			}
 		}
@@ -369,32 +497,17 @@ class Integration extends Abstract_Integration {
 		$start_date = Utils::create_date_time( $start_date, $timezone );
 		$end_date   = Utils::create_date_time( $end_date, $timezone );
 
-		$free_busy_args = array(
-			'timeMin'  => $start_date->format( 'Y-m-d\TH:i:s\Z' ),
-			'timeMax'  => $end_date->format( 'Y-m-d\TH:i:s\Z' ),
-			'timeZone' => 'UTC',
-		);
+		$start_date = $start_date->format( 'Ymd\THis\Z' );
+		$end_date   = $end_date->format( 'Ymd\THis\Z' );
 
-		$free_busy_response = $api->get_free_busy( $calendars, $free_busy_args );
-		if ( ! $free_busy_response['success'] ) {
-			return array();
-		}
+		/** @var Client $client */
+		$client = $this->client;
 
 		$calendars_data = array();
-		foreach ( Arr::get( $free_busy_response, 'data.calendars', array() ) as $calendar_id => $calendar_data ) {
-			if ( Arr::has( $calendar_data, 'errors' ) ) {
-				$calendar_events = $api->get_events( $calendar_id, $free_busy_args );
-				if ( ! $calendar_events['success'] ) {
-					continue;
-				}
-				$calendars_data[ $calendar_id ] = Arr::get( $calendar_events, 'data.items', array() );
-				continue;
-			}
+		foreach ( $calendars as $calendar_id ) {
+			$events = $client->get_events( $account_id, $calendar_id, $start_date, $end_date );
 
-			$busy_slots = Arr::get( $calendar_data, 'busy', array() );
-			foreach ( $busy_slots as $busy_slot ) {
-				$calendars_data[ $calendar_id ] = $busy_slot;
-			}
+			$calendars_data[ $calendar_id ] = $events;
 		}
 
 		return $calendars_data;
@@ -409,13 +522,16 @@ class Integration extends Abstract_Integration {
 	 * @param string $event_start Start date-time of the event in ISO 8601 format (UTC timezone).
 	 * @param string $event_end End date-time of the event in ISO 8601 format (UTC timezone).
 	 * @param string $timezone Timezone.
+	 * @param string $event_timezone Event timezone.
 	 *
 	 * @return array Updated slots array.
 	 */
-	public function remove_booked_slot( $slots, $event_start, $event_end, $timezone ) {
-		$event_start_timestamp = ( new \DateTime( $event_start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
-		$event_end_timestamp   = ( new \DateTime( $event_end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+	public function remove_booked_slot( $slots, $event_start, $event_end, $timezone, $event_timezone ) {
+		$event_start = Utils::create_date_time( $event_start, $event_timezone );
+		$event_end   = Utils::create_date_time( $event_end, $event_timezone );
 
+		$event_start_timestamp = $event_start->getTimestamp();
+		$event_end_timestamp   = $event_end->getTimestamp();
 		// Iterate through each day's slots.
 		foreach ( $slots as $date => &$daily_slots ) {
 			$daily_slots = array_values(

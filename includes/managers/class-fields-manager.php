@@ -19,83 +19,21 @@ use QuillBooking\Fields\Email_Field;
 use QuillBooking\Fields\Number_Field;
 use QuillBooking\Fields\Radio_Field;
 use QuillBooking\Fields\Textarea_Field;
+use QuillBooking\Abstracts\Manager;
+use QuillBooking\Traits\Singleton;
 
 /**
  * Fields Manager class
  */
-class Fields_Manager {
+class Fields_Manager extends Manager {
 
-	/**
-	 * Registed fields
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var array
-	 */
-	protected $fields = array();
-
-	/**
-	 * Options
-	 *
-	 * @var array
-	 */
-	protected $options = array();
-
-	/**
-	 * Class Instance.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var Fields_Manager
-	 */
-	private static $instance;
-
-	/**
-	 * Manager Instance.
-	 *
-	 * Instantiates or reuses an instance of Manager.
-	 *
-	 * @since  1.0.0
-	 *
-	 * @return Fields_Manager
-	 */
-	public static function instance() {
-		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
+	use Singleton;
 
 	/**
 	 * Fields_Manager constructor.
 	 */
 	public function __construct() {
 		$this->register_fields();
-	}
-
-	/**
-	 * Register Field_Type
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param Field_Type $field_type
-	 * @return void
-	 */
-	public function register( Field_Type $field_type ) {
-		if ( ! $field_type instanceof Field_Type ) {
-			throw new Exception( __( 'Invalid field_type', 'quillbooking' ) );
-		}
-
-		if ( isset( $this->fields[ $field_type->slug ] ) ) {
-			return;
-		}
-
-		$this->fields[ $field_type->slug ]  = $field_type;
-		$this->options[ $field_type->slug ] = array(
-			'name'        => $field_type->name,
-			'has_options' => $field_type->has_options,
-		);
 	}
 
 	/**
@@ -107,6 +45,7 @@ class Fields_Manager {
 	 */
 	public function register_fields() {
 		$fields = array(
+			Checkbox_Field::class,
 			Text_Field::class,
 			Email_Field::class,
 			Number_Field::class,
@@ -116,45 +55,15 @@ class Fields_Manager {
 		);
 
 		foreach ( $fields as $field ) {
-			$this->register( new $field() );
+			$this->register(
+				new $field,
+				Field_Type::class,
+				'slug',
+				array(
+					'name'        => 'name',
+					'has_options' => 'has_options',
+				)
+			);
 		}
-	}
-
-	/**
-	 * Get Field_Type
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $slug
-	 * @return Field_Type
-	 */
-	public function get_field_type( $slug ) {
-		if ( ! isset( $this->fields[ $slug ] ) ) {
-			throw new Exception( sprintf( __( 'Field_Type %s not registered', 'quillbooking' ), $slug ) );
-		}
-
-		return $this->fields[ $slug ];
-	}
-
-	/**
-	 * Get Field_Types
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_field_types() {
-		return $this->fields;
-	}
-
-	/**
-	 * Get Options
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_options() {
-		return $this->options;
 	}
 }

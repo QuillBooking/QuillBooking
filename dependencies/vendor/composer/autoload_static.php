@@ -48,6 +48,7 @@ class ComposerStaticInit0b4a147854ba0864f550252c1e1040f4
             'Symfony\\Component\\Mime\\' => 23,
             'Symfony\\Component\\HttpFoundation\\' => 33,
             'Symfony\\Component\\Finder\\' => 25,
+            'Stripe\\' => 7,
             'Sabre\\Xml\\' => 10,
             'Sabre\\VObject\\' => 14,
             'Sabre\\Uri\\' => 10,
@@ -157,6 +158,10 @@ class ComposerStaticInit0b4a147854ba0864f550252c1e1040f4
         'Symfony\\Component\\Finder\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/finder',
+        ),
+        'Stripe\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/stripe/stripe-php/lib',
         ),
         'Sabre\\Xml\\' => 
         array (

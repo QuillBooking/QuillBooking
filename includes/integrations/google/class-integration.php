@@ -67,7 +67,8 @@ class Integration extends Abstract_Integration {
 		parent::__construct();
 		$this->app = new App( $this );
 		add_filter( 'quillbooking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
-		// add_filter( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		// add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		// add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
 		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
 	}
@@ -86,51 +87,87 @@ class Integration extends Abstract_Integration {
 		$host  = $event->calendar->id;
 		$this->set_host( $host );
 
-		$google_event = $booking->get_meta( 'google_event_details', array() );
-		error_log( 'Google Event Details: ' . wp_json_encode( $google_event ) );
-		if ( empty( $google_event ) ) {
+		$google_events = $booking->get_meta( 'google_events_details', array() );
+		if ( empty( $google_events ) ) {
 			return;
 		}
 
-		$event_id    = Arr::get( $google_event, 'event.id' );
-		$account_id  = Arr::get( $google_event, 'account_id' );
-		$calendar_id = Arr::get( $google_event, 'calendar_id' );
+		foreach ( $google_events as $event_id => $google_event ) {
+			$event_id    = Arr::get( $google_event, 'event.id' );
+			$account_id  = Arr::get( $google_event, 'account_id' );
+			$calendar_id = Arr::get( $google_event, 'calendar_id' );
 
-		$api = $this->connect( $host, $account_id );
-		if ( ! $api || is_wp_error( $api ) ) {
-			error_log( 'Google Integration Error: ' . $api->get_error_message() );
-			return;
-		}
+			$api = $this->connect( $host, $account_id );
+			if ( ! $api || is_wp_error( $api ) ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Google Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with Google Account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
+				return;
+			}
 
-		$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
-		$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
+			$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
+			$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
 
-		$event_data = array(
-			'start' => array(
-				'dateTime' => $start_date->format( 'Y-m-d\TH:i:s' ),
-				'timeZone' => 'UTC',
-			),
-			'end'   => array(
-				'dateTime' => $end_date->format( 'Y-m-d\TH:i:s' ),
-				'timeZone' => 'UTC',
-			),
-		);
+			$event_data = array(
+				'start' => array(
+					'dateTime' => $start_date->format( 'Y-m-d\TH:i:s' ),
+					'timeZone' => 'UTC',
+				),
+				'end'   => array(
+					'dateTime' => $end_date->format( 'Y-m-d\TH:i:s' ),
+					'timeZone' => 'UTC',
+				),
+			);
 
-		$response = $api->update_event( $calendar_id, $event_id, $event_data );
-		error_log( 'Event rescheduled in Google Calendar: ' . wp_json_encode( $response ) );
-		if ( ! $response['success'] ) {
-			return;
-		}
+			$response = $api->update_event( $calendar_id, $event_id, $event_data );
+			if ( ! $response['success'] ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error rescheduling event in Google Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error rescheduling event in Google Calendar %1$s: %2$s', 'quillbooking' ),
+							$calendar_id,
+							Arr::get( $response, 'data.error.message' )
+						),
+					)
+				);
+				return;
+			}
 
-		$event = Arr::get( $response, 'data' );
-		$booking->update_meta(
-			'google_event_details',
-			array(
+			$event             = Arr::get( $response, 'data' );
+			$meta              = $booking->get_meta( 'google_events_details', array() );
+			$meta[ $event_id ] = array(
 				'event'       => $event,
 				'calendar_id' => $calendar_id,
 				'account_id'  => $account_id,
-			)
-		);
+			);
+
+			$booking->update_meta(
+				'google_events_details',
+				$meta
+			);
+
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Event rescheduled in Google Calendar.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Event %1$s rescheduled in Google Calendar %2$s.', 'quillbooking' ),
+						$event_id,
+						$calendar_id
+					),
+				)
+			);
+		}
 	}
 
 	/**
@@ -147,26 +184,67 @@ class Integration extends Abstract_Integration {
 		$host  = $event->calendar->id;
 		$this->set_host( $host );
 
-		$google_event = $booking->get_meta( 'google_event_details', array() );
-		if ( empty( $google_event ) ) {
+		$google_events = $booking->get_meta( 'google_events_details', array() );
+		if ( empty( $google_events ) ) {
 			return;
 		}
 
-		$event_id    = Arr::get( $google_event, 'event.id' );
-		$account_id  = Arr::get( $google_event, 'account_id' );
-		$calendar_id = Arr::get( $google_event, 'calendar_id' );
+		foreach ( $google_events as $event_id => $google_event ) {
+			$account_id  = Arr::get( $google_event, 'account_id' );
+			$calendar_id = Arr::get( $google_event, 'calendar_id' );
 
-		$api = $this->connect( $host, $account_id );
-		if ( ! $api ) {
-			return;
+			$api = $this->connect( $host, $account_id );
+			if ( ! $api ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Google Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with Google Account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
+				return;
+			}
+
+			$response = $api->delete_event( $calendar_id, $event_id );
+			if ( ! $response['success'] ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error removing event from Google Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error removing event from Google Calendar %1$s: %2$s', 'quillbooking' ),
+							$calendar_id,
+							Arr::get( $response, 'data.error.message' )
+						),
+					)
+				);
+				return;
+			}
+
+			$meta = $booking->get_meta( 'google_events_details', array() );
+			Arr::forget( $meta, $event_id );
+
+			$booking->update_meta(
+				'google_events_details',
+				$meta
+			);
+
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Event removed from Google Calendar.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Event %1$s removed from Google Calendar %2$s.', 'quillbooking' ),
+						$event_id,
+						$calendar_id
+					),
+				)
+			);
 		}
-
-		$response = $api->delete_event( $calendar_id, $event_id );
-		if ( ! $response['success'] ) {
-			return;
-		}
-
-		error_log( 'Event removed from Google Calendar: ' . wp_json_encode( $response ) );
 	}
 
 	/**
@@ -194,6 +272,17 @@ class Integration extends Abstract_Integration {
 		foreach ( $google_integration as $account_id => $data ) {
 			$api = $this->connect( $host, $account_id );
 			if ( ! $api ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Google Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with Google Account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
 				continue;
 			}
 
@@ -265,16 +354,43 @@ class Integration extends Abstract_Integration {
 			foreach ( $calendars as $calendar_id ) {
 				$response = $api->add_event( $calendar_id, $event_data );
 				if ( ! $response['success'] ) {
+					$booking->logs()->create(
+						array(
+							'type'    => 'error',
+							'message' => __( 'Error adding event to Google Calendar.', 'quillbooking' ),
+							'details' => sprintf(
+								__( 'Error adding event to Google Calendar %1$s: %2$s', 'quillbooking' ),
+								$calendar_id,
+								Arr::get( $response, 'data.error.message' )
+							),
+						)
+					);
 					continue;
 				}
 
-				$event = Arr::get( $response, 'data' );
+				$event       = Arr::get( $response, 'data' );
+				$meta        = $booking->get_meta( 'google_events_details', array() );
+				$id          = Arr::get( $event, 'id' );
+				$meta[ $id ] = array(
+					'event'       => $event,
+					'calendar_id' => $calendar_id,
+					'account_id'  => $account_id,
+				);
+
 				$booking->update_meta(
-					'google_event_details',
+					'google_events_details',
+					$meta
+				);
+
+				$booking->logs()->create(
 					array(
-						'event'       => $event,
-						'calendar_id' => $calendar_id,
-						'account_id'  => $account_id,
+						'type'    => 'info',
+						'message' => __( 'Event added to Google Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Event %1$s added to Google Calendar %2$s.', 'quillbooking' ),
+							$id,
+							$calendar_id
+						),
 					)
 				);
 			}
@@ -309,31 +425,6 @@ class Integration extends Abstract_Integration {
 		$start_date   = new \DateTime( $booking->start_time, new \DateTimeZone( $booking->calendar->timezone ) );
 		$end_date     = new \DateTime( $booking->end_time, new \DateTimeZone( $booking->calendar->timezone ) );
 		$description .= sprintf(
-			__( 'When:%4$s%1$s to %2$s (%3$s)', 'quillbooking' ),
-			$start_date->format( 'Y-m-d H:i' ),
-			$end_date->format( 'Y-m-d H:i' ),
-			$booking->calendar->timezone,
-			PHP_EOL
-		);
-
-		return $description;$description = sprintf(
-			__( 'Event Detials:', 'quillbooking' ),
-			$booking->event->name
-		);
-		$description                    .= PHP_EOL;
-		$description                    .= sprintf(
-			__( 'Invitee: %s', 'quillbooking' ),
-			$booking->guest->name
-		);
-		$description                    .= PHP_EOL;
-		$description                    .= sprintf(
-			__( 'Invitee Email: %s', 'quillbooking' ),
-			$booking->guest->email
-		);
-		$description                    .= PHP_EOL . PHP_EOL;
-		$start_date                      = new \DateTime( $booking->start_time, new \DateTimeZone( $booking->calendar->timezone ) );
-		$end_date                        = new \DateTime( $booking->end_time, new \DateTimeZone( $booking->calendar->timezone ) );
-		$description                    .= sprintf(
 			__( 'When:%4$s%1$s to %2$s (%3$s)', 'quillbooking' ),
 			$start_date->format( 'Y-m-d H:i' ),
 			$end_date->format( 'Y-m-d H:i' ),

@@ -213,8 +213,7 @@ XML;
 	public function create_event( $account_id, $calendar_id, $event_data ) {
 		$calendar_url = $this->get_calendar_url( $account_id, $calendar_id );
 		$prepare_data = $event_data;
-		unset( $prepare_data['ATTENDEE'] );
-		unset( $prepare_data['ATTENDEE_NAME'] );
+		unset( $prepare_data['ATTENDEES'] );
 		unset( $prepare_data['ORGANIZER_NAME'] );
 		unset( $prepare_data['ORGANIZER'] );
 
@@ -226,15 +225,17 @@ XML;
 		);
 
 		// Add attendees to the event.
-		$vcalendar->VEVENT->add(
-			'ATTENDEE',
-			$event_data['ATTENDEE'],
-			array(
-				'CN'       => $event_data['ATTENDEE_NAME'],
-				'PARTSTAT' => 'ACCEPTED',
-				'RSVP'     => 'FALSE',
-			)
-		);
+		foreach ( $event_data['ATTENDEES'] as $attendee ) {
+			$vcalendar->VEVENT->add(
+				'ATTENDEE',
+				"mailto:{$attendee['MAIL']}",
+				array(
+					'CN'       => $attendee['CN'],
+					'PARTSTAT' => 'NEEDS-ACTION',
+					'ROLE'     => 'REQ-PARTICIPANT',
+				)
+			);
+		}
 		$vcalendar->VEVENT->add( 'ORGANIZER', $event_data['ORGANIZER'], array( 'CN' => $event_data['ORGANIZER_NAME'] ) );
 
 		// Serialize the VCalendar object to a string.
@@ -263,11 +264,12 @@ XML;
 					'Content-Type'  => 'text/calendar',
 					'User-Agent'    => 'QuillBooking',
 					'Authorization' => 'Basic ' . base64_encode( $this->apple_id . ':' . $this->app_specific_password ),
+					'If-None-Match' => '*',
 				),
 				'body'    => $ical_data,
 			)
 		);
-
+		error_log( wp_json_encode( $response ) );
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( $code !== 201 ) {
 			return array(

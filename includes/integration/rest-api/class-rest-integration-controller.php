@@ -95,38 +95,9 @@ abstract class REST_Integration_Controller extends REST_Controller {
 					'description' => __( 'Integration Settings', 'quillbooking' ),
 					'type'        => 'object',
 					'required'    => true,
-					'arg_options' => array(
-						'validate_callback' => array( $this, 'validate_item_settings' ),
-					),
 				),
 			),
 		);
-	}
-
-	/**
-	 * Validate the create item request
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param mixed           $value The value of the parameter.
-	 * @param WP_REST_Request $request The request object.
-	 * @param string          $param The parameter name.
-	 *
-	 * @return WP_Error|bool
-	 */
-	public function validate_item_settings( $value, $request, $param ) {
-		try {
-			$attributes_schema = $this->get_settings_schema();
-			$validator         = rest_validate_value_from_schema( $value, $attributes_schema, $param );
-
-			if ( is_wp_error( $validator ) ) {
-				return $validator;
-			}
-
-			return true;
-		} catch ( Exception $e ) {
-			return new WP_Error( 'rest_invalid_request', $e->getMessage(), array( 'status' => 400 ) );
-		}
 	}
 
 	/**

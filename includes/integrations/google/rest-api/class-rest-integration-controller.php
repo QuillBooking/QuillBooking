@@ -59,13 +59,13 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 					'context'    => array( 'view' ),
 					'properties' => array(
 						'client_id'     => array(
-							'label'    => __( 'Client ID', 'quillcrm' ),
+							'label'    => __( 'Client ID', 'quillbooking' ),
 							'type'     => 'string',
 							'required' => true,
 							'context'  => array( 'view' ),
 						),
 						'client_secret' => array(
-							'label'    => __( 'Client Secret', 'quillcrm' ),
+							'label'    => __( 'Client Secret', 'quillbooking' ),
 							'type'     => 'string',
 							'required' => true,
 							'context'  => array(),

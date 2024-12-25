@@ -13,6 +13,7 @@ namespace QuillBooking\Abstracts;
 
 use QuillBooking\Managers\Locations_Manager;
 use QuillBooking\Managers\Fields_Manager;
+use QuillBooking\Traits\Entity_Properties;
 use WP_Error;
 
 /**
@@ -60,30 +61,29 @@ abstract class Location {
 	 *
 	 * @return static - Single instance
 	 */
-	public static function instance() {
+	final public static function instance() {
 		if ( ! isset( self::$instances[ static::class ] ) ) {
-			self::$instances[ static::class ] = new static();
+			$instance = new static();
+			$instance->register();
+			self::$instances[ static::class ] = $instance;
 		}
+
 		return self::$instances[ static::class ];
 	}
 
 	/**
 	 * Constructor
 	 */
-	public function __construct() {
-		if ( ! $this->register() ) {
-			return;
-		}
-	}
+	protected function __construct() {}
 
 	/**
 	 * Register
 	 *
 	 * @return bool
 	 */
-	private function register() {
+	protected function register() {
 		try {
-			Locations_Manager::instance()->register( $this );
+			Locations_Manager::instance()->register_location( $this );
 		} catch ( \Exception $e ) {
 			return false;
 		}

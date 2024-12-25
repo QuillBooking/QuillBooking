@@ -46,7 +46,6 @@ class Booking_Log_Model extends Model {
 	 */
 	protected $fillable = array(
 		'booking_id',
-		'status',
 		'type',
 		'source',
 		'message',
@@ -69,7 +68,6 @@ class Booking_Log_Model extends Model {
 	 */
 	protected $rules = array(
 		'booking_id' => 'required|integer',
-		'status'     => 'required|string',
 		'type'       => 'required|string',
 		'source'     => 'string',
 		'message'    => 'required|string',
@@ -84,8 +82,6 @@ class Booking_Log_Model extends Model {
 	protected $messages = array(
 		'booking_id.required' => 'Booking ID is required.',
 		'booking_id.integer'  => 'Booking ID must be an integer.',
-		'status.required'     => 'Status is required.',
-		'status.string'       => 'Status must be a string.',
 		'type.required'       => 'Type is required.',
 		'type.string'         => 'Type must be a string.',
 		'source.string'       => 'Source must be a string.',

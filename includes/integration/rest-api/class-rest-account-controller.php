@@ -142,7 +142,7 @@ class REST_Account_Controller extends REST_Controller {
 			'type'       => 'object',
 			'properties' => array(
 				'id'     => array(
-					'type'        => 'integer',
+					'type'        => array( 'integer', 'string' ),
 					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
 					'context'     => array( 'view', 'edit', 'embed' ),
 					'readonly'    => true,

@@ -73,7 +73,7 @@ class Integration extends Abstract_Integration {
 	public function __construct() {
 		parent::__construct();
 		$this->app = new App( $this );
-		// add_filter( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		// add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
 		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
 	}
@@ -102,6 +102,17 @@ class Integration extends Abstract_Integration {
 
 		$api = $this->connect( $host, $account_id );
 		if ( ! $api ) {
+			$booking->logs()->create(
+				array(
+					'type'    => 'error',
+					'message' => __( 'Error connecting to Zoom.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Error connecting host %1$s with Zoom Account %2$s.', 'quillbooking' ),
+						$host->name,
+						$account_id
+					),
+				)
+			);
 			return;
 		}
 
@@ -112,18 +123,37 @@ class Integration extends Abstract_Integration {
 		);
 
 		$response = $api->update_meeting( $meeting_id, $data );
-		error_log( 'Zoom Integration: ' . wp_json_encode( $response ) );
 		if ( ! $response['success'] ) {
-			error_log( 'Zoom Integration Error: ' . wp_json_encode( $response ) );
+			$booking->logs()->create(
+				array(
+					'type'    => 'error',
+					'message' => __( 'Error rescheduling meeting in Zoom.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Error rescheduling event in Zoom Account %1$s: %2$s', 'quillbooking' ),
+						$account_id,
+						Arr::get( $response, 'data.error.message' )
+					),
+				)
+			);
 			return;
 		}
 
-		error_log( 'Event rescheduled in Zoom Calendar: ' . wp_json_encode( $response ) );
 		$booking->update_meta(
 			'zoom_event_details',
 			array(
 				'event'      => Arr::get( $response, 'data' ),
 				'account_id' => $account_id,
+			)
+		);
+
+		$booking->logs()->create(
+			array(
+				'type'    => 'info',
+				'message' => __( 'Meeting rescheduled in Zoom Calendar.', 'quillbooking' ),
+				'details' => sprintf(
+					__( 'Event has been rescheduled in Zoom Account %1$s.', 'quillbooking' ),
+					$account_id
+				),
 			)
 		);
 	}
@@ -152,16 +182,43 @@ class Integration extends Abstract_Integration {
 
 		$api = $this->connect( $host, $account_id );
 		if ( ! $api ) {
+			$booking->logs()->create(
+				array(
+					'type'    => 'error',
+					'message' => __( 'Error connecting to Zoom.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Error connecting host %1$s with Zoom Account %2$s.', 'quillbooking' ),
+						$host->name,
+						$account_id
+					),
+				)
+			);
 			return;
 		}
 
 		$response = $api->delete_meeting( $meeting_id );
-		error_log( 'Zoom Integration: ' . wp_json_encode( $response ) );
 		if ( ! $response['success'] ) {
+			$booking->logs()->create(
+				array(
+					'type'    => 'error',
+					'message' => __( 'Error removing meeting from Zoom.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Error removing event from Zoom Account %1$s: %2$s', 'quillbooking' ),
+						$account_id,
+						Arr::get( $response, 'data.error.message' )
+					),
+				)
+			);
 			return;
 		}
 
-		error_log( 'Event removed from Zoom Calendar: ' . wp_json_encode( $response ) );
+		$booking->logs()->create(
+			array(
+				'type'    => 'info',
+				'message' => __( 'Meeting removed from Zoom Calendar.', 'quillbooking' ),
+				'details' => __( 'Event has been removed from Zoom Calendar.', 'quillbooking' ),
+			)
+		);
 	}
 
 	/**
@@ -192,6 +249,17 @@ class Integration extends Abstract_Integration {
 		foreach ( $zoom_integration as $account_id => $data ) {
 			$api = $this->connect( $host, $account_id );
 			if ( ! $api ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Zoom.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with Zoom Account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
 				continue;
 			}
 
@@ -216,9 +284,18 @@ class Integration extends Abstract_Integration {
 			$meeting_data = array_filter( $meeting_data );
 
 			$response = $api->create_meeting( $meeting_data );
-			error_log( 'Zoom Integration: ' . wp_json_encode( $response ) );
 			if ( ! $response['success'] ) {
-				error_log( 'Zoom Integration Error: ' . wp_json_encode( $response ) );
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error creating meeting in Zoom.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error adding event to Zoom Account %1$s: %2$s', 'quillbooking' ),
+							$account_id,
+							Arr::get( $response, 'data.error.message' )
+						),
+					)
+				);
 				continue;
 			}
 
@@ -228,6 +305,18 @@ class Integration extends Abstract_Integration {
 				array(
 					'meeting'    => $meeting,
 					'account_id' => $account_id,
+				)
+			);
+
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Meeting created in Zoom Calendar.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Event has been added to Zoom Account %1$s: %2$s', 'quillbooking' ),
+						$account_id,
+						$meeting['join_url']
+					),
 				)
 			);
 		}

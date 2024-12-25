@@ -68,8 +68,7 @@ class Bookings_Table extends Migration {
 		created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY  (id),
-		KEY event_id (event_id),
-		KEY guest_id (guest_id)';
+		KEY event_id (event_id)';
 
 		return $query;
 	}

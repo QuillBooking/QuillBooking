@@ -74,7 +74,8 @@ class Integration extends Abstract_Integration {
 		parent::__construct();
 		$this->app = new App( $this );
 		add_filter( 'quillbooking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
-		// add_filter( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
 		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
 	}
@@ -93,51 +94,77 @@ class Integration extends Abstract_Integration {
 		$host  = $event->calendar->id;
 		$this->set_host( $host );
 
-		$outlook_event = $booking->get_meta( 'outlook_event_details', array() );
-		error_log( 'Outlook Event Details: ' . wp_json_encode( $outlook_event ) );
-		if ( empty( $outlook_event ) ) {
+		$outlook_events = $booking->get_meta( 'outlook_events_details', array() );
+		if ( empty( $outlook_events ) ) {
 			return;
 		}
 
-		$event_id    = Arr::get( $outlook_event, 'event.id' );
-		$account_id  = Arr::get( $outlook_event, 'account_id' );
-		$calendar_id = Arr::get( $outlook_event, 'calendar_id' );
+		foreach ( $outlook_events as $event_id => $outlook_event ) {
+			$account_id  = Arr::get( $outlook_event, 'account_id' );
+			$calendar_id = Arr::get( $outlook_event, 'calendar_id' );
 
-		$api = $this->connect( $host, $account_id );
-		if ( ! $api || is_wp_error( $api ) ) {
-			error_log( 'Outlook Integration Error: ' . $api->get_error_message() );
-			return;
+			$api = $this->connect( $host, $account_id );
+			if ( ! $api || is_wp_error( $api ) ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Outlook Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with Outlook Account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
+				return;
+			}
+
+			$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
+			$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
+
+			$data = array(
+				'start' => array(
+					'dateTime' => $start_date->format( 'Y-m-d\TH:i:s' ),
+					'timeZone' => 'UTC',
+				),
+				'end'   => array(
+					'dateTime' => $end_date->format( 'Y-m-d\TH:i:s' ),
+					'timeZone' => 'UTC',
+				),
+			);
+
+			$response = $api->update_event( $calendar_id, $event_id, $data );
+			if ( ! $response['success'] ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error rescheduling event in Outlook Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error rescheduling event in Outlook Calendar %1$s: %2$s', 'quillbooking' ),
+							$calendar_id,
+							Arr::get( $response, 'data.error.message', '' )
+						),
+					)
+				);
+				return;
+			}
+
+			$meta = $booking->get_meta( 'outlook_events_details', array() );
+			Arr::set( $meta, "{$event_id}.event", $response['data'] );
+			$booking->update_meta( 'outlook_events_details', $meta );
+
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Event rescheduled in Outlook Calendar.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Event %1$s rescheduled in Outlook Calendar %2$s.', 'quillbooking' ),
+						$event_id,
+						$calendar_id
+					),
+				)
+			);
 		}
-
-		$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
-		$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
-
-		$data = array(
-			'start' => array(
-				'dateTime' => $start_date->format( 'Y-m-d\TH:i:s' ),
-				'timeZone' => 'UTC',
-			),
-			'end'   => array(
-				'dateTime' => $end_date->format( 'Y-m-d\TH:i:s' ),
-				'timeZone' => 'UTC',
-			),
-		);
-
-		$response = $api->update_event( $calendar_id, $event_id, $data );
-		if ( ! $response['success'] ) {
-			error_log( 'Outlook Integration Error: ' . wp_json_encode( $response ) );
-			return;
-		}
-
-		error_log( 'Event rescheduled in Outlook Calendar: ' . wp_json_encode( $response ) );
-		$booking->update_meta(
-			'outlook_event_details',
-			array(
-				'event'       => Arr::get( $response, 'data' ),
-				'calendar_id' => $calendar_id,
-				'account_id'  => $account_id,
-			)
-		);
 	}
 
 	/**
@@ -154,25 +181,61 @@ class Integration extends Abstract_Integration {
 		$host  = $event->calendar->id;
 		$this->set_host( $host );
 
-		$outlook_events = $booking->get_meta( 'outlook_event_details', array() );
+		$outlook_events = $booking->get_meta( 'outlook_events_details', array() );
 		if ( empty( $outlook_events ) ) {
 			return;
 		}
 
-		$event_id   = Arr::get( $outlook_events, 'event.id' );
-		$account_id = Arr::get( $outlook_events, 'account_id' );
+		foreach ( $outlook_events as $event_id => $outlook_event ) {
+			$account_id = Arr::get( $outlook_event, 'account_id' );
 
-		$api = $this->connect( $host, $account_id );
-		if ( ! $api ) {
-			return;
+			$api = $this->connect( $host, $account_id );
+			if ( ! $api ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Outlook Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with Outlook Account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
+				return;
+			}
+
+			$response = $api->delete_event( $event_id );
+			if ( ! $response['success'] ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error removing event from Outlook Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error removing event from Outlook Calendar %1$s: %2$s', 'quillbooking' ),
+							$event_id,
+							Arr::get( $response, 'data.error.message', '' )
+						),
+					)
+				);
+				return;
+			}
+
+			$meta = $booking->get_meta( 'outlook_events_details', array() );
+			Arr::forget( $meta, $event_id );
+			$booking->update_meta( 'outlook_events_details', $meta );
+
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Event removed from Outlook Calendar.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Event %1$s removed from Outlook Calendar.', 'quillbooking' ),
+						$event_id
+					),
+				)
+			);
 		}
-
-		$response = $api->delete_event( $event_id );
-		if ( ! $response['success'] ) {
-			return;
-		}
-
-		error_log( 'Event removed from Outlook Calendar: ' . wp_json_encode( $response ) );
 	}
 
 	/**
@@ -189,17 +252,28 @@ class Integration extends Abstract_Integration {
 		$host  = $event->calendar->id;
 		$this->set_host( $host );
 
-		$google_integration = $this->host->get_meta( $this->meta_key, array() );
-		if ( empty( $google_integration ) ) {
+		$outlook_integration = $this->host->get_meta( $this->meta_key, array() );
+		if ( empty( $outlook_integration ) ) {
 			return $booking;
 		}
 
 		$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
 		$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
 
-		foreach ( $google_integration as $account_id => $data ) {
+		foreach ( $outlook_integration as $account_id => $data ) {
 			$api = $this->connect( $host, $account_id );
 			if ( ! $api ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error connecting to Outlook Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Error connecting host %1$s with Outlook Account %2$s.', 'quillbooking' ),
+							$host->name,
+							$account_id
+						),
+					)
+				);
 				continue;
 			}
 
@@ -247,26 +321,50 @@ class Integration extends Abstract_Integration {
 				'transactionId'         => "{$this->get_site_uid()}-{$booking->id}",
 			);
 
-			// if ( 'ms_meet' === $booking->location ) {
-			$event_data['isOnlineMeeting']       = true;
-			$event_data['onlineMeetingProvider'] = 'teamsForBusiness';
-			// }
+			if ( 'ms_meet' === $booking->location ) {
+				$event_data['isOnlineMeeting']       = true;
+				$event_data['onlineMeetingProvider'] = 'teamsForBusiness';
+			}
 
 			// Remove any empty values recursively.
 			$event_data = array_filter( $event_data );
 			foreach ( $calendars as $calendar_id ) {
 				$response = $api->create_event( $calendar_id, $event_data );
 				if ( ! $response['success'] ) {
+					$booking->logs()->create(
+						array(
+							'type'    => 'error',
+							'message' => __( 'Error adding event to Outlook Calendar.', 'quillbooking' ),
+							'details' => sprintf(
+								__( 'Error adding event to Outlook Calendar %1$s: %2$s', 'quillbooking' ),
+								$calendar_id,
+								Arr::get( $response, 'data.error.message', '' )
+							),
+						)
+					);
 					continue;
 				}
 
-				$event = Arr::get( $response, 'data' );
-				$booking->update_meta(
-					'outlook_event_details',
+				$event       = Arr::get( $response, 'data' );
+				$id          = Arr::get( $event, 'id' );
+				$meta        = $booking->get_meta( 'outlook_events_details', array() );
+				$meta[ $id ] = array(
+					'event'       => $event,
+					'calendar_id' => $calendar_id,
+					'account_id'  => $account_id,
+				);
+
+				$booking->update_meta( 'outlook_events_details', $meta );
+
+				$booking->logs()->create(
 					array(
-						'event'       => $event,
-						'calendar_id' => $calendar_id,
-						'account_id'  => $account_id,
+						'type'    => 'info',
+						'message' => __( 'Event added to Outlook Calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Event %1$s added to Outlook Calendar %2$s.', 'quillbooking' ),
+							$id,
+							$calendar_id
+						),
 					)
 				);
 			}

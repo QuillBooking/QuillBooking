@@ -14,7 +14,7 @@ use QuillBooking\REST_API\Controllers\V1\REST_Team_Controller;
 use QuillBooking\REST_API\Controllers\V1\REST_Event_Controller;
 use QuillBooking\REST_API\Controllers\V1\REST_Booking_Controller;
 use QuillBooking\REST_API\Controllers\v1\REST_Availability_Controller;
-use QuillBooking\REST_API\Controllers\v1\REST_Integration_Controller;
+use QuillBooking\Traits\Singleton;
 
 /**
  * REST_API class is mainly responsible for registering routes.
@@ -23,28 +23,7 @@ use QuillBooking\REST_API\Controllers\v1\REST_Integration_Controller;
  */
 class REST_API {
 
-	/**
-	 *  Class singleton instance
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var object $_instance The singleton instance.
-	 */
-	private static $_instance = null;
-
-	/**
-	 * Get instance as a singleton.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return self $_instance An instance of the REST_API class
-	 */
-	public static function instance() {
-		if ( null === self::$_instance ) {
-			self::$_instance = new self();
-		}
-		return self::$_instance;
-	}
+	use Singleton;
 
 	/**
 	 * Cloning the singletone.
@@ -75,7 +54,6 @@ class REST_API {
 			REST_Event_Controller::class,
 			REST_Booking_Controller::class,
 			REST_Availability_Controller::class,
-			REST_Integration_Controller::class,
 		);
 
 		foreach ( $controllers as $controller ) {

@@ -82,7 +82,7 @@ class Event_Model extends Model {
 	 *
 	 * @var array
 	 */
-	protected $appends = array( 'fields', 'availability', 'location', 'limits', 'email_notifications', 'additional_settings', 'group_settings', 'event_range' );
+	protected $appends = array( 'fields', 'availability', 'location', 'limits', 'email_notifications', 'sms_notifications', 'additional_settings', 'group_settings', 'event_range', 'advanced_settings', 'payments_settings', 'webhook_feeds' );
 
 	/**
 	 * Rules
@@ -313,6 +313,34 @@ class Event_Model extends Model {
 	}
 
 	/**
+	 * Get the event SMS notifications
+	 *
+	 * @return array
+	 */
+	public function getSmsNotificationsAttribute() {
+		$value = $this->meta()->where( 'meta_key', 'sms_notifications' )->value( 'meta_value' );
+
+		return $value ? maybe_unserialize( $value ) : null;
+	}
+
+	/**
+	 * Set the event SMS notifications
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setSmsNotificationsAttribute( $value ) {
+		$meta = $this->meta()->firstOrNew(
+			array(
+				'meta_key' => 'sms_notifications',
+			)
+		);
+
+		$meta->meta_value = maybe_serialize( $value );
+		$meta->save();
+	}
+
+	/**
 	 * Get the event additional settings
 	 *
 	 * @return array
@@ -393,6 +421,90 @@ class Event_Model extends Model {
 		$meta = $this->meta()->firstOrNew(
 			array(
 				'meta_key' => 'event_range',
+			)
+		);
+
+		$meta->meta_value = maybe_serialize( $value );
+		$meta->save();
+	}
+
+	/**
+	 * Get the event advanced settings
+	 *
+	 * @return array
+	 */
+	public function getAdvancedSettingsAttribute() {
+		$value = $this->meta()->where( 'meta_key', 'advanced_settings' )->value( 'meta_value' );
+
+		return $value ? maybe_unserialize( $value ) : null;
+	}
+
+	/**
+	 * Set the event advanced settings
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setAdvancedSettingsAttribute( $value ) {
+		$meta = $this->meta()->firstOrNew(
+			array(
+				'meta_key' => 'advanced_settings',
+			)
+		);
+
+		$meta->meta_value = maybe_serialize( $value );
+		$meta->save();
+	}
+
+	/**
+	 * Get the event payments settings
+	 *
+	 * @return array
+	 */
+	public function getPaymentsSettingsAttribute() {
+		$value = $this->meta()->where( 'meta_key', 'payments_settings' )->value( 'meta_value' );
+
+		return $value ? maybe_unserialize( $value ) : null;
+	}
+
+	/**
+	 * Set the event payments settings
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setPaymentsSettingsAttribute( $value ) {
+		$meta = $this->meta()->firstOrNew(
+			array(
+				'meta_key' => 'payments_settings',
+			)
+		);
+
+		$meta->meta_value = maybe_serialize( $value );
+		$meta->save();
+	}
+
+	/**
+	 * Get the event webhook feeds
+	 *
+	 * @return array
+	 */
+	public function getWebhookFeedsAttribute() {
+		$value = $this->meta()->where( 'meta_key', 'webhook_feeds' )->value( 'meta_value' );
+
+		return $value ? maybe_unserialize( $value ) : null;
+	}
+
+	/**
+	 * Set the event webhook feeds
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setWebhookFeedsAttribute( $value ) {
+		$meta = $this->meta()->firstOrNew(
+			array(
+				'meta_key' => 'webhook_feeds',
 			)
 		);
 
@@ -544,15 +656,128 @@ class Event_Model extends Model {
 	}
 
 	/**
-	 * Get available slots
+	 * Check if reached minimum notice
 	 *
-	 * @param int    $start_date Start date (Unix timestamp)
-	 * @param string $timezone   Timezone
-	 * @param int    $duration   Duration of each slot in minutes
+	 * @param string $start_date Booking start date
+	 *
+	 * @return bool
+	 */
+	public function requireConfirmation( $start_date ) {
+		$require_confirmation = Arr::get( $this->advanced_settings, 'require_confirmation', false );
+		if ( ! $require_confirmation ) {
+			return false;
+		}
+
+		$confirmation_time = Arr::get( $this->advanced_settings, 'confirmation_time', 'always' );
+		if ( 'always' === $confirmation_time ) {
+			return true;
+		}
+
+		$confirmation_time_value = Arr::get( $this->advanced_settings, 'confirmation_time_value', 20 );
+		$confirmation_time_unit  = Arr::get( $this->advanced_settings, 'confirmation_time_unit', 'minutes' );
+
+		$start_date = new \DateTime( $start_date, new \DateTimeZone( 'UTC' ) );
+		$now        = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+
+		if ( 'hours' === $confirmation_time_unit ) {
+			$confirmation_time_value *= 60;
+		}
+
+		return $start_date->getTimestamp() - $now->getTimestamp() >= $confirmation_time_value;
+	}
+
+	/**
+	 * Require payment
+	 *
+	 * @return bool
+	 */
+	public function requirePayment() {
+		$payments_settings = $this->payments_settings;
+		if ( ! $payments_settings ) {
+			return false;
+		}
+
+		$enabled = Arr::get( $payments_settings, 'enable_payment', false );
+		if ( ! $enabled ) {
+			return false;
+		}
+
+		$items = Arr::get( $payments_settings, 'items', array() );
+		if ( empty( $items ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get total price
+	 *
+	 * @return float
+	 */
+	public function getTotalPrice() {
+		$payments_settings = $this->payments_settings;
+		if ( ! $payments_settings ) {
+			return 0;
+		}
+
+		$items = Arr::get( $payments_settings, 'items', array() );
+		if ( empty( $items ) ) {
+			return 0;
+		}
+
+		$total_price = 0;
+		foreach ( $items as $item ) {
+			$total_price += $item['price'];
+		}
+
+		return $total_price;
+	}
+
+	/**
+	 * Get items
 	 *
 	 * @return array
 	 */
+	public function getItems() {
+		$payments_settings = $this->payments_settings;
+		if ( ! $payments_settings ) {
+			return array();
+		}
+
+		$items = Arr::get( $payments_settings, 'items', array() );
+		if ( empty( $items ) ) {
+			return array();
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Fetch available slots based on provided parameters.
+	 *
+	 * @param int    $start_date Start date (Unix timestamp).
+	 * @param string $timezone   Timezone.
+	 * @param int    $duration   Duration of each slot in minutes.
+	 * @return array List of available slots.
+	 */
 	public function get_available_slots( $start_date, $timezone, $duration ) {
+		$this->validate_availability();
+		$this->apply_frequency_limits( $start_date );
+		$this->apply_duration_limits( $start_date );
+
+		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
+		$end_date   = $this->calculate_end_date( $start_date, $timezone );
+
+		$slots = $this->generate_daily_slots( $start_date, $end_date, $timezone, $duration );
+
+		return apply_filters( 'quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone );
+	}
+
+	/**
+	 * Validate availability data and weekly hours.
+	 */
+	private function validate_availability() {
 		$availability = $this->availability;
 		if ( ! $availability ) {
 			throw new \Exception( __( 'Availability not set', 'quillbooking' ) );
@@ -562,61 +787,134 @@ class Event_Model extends Model {
 		if ( empty( $weekly_hours ) ) {
 			throw new \Exception( __( 'Weekly hours are not set', 'quillbooking' ) );
 		}
+	}
 
-		// $lock_timezone = Arr::get( $this->limits, 'timezone_lock.enable', false );
-		// if ( $lock_timezone ) {
-		// $timezone = Arr::get( $this->limits, 'timezone_lock.timezone', false ) ?? $this->availability['timezone'];
-		// }
+	/**
+	 * Apply frequency limits to ensure booking constraints are respected.
+	 *
+	 * @param int $start_date Start date timestamp.
+	 */
+	private function apply_frequency_limits( $start_date ) {
+		if ( ! Arr::get( $this->limits, 'frequency.enable', false ) ) {
+			return;
+		}
 
-		// $event_duration = Arr::get( $this->additional_settings, 'duration.allow_attendees_to_select_duration', false );
-		// if ( !$event_duration ) {
-		// $duration = $this->duration;
-		// }
-		$start_date = new \DateTime( $start_date );
-		$start_date->setTimezone( new \DateTimeZone( $timezone ) );
-		$start_date       = $start_date->getTimestamp();
+		$frequency_limit      = Arr::get( $this->limits, 'frequency.limit', 5 );
+		$frequency_unit       = Arr::get( $this->limits, 'frequency.unit', 'days' );
+		$frequency_start_time = strtotime( 'midnight', $start_date );
+		$frequency_end_time   = strtotime( 'tomorrow', $frequency_start_time ) - 1;
+
+		$this->validate_limit( $frequency_limit, $frequency_unit, $frequency_start_time, $frequency_end_time, 'Event reached the frequency limit' );
+	}
+
+	/**
+	 * Apply duration limits to ensure total booking time is within allowed constraints.
+	 *
+	 * @param int $start_date Start date timestamp.
+	 */
+	private function apply_duration_limits( $start_date ) {
+		if ( ! Arr::get( $this->limits, 'duration.enable', false ) ) {
+			return;
+		}
+
+		$duration_limit      = Arr::get( $this->limits, 'duration.limit', 60 );
+		$duration_unit       = Arr::get( $this->limits, 'duration.unit', 'days' );
+		$duration_start_time = strtotime( 'midnight', $start_date );
+		$duration_end_time   = strtotime( 'tomorrow', $duration_start_time ) - 1;
+
+		$this->validate_limit( $duration_limit, $duration_unit, $duration_start_time, $duration_end_time, 'Event reached the duration limit', true );
+	}
+
+	/**
+	 * Validate booking limits (frequency or duration).
+	 *
+	 * @param int    $limit      Limit value.
+	 * @param string $unit       Unit of the limit (days, weeks, months).
+	 * @param int    $start_time Start timestamp.
+	 * @param int    $end_time   End timestamp.
+	 * @param string $message    Error message to display if the limit is exceeded.
+	 * @param bool   $sum        Whether to sum bookings (for duration limits).
+	 */
+	private function validate_limit( $limit, $unit, $start_time, $end_time, $message, $sum = false ) {
+		$unit_multiplier = array(
+			'weeks'  => 7,
+			'months' => 30,
+		);
+		$limit          *= $unit_multiplier[ $unit ] ?? 1;
+
+		$query = Booking_Model::where( 'event_id', $this->id )
+			->where( 'start_date', '>=', $start_time )
+			->where( 'start_date', '<=', $end_time )
+			->whereNot( 'status', 'cancelled' );
+
+		$result = $sum ? $query->sum( 'duration' ) : $query->count();
+
+		if ( $result >= $limit ) {
+			throw new \Exception( __( $message, 'quillbooking' ) );
+		}
+	}
+
+	/**
+	 * Adjust start date based on event and current date.
+	 *
+	 * @param int    $start_date Start date timestamp.
+	 * @param string $timezone   Timezone.
+	 * @param int    $duration   Slot duration in minutes.
+	 * @return int Adjusted start date timestamp.
+	 */
+	private function adjust_start_date( $start_date, $timezone, $duration ) {
+		$start_date       = new \DateTime( $start_date, new \DateTimeZone( $timezone ) );
 		$event_start_date = $this->get_start_date( $timezone );
-		$today            = new \DateTime( 'now' );
-		$today->setTimezone( new \DateTimeZone( $timezone ) );
-		$current_time = $today->getTimestamp();
+		$current_time     = ( new \DateTime( 'now', new \DateTimeZone( $timezone ) ) )->getTimestamp();
 
-		if ( $start_date < $event_start_date ) {
-			$start_date = $event_start_date;
-		}
-		if ( $start_date < $current_time ) {
-			$next_slot_time = $current_time;
-			$next_slot_time = ceil( $next_slot_time / ( $duration * 60 ) ) * ( $duration * 60 );
-			$start_date     = max( $next_slot_time, $start_date );
-		}
+		$start_date = max( $event_start_date, $start_date->getTimestamp(), $current_time );
 
-		// End date should be the last for start date month
-		$end_date       = strtotime( 'last day of this month', $start_date );
+		return ceil( $start_date / ( $duration * 60 ) ) * ( $duration * 60 );
+	}
+
+	/**
+	 * Calculate the end date for the event.
+	 *
+	 * @param int    $start_date Start date timestamp.
+	 * @param string $timezone   Timezone.
+	 * @return int End date timestamp.
+	 */
+	private function calculate_end_date( $start_date, $timezone ) {
 		$event_end_date = $this->get_end_date( $timezone );
+
 		if ( $start_date > $event_end_date ) {
 			throw new \Exception( __( 'Event is not available', 'quillbooking' ) );
-		} else {
-			$end_date = min( $end_date, $event_end_date );
 		}
 
+		return min( strtotime( 'last day of this month', $start_date ), $event_end_date );
+	}
+
+	/**
+	 * Generate slots for each day within the given range.
+	 *
+	 * @param int    $start_date Start date timestamp.
+	 * @param int    $end_date   End date timestamp.
+	 * @param string $timezone   Timezone.
+	 * @param int    $duration   Slot duration in minutes.
+	 * @return array Generated slots.
+	 */
+	private function generate_daily_slots( $start_date, $end_date, $timezone, $duration ) {
 		$slots = array();
 
 		for ( $current_date = $start_date; $current_date <= $end_date; $current_date = strtotime( '+1 day', $current_date ) ) {
-			$day_of_week = strtolower( date( 'l', $current_date ) ); // Get the day of the week (e.g., Monday, Tuesday)
+			$day_of_week = strtolower( date( 'l', $current_date ) );
 
-			if ( ! $weekly_hours[ $day_of_week ]['off'] ) {
-				foreach ( $weekly_hours[ $day_of_week ]['times'] as $time_block ) {
+			if ( empty( $this->availability['weekly_hours'][ $day_of_week ]['off'] ) ) {
+				foreach ( $this->availability['weekly_hours'][ $day_of_week ]['times'] as $time_block ) {
 					$day_start = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
 					$day_end   = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
-
-					$day_start->setTimezone( new \DateTimeZone( $timezone ) );
-					$day_end->setTimezone( new \DateTimeZone( $timezone ) );
 
 					$slots = $this->generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots );
 				}
 			}
 		}
 
-		return apply_filters( 'quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone );
+		return $slots;
 	}
 
 	/**

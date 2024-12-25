@@ -101,9 +101,9 @@ abstract class Integration {
 	private static $instances = array();
 
 	/**
-	 * Location Instances.
+	 * Integration Instances.
 	 *
-	 * Instantiates or reuses an instances of Location.
+	 * Instantiates or reuses an instances of Integration.
 	 *
 	 * @since 1.0.0
 	 * @static
@@ -112,7 +112,9 @@ abstract class Integration {
 	 */
 	public static function instance() {
 		if ( ! isset( self::$instances[ static::class ] ) ) {
-			self::$instances[ static::class ] = new static();
+			$instance = new static();
+			$instance->register();
+			self::$instances[ static::class ] = $instance;
 		}
 		return self::$instances[ static::class ];
 	}
@@ -131,7 +133,7 @@ abstract class Integration {
 	/**
 	 * Constructor
 	 */
-	public function __construct() {
+	protected function __construct() {
 		$this->init();
 	}
 
@@ -154,10 +156,6 @@ abstract class Integration {
 		$this->accounts    = new Accounts( $this );
 		$this->option_name = 'quillbooking_' . $this->slug . '_settings';
 		$this->meta_key    = 'quillbooking_' . $this->slug . '_accounts';
-
-		if ( ! $this->register() ) {
-			return;
-		}
 	}
 
 	/**
@@ -167,7 +165,7 @@ abstract class Integration {
 	 */
 	private function register() {
 		try {
-			Integrations_Manager::instance()->register( $this );
+			Integrations_Manager::instance()->register_integration( $this );
 		} catch ( \Exception $e ) {
 			return false;
 		}

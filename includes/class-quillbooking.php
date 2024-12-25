@@ -14,7 +14,10 @@ use Illuminate\Container\Container;
 use QuillBooking\REST_API\REST_API;
 use QuillBooking\Capabilities;
 use QuillBooking\Availabilities;
-use QuillBooking\Booking;
+use QuillBooking\Booking\Booking;
+use QuillBooking\Traits\Singleton;
+use QuillBooking\WooCommerce\WooCommerce;
+use QuillBooking\Webhook_Feeds;
 
 /**
  * Main QuillBooking Class
@@ -24,29 +27,16 @@ use QuillBooking\Booking;
  */
 class QuillBooking {
 
+	use Singleton;
+
 	/**
-	 * Instance
+	 * Booking Tasks
 	 *
 	 * @since 1.0.0
 	 *
-	 * @var QuillBooking
+	 * @var Tasks
 	 */
-	private static $instance;
-
-	/**
-	 * Get Instance
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return QuillBooking
-	 */
-	public static function instance() {
-		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
+	public $tasks;
 
 	/**
 	 * Constructor
@@ -96,6 +86,8 @@ class QuillBooking {
 	private function load_dependencies() {
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/event-locations/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/integrations/loader.php';
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/merge-tags/loader.php';
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/payment-gateways/loader.php';
 	}
 
 	/**
@@ -104,9 +96,13 @@ class QuillBooking {
 	 * @since 1.0.0
 	 */
 	private function init_objects() {
+		$this->tasks = new Tasks( 'quillbooking' );
+
 		REST_API::instance();
 		Capabilities::assign_capabilities_for_user_roles();
 		Booking::instance();
+		WooCommerce::instance();
+		Webhook_Feeds::instance();
 	}
 
 	/**

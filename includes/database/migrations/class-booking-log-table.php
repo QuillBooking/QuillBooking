@@ -40,7 +40,6 @@ class Booking_Log_Table extends Migration {
 		 *
 		 * id: int(11) NOT NULL AUTO_INCREMENT
 		 * booking_id: int(11) NOT NULL
-		 * status: varchar(255) NOT NULL
 		 * type: varchar(255) NOT NULL
 		 * source: varchar(255) NOT NULL
 		 * message: varchar(255) NOT NULL
@@ -50,7 +49,6 @@ class Booking_Log_Table extends Migration {
 		 */
 		$query = 'id int(11) NOT NULL AUTO_INCREMENT,
         booking_id int(11) NOT NULL,
-        status varchar(255) NOT NULL,
         type varchar(255) NOT NULL,
         source varchar(255) NOT NULL,
         message varchar(255) NOT NULL,

@@ -43,11 +43,11 @@ class REST_API {
 	 */
 	public function __construct( $integration ) {
 		$this->integration = $integration;
-		if ( ! empty( static::$classes['integration_controller'] ) ) {
+		if ( ! empty( static::$classes['integration_controller'] ?? null ) ) {
 			new static::$classes['integration_controller']( $this->integration );
 		}
 
-		if ( ! empty( static::$classes['account_controller'] ) ) {
+		if ( ! empty( static::$classes['account_controller'] ?? null ) ) {
 			new static::$classes['account_controller']( $this->integration );
 		} else {
 			new REST_Account_Controller( $this->integration );

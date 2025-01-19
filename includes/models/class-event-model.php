@@ -78,13 +78,6 @@ class Event_Model extends Model {
 	);
 
 	/**
-	 * The attributes that should be appended to the model's array form.
-	 *
-	 * @var array
-	 */
-	protected $appends = array( 'fields', 'availability', 'location', 'limits', 'email_notifications', 'sms_notifications', 'additional_settings', 'group_settings', 'event_range', 'advanced_settings', 'payments_settings', 'webhook_feeds' );
-
-	/**
 	 * Rules
 	 *
 	 * @var array
@@ -613,7 +606,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function updateSystemFields() {
-		$event_location = $this->settings['location'] ?? null;
+		$event_location = $this->location ?? null;
 
 		if ( ! $event_location || ! is_array( $event_location ) ) {
 			throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
@@ -653,6 +646,45 @@ class Event_Model extends Model {
 			array( 'meta_key' => 'fields' ),
 			array( 'meta_value' => maybe_serialize( $fields ) )
 		);
+	}
+
+	/**
+	 * Get meta value
+	 *
+	 * @param string $key Meta key.
+	 * @param mixed  $default Default value.
+	 *
+	 * @return mixed
+	 */
+	public function get_meta( $key, $default = null ) {
+		$meta = $this->meta()->where( 'meta_key', $key )->first();
+		$meta = $meta ? maybe_unserialize( $meta->meta_value ) : $default;
+
+		return $meta;
+	}
+
+	/**
+	 * Duplicate event
+	 *
+	 * @return Event_Model
+	 */
+	public function duplicate() {
+		$event          = $this->replicate();
+		$event->name    = $event->name . ' - ' . __( 'Copy', 'quillbooking' );
+		$event->hash_id = Str::random( 32 );
+		$event->save();
+
+		$meta = $this->meta()->get();
+		foreach ( $meta as $meta_item ) {
+			$event->meta()->create(
+				array(
+					'meta_key'   => $meta_item->meta_key,
+					'meta_value' => $meta_item->meta_value,
+				)
+			);
+		}
+
+		return $event;
 	}
 
 	/**

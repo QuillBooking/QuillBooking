@@ -18,6 +18,8 @@ use QuillBooking\Booking\Booking;
 use QuillBooking\Traits\Singleton;
 use QuillBooking\WooCommerce\WooCommerce;
 use QuillBooking\Webhook_Feeds;
+use QuillBooking\Admin\Admin;
+use QuillBooking\Admin\Admin_Loader;
 
 /**
  * Main QuillBooking Class
@@ -84,6 +86,7 @@ class QuillBooking {
 	 * @since 1.0.0
 	 */
 	private function load_dependencies() {
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/functions.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/event-locations/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/integrations/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/merge-tags/loader.php';
@@ -98,6 +101,8 @@ class QuillBooking {
 	private function init_objects() {
 		$this->tasks = new Tasks( 'quillbooking' );
 
+		Admin::instance();
+		Admin_Loader::instance();
 		REST_API::instance();
 		Capabilities::assign_capabilities_for_user_roles();
 		Booking::instance();

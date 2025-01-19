@@ -19,25 +19,11 @@ use QuillBooking\Integration\API as Abstract_API;
 class API extends Abstract_API {
 
 	/**
-	 * App
-	 *
-	 * @var App
-	 */
-	private $app;
-
-	/**
 	 * Access token
 	 *
 	 * @var string
 	 */
 	private $access_token;
-
-	/**
-	 * Refresh token
-	 *
-	 * @var string
-	 */
-	private $refresh_token;
 
 	/**
 	 * Account id
@@ -50,16 +36,13 @@ class API extends Abstract_API {
 	 * Constructor
 	 *
 	 * @param string $access_token Access token.
-	 * @param string $refresh_token Refresh token.
-	 * @param App    $app App.
+	 * @param string $account_id Account ID.
 	 * @since 1.0.0
 	 */
-	public function __construct( $access_token, $refresh_token = null, $app = null, $account_id = null ) {
-		$this->endpoint      = 'https://api.zoom.us/v2';
-		$this->app           = $app;
-		$this->access_token  = $access_token;
-		$this->refresh_token = $refresh_token;
-		$this->account_id    = $account_id;
+	public function __construct( $access_token, $account_id = null ) {
+		$this->endpoint     = 'https://api.zoom.us/v2';
+		$this->access_token = $access_token;
+		$this->account_id   = $account_id;
 	}
 
 	/**
@@ -193,13 +176,63 @@ class API extends Abstract_API {
 	 * @return boolean
 	 */
 	private function refresh_tokens() {
-		$tokens = $this->app->refresh_tokens( $this->refresh_token, $this->account_id );
-		if ( ! is_array( $tokens ) ) {
+		try {
+			$account = $this->integration->accounts->get_account( $this->account_id );
+			if ( empty( $account ) ) {
+				return false;
+			}
+
+			$app_credentials = Arr::get( $account, 'app_credentials', array() );
+			if ( empty( $app_credentials ) ) {
+				return false;
+			}
+
+			$tokens = $this->get_tokens( $app_credentials );
+			$this->integration->accounts->update_account(
+				$this->account_id,
+				array(
+					'tokens' => $tokens,
+				)
+			);
+
+			return true;
+		} catch ( \Exception $e ) {
 			return false;
 		}
+	}
 
-		$this->access_token  = $tokens['access_token'];
-		$this->refresh_token = $tokens['refresh_token'];
-		return true;
+	/**
+	 * Get tokens
+	 *
+	 * @param array $app_credentials App credentials.
+	 * @return array
+	 */
+	private function get_tokens( $app_credentials ) {
+		$response = wp_remote_post(
+			'https://zoom.us/oauth/token',
+			array(
+				'body'    => array(
+					'client_id'     => Arr::get( $app_credentials, 'client_id' ),
+					'client_secret' => Arr::get( $app_credentials, 'client_secret' ),
+					'grant_type'    => 'client_credentials',
+				),
+				'headers' => array(
+					'Authorization' => 'Basic ' . base64_encode( Arr::get( $app_credentials, 'client_id' ) . ':' . Arr::get( $app_credentials, 'client_secret' ) ),
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			throw new Exception( $response->get_error_message() );
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( empty( $data ) ) {
+			throw new Exception( __( 'Invalid response from Zoom.', 'quillbooking' ) );
+		}
+
+		return $data;
 	}
 }

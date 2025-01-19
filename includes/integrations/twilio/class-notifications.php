@@ -9,10 +9,12 @@
  * @package QuillBooking
  */
 
-namespace QuillBooking\Integrations;
+namespace QuillBooking\Integrations\Twilio;
 
-use QuillBooking\Integrations\Twilio\REST_API\REST_API;
 use QuillBooking\Managers\Merge_Tags_Manager;
+use QuillBooking\Models\Booking_Model;
+use QuillBooking\QuillBooking;
+use Illuminate\Support\Arr;
 
 /**
  * Twilio Notifications class

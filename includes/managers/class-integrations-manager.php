@@ -36,9 +36,15 @@ final class Integrations_Manager extends Manager {
 			Integration::class,
 			'slug',
 			array(
-				'label'       => 'name',
-				'description' => 'description',
-				'settings'    => 'get_settings',
+				'name'         => 'name',
+				'description'  => 'description',
+				'icon'         => 'get_icon',
+				'settings'     => 'get_settings',
+				'is_calendar'  => 'is_calendar',
+				'auth_type'    => 'auth_type',
+				'fields'       => 'get_fields',
+				'has_accounts' => 'has_accounts',
+				'is_global'    => 'is_global',
 			)
 		);
 	}

@@ -144,11 +144,11 @@ class App {
 
 		// Redirect to settings page.
 		echo esc_html__( 'Success, Account added!', 'quillbooking' );
-		// wp_redirect(
-		// admin_url(
-		// "admin.php?page=quillbooking&path=integrations&id={$this->integration->slug}&tab=success"
-		// )
-		// );
+		wp_redirect(
+			admin_url(
+				"admin.php?page=quillbooking&path=calendars&id={$host_id}&tab=integrations&subtab={$this->integration->slug}"
+			)
+		);
 		exit;
 	}
 

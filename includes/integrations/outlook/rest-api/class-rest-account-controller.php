@@ -10,7 +10,6 @@
 namespace QuillBooking\Integrations\Outlook\REST_API;
 
 use QuillBooking\Integration\REST_API\REST_Account_Controller as Abstract_REST_Account_Controller;
-use QuillBooking\Integrations\Outlook\Remote_Data;
 
 /**
  * Rest Integration Account Controller
@@ -27,9 +26,6 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	protected $entities = array(
 		'calendars' => array(
 			'callback' => 'fetch_calendars',
-		),
-		'events'    => array(
-			'callback' => 'fetch_events',
 		),
 	);
 }

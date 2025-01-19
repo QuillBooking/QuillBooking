@@ -41,7 +41,7 @@ class Integration extends Abstract_Integration {
 	 *
 	 * @var string
 	 */
-	public $description = 'Outlook Calendar / MS Teams Integration';
+	public $description = 'Manage appointments and sync across devices with Microsoft Calendar. Stay in control, wherever you are.';
 
 	/**
 	 * App

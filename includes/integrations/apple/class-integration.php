@@ -42,7 +42,7 @@ class Integration extends Abstract_Integration {
 	 *
 	 * @var string
 	 */
-	public $description = 'Apple Calendar';
+	public $description = 'Sync your events across Apple devices with iCloud. Never miss an event, whether on Mac, iPhone, or iPad.';
 
 	/**
 	 * Client
@@ -50,6 +50,13 @@ class Integration extends Abstract_Integration {
 	 * @var Client
 	 */
 	public $client;
+
+	/**
+	 * Auth type
+	 *
+	 * @var string
+	 */
+	public $auth_type = 'basic';
 
 	/**
 	 * Classes
@@ -581,5 +588,31 @@ class Integration extends Abstract_Integration {
 		$this->client = new Client( $apple_id, $app_password );
 
 		return $this->client;
+	}
+
+	/**
+	 * Get fields
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_fields() {
+		return array(
+			'apple_id'     => array(
+				'label'       => __( 'Apple ID', 'quillbooking' ),
+				'type'        => 'text',
+				'required'    => true,
+				'placeholder' => __( 'Enter your Apple ID', 'quillbooking' ),
+				'description' => __( 'Your Apple ID is the email address you use to sign in to iCloud.', 'quillbooking' ),
+			),
+			'app_password' => array(
+				'label'       => __( 'App-specific Password', 'quillbooking' ),
+				'type'        => 'password',
+				'required'    => true,
+				'placeholder' => __( 'Enter your App-specific Password', 'quillbooking' ),
+				'description' => __( 'An app-specific password is a single-use password for your Apple ID that lets you sign in to your account securely when you use third-party apps.', 'quillbooking' ),
+			),
+		);
 	}
 }

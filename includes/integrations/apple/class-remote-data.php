@@ -28,10 +28,19 @@ class Remote_Data extends Abstracts_Remote_Data {
 	 */
 	public function fetch_calendars() {
 		/** @var Client $client */
-		$client = $this->integration->client;
-		$data   = $client->get_calendars();
+		$client        = $this->integration->client;
+		$data          = $client->get_calendars();
+		$calendars     = Arr::get( $data, 'calendars', array() );
+		$calendars_arr = array();
 
-		return Arr::get( $data, 'calendars', array() );
+		foreach ( $calendars as $id => $calendar ) {
+			$calendars_arr[] = array(
+				'id'   => $id,
+				'name' => $calendar['name'],
+			);
+		}
+
+		return $calendars_arr;
 	}
 
 	/**

@@ -132,12 +132,19 @@ class Accounts {
 	 * @param string|int $account_id Account ID.
 	 * @param array      $data Data.
 	 *
-	 * @return void
+	 * @return string|int
 	 */
 	public function add_account( $account_id, $data ) {
+		if ( ! is_numeric( $account_id ) ) {
+			$hash       = crc32( $account_id );
+			$account_id = abs( $hash );
+		}
+
 		$accounts                = $this->get_accounts();
 		$accounts[ $account_id ] = $data;
 		$this->integration->host->update_meta( $this->integration->meta_key, $accounts );
+
+		return $account_id;
 	}
 
 	/**

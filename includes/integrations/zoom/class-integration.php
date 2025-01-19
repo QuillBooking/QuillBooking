@@ -41,7 +41,7 @@ class Integration extends Abstract_Integration {
 	 *
 	 * @var string
 	 */
-	public $description = 'Zoom Integration';
+	public $description = 'Host meetings and webinars with Zoom. Easily sync your Zoom events directly from the platform.';
 
 	/**
 	 * App
@@ -56,6 +56,27 @@ class Integration extends Abstract_Integration {
 	 * @var API
 	 */
 	public $api;
+
+	/**
+	 * Is calendar integration
+	 *
+	 * @var bool
+	 */
+	public $is_calendar = false;
+
+	/**
+	 * Has acconuts
+	 *
+	 * @var bool
+	 */
+	public $has_accounts = false;
+
+	/**
+	 * Auth type
+	 *
+	 * @var string
+	 */
+	public $auth_type = 'basic';
 
 	/**
 	 * Classes
@@ -425,5 +446,38 @@ class Integration extends Abstract_Integration {
 		$this->api = new API( $access_token, $refresh_token, $this->app, $account_id );
 
 		return $this->api;
+	}
+
+	/**
+	 * Get fields
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_fields() {
+		return array(
+			'account_id'    => array(
+				'type'        => 'text',
+				'label'       => __( 'Account ID', 'quillbooking' ),
+				'required'    => true,
+				'placeholder' => __( 'Enter your Zoom Account ID', 'quillbooking' ),
+				'description' => __( 'You can find your Account ID in your Zoom app settings.', 'quillbooking' ),
+			),
+			'client_id'     => array(
+				'type'        => 'text',
+				'label'       => __( 'Client ID', 'quillbooking' ),
+				'required'    => true,
+				'placeholder' => __( 'Enter your Zoom Client ID', 'quillbooking' ),
+				'description' => __( 'You can find your Client ID in your Zoom app settings.', 'quillbooking' ),
+			),
+			'client_secret' => array(
+				'type'        => 'text',
+				'label'       => __( 'Secret Key', 'quillbooking' ),
+				'required'    => true,
+				'placeholder' => __( 'Enter your Zoom Secret Key', 'quillbooking' ),
+				'description' => __( 'You can find your Secret Key in your Zoom app settings.', 'quillbooking' ),
+			),
+		);
 	}
 }

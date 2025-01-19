@@ -1,0 +1,27 @@
+.quillbooking-calendar-events{
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+
+    .quillbooking-calendar-event{
+        cursor: pointer;
+        transition: all 0.3s;
+        &:hover{
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+        }
+    }
+}
+.quillbooking-calendar-no-events{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    width: 100%;
+    color: #999;
+}
+
+
+.quillbooking-calendars-action{
+    margin-bottom: 20px;
+}

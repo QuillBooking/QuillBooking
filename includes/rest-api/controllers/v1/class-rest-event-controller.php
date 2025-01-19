@@ -169,6 +169,26 @@ class REST_Event_Controller extends REST_Controller {
 				),
 			)
 		);
+
+		// Duplicate event
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/duplicate',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'duplicate_item' ),
+					'permission_callback' => array( $this, 'duplicate_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Event ID to duplicate.', 'quillbooking' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -255,7 +275,7 @@ class REST_Event_Controller extends REST_Controller {
 					'arg_options' => array(
 						'sanitize_callback' => 'sanitize_text_field',
 					),
-					'enum'        => array( 'one-to-one', 'group', 'collective', 'round-robin' ),
+					'enum'        => array( 'one-to-one', 'group', 'round-robin' ),
 				),
 				'duration'    => array(
 					'description' => __( 'Event duration.', 'quillbooking' ),
@@ -499,7 +519,7 @@ class REST_Event_Controller extends REST_Controller {
 	public function get_item( $request ) {
 		try {
 			$id    = $request->get_param( 'id' );
-			$event = Event_Model::find( $id );
+			$event = Event_Model::with( 'calendar' )->find( $id );
 
 			if ( ! $event ) {
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
@@ -754,7 +774,12 @@ class REST_Event_Controller extends REST_Controller {
 
 			$event->delete();
 
-			return new WP_REST_Response( null, 200 );
+			return new WP_REST_Response(
+				array(
+					'id' => $id,
+				),
+				200
+			);
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
@@ -771,5 +796,43 @@ class REST_Event_Controller extends REST_Controller {
 	public function delete_item_permissions_check( $request ) {
 		$id = $request->get_param( 'id' );
 		return Capabilities::can_manage_event( $id ) || current_user_can( 'quillbooking_manage_all_calendars' );
+	}
+
+	/**
+	 * Duplicate item
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function duplicate_item( $request ) {
+		try {
+			$id = $request->get_param( 'id' );
+
+			$event = Event_Model::find( $id );
+
+			if ( ! $event ) {
+				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			$new_event = $event->duplicate();
+
+			return new WP_REST_Response( $new_event, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Duplicate item permissions check
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return boolean
+	 */
+	public function duplicate_item_permissions_check( $request ) {
+		return current_user_can( 'quillbooking_manage_all_calendars' );
 	}
 }

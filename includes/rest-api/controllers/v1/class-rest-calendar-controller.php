@@ -19,6 +19,7 @@ use WP_REST_Response;
 use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
 use QuillBooking\Models\Calendar_Model;
+use QuillBooking\Models\Event_Model;
 use QuillBooking\Capabilities;
 
 /**
@@ -65,6 +66,10 @@ class REST_Calendar_Controller extends REST_Controller {
 						'filter'   => array(
 							'description' => __( 'Filter the results.', 'quillbooking' ),
 							'type'        => 'object',
+						),
+						'ids'      => array(
+							'description' => __( 'IDs of the calendars.', 'quillbooking' ),
+							'type'        => 'array',
 						),
 					),
 				),
@@ -117,6 +122,35 @@ class REST_Calendar_Controller extends REST_Controller {
 				),
 			)
 		);
+
+		// Register route for clone events from a calendar to another
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/clone',
+			array(
+				'args' => array(
+					'id' => array(
+						'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
+						'type'        => 'integer',
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'clone_events' ),
+					'permission_callback' => array( $this, 'clone_events_permissions_check' ),
+					'args'                => array(
+						'event_id' => array(
+							'description' => __( 'Events to clone.', 'quillbooking' ),
+							'type'        => 'array',
+							'required'    => true,
+							'items'       => array(
+								'type' => 'integer',
+							),
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -132,28 +166,27 @@ class REST_Calendar_Controller extends REST_Controller {
 			'title'      => 'calendar',
 			'type'       => 'object',
 			'properties' => array(
-				'id'          => array(
+				'id'             => array(
 					'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
 					'type'        => 'integer',
 					'context'     => array( 'view' ),
 					'readonly'    => true,
 				),
-				'hash_id'     => array(
+				'hash_id'        => array(
 					'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view' ),
 					'readonly'    => true,
 				),
-				'user_id'     => array(
+				'user_id'        => array(
 					'description'  => __( 'User ID.', 'quillbooking' ),
 					'type'         => 'integer',
 					'context'      => array( 'view', 'edit' ),
-					'required'     => true,
 					'args_options' => array(
 						'sanitize_callback' => 'absint',
 					),
 				),
-				'name'        => array(
+				'name'           => array(
 					'description'  => __( 'Name of the calendar.', 'quillbooking' ),
 					'type'         => 'string',
 					'context'      => array( 'view', 'edit' ),
@@ -162,7 +195,7 @@ class REST_Calendar_Controller extends REST_Controller {
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
-				'description' => array(
+				'description'    => array(
 					'description'  => __( 'Description of the calendar.', 'quillbooking' ),
 					'type'         => 'string',
 					'context'      => array( 'view', 'edit' ),
@@ -170,7 +203,7 @@ class REST_Calendar_Controller extends REST_Controller {
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
-				'slug'        => array(
+				'slug'           => array(
 					'description'  => __( 'Slug of the calendar.', 'quillbooking' ),
 					'type'         => 'string',
 					'context'      => array( 'view', 'edit' ),
@@ -178,32 +211,62 @@ class REST_Calendar_Controller extends REST_Controller {
 						'sanitize_callback' => 'sanitize_title',
 					),
 				),
-				'status'      => array(
+				'status'         => array(
 					'description' => __( 'Status of the calendar.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
 					'enum'        => array( 'active', 'inactive' ),
 				),
-				'type'        => array(
+				'type'           => array(
 					'description' => __( 'Type of the calendar.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
 					'enum'        => array( 'host', 'team', 'one-off' ),
 					'required'    => true,
 				),
-				'members'     => array(
+				'members'        => array(
 					'description' => __( 'Members.', 'quillbooking' ),
 					'type'        => 'array',
 					'context'     => array( 'view', 'edit' ),
 				),
-				'created_at'  => array(
+				'avatar'         => array(
+					'description' => __( 'Avatar.', 'quillbooking' ),
+					'type'        => 'object',
+					'context'     => array( 'view', 'edit' ),
+					'properties'  => array(
+						'url' => array(
+							'description' => __( 'Avatar URL.', 'quillbooking' ),
+							'type'        => 'string',
+						),
+						'id'  => array(
+							'description' => __( 'Avatar ID.', 'quillbooking' ),
+							'type'        => 'integer',
+						),
+					),
+				),
+				'featured_image' => array(
+					'description' => __( 'Featured.', 'quillbooking' ),
+					'type'        => 'object',
+					'context'     => array( 'view', 'edit' ),
+					'properties'  => array(
+						'url' => array(
+							'description' => __( 'Avatar URL.', 'quillbooking' ),
+							'type'        => 'string',
+						),
+						'id'  => array(
+							'description' => __( 'Avatar ID.', 'quillbooking' ),
+							'type'        => 'integer',
+						),
+					),
+				),
+				'created_at'     => array(
 					'description' => __( 'Date and time when the calendar was created.', 'quillbooking' ),
 					'type'        => 'string',
 					'format'      => 'date-time',
 					'context'     => array( 'view' ),
 					'readonly'    => true,
 				),
-				'updated_at'  => array(
+				'updated_at'     => array(
 					'description' => __( 'Date and time when the calendar was last updated.', 'quillbooking' ),
 					'type'        => 'string',
 					'format'      => 'date-time',
@@ -228,8 +291,10 @@ class REST_Calendar_Controller extends REST_Controller {
 			$page     = $request->get_param( 'page' ) ? $request->get_param( 'page' ) : 1;
 			$per_page = $request->get_param( 'per_page' ) ? $request->get_param( 'per_page' ) : 10;
 			$keyword  = $request->get_param( 'keyword' ) ? $request->get_param( 'keyword' ) : '';
-			$filter   = $request->get_param( 'filter' ) ? $request->get_param( 'filter' ) : array();
-			$user     = Arr::get( $filter, 'user' ) ? Arr::get( $filter, 'user' ) : 'own';
+			$filter   = $request->get_param( 'filters' ) ? $request->get_param( 'filters' ) : array();
+			$type     = Arr::get( $filter, 'type', 'all' );
+			$user     = current_user_can( 'quillbooking_read_all_calendars' ) ? 'all' : 'own';
+			$ids      = $request->get_param( 'ids' ) ? $request->get_param( 'ids' ) : array();
 
 			if ( 'own' === $user ) {
 				$user = get_current_user_id();
@@ -242,14 +307,37 @@ class REST_Calendar_Controller extends REST_Controller {
 			$query = Calendar_Model::query();
 
 			if ( ! empty( $keyword ) ) {
-				$query->where( 'name', 'LIKE', '%' . $keyword . '%' );
+				$query->whereHas(
+					'events',
+					function ( $query ) use ( $keyword ) {
+						$query->where( 'name', 'like', '%' . $keyword . '%' )
+						  ->orWhere( 'description', 'like', '%' . $keyword . '%' );
+					}
+				);
 			}
 
 			if ( 'all' !== $user ) {
 				$query->where( 'user_id', $user );
 			}
 
-			$calendars = $query->paginate( $per_page, array( '*' ), 'page', $page );
+			if ( 'all' !== $type ) {
+				$query->where( 'type', $type );
+			}
+
+			if ( ! empty( $ids ) ) {
+				$query->whereIn( 'id', $ids );
+			}
+
+			$calendars = $query->with(
+				array(
+					'events' => function( $query ) use ( $keyword ) {
+						$query->select( 'id', 'calendar_id', 'name', 'duration', 'type', 'slug' );
+						if ( $keyword ) {
+							$query->where( 'name', 'like', '%' . $keyword . '%' );
+						}
+					},
+				)
+			)->paginate( $per_page, array( '*' ), 'page', $page );
 
 			return new WP_REST_Response( $calendars, 200 );
 		} catch ( Exception $e ) {
@@ -287,6 +375,11 @@ class REST_Calendar_Controller extends REST_Controller {
 			$type        = $request->get_param( 'type' );
 			$members     = $request->get_param( 'members' );
 			$timezone    = $request->get_param( 'timezone' );
+			$user_id     = 'team' === $type ? get_current_user_id() : $user_id;
+
+			if ( ! $user_id ) {
+				return new WP_Error( 'rest_calendar_error', __( 'User ID is required', 'quillbooking' ), array( 'status' => 400 ) );
+			}
 
 			if ( empty( $timezone ) ) {
 				return new WP_Error( 'rest_calendar_error', __( 'Calendar timezone is required', 'quillbooking' ), array( 'status' => 400 ) );
@@ -430,12 +523,14 @@ class REST_Calendar_Controller extends REST_Controller {
 	 */
 	public function update_item( $request ) {
 		try {
-			$id           = $request->get_param( 'id' );
-			$name         = $request->get_param( 'name' );
-			$description  = $request->get_param( 'description' );
-			$members      = $request->get_param( 'members' );
-			$timezone     = $request->get_param( 'timezone' );
-			$integrations = $request->get_param( 'integrations' );
+			$id             = $request->get_param( 'id' );
+			$name           = $request->get_param( 'name' );
+			$description    = $request->get_param( 'description' );
+			$members        = $request->get_param( 'members' );
+			$timezone       = $request->get_param( 'timezone' );
+			$integrations   = $request->get_param( 'integrations' );
+			$avatar         = $request->get_param( 'avatar' );
+			$featured_image = $request->get_param( 'featured_image' );
 
 			$calendar = Calendar_Model::find( $id );
 
@@ -475,6 +570,14 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			if ( $members && 'team' === $calendar->type ) {
 				$calendar->syncTeamMembers( $members );
+			}
+
+			if ( ! empty( $avatar ) ) {
+				$calendar->avatar = $avatar;
+			}
+
+			if ( ! empty( $featured_image ) ) {
+				$calendar->featured_image = $featured_image;
 			}
 
 			$calendar->save();
@@ -535,6 +638,88 @@ class REST_Calendar_Controller extends REST_Controller {
 	 * @return bool
 	 */
 	public function delete_item_permissions_check( $request ) {
+		$id = $request->get_param( 'id' );
+		return Capabilities::can_manage_calendar( $id );
+	}
+
+	/**
+	 * Clone events from a calendar to another
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function clone_events( $request ) {
+		try {
+			$id       = $request->get_param( 'id' );
+			$event_id = $request->get_param( 'event_id' );
+
+			$calendar = Calendar_Model::find( $id );
+			if ( ! $calendar ) {
+				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			if ( ! $event_id ) {
+				return new WP_Error( 'rest_calendar_error', __( 'Event are required', 'quillbooking' ), array( 'status' => 400 ) );
+			}
+
+			$event = Event_Model::find( $event_id )->first();
+			if ( ! $event ) {
+				return new WP_Error( 'rest_calendar_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			$columns = array(
+				'name',
+				'description',
+				'type',
+				'duration',
+				'color',
+			);
+
+			$meta = array(
+				'availability',
+				'location',
+				'limits',
+				'email_notifications',
+				'sms_notifications',
+				'additional_settings',
+				'group_settings',
+				'event_range',
+				'advanced_settings',
+				'payments_settings',
+				'webhook_feeds',
+			);
+
+			$eventData                = Arr::only( $event->toArray(), $columns );
+			$eventData['calendar_id'] = $calendar->id;
+			$eventData['user_id']     = $calendar->user_id;
+
+			$cloned_event = Event_Model::create( $eventData );
+			if ( $cloned_event->id ) {
+				foreach ( $meta as $key ) {
+					$cloned_event->{$key} = $event->get_meta( $key, null );
+				}
+				$cloned_event->save();
+			}
+
+			return new WP_REST_Response( array( 'message' => __( 'Events cloned successfully', 'quillbooking' ) ), 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Check if a given request has access to clone events
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return bool
+	 */
+	public function clone_events_permissions_check( $request ) {
 		$id = $request->get_param( 'id' );
 		return Capabilities::can_manage_calendar( $id );
 	}

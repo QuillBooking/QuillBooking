@@ -64,7 +64,7 @@ class Calendar_Model extends Model {
 	 *
 	 * @var array
 	 */
-	protected $appends = array( 'timezone', 'integrations' );
+	protected $appends = array( 'timezone', 'avatar', 'featured_image' );
 
 	/**
 	 * Casts
@@ -164,14 +164,45 @@ class Calendar_Model extends Model {
 	}
 
 	/**
-	 * Get integrations meta
+	 * Get the avatar meta value.
 	 *
-	 * @return array
+	 * @return string|null
 	 */
-	public function getIntegrationsAttribute() {
-		$integrations = apply_filters( 'quillbooking_calendar_integrations', array(), $this );
+	public function getAvatarAttribute() {
+		$value = $this->get_meta( 'avatar' );
 
-		return $integrations;
+		return $value;
+	}
+
+	/**
+	 * Set the avatar meta value.
+	 *
+	 * @param string $value
+	 * @return void
+	 */
+	public function setAvatarAttribute( $value ) {
+		$this->update_meta( 'avatar', $value );
+	}
+
+	/**
+	 * Get the featured image meta value.
+	 *
+	 * @return string|null
+	 */
+	public function getFeaturedImageAttribute() {
+		$value = $this->get_meta( 'featured_image' );
+
+		return $value;
+	}
+
+	/**
+	 * Set the featured image meta value.
+	 *
+	 * @param string $value
+	 * @return void
+	 */
+	public function setFeaturedImageAttribute( $value ) {
+		$this->update_meta( 'featured_image', $value );
 	}
 
 	/**

@@ -31,6 +31,6 @@ class REST_API extends Abstract_REST_API {
 	 * @var array
 	 */
 	protected static $classes = array(
-		'integration_controller' => REST_Integration_Controller::class,
+		'account_controller' => REST_Account_Controller::class,
 	);
 }

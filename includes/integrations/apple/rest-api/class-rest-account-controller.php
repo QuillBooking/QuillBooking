@@ -32,9 +32,6 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 		'calendars' => array(
 			'callback' => 'fetch_calendars',
 		),
-		'events'    => array(
-			'callback' => 'fetch_events',
-		),
 	);
 
 	/**
@@ -66,19 +63,19 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 		return array(
 			'type'       => 'object',
 			'properties' => array(
-				'id'          => array(
+				'id'              => array(
 					'type'        => 'integer',
 					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
 					'context'     => array( 'view', 'edit', 'embed' ),
 					'readonly'    => false,
 				),
-				'name'        => array(
+				'name'            => array(
 					'type'        => 'string',
 					'description' => __( 'Name of the account.', 'quillbooking' ),
 					'context'     => array( 'view', 'edit', 'embed' ),
 					'required'    => false,
 				),
-				'credentials' => array(
+				'app_credentials' => array(
 					'type'                 => 'object',
 					'description'          => __( 'Credentials for the account.', 'quillbooking' ),
 					'context'              => array( 'view', 'edit', 'embed' ),
@@ -99,7 +96,7 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 					),
 					'additionalProperties' => true,
 				),
-				'config'      => array(
+				'config'          => array(
 					'type'                 => 'object',
 					'description'          => __( 'Configuration for the account.', 'quillbooking' ),
 					'context'              => array( 'view', 'edit', 'embed' ),
@@ -143,8 +140,8 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 */
 	public function create_item( $request ) {
 		$params       = $request->get_params();
-		$apple_id     = Arr::get( $params, 'credentials.apple_id' );
-		$app_password = Arr::get( $params, 'credentials.app_password' );
+		$apple_id     = Arr::get( $params, 'app_credentials.apple_id' );
+		$app_password = Arr::get( $params, 'app_credentials.app_password' );
 		$host_id      = $request->get_param( 'calendar_id' );
 
 		try {

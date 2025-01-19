@@ -42,17 +42,22 @@ class App {
 	 * Redirect the user to authorization page
 	 *
 	 * @param int   $host_id Host ID.
+	 * @param int   $account_id Account ID.
 	 * @param array $app_credentials App credentials.
 	 *
 	 * @return void
 	 */
-	public function get_auth_uri( $host_id, $app_credentials = array() ) {
+	public function get_auth_uri( $host_id, $account_id, $app_credentials = array() ) {
 		if ( empty( $host_id ) ) {
 			return new \WP_Error( 'no_host_id', esc_html__( 'No host ID found!', 'quillbooking' ) );
 		}
 
+		if ( empty( $account_id ) ) {
+			return new \WP_Error( 'no_account_id', esc_html__( 'No account ID found!', 'quillbooking' ) );
+		}
+
 		if ( empty( $app_credentials ) ) {
-			$app_credentials = $this->get_app_credentials();
+			$app_credentials = $this->get_app_credentials( $account_id );
 		}
 
 		if ( empty( $app_credentials ) ) {
@@ -64,7 +69,7 @@ class App {
 				'response_type' => 'code',
 				'client_id'     => $app_credentials['client_id'],
 				'redirect_uri'  => urlencode( $this->get_redirect_uri() ),
-				'state'         => "quillbooking-zm-{$host_id}",
+				'state'         => "quillbooking-zm-{$host_id}:{$account_id}",
 			),
 			'https://zoom.us/oauth/authorize'
 		);
@@ -83,9 +88,16 @@ class App {
 			return;
 		}
 
-		$host_id  = str_replace( 'quillbooking-zm-', '', $state );
+		$ids      = explode( ':', str_replace( 'quillbooking-zm-', '', $state ) );
+		$host_id  = $ids[0] ?? null;
 		$calendar = Calendar_Model::find( $host_id );
 		if ( empty( $calendar ) ) {
+			return;
+		}
+
+		$account_id = $ids[1] ?? null;
+		if ( empty( $account_id ) ) {
+			echo esc_html__( 'Error, There is no account ID passed!', 'quillbooking' );
 			return;
 		}
 
@@ -96,7 +108,8 @@ class App {
 			exit;
 		}
 
-		$app_credentials = $this->get_app_credentials();
+		$this->integration->set_host( $calendar );
+		$app_credentials = $this->get_app_credentials( $account_id );
 
 		// get tokens.
 		$tokens = $this->get_tokens(
@@ -106,7 +119,8 @@ class App {
 				'client_id'     => $app_credentials['client_id'],
 				'client_secret' => $app_credentials['client_secret'],
 				'redirect_uri'  => $this->get_redirect_uri(),
-			)
+			),
+			$account_id
 		);
 		error_log( 'tokens: ' . wp_json_encode( $tokens ) );
 		if ( empty( $tokens ) ) {
@@ -130,8 +144,7 @@ class App {
 			exit;
 		}
 
-		$this->integration->set_host( $host_id );
-		$this->integration->accounts->add_account(
+		$this->integration->accounts->update_account(
 			$account_id,
 			array(
 				'name'   => $account_name,
@@ -142,11 +155,11 @@ class App {
 
 		// Redirect to settings page.
 		echo esc_html__( 'Success, Account added!', 'quillbooking' );
-		// wp_redirect(
-		// admin_url(
-		// "admin.php?page=quillbooking&path=integrations&id={$this->integration->slug}&tab=success"
-		// )
-		// );
+		wp_redirect(
+			admin_url(
+				"admin.php?page=quillbooking&path=calendars&id={$host_id}&tab=integrations&subtab={$this->integration->slug}"
+			)
+		);
 		exit;
 	}
 
@@ -162,14 +175,15 @@ class App {
 			return false;
 		}
 
-		$app_credentials = $this->get_app_credentials();
+		$app_credentials = $this->get_app_credentials( $account_id );
 		$refeshed_tokens = $this->get_tokens(
 			array(
 				'client_id'     => Arr::get( $app_credentials, 'client_id' ),
 				'client_secret' => Arr::get( $app_credentials, 'client_secret' ),
 				'grant_type'    => 'refresh_token',
 				'refresh_token' => $refresh_token,
-			)
+			),
+			$account_id
 		);
 
 		if ( empty( $refeshed_tokens ) ) {
@@ -194,15 +208,16 @@ class App {
 	 * Get tokens
 	 *
 	 * @param array $query Query to get tokens.
+	 * @param int   $account_id Account ID.
 	 * @return boolean|array
 	 */
-	public function get_tokens( $query ) {
+	public function get_tokens( $query, $account_id ) {
 		$response = wp_remote_post(
 			'https://zoom.us/oauth/token',
 			array(
 				'body'    => $query,
 				'headers' => array(
-					'Authorization' => $this->get_authorization_header(),
+					'Authorization' => $this->get_authorization_header( $account_id ),
 				),
 			)
 		);
@@ -229,10 +244,17 @@ class App {
 	/**
 	 * Get app credentials
 	 *
+	 * @param int $account_id Account ID.
+	 *
 	 * @return array|false Array of client_id & client_secret. false on failure.
 	 */
-	public function get_app_credentials() {
-		$app_settings = $this->integration->get_setting( 'app' ) ?? array();
+	public function get_app_credentials( $account_id ) {
+		$account = $this->integration->accounts->get_account( $account_id );
+		if ( empty( $account ) ) {
+			return false;
+		}
+
+		$app_settings = Arr::get( $account, 'app', array() );
 		if ( empty( $app_settings['client_id'] ) || empty( $app_settings['client_secret'] ) ) {
 			return false;
 		} else {
@@ -243,10 +265,17 @@ class App {
 	/**
 	 * Get Authorization header
 	 *
+	 * @param int $account_id Account ID.
+	 *
 	 * @return string
 	 */
-	private function get_authorization_header() {
-		$app_settings = $this->integration->get_setting( 'app' ) ?? array();
+	private function get_authorization_header( $account_id ) {
+		$account = $this->integration->accounts->get_account( $account_id );
+		if ( empty( $account ) ) {
+			return false;
+		}
+
+		$app_settings = Arr::get( $account, 'app', array() );
 		return 'Basic ' . base64_encode( $app_settings['client_id'] . ':' . $app_settings['client_secret'] );
 	}
 

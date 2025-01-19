@@ -92,6 +92,34 @@ abstract class Integration {
 	public $host;
 
 	/**
+	 * Is calendar integration
+	 *
+	 * @var bool
+	 */
+	public $is_calendar = true;
+
+	/**
+	 * Has accounts
+	 *
+	 * @var bool
+	 */
+	public $has_accounts = true;
+
+	/**
+	 * Is global integration
+	 *
+	 * @var bool
+	 */
+	public $is_global = false;
+
+	/**
+	 * Auth type
+	 *
+	 * @var string
+	 */
+	public $auth_type = 'oauth';
+
+	/**
 	 * Subclasses instances.
 	 *
 	 * @var array
@@ -292,5 +320,27 @@ abstract class Integration {
 		}
 
 		return new \WP_Error( 'integration_not_connected', sprintf( __( 'Integration %s is not connected.', 'quillbooking' ), $this->name ) );
+	}
+
+	/**
+	 * Get icon
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string
+	 */
+	public function get_icon() {
+		return QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . $this->slug . '/icon.svg';
+	}
+
+	/**
+	 * Get fields
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_fields() {
+		return array();
 	}
 }

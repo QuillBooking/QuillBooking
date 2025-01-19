@@ -17,8 +17,8 @@ use QuillBooking\Integrations\Zoom\Integration as Zoom_Integration;
 use QuillBooking\Integrations\Apple\Integration as Apple_Integration;
 use QuillBooking\Integrations\Twilio\Integration as Twilio_Integration;
 
-// Google_Integration::instance();
-// Outlook_Integration::instance();
-// Zoom_Integration::instance();
-// Apple_Integration::instance();
-// Twilio_Integration::instance();
+Google_Integration::instance();
+Outlook_Integration::instance();
+Zoom_Integration::instance();
+Apple_Integration::instance();
+Twilio_Integration::instance();

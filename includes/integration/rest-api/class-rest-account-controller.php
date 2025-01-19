@@ -224,6 +224,18 @@ class REST_Account_Controller extends REST_Controller {
 			$host_id = $request->get_param( 'calendar_id' );
 			$this->integration->set_host( $host_id );
 			$accounts = $this->integration->accounts->get_accounts();
+			$entities = $this->get_entities();
+			if ( ! empty( $entities ) ) {
+				foreach ( $accounts as $key => $account ) {
+					$connect = $this->integration->connect( $host_id, $key );
+					if ( is_wp_error( $connect ) ) {
+						continue;
+					}
+					foreach ( $entities as $entity => $data ) {
+						$accounts[ $key ][ $entity ] = $this->integration->remote_data->{$data['callback']}( $account );
+					}
+				}
+			}
 
 			return new WP_REST_Response( $accounts, 200 );
 		} catch ( Exception $e ) {

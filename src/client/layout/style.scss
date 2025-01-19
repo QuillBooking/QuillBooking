@@ -1,0 +1,88 @@
+#screen-meta-links {
+	display: none !important;
+}
+
+.quillbooking-layout {
+	font-size: 13px;
+}
+
+#wpwrap {
+	background-color: #ffffff;
+}
+
+div#wpcontent {
+	padding: 0;
+	overflow-x: unset !important;
+	min-height: calc(100vh - 32px);
+}
+
+.quillbooking-layout * {
+	box-sizing: border-box;
+}
+.quillbooking-layout__main {
+	display: flex;
+	box-sizing: border-box;
+	.quillbooking-page-component-wrapper {
+		width: 100%;
+		position: relative;
+		padding: 20px 40px;
+		padding-top: 40px;
+	}
+}
+
+.quillbooking-breadcrumbs{
+	width: 100%;
+	position: relative;
+	padding: 20px 40px;
+}
+
+// Hide all wordpress admin notices
+#quillbooking-admin-root {
+	.notice {
+		display: none !important;
+	}
+}
+
+:root {
+	--delay: 0s;
+}
+
+* {
+	outline: none;
+	box-sizing: border-box;
+}
+
+.hidden {
+	display: none !important;
+}
+
+html {
+	box-sizing: border-box;
+	-webkit-font-smoothing: antialiased;
+}
+
+img {
+	max-width: 100%;
+}
+
+body {
+	font-family: "Inter", sans-serif;
+	color: #9b9ca7;
+}
+
+input{
+	box-shadow: none !important;
+	outline: none !important;
+	&.ant-input-lg{
+		padding: 7px 11px;
+        font-size: 16px;
+        line-height: 1.5;
+        border-radius: 8px;
+	}
+	&.ant-input-outlined {
+        background: #ffffff;
+        border-width: 1px;
+        border-style: solid;
+        border-color: #d9d9d9;
+	}
+}

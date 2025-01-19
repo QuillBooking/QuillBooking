@@ -41,7 +41,7 @@ class Integration extends Abstract_Integration {
 	 *
 	 * @var string
 	 */
-	public $description = 'Google Calendar / Meet Integration';
+	public $description = 'Sync events and reminders across devices with Google Calendar. Stay organized and up-to-date on any device.';
 
 	/**
 	 * App

@@ -68,4 +68,30 @@ class Utils {
 
 		return $date;
 	}
+
+	/**
+	 * Get user capabilities
+	 *
+	 * @param int $user_id User ID.
+	 *
+	 * @return array
+	 */
+	public static function get_user_capabilities( $user_id ) {
+		$capabilities = array();
+
+		$user = get_userdata( $user_id );
+		if ( $user ) {
+			$roles = $user->roles;
+
+			foreach ( $roles as $role ) {
+				$role_obj = get_role( $role );
+
+				if ( $role_obj ) {
+					$capabilities = array_merge( $capabilities, array_keys( $role_obj->capabilities ) );
+				}
+			}
+		}
+
+		return $capabilities;
+	}
 }

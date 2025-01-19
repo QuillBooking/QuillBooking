@@ -49,6 +49,20 @@ class Integration extends Abstract_Integration {
 	public $api;
 
 	/**
+	 * Is calendar integration
+	 *
+	 * @var bool
+	 */
+	public $is_calendar = false;
+
+	/**
+	 * Is Global Integration
+	 *
+	 * @var bool
+	 */
+	public $is_global = true;
+
+	/**
 	 * Classes
 	 *
 	 * @var array

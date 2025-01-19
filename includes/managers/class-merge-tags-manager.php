@@ -21,6 +21,13 @@ final class Merge_Tags_Manager extends Manager {
 	use Singleton;
 
 	/**
+	 * Merge Tag Groups
+	 *
+	 * @var array
+	 */
+	private $groups = array();
+
+	/**
 	 * Register Merge Tag
 	 *
 	 * @since 1.0.0

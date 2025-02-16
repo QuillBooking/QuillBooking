@@ -11,7 +11,7 @@
 
 namespace QuillBooking\Models;
 
-use QuillBooking\Abstracts\Model;
+use WPEloquent\Eloquent\Model;
 use QuillBooking\Capabilities;
 use Illuminate\Support\Arr;
 

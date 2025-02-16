@@ -7,7 +7,7 @@ import { useEffect } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Card, Button, Typography, Badge, Flex, Tooltip } from 'antd';
+import { Card, Typography, Badge, Flex, Tooltip } from 'antd';
 import { map, isEmpty } from 'lodash';
 import { useParams } from 'react-router-dom';
 
@@ -56,22 +56,12 @@ const IntegrationCards: React.FC = () => {
                             cursor: 'pointer',
                         }}
                         key={index}
-                        actions={[
-                            <Flex gap={10} style={{ padding: '0 20px' }}>
-                                <Button
-                                    type="primary"
-                                    style={{ width: '100%' }}
-                                    onClick={() => state ? navigate(`calendars/:id/integrations/:subtab`, { id: state.id, subtab: index }) : null}
-                                >
-                                    {__('Connect', 'quillbooking')}
-                                </Button>
-                            </Flex>
-                        ]}
+                        onClick={() => navigate(`calendars/${id}/integrations/${index}`)}
+                        loading={!state}
                     >
                         <Flex
                             vertical
                             gap={10}
-                            onClick={() => { }}
                         >
                             <Flex justify='space-between'>
                                 <div className="quillbooking-integration-icon">

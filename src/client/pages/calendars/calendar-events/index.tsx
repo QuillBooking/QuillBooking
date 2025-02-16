@@ -78,7 +78,7 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                                     {__('Share', 'quillbooking')}
                                 </Button>,
                             ]}
-                            onClick={() => navigate(`calendars/:calendarId/:eventId`, { calendarId: calendar.id, eventId: event.id })}
+                            onClick={() => navigate(`calendars/${calendar.id}/${event.id}`)}
                         >
                             <Flex gap={20} vertical>
                                 <Flex justify="space-between">

@@ -130,7 +130,7 @@ abstract class Location {
 			$value = $location_fields[ $slug ];
 
 			try {
-				$field_type = Fields_Manager::instance()->get_field_type( $field['type'] );
+				$field_type = Fields_Manager::instance()->get_item( $field['type'] );
 				$field_type = new $field_type(
 					array(
 						'is_required' => $field['required'] ?? false,

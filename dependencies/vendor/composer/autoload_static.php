@@ -4,14 +4,12 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit0b4a147854ba0864f550252c1e1040f4
+class ComposerStaticInit0458697ccb072471fa946a48c303b279
 {
     public static $files = array (
-        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
-        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
-        'a1105708a18b76903365ca1c4aa61b02' => __DIR__ . '/..' . '/symfony/translation/Resources/functions.php',
-        '72579e7bd17821bb1321b87411366eae' => __DIR__ . '/..' . '/illuminate/support/helpers.php',
+        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
+        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         '383eaff206634a77a1be54e64e6459c7' => __DIR__ . '/..' . '/sabre/uri/lib/functions.php',
         'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
@@ -22,10 +20,12 @@ class ComposerStaticInit0b4a147854ba0864f550252c1e1040f4
         'a1cce3d26cc15c00fcd0b3354bd72c88' => __DIR__ . '/..' . '/sabre/event/lib/Promise/functions.php',
         '3569eecfeed3bcf0bad3c998a494ecb8' => __DIR__ . '/..' . '/sabre/xml/lib/Deserializer/functions.php',
         '93aa591bc4ca510c520999e34229ee79' => __DIR__ . '/..' . '/sabre/xml/lib/Serializer/functions.php',
+        'a1105708a18b76903365ca1c4aa61b02' => __DIR__ . '/..' . '/symfony/translation/Resources/functions.php',
         '1f87db08236948d07391152dccb70f04' => __DIR__ . '/..' . '/google/apiclient-services/autoload.php',
         'decc78cc4436b1292c6c0d151b19445c' => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib/bootstrap.php',
         'ebdb698ed4152ae445614b69b5e4bb6a' => __DIR__ . '/..' . '/sabre/http/lib/functions.php',
         'a8d3953fd9959404dd22d3dfcd0a79f0' => __DIR__ . '/..' . '/google/apiclient/src/aliases.php',
+        'c53bdb7aec0ddd79599fdc88b1c10d08' => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/support/helpers.php',
     );
 
     public static $prefixLengthsPsr4 = array (
@@ -35,7 +35,8 @@ class ComposerStaticInit0b4a147854ba0864f550252c1e1040f4
         ),
         'W' => 
         array (
-            'WeDevs\\ORM\\' => 11,
+            'WPEloquent\\WP\\' => 14,
+            'WPEloquent\\Eloquent\\' => 20,
         ),
         'S' => 
         array (
@@ -119,9 +120,13 @@ class ComposerStaticInit0b4a147854ba0864f550252c1e1040f4
         array (
             0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
         ),
-        'WeDevs\\ORM\\' => 
+        'WPEloquent\\WP\\' => 
         array (
-            0 => __DIR__ . '/..' . '/tareq1988/wp-eloquent/src',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/WP',
+        ),
+        'WPEloquent\\Eloquent\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Eloquent',
         ),
         'Symfony\\Polyfill\\Php80\\' => 
         array (
@@ -193,7 +198,7 @@ class ComposerStaticInit0b4a147854ba0864f550252c1e1040f4
         ),
         'Psr\\Log\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
+            0 => __DIR__ . '/..' . '/psr/log/src',
         ),
         'Psr\\Http\\Message\\' => 
         array (
@@ -226,39 +231,39 @@ class ComposerStaticInit0b4a147854ba0864f550252c1e1040f4
         ),
         'Illuminate\\Validation\\' => 
         array (
-            0 => __DIR__ . '/..' . '/illuminate/validation',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/validation',
         ),
         'Illuminate\\Translation\\' => 
         array (
-            0 => __DIR__ . '/..' . '/illuminate/translation',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/translation',
         ),
         'Illuminate\\Support\\' => 
         array (
-            0 => __DIR__ . '/..' . '/illuminate/support',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/support',
         ),
         'Illuminate\\Pagination\\' => 
         array (
-            0 => __DIR__ . '/..' . '/illuminate/pagination',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/pagination',
         ),
         'Illuminate\\Filesystem\\' => 
         array (
-            0 => __DIR__ . '/..' . '/illuminate/filesystem',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/filesystem',
         ),
         'Illuminate\\Events\\' => 
         array (
-            0 => __DIR__ . '/..' . '/illuminate/events',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/events',
         ),
         'Illuminate\\Database\\' => 
         array (
-            0 => __DIR__ . '/..' . '/illuminate/database',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/database',
         ),
         'Illuminate\\Contracts\\' => 
         array (
-            0 => __DIR__ . '/..' . '/illuminate/contracts',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/contracts',
         ),
         'Illuminate\\Container\\' => 
         array (
-            0 => __DIR__ . '/..' . '/illuminate/container',
+            0 => __DIR__ . '/..' . '/quillforms/wpeloquent/src/Illuminate/container',
         ),
         'GuzzleHttp\\Psr7\\' => 
         array (
@@ -351,9 +356,9 @@ class ComposerStaticInit0b4a147854ba0864f550252c1e1040f4
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit0b4a147854ba0864f550252c1e1040f4::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit0b4a147854ba0864f550252c1e1040f4::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit0b4a147854ba0864f550252c1e1040f4::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit0458697ccb072471fa946a48c303b279::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit0458697ccb072471fa946a48c303b279::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit0458697ccb072471fa946a48c303b279::$classMap;
 
         }, null, ClassLoader::class);
     }

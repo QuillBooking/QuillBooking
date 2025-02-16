@@ -1,3 +1,5 @@
+import type { Availability } from '@quillbooking/client';
+
 export type ConfigData = Record<string, unknown> & {
 	blogName: string;
 	adminUrl: string;
@@ -9,6 +11,8 @@ export type ConfigData = Record<string, unknown> & {
 	isWoocommerceActive: boolean;
 	timezones: Record<string, string>;
 	integrations: Integrations;
+	locations: Locations;
+	availabilities: Availability[];
 };
 
 export type Integrations = {
@@ -37,4 +41,23 @@ export type Field = {
 	type: 'text' | 'password';
 	required: boolean;
 	placeholder?: string;
+};
+
+export type Locations = {
+	[key: string]: Location;
+};
+
+export type Location = {
+	title: string;
+	is_integration: boolean;
+	fields: {
+		[key: string]: LocationField;
+	};
+};
+
+export type LocationField = {
+	label: string;
+	desc: string;
+	type: 'text' | 'checkbox' | 'url';
+	required: boolean;
 };

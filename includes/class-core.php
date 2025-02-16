@@ -11,6 +11,8 @@ namespace QuillBooking;
 
 use QuillBooking\Utils;
 use QuillBooking\Managers\Integrations_Manager;
+use QuillBooking\Managers\Locations_Manager;
+use QuillBooking\Availabilities;
 
 /**
  * Main Core Class
@@ -37,11 +39,13 @@ class Core {
 			'quillbooking.config.setAdminEmail("' . $admin_email . '");' .
 			'quillbooking.config.setAjaxUrl("' . $ajax_url . '");' .
 			'quillbooking.config.setNonce("' . $nonce . '");' .
-			'quillbooking.config.setPluginDirUrl("' . QUILLCRM_PLUGIN_URL . '");' .
+			'quillbooking.config.setPluginDirUrl("' . QUILLBOOKING_PLUGIN_URL . '");' .
 			'quillbooking.config.setIsWoocommerceActive( ' . quillbooking_is_plugin_active( 'woocommerce/woocommerce.php' ) . ' );' .
 			'quillbooking.config.setSiteUrl( "' . site_url() . '" );' .
 			'quillbooking.config.setTimezones( ' . json_encode( Utils::get_timezones() ) . ' );' .
-			'quillbooking.config.setIntegrations( ' . json_encode( Integrations_Manager::instance()->get_options() ) . ' );'
+			'quillbooking.config.setIntegrations( ' . json_encode( Integrations_Manager::instance()->get_options() ) . ' );' .
+			'quillbooking.config.setLocations( ' . json_encode( Locations_Manager::instance()->get_options() ) . ' );' .
+			'quillbooking.config.setAvailabilities( ' . json_encode( Availabilities::get_availabilities() ) . ' );'
 		);
 	}
 }

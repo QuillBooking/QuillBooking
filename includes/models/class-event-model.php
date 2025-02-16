@@ -12,7 +12,7 @@
 namespace QuillBooking\Models;
 
 use Illuminate\Support\Arr;
-use QuillBooking\Abstracts\Model;
+use WPEloquent\Eloquent\Model;
 use Illuminate\Support\Str;
 use QuillBooking\Utils;
 use QuillBooking\Managers\Locations_Manager;
@@ -109,6 +109,16 @@ class Event_Model extends Model {
 	);
 
 	/**
+	 * Appends
+	 *
+	 * @var array
+	 */
+	protected $appends = array(
+		'dynamic_duration',
+		'location',
+	);
+
+	/**
 	 * Relationship with calendar
 	 *
 	 * @since 1.0.0
@@ -158,9 +168,7 @@ class Event_Model extends Model {
 	 * @return string|null
 	 */
 	public function getFieldsAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'fields' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'fields' );
 	}
 
 	/**
@@ -169,8 +177,7 @@ class Event_Model extends Model {
 	 * @return string|null
 	 */
 	public function getAvailabilityAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'availability' )->value( 'meta_value' );
-		$value = $value ? maybe_unserialize( $value ) : null;
+		$value = $this->get_meta( 'availability' );
 
 		if ( is_array( $value ) ) {
 			return $value;
@@ -187,14 +194,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setAvailabilityAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'availability',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+		$this->update_meta( 'availability', $value );
 	}
 
 	/**
@@ -228,14 +228,7 @@ class Event_Model extends Model {
 			$event_location[ $index ] = $validation;
 		}
 
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'location',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $event_location );
-		$meta->save();
+		$this->update_meta( 'location', $event_location );
 	}
 
 	/**
@@ -244,9 +237,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getLocationAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'location' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'location', array() );
 	}
 
 	/**
@@ -255,9 +246,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getLimitsAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'limits' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'limits', array() );
 	}
 
 	/**
@@ -267,14 +256,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setLimitsAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'limits',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+		$this->update_meta( 'limits', $value );
 	}
 
 	/**
@@ -283,9 +265,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getEmailNotificationsAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'email_notifications' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'email_notifications', array() );
 	}
 
 	/**
@@ -295,14 +275,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setEmailNotificationsAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'email_notifications',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+		$this->update_meta( 'email_notifications', $value );
 	}
 
 	/**
@@ -311,9 +284,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getSmsNotificationsAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'sms_notifications' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'sms_notifications', array() );
 	}
 
 	/**
@@ -323,14 +294,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setSmsNotificationsAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'sms_notifications',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+		$this->update_meta( 'sms_notifications', $value );
 	}
 
 	/**
@@ -339,9 +303,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getAdditionalSettingsAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'additional_settings' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'additional_settings', array() );
 	}
 
 	/**
@@ -351,14 +313,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setAdditionalSettingsAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'additional_settings',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+		$this->update_meta( 'additional_settings', $value );
 	}
 
 	/**
@@ -367,9 +322,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getGroupSettingsAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'group' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'group', array() );
 	}
 
 	/**
@@ -379,14 +332,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setGroupSettingsAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'group',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+		$this->update_meta( 'group', $value );
 	}
 
 	/**
@@ -395,13 +341,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getEventRangeAttribute() {
-		$value   = $this->meta()->where( 'meta_key', 'event_range' )->value( 'meta_value' );
-		$default = array(
-			'type' => 'days',
-			'days' => 60,
-		);
-
-		return $value ? maybe_unserialize( $value ) : $default;
+		return $this->get_meta( 'event_range', array() );
 	}
 
 	/**
@@ -411,14 +351,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setEventRangeAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'event_range',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+		$this->update_meta( 'event_range', $value );
 	}
 
 	/**
@@ -427,9 +360,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getAdvancedSettingsAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'advanced_settings' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'advanced_settings', array() );
 	}
 
 	/**
@@ -439,14 +370,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setAdvancedSettingsAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'advanced_settings',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+		$this->update_meta( 'advanced_settings', $value );
 	}
 
 	/**
@@ -455,9 +379,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getPaymentsSettingsAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'payments_settings' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'payments_settings', array() );
 	}
 
 	/**
@@ -467,14 +389,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setPaymentsSettingsAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'payments_settings',
-			)
-		);
-
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+		$this->update_meta( 'payments_settings', $value );
 	}
 
 	/**
@@ -483,9 +398,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getWebhookFeedsAttribute() {
-		$value = $this->meta()->where( 'meta_key', 'webhook_feeds' )->value( 'meta_value' );
-
-		return $value ? maybe_unserialize( $value ) : null;
+		return $this->get_meta( 'webhook_feeds', array() );
 	}
 
 	/**
@@ -495,14 +408,26 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setWebhookFeedsAttribute( $value ) {
-		$meta = $this->meta()->firstOrNew(
-			array(
-				'meta_key' => 'webhook_feeds',
-			)
-		);
+		$this->update_meta( 'webhook_feeds', $value );
+	}
 
-		$meta->meta_value = maybe_serialize( $value );
-		$meta->save();
+	/**
+	 * Get dynamic duration
+	 *
+	 * @return bool
+	 */
+	public function getDynamicDurationAttribute() {
+		return $this->get_meta( 'dynamic_duration', false );
+	}
+
+	/**
+	 * Set dynamic duration
+	 *
+	 * @param bool $value
+	 * @return void
+	 */
+	public function setDynamicDurationAttribute( $value ) {
+		$this->update_meta( 'dynamic_duration', $value );
 	}
 
 	/**
@@ -661,6 +586,25 @@ class Event_Model extends Model {
 		$meta = $meta ? maybe_unserialize( $meta->meta_value ) : $default;
 
 		return $meta;
+	}
+
+	/**
+	 * Update meta value
+	 *
+	 * @param string $key Meta key.
+	 * @param mixed  $value Meta value.
+	 *
+	 * @return void
+	 */
+	public function update_meta( $key, $value ) {
+		$meta = $this->meta()->firstOrNew(
+			array(
+				'meta_key' => $key,
+			)
+		);
+
+		$meta->meta_value = maybe_serialize( $value );
+		$meta->save();
 	}
 
 	/**

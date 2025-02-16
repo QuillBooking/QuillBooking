@@ -2,9 +2,7 @@
     "name": "quillbooking/quillbooking-deps",
     "require": {
         "composer/installers": "~1.0",
-        "tareq1988/wp-eloquent": "dev-master",
-        "illuminate/events": "^5.4",
-        "illuminate/validation": "5.8",
+        "quillforms/wpeloquent": "^1.0.2",
         "google/apiclient": "^2.16.0",
         "sabre/dav": "~4.6.0",
         "sabre/vobject": "~4.5",
@@ -22,5 +20,11 @@
         "google/apiclient-services": [
             "Calendar"
         ]
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:quillforms/wpeloquent.git"
+        }
+    ]
 }

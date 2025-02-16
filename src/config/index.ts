@@ -1,8 +1,10 @@
 /* eslint-disable jsdoc/check-line-alignment */
 import type {
     ConfigData,
-    Integrations
+    Integrations,
+    Locations,
 } from './types/config-data';
+import type { Availability } from '@quillbooking/client';
 
 const configData: ConfigData = {
     blogName: '',
@@ -15,6 +17,8 @@ const configData: ConfigData = {
     isWoocommerceActive: false,
     timezones: {},
     integrations: {},
+    locations: {},
+    availabilities: [],
 };
 
 /**
@@ -229,6 +233,48 @@ export const setIntegrations = (data: ConfigData) => (value: Integrations) => {
     data.integrations = value;
 };
 
+/**
+ * Get locations
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * 
+ * @returns Locations
+ */
+export const getLocations = (data: ConfigData): Locations => {
+    return data.locations;
+};
+
+/**
+ * Set locations
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * @param value the value to set
+ */
+export const setLocations = (data: ConfigData) => (value: Locations) => {
+    data.locations = value;
+};
+
+/**
+ * Get availabilities
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * 
+ * @returns Availability[]
+ */
+export const getAvailabilities = (data: ConfigData): Availability[] => {
+    return data.availabilities;
+};
+
+/**
+ * Set availabilities
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * @param value the value to set
+ */
+export const setAvailabilities = (data: ConfigData) => (value: Availability[]) => {
+    data.availabilities = value;
+};
+
 export interface ConfigApi {
     <T>(key: string): T;
     getBlogName: () => string;
@@ -251,6 +297,10 @@ export interface ConfigApi {
     setTimezones: (value: Record<string, string>) => void;
     getIntegrations: () => Integrations;
     setIntegrations: (value: Integrations) => void;
+    getLocations: () => Locations;
+    setLocations: (value: Locations) => void;
+    getAvailabilities: () => Availability[];
+    setAvailabilities: (value: Availability[]) => void;
 }
 
 const createConfig = (data: ConfigData): ConfigApi => {
@@ -275,6 +325,10 @@ const createConfig = (data: ConfigData): ConfigApi => {
     configApi.setTimezones = setTimezones(data);
     configApi.getIntegrations = () => getIntegrations(data);
     configApi.setIntegrations = setIntegrations(data);
+    configApi.getLocations = () => getLocations(data);
+    configApi.setLocations = setLocations(data);
+    configApi.getAvailabilities = () => getAvailabilities(data);
+    configApi.setAvailabilities = setAvailabilities(data);
 
     return configApi;
 };

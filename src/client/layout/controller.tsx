@@ -52,9 +52,3 @@ registerAdminPage('calendar', {
 	component: () => <Calendar />,
 	label: __('Calendar', 'quillbooking'),
 });
-
-registerAdminPage('event', {
-	path: 'calendars/:calendarId/:eventId/:tab?/:subtab?',
-	component: () => <Event />,
-	label: __('Event', 'quillbooking'),
-});

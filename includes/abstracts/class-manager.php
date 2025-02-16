@@ -49,7 +49,7 @@ abstract class Manager {
 		$slug = $item->{$slug_property};
 
 		if ( isset( $this->items[ $slug ] ) ) {
-			throw new \Exception( __( "$type already registered", 'quillbooking' ) );
+			return;
 		}
 
 		$this->items[ $slug ] = $item;

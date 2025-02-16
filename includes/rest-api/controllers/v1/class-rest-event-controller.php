@@ -189,6 +189,23 @@ class REST_Event_Controller extends REST_Controller {
 				),
 			)
 		);
+
+		// Get meta
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/meta/(?P<key>[\w-]+)',
+			array(
+				'id' => array(
+					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
+					'type'        => 'integer',
+				),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_meta' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -548,7 +565,12 @@ class REST_Event_Controller extends REST_Controller {
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			return new WP_REST_Response( $event->availability, 200 );
+			$data = array(
+				'availability' => $event->availability,
+				'range'        => $event->event_range,
+			);
+
+			return new WP_REST_Response( $data, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
@@ -606,6 +628,7 @@ class REST_Event_Controller extends REST_Controller {
 			$description         = $request->get_param( 'description' );
 			$status              = $request->get_param( 'status' );
 			$type                = $request->get_param( 'type' );
+			$dynamic_duration    = $request->get_param( 'dynamic_duration' );
 			$duration            = $request->get_param( 'duration' );
 			$color               = $request->get_param( 'color' );
 			$availability        = $request->get_param( 'availability' );
@@ -646,6 +669,7 @@ class REST_Event_Controller extends REST_Controller {
 				'sms_notifications'   => $sms_notifications,
 				'payments_settings'   => $payments_settings,
 				'webhook_feeds'       => $webhook_feeds,
+				'dynamic_duration'    => $dynamic_duration,
 			);
 
 			if ( $user_id ) {
@@ -834,5 +858,36 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function duplicate_item_permissions_check( $request ) {
 		return current_user_can( 'quillbooking_manage_all_calendars' );
+	}
+
+	/**
+	 * Get meta
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_meta( $request ) {
+		try {
+			$id  = $request->get_param( 'id' );
+			$key = $request->get_param( 'key' );
+
+			$event = Event_Model::find( $id );
+
+			if ( ! $event ) {
+				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			$meta = $event->{$key};
+
+			if ( ! $meta ) {
+				return new WP_Error( 'rest_event_error', __( 'Meta not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			return new WP_REST_Response( $meta, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
 	}
 }

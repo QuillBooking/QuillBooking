@@ -8,7 +8,7 @@ import { useState, useEffect } from '@wordpress/element';
  * External dependencies
  */
 import { Tabs } from 'antd';
-import { SettingOutlined, CloudSyncOutlined as IntegrationIcon } from '@ant-design/icons';
+import { SettingOutlined, ApartmentOutlined } from '@ant-design/icons';
 
 /**
  * Internal dependencies
@@ -19,12 +19,16 @@ import { useApi, useNotice, useBreadcrumbs, useNavigate } from '@quillbooking/ho
 import { useParams } from '@quillbooking/navigation';
 import { Provider } from './state/context';
 import { GeneralSettings, Integrations } from './tabs';
+import Event from '../event';
 
 /**
  * Main Calendars Component.
  */
 const Calendar: React.FC = () => {
     const { id, tab } = useParams<{ id: string; tab: string }>();
+    if (tab?.match(/^\d+$/)) {
+        return <Event />;
+    }
     const { callApi } = useApi();
     const { errorNotice } = useNotice();
     const [calendar, setCalendar] = useState<CalendarType | null>(null);
@@ -68,7 +72,7 @@ const Calendar: React.FC = () => {
             key: 'integrations',
             label: __('Integrations', 'quillbooking'),
             children: <Integrations />,
-            icon: <IntegrationIcon />,
+            icon: <ApartmentOutlined />,
         }
     ];
 
@@ -89,7 +93,7 @@ const Calendar: React.FC = () => {
                     tabPosition="left"
                     tabBarStyle={{ width: 200 }}
                     onChange={(key) => {
-                        navigate(`calendars/:id/:tab`, { id, tab: key });
+                        navigate(`calendars/${id}/${key}`);
                     }}
                 />
             </div>

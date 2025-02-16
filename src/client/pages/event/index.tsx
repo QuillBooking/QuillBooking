@@ -8,7 +8,7 @@ import { useState, useEffect } from '@wordpress/element';
  * External dependencies
  */
 import { Tabs } from 'antd';
-import { SettingOutlined, CloudSyncOutlined as IntegrationIcon } from '@ant-design/icons';
+import { SettingOutlined, ClockCircleOutlined } from '@ant-design/icons';
 
 /**
  * Internal dependencies
@@ -18,10 +18,15 @@ import type { Event as EventType } from '@quillbooking/client';
 import { useApi, useNotice, useBreadcrumbs, useNavigate } from '@quillbooking/hooks';
 import { useParams } from '@quillbooking/navigation';
 import { Provider } from './state/context';
-
+import Calendar from '../calendar';
+import { EventDetails, Availability, Limits, Fields } from './tabs';
 
 const Event: React.FC = () => {
-    const { eventId: id, calendarId, tab } = useParams<{ eventId: string; calendarId; tab: string }>();
+    const { id: calendarId, tab: id, subtab: tab } = useParams<{ id: string; tab: string; subtab: string }>();
+    if (!id?.match(/^\d+$/)) {
+        return <Calendar />;
+    }
+
     const { callApi } = useApi();
     const { errorNotice } = useNotice();
     const [event, setEvent] = useState<EventType | null>(null);
@@ -60,16 +65,28 @@ const Event: React.FC = () => {
 
     const tabs = [
         {
-            key: 'general',
-            label: __('General', 'quillbooking'),
-            children: <></>,
-            icon: <SettingOutlined />,
+            key: 'details',
+            label: __('Event Details', 'quillbooking'),
+            children: <EventDetails />,
+            icon: <SettingOutlined />
         },
         {
-            key: 'integrations',
-            label: __('Integrations', 'quillbooking'),
-            children: <></>,
-            icon: <IntegrationIcon />,
+            key: 'availability',
+            label: __('Availability', 'quillbooking'),
+            children: <Availability />,
+            icon: <ClockCircleOutlined />
+        },
+        {
+            key: 'limits',
+            label: __('Limits', 'quillbooking'),
+            children: <Limits />,
+            icon: <ClockCircleOutlined />
+        },
+        {
+            key: 'fields',
+            label: __('Fields', 'quillbooking'),
+            children: <Fields />,
+            icon: <ClockCircleOutlined />
         }
     ];
 
@@ -84,14 +101,14 @@ const Event: React.FC = () => {
         >
             <div className="quillbooking-event">
                 <Tabs
-                    defaultActiveKey={tab || 'general'}
-                    activeKey={tab || 'general'}
+                    defaultActiveKey={tab || 'details'}
+                    activeKey={tab || 'details'}
                     items={tabs}
                     tabPosition="left"
                     tabBarStyle={{ width: 200 }}
                     onChange={(key) => {
                         if (event) {
-                            navigate(`events/${id}/${key}`);
+                            navigate(`calendars/${event.calendar.id}/${event.id}/${key}`);
                         }
                     }}
                 />

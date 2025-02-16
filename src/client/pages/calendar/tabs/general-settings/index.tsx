@@ -7,7 +7,7 @@ import { useEffect } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Typography, Input } from 'antd';
+import { Card, Flex, Button, Typography, Input, Skeleton } from 'antd';
 
 /**
  * Internal dependencies
@@ -41,7 +41,7 @@ const GeneralSettings: React.FC = () => {
     }, [state]);
 
     if (!state) {
-        return null;
+        return <Skeleton active />;
     }
 
     const saveSettings = () => {
@@ -96,7 +96,7 @@ const GeneralSettings: React.FC = () => {
     return (
         <Card className="quillbooking-calendar-settings">
             <Flex>
-                <Typography.Title level={4}>{__('General Settings', 'quillbooking')}</Typography.Title>
+                <Typography.Title className='quillbooking-tab-title' level={4}>{__('General Settings', 'quillbooking')}</Typography.Title>
             </Flex>
             <Flex vertical gap={20}>
                 <Flex justify='space-between' align='center'>

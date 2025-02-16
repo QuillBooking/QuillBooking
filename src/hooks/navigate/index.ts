@@ -21,7 +21,7 @@ const useCustomNavigate = () => {
      * @param {Object} [options] Additional options (e.g., state).
      */
     const customNavigate = (path: string, options: Record<string, string | number> = {}) => {
-        navigate(getToLink(path, options));
+        navigate(getToLink(path), options);
     };
 
     return customNavigate;

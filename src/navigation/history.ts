@@ -32,18 +32,11 @@ function getHistory(): QuillBookingBrowserHistory {
 				const { location } = browserHistory;
 				const query = parse(location.search.substring(1));
 				let pathname = '/';
-				console.log(query);
 
 				// Dynamically construct the pathname based on query parameters
 				if (query && typeof query.path === 'string') {
 					pathname = query.path ? `/${query.path}` : '';
-					Object.keys(query).forEach((key) => {
-						if (typeof query[key] === 'string' && ['path', 'page'].indexOf(key) === -1) {
-							pathname += `/${query[key]}`;
-						}
-					});
 				}
-				console.log(pathname);
 
 				return {
 					...location,

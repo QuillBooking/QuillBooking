@@ -179,16 +179,19 @@ class Event_Fields {
 					'label'   => __( 'Buffer Before', 'quillbooking' ),
 					'type'    => 'number',
 					'default' => 0,
+					'group'   => 'buffer',
 				),
 				'buffer_after'        => array(
 					'label'   => __( 'Buffer After', 'quillbooking' ),
 					'type'    => 'number',
+					'group'   => 'buffer',
 					'default' => 0,
 				),
 				'minimum_notices'     => array(
 					'label'   => __( 'Minimum Notice', 'quillbooking' ),
 					'type'    => 'number',
 					'default' => 4,
+					'group'   => 'notice',
 				),
 				'minimum_notice_unit' => array(
 					'label'   => __( 'Minimum Notice Unit', 'quillbooking' ),
@@ -199,12 +202,14 @@ class Event_Fields {
 						'days'    => __( 'Days', 'quillbooking' ),
 					),
 					'default' => 'hours',
+					'group'   => 'notice',
 				),
 				'time_slot'           => array(
 					'label'   => __( 'Time Slot', 'quillbooking' ),
 					'type'    => 'select',
 					'default' => 0,
 					'options' => $this->get_time_slot_options(),
+					'group'   => 'notice',
 				),
 			),
 			'frequency'     => array(

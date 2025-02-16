@@ -5,4 +5,3 @@ export { default as TimezoneSelect } from './timezone-select';
 export { default as FieldWrapper } from './field-wrapper';
 export { default as EventSelect } from './event-select';
 export { default as TextField } from './text-field';
-export { default as DynamicFields } from './dynamic-fields';

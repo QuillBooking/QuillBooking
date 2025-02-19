@@ -20,7 +20,7 @@ import { motion } from 'framer-motion';
 import Home from '../pages/home';
 import Calendars from '../pages/calendars';
 import Calendar from '../pages/calendar';
-import Event from '../pages/event';
+import CreateEvent from '../pages/create-event';
 
 export const Controller = ({ page }) => {
 	useEffect(() => {
@@ -51,4 +51,12 @@ registerAdminPage('calendar', {
 	path: 'calendars/:id/:tab?/:subtab?',
 	component: () => <Calendar />,
 	label: __('Calendar', 'quillbooking'),
+	hidden: true,
+});
+
+registerAdminPage('create-event', {
+	path: 'calendars/:id/create-event/:type',
+	component: () => <CreateEvent />,
+	label: __('Create Event', 'quillbooking'),
+	hidden: true,
 });

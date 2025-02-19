@@ -20,7 +20,9 @@ import { motion } from 'framer-motion';
 import Home from '../pages/home';
 import Calendars from '../pages/calendars';
 import Calendar from '../pages/calendar';
-import CreateEvent from '../pages/create-event';
+import Event from '../pages/event';
+import Availability from '../pages/availability';
+import AvailabilityDetails from '../pages/availabilityDetails';
 
 export const Controller = ({ page }) => {
 	useEffect(() => {
@@ -29,7 +31,10 @@ export const Controller = ({ page }) => {
 
 	return (
 		// Using motion div with layoutScroll to reevaluate positions when the user scrolls.
-		<motion.div layoutScroll className="quillbooking-page-component-wrapper">
+		<motion.div
+			layoutScroll
+			className="quillbooking-page-component-wrapper"
+		>
 			<page.component />
 		</motion.div>
 	);
@@ -54,9 +59,14 @@ registerAdminPage('calendar', {
 	hidden: true,
 });
 
-registerAdminPage('create-event', {
-	path: 'calendars/:id/create-event/:type',
-	component: () => <CreateEvent />,
-	label: __('Create Event', 'quillbooking'),
-	hidden: true,
+registerAdminPage('availability', {
+	path: 'availability',
+	component: () => <Availability />,
+	label: __('Availability', 'quillbooking'),
+});
+
+registerAdminPage('availability/:id', {
+	path: 'availability/:id',
+	component: () => <AvailabilityDetails />,
+	label: __('Availability Details', 'quillbooking'),
 });

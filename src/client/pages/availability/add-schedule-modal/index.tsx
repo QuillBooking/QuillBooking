@@ -16,7 +16,7 @@ import { FieldWrapper, TimezoneSelect } from '@quillbooking/components';
 import { Availability } from 'client/types';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
-import { getHistory } from '@quillbooking/navigation';
+import { getToLink, useNavigate } from '@quillbooking/navigation';
 
 interface AddAvailabilityModalProps {
 	open: boolean;
@@ -38,12 +38,14 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 		name: '',
 		timezone: '',
 		weekly_hours: DEFAULT_WEEKLY_HOURS,
+		override: {},
 	});
 
 	const updateFormData = (key: keyof typeof formData, value: any) => {
 		setFormData((prev) => ({ ...prev, [key]: value }));
 	};
 	const { errorNotice } = useNotice();
+	const navigate = useNavigate();
 
 	const saveAvailabilitySchedule = async () => {
 		if (!validate() || loading) return;
@@ -55,8 +57,8 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 			onSuccess: (data) => {
 				closeHandler();
 				onSaved();
-				const history = getHistory();
-				history.push(`${history.location.search}/${data.id}`);
+				const path = getToLink(`availability/${data.id}`);
+				navigate(path);
 			},
 			onError: (error) => {
 				errorNotice(error.message);

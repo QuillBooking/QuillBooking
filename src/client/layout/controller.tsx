@@ -22,7 +22,7 @@ import Calendars from '../pages/calendars';
 import Calendar from '../pages/calendar';
 import Event from '../pages/event';
 import Availability from '../pages/availability';
-import AvailabilityDetails from '../pages/availabilityDetails';
+import AvailabilityDetails from '../pages/availability-details';
 
 export const Controller = ({ page }) => {
 	useEffect(() => {

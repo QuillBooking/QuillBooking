@@ -444,8 +444,14 @@ class REST_Event_Controller extends REST_Controller {
 				return new WP_Error( 'rest_event_error', __( 'Event not created', 'quillbooking' ), array( 'status' => 500 ) );
 			}
 
+			$default_availability = Availabilities::get_default_availability( get_current_user_id() );
+
+			if ( !$default_availability) {
+				return new WP_Error( 'rest_event_error', __( 'Default availability not found', 'quillbooking' ), array( 'status' => 500 ) );
+			}
+
 			$event->location            = $location;
-			$event->availability        = 'default';
+			$event->availability        = $default_availability['id'];
 			$event->limits              = Event_Fields::instance()->get_default_limit_settings();
 			$event->email_notifications = Event_Fields::instance()->get_default_email_notification_settings();
 			$event->additional_settings = Event_Fields::instance()->get_default_additional_settings( $type );

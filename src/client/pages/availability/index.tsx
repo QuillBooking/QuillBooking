@@ -2,38 +2,53 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useCallback } from '@wordpress/element';
 
 /**
  * External dependencies
  */
 import { PlusOutlined } from '@ant-design/icons';
+import { Button, Flex, Segmented, Typography } from 'antd';
 
 /**
  * Internal dependencies
  */
 import './style.scss';
-import { Button, Flex, Segmented } from 'antd';
-import AddAvailabilitySechduleModal from './add-availability-schedule-modal';
+import AddAvailabilitySechduleModal from './add-schedule-modal';
 import AvailabilityList from './availability-list';
 
-/**
- * Main Calendars Component.
- */
+const { Title, Text } = Typography;
+
 const Availability: React.FC = () => {
 	const [open, setOpen] = useState(false);
-	const [loading, setLoading] = useState(false);
+	const [isFiltered, setIsFiltered] = useState(false);
+
+	// Toggle the filter state
+	const handleSegmentChange = useCallback(() => {
+		setIsFiltered((prev) => !prev);
+	}, []);
+
+	// Open the "Add New" modal
+	const handleAddNew = useCallback(() => {
+		setOpen(true);
+	}, []);
+
+	// Close the modal when done or on cancel
+	const handleCloseModal = useCallback(() => {
+		setOpen(false);
+	}, []);
+
 	return (
 		<>
 			<Flex justify="space-between" align="center">
 				<div>
-					<h1>{__('Availability', 'quillbooking')}</h1>
-					<p>
+					<Title level={1}>{__('Availability', 'quillbooking')}</Title>
+					<Text>
 						{__(
 							'Configure times when you are available for bookings.',
 							'quillbooking'
 						)}
-					</p>
+					</Text>
 				</div>
 
 				<Flex justify="space-between" align="center" gap={10}>
@@ -42,30 +57,26 @@ const Availability: React.FC = () => {
 							__('My Schedule', 'quillbooking'),
 							__('All Schedule', 'quillbooking'),
 						]}
-						onChange={(value) => {
-							console.log(value);
-						}}
+						onChange={handleSegmentChange}
 					/>
 					<Button
 						type="primary"
 						icon={<PlusOutlined />}
 						size="large"
-						onClick={() => {
-							setOpen(true);
-						}}
+						onClick={handleAddNew}
 					>
 						{__('Add New', 'quillbooking')}
 					</Button>
 				</Flex>
 			</Flex>
 
-			<AvailabilityList />
+			<AvailabilityList isFiltered={isFiltered} />
 
 			{open && (
 				<AddAvailabilitySechduleModal
 					open={open}
-					onClose={() => setOpen(false)}
-					onSaved={() => setOpen(false)}
+					onClose={handleCloseModal}
+					onSaved={handleCloseModal}
 				/>
 			)}
 		</>

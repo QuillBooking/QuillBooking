@@ -118,7 +118,7 @@ class Availabilities {
 		return Arr::first(
 			self::get_availabilities(),
 			function( $availability ) {
-				return 'default' === $availability['id'];
+				return $availability['is_default'] === true;
 			}
 		);
 	}

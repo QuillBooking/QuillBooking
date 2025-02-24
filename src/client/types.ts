@@ -98,7 +98,9 @@ export type Availability = {
 	weekly_hours: WeeklyHours;
 	override: DateOverrides;
 	timezone: string;
-	events?: number;
+	events?: EventMetaData[];
+	events_count?: number;
+	is_default?: boolean;
 };
 
 export type AvailabilityRange = {
@@ -140,4 +142,14 @@ export interface EventLimits {
 		enable: boolean;
 		timezone: string;
 	};
+}
+
+export interface EventMetaData {
+	id: number;
+	event_id: number;
+	event: Event;
+	meta_key: string;
+	meta_value: string;
+	updated_at: string;
+	create_at: string;
 }

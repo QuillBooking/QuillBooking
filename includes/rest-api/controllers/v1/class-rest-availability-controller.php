@@ -456,7 +456,6 @@ class REST_Availability_Controller extends REST_Controller {
 		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {
 			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to update this availability.', 'quill-booking' ), array( 'status' => 403 ) );
 		}
-
 		$update = array_filter(
 			array(
 				'name'         => $name,
@@ -464,9 +463,14 @@ class REST_Availability_Controller extends REST_Controller {
 				'override'     => $override,
 				'timezone'     => $timezone,
 			),
-			function ( $value ) {
-				return ! empty( $value );
-			}
+			function ( $value, $key ) {
+					// Always include override even if empty
+				if ( $key === 'override' ) {
+					return true;
+				}
+					return ! empty( $value );
+			},
+			ARRAY_FILTER_USE_BOTH
 		);
 
 		$availability = array_merge( $availability, $update );
@@ -604,7 +608,6 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return array
 	 */
-
 	private function events_details_for_availability( $availability ) {
 		$events                       = Event_Meta_Model::where( 'meta_key', 'availability' )->where( 'meta_value', $availability['id'] )->with( 'event' )->get();
 		$availability['events_count'] = $events->count();

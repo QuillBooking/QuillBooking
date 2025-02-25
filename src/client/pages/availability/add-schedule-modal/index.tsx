@@ -14,10 +14,8 @@ import { Button, Flex, Input, Modal } from 'antd';
  */
 import { FieldWrapper, TimezoneSelect } from '@quillbooking/components';
 import { Availability } from 'client/types';
-import { useApi, useNotice } from '@quillbooking/hooks';
+import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
-import { getToLink, useNavigate } from '@quillbooking/navigation';
-
 interface AddAvailabilityModalProps {
 	open: boolean;
 	onClose: () => void;
@@ -41,7 +39,10 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 		override: {},
 	});
 
-	const updateFormData = (key: keyof typeof formData, value: any) => {
+	const updateFormData = (
+		key: keyof typeof formData,
+		value: Partial<Availability>[keyof Availability]
+	) => {
 		setFormData((prev) => ({ ...prev, [key]: value }));
 	};
 	const { errorNotice } = useNotice();
@@ -57,11 +58,12 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 			onSuccess: (data) => {
 				closeHandler();
 				onSaved();
-				const path = getToLink(`availability/${data.id}`);
-				navigate(path);
+				navigate(`availability/${data.id}`);
 			},
-			onError: (error) => {
-				errorNotice(error.message);
+			onError: () => {
+				errorNotice(
+					__('Failed to save availability schedule.', 'quillbooking')
+				);
 			},
 		});
 	};
@@ -74,7 +76,7 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 	const validate = () => {
 		if (!formData.name) {
 			errorNotice(
-				__('Please enter a title for the formData.', 'quillbooking')
+				__('Please enter a title for the availability.', 'quillbooking')
 			);
 			return false;
 		}

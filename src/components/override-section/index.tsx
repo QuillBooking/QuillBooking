@@ -16,13 +16,13 @@ import type { DateOverrides, TimeSlot } from '@quillbooking/client';
 
 const { Text } = Typography;
 
-interface OverridesSectionProps {
+interface OverrideSectionProps {
 	dateOverrides: DateOverrides;
 	onAddOverride: () => void;
 	onRemoveOverride: (date: string) => void;
 }
 
-const OverridesSection: React.FC<OverridesSectionProps> = ({
+const OverrideSection: React.FC<OverrideSectionProps> = ({
 	dateOverrides,
 	onAddOverride,
 	onRemoveOverride,
@@ -66,4 +66,4 @@ const OverridesSection: React.FC<OverridesSectionProps> = ({
 	);
 };
 
-export default OverridesSection;
+export default OverrideSection;

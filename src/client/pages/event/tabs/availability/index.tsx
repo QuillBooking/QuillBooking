@@ -23,8 +23,7 @@ import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import { RangeSection, AvailabilitySection } from './sections';
-import OverridesSection from '../../../../../components/override-section';
-import OverrideModal from '../../../../../components/override-modal';
+import { OverrideModal, OverrideSection} from '@quillbooking/components';
 
 const AvailabilityTab: React.FC = () => {
 	const [range, setRange] = useState<AvailabilityRange | null>(null);
@@ -169,7 +168,7 @@ const AvailabilityTab: React.FC = () => {
 					/>
 
 					{/* Date Overrides Section */}
-					<OverridesSection
+					<OverrideSection
 						dateOverrides={dateOverrides}
 						onAddOverride={openOverrideModal}
 						onRemoveOverride={(date) => {

@@ -39,7 +39,7 @@ import { OverrideSection, OverrideModal } from '@quillbooking/components';
 /**
  * Main Calendars Component.
  */
-const { Text,Title  } = Typography;
+const { Text, Title } = Typography;
 
 const AvailabilityDetails: React.FC = () => {
 	const [availabilityDetails, setAvailabilityDetails] = useState<
@@ -52,16 +52,15 @@ const AvailabilityDetails: React.FC = () => {
 	const [availabilityTimezone, setAvailabilityTimezone] =
 		useState<string>('');
 	const [isDefault, setIsDefault] = useState<boolean>(false);
-	const [dateOverrides, setDateOverrides] = useState<DateOverrides | {}>(
-		{}
-	);
+	const [dateOverrides, setDateOverrides] = useState<DateOverrides | {}>({});
 
 	const { callApi } = useApi();
 	const navigate = useNavigate();
 	const { errorNotice, successNotice } = useNotice();
 
 	// State for the date override modal
-	const [isOverrideModalVisible, setIsOverrideModalVisible] = useState<boolean>(false);
+	const [isOverrideModalVisible, setIsOverrideModalVisible] =
+		useState<boolean>(false);
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 	const [overrideTimes, setOverrideTimes] = useState<TimeSlot[]>([]);
 	const [isUnavailable, setIsUnavailable] = useState<boolean>(false);
@@ -86,23 +85,26 @@ const AvailabilityDetails: React.FC = () => {
 	};
 
 	useEffect(fetchAvailabilityDetails, []);
-	const {id: availabilityId} = useParams<{id:string} >();
+	const { id: availabilityId } = useParams<{ id: string }>();
 	if (!availabilityId) return null;
 
-	const handleNameUpdate = (val: string) => {
+	const handleNameUpdate = (availabilityName: string) => {
 		callApi({
 			path: `availabilities/${availabilityId}`,
 			method: 'PUT',
 			data: {
-				name: val,
+				name: availabilityName,
 			},
 			onSuccess: () => {
+				setAvailabilityName(availabilityName);
 				successNotice(
 					__('Availability name updated successfully', 'quillbooking')
 				);
 			},
 			onError: () => {
-				errorNotice(__('Failed to update availability name', 'quillbooking'));
+				errorNotice(
+					__('Failed to update availability name', 'quillbooking')
+				);
 			},
 		});
 	};
@@ -124,14 +126,16 @@ const AvailabilityDetails: React.FC = () => {
 		});
 	};
 
-	const onCustomAvailabilityChange = ( day: keyof Availability['weekly_hours'],
+	const onCustomAvailabilityChange = (
+		day: keyof Availability['weekly_hours'],
 		field: 'off' | 'times',
-		value: boolean | TimeSlot[]) => {
+		value: boolean | TimeSlot[]
+	) => {
 		const updatedAvailability = { ...availabilityDetails };
 		if (updatedAvailability.weekly_hours) {
 			if (field === 'off' && typeof value === 'boolean') {
 				updatedAvailability.weekly_hours[day].off = value;
-			} else if(field === 'times' && Array.isArray(value)) {
+			} else if (field === 'times' && Array.isArray(value)) {
 				updatedAvailability.weekly_hours[day].times = value;
 			} else {
 				return;
@@ -160,8 +164,13 @@ const AvailabilityDetails: React.FC = () => {
 			return;
 		}
 
-		if(!overrideTimes.length && !isUnavailable) {
-			errorNotice(__('Please add a time slot or mark as unavailable', 'quillbooking'));
+		if (!overrideTimes.length && !isUnavailable) {
+			errorNotice(
+				__(
+					'Please add a time slot or mark as unavailable',
+					'quillbooking'
+				)
+			);
 			return;
 		}
 
@@ -193,12 +202,14 @@ const AvailabilityDetails: React.FC = () => {
 		await callApi({
 			path: `availabilities/${availability.id}/set-default`,
 			method: 'POST',
-			onSuccess: () => {
-				setIsDefault(availability.is_default ?? false);
+			onSuccess: (resData: Availability) => {
+				setIsDefault(resData.is_default ?? false);
 				successNotice(__('Default calendar updated', 'quillbooking'));
 			},
 			onError: () => {
-				errorNotice(__('Failed to update default calendar', 'quillbooking'));
+				errorNotice(
+					__('Failed to update default calendar', 'quillbooking')
+				);
 			},
 		});
 	};
@@ -218,7 +229,7 @@ const AvailabilityDetails: React.FC = () => {
 					<Flex justify="space-between">
 						<Space>
 							<Space.Compact>
-								<Typography.Title
+								<Title
 									level={5}
 									editable={{
 										onChange: (val) =>
@@ -226,7 +237,7 @@ const AvailabilityDetails: React.FC = () => {
 									}}
 								>
 									{availabilityName}
-								</Typography.Title>
+								</Title>
 							</Space.Compact>
 						</Space>
 
@@ -280,9 +291,7 @@ const AvailabilityDetails: React.FC = () => {
 				</Card>
 
 				<Card style={{ flex: 1 }}>
-					<Title level={5}>
-						{__('Timezone:', 'quillbooking')}
-					</Title>
+					<Title level={5}>{__('Timezone:', 'quillbooking')}</Title>
 					<TimezoneSelect
 						value={availabilityTimezone || null}
 						onChange={(value) => setAvailabilityTimezone(value)}
@@ -339,8 +348,16 @@ const AvailabilityDetails: React.FC = () => {
 																'times',
 																[
 																	{
-																		start: times[0]?.format('HH:mm') || '',
-																		end: times[1]?.format('HH:mm') || '',
+																		start:
+																			times[0]?.format(
+																				'HH:mm'
+																			) ||
+																			'',
+																		end:
+																			times[1]?.format(
+																				'HH:mm'
+																			) ||
+																			'',
 																	},
 																]
 															);
@@ -415,7 +432,9 @@ const AvailabilityDetails: React.FC = () => {
 										<>
 											<div>
 												<Text>
-													{availabilityDetails.timezone}
+													{
+														availabilityDetails.timezone
+													}
 												</Text>
 											</div>
 										</>

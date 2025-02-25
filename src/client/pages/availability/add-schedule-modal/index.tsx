@@ -39,7 +39,10 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 		override: {},
 	});
 
-	const updateFormData = (key: keyof typeof formData, value: Partial<Availability>[keyof Availability]) => {
+	const updateFormData = (
+		key: keyof typeof formData,
+		value: Partial<Availability>[keyof Availability]
+	) => {
 		setFormData((prev) => ({ ...prev, [key]: value }));
 	};
 	const { errorNotice } = useNotice();
@@ -58,7 +61,9 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 				navigate(`availability/${data.id}`);
 			},
 			onError: () => {
-				errorNotice(__('Failed to save availability schedule.', 'quillbooking'));
+				errorNotice(
+					__('Failed to save availability schedule.', 'quillbooking')
+				);
 			},
 		});
 	};

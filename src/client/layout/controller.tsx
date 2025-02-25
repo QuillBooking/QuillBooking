@@ -20,9 +20,9 @@ import { motion } from 'framer-motion';
 import Home from '../pages/home';
 import Calendars from '../pages/calendars';
 import Calendar from '../pages/calendar';
-import Event from '../pages/event';
 import Availability from '../pages/availability';
 import AvailabilityDetails from '../pages/availabilityDetails';
+import CreateEvent from '../pages/create-event';
 
 export const Controller = ({ page }) => {
 	useEffect(() => {
@@ -69,4 +69,10 @@ registerAdminPage('availability/:id', {
 	path: 'availability/:id',
 	component: () => <AvailabilityDetails />,
 	label: __('Availability Details', 'quillbooking'),
+});
+
+registerAdminPage('create-event', {
+	path: 'calendars/:id/create-event/:type',
+	component: () => <CreateEvent />,
+	label: __('Create Event', 'quillbooking'),
 });

@@ -19,6 +19,7 @@ use QuillBooking\Fields\Email_Field;
 use QuillBooking\Fields\Number_Field;
 use QuillBooking\Fields\Radio_Field;
 use QuillBooking\Fields\Textarea_Field;
+use QuillBooking\Fields\Select_Field;
 use QuillBooking\Abstracts\Manager;
 use QuillBooking\Traits\Singleton;
 
@@ -52,6 +53,7 @@ class Fields_Manager extends Manager {
 			Checkbox_Field::class,
 			Radio_Field::class,
 			Textarea_Field::class,
+			Select_Field::class,
 		);
 
 		foreach ( $fields as $field ) {
@@ -62,6 +64,7 @@ class Fields_Manager extends Manager {
 				array(
 					'name'        => 'name',
 					'has_options' => 'has_options',
+					'multiple'    => 'multiple',
 				)
 			);
 		}

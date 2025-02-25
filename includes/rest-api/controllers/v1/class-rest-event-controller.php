@@ -643,6 +643,7 @@ class REST_Event_Controller extends REST_Controller {
 			$sms_notifications   = $request->get_param( 'sms_notifications' );
 			$payments_settings   = $request->get_param( 'payments_settings' );
 			$webhook_feeds       = $request->get_param( 'webhook_feeds' );
+			$fields              = $request->get_param( 'fields' );
 
 			$event = Event_Model::find( $id );
 
@@ -679,6 +680,10 @@ class REST_Event_Controller extends REST_Controller {
 
 			foreach ( $updated as $key => $value ) {
 				$event->{$key} = $value;
+			}
+
+			if ( $fields ) {
+				$event->updateFields( $fields );
 			}
 
 			$event->save();

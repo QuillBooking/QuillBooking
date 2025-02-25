@@ -19,7 +19,7 @@ import { useApi, useNotice, useBreadcrumbs, useNavigate } from '@quillbooking/ho
 import { useParams } from '@quillbooking/navigation';
 import { Provider } from './state/context';
 import Calendar from '../calendar';
-import { EventDetails, Availability, Limits, Fields } from './tabs';
+import { EventDetails, Availability, Limits, Fields, Notifications } from './tabs';
 
 const Event: React.FC = () => {
     const { id: calendarId, tab: id, subtab: tab } = useParams<{ id: string; tab: string; subtab: string }>();
@@ -86,6 +86,18 @@ const Event: React.FC = () => {
             key: 'fields',
             label: __('Fields', 'quillbooking'),
             children: <Fields />,
+            icon: <ClockCircleOutlined />
+        },
+        {
+            key: 'email-notifications',
+            label: __('Email Notifications', 'quillbooking'),
+            children: <Notifications notificationType='email' />,
+            icon: <ClockCircleOutlined />
+        },
+        {
+            key: 'sms-notifications',
+            label: __('SMS Notifications', 'quillbooking'),
+            children: <Notifications notificationType='sms' />,
             icon: <ClockCircleOutlined />
         }
     ];

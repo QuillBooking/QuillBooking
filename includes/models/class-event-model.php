@@ -465,7 +465,7 @@ class Event_Model extends Model {
 				throw new \Exception( $validation->get_error_message() );
 			}
 
-			if ( 1 <= count( $event_location ) ) {
+			if ( 1 < count( $event_location ) ) {
 				$fields['location-select']['options'][] = array(
 					'label' => $location_type->title,
 					'value' => $location['type'],
@@ -517,12 +517,7 @@ class Event_Model extends Model {
 			'location' => $location_fields,
 		);
 
-		$this->meta()->create(
-			array(
-				'meta_key'   => 'fields',
-				'meta_value' => maybe_serialize( $fields ),
-			)
-		);
+		$this->update_meta( 'fields', $fields );
 	}
 
 	/**
@@ -541,10 +536,7 @@ class Event_Model extends Model {
 		$location_fields    = $this->processLocationFields( $event_location, $this->fields['location'] ?? array() );
 		$fields['location'] = $location_fields;
 
-		$this->meta()->updateOrCreate(
-			array( 'meta_key' => 'fields' ),
-			array( 'meta_value' => maybe_serialize( $fields ) )
-		);
+		$this->update_meta( 'fields', $fields );
 	}
 
 	/**
@@ -557,9 +549,9 @@ class Event_Model extends Model {
 	public function updateFields( $fields ) {
 		foreach ( $fields as $group => $group_fields ) {
 			foreach ( $group_fields as $field_key => $field ) {
-				$field_type = Fields_Manager::instance()->get_field_type( $field['type'] );
+				$field_type = Fields_Manager::instance()->get_item( $field['type'] );
 				$field_type = new $field_type();
-				if ( $field_type->has_options && ! isset( $field['options'] ) ) {
+				if ( $field_type->has_options && ! isset( $field['settings']['options'] ) ) {
 					throw new \Exception( sprintf( __( 'Options are required for %s field', 'quillbooking' ), $field['label'] ) );
 				}
 
@@ -567,10 +559,7 @@ class Event_Model extends Model {
 			}
 		}
 
-		$this->meta()->updateOrCreate(
-			array( 'meta_key' => 'fields' ),
-			array( 'meta_value' => maybe_serialize( $fields ) )
-		);
+		$this->update_meta( 'fields', $fields );
 	}
 
 	/**

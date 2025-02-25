@@ -109,6 +109,15 @@ const Calendars: React.FC = () => {
         setCalendars(updatedCalendars);
     };
 
+    const hostEventsTypes = {
+        "one-to-one": __('One to One', 'quillbooking'),
+        "group": __('Group', 'quillbooking'),
+    };
+
+    const teamEventsTypes = {
+        "round-robin": __('Round Robin', 'quillbooking'),
+    };
+
     return (
         <div className="quillbooking-calendars">
             <Card className='quillbooking-calendars-action'>
@@ -177,7 +186,45 @@ const Calendars: React.FC = () => {
                                         </Flex>
                                     </Flex>
                                     <Flex gap={10}>
-                                        <Button icon={<PlusOutlined />}>{__('Add New Event', 'quillbooking')}</Button>
+                                        <Popover
+                                            trigger={['click']}
+                                            content={(
+                                                <Flex vertical gap={10}>
+                                                    {calendar.type === 'host' && (
+                                                        <>
+                                                            {map(hostEventsTypes, (label, type) => (
+                                                                <Button
+                                                                    type="text"
+                                                                    key={type}
+                                                                    onClick={() => {
+                                                                        navigate(`calendars/${calendar.id}/create-event/${type}`);
+                                                                    }}
+                                                                >
+                                                                    {label}
+                                                                </Button>
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                    {calendar.type === 'team' && (
+                                                        <>
+                                                            {map(teamEventsTypes, (label, type) => (
+                                                                <Button
+                                                                    type="text"
+                                                                    key={type}
+                                                                    onClick={() => {
+                                                                        navigate(`calendars/${calendar.id}/create-event/${type}`);
+                                                                    }}
+                                                                >
+                                                                    {label}
+                                                                </Button>
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                </Flex>
+                                            )}
+                                        >
+                                            <Button icon={<PlusOutlined />}>{__('Add New Event', 'quillbooking')}</Button>
+                                        </Popover>
                                         <Popover
                                             trigger={['click']}
                                             content={(

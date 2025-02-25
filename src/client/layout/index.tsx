@@ -97,9 +97,20 @@ const Breadcrumbs: React.FC = () => {
 	const pathnames = location.pathname.split('/').filter(Boolean);
 	const breadcrumbItems = pathnames.map((_, index) => {
 		const currentPath = `${pathnames.slice(0, index + 1).join('/')}`;
-		const title = breadcrumbs[currentPath] || '...';
+		const title = breadcrumbs[currentPath];
+		if (!title) {
+			return null;
+		}
 		return { title: <Link to={currentPath}>{title}</Link>, key: currentPath };
 	});
+
+	// Check if any title is ... return null
+	if (breadcrumbItems.some((item) => item === null)) {
+		return null;
+	}
+
+	// Remove null values
+	const newBreadcrumbItems = breadcrumbItems.filter((item) => item !== null);
 
 	return (
 		<Breadcrumb
@@ -112,7 +123,7 @@ const Breadcrumbs: React.FC = () => {
 						</Link>,
 					key: '/'
 				},
-				...breadcrumbItems,
+				...newBreadcrumbItems,
 			]}
 		/>
 	);

@@ -13,6 +13,17 @@ export type ConfigData = Record<string, unknown> & {
 	integrations: Integrations;
 	locations: Locations;
 	availabilities: Availability[];
+	fieldsTypes: FieldsTypes;
+};
+
+export type FieldsTypes = {
+	[key: string]: FieldType;
+};
+
+export type FieldType = {
+	type: 'text' | 'textarea' | 'checkbox' | 'select' | 'radio' | 'date' | 'time' | 'datetime' | 'number' | 'multiple_select' | 'file' | 'hidden' | 'checkbox_group' | 'terms';
+	has_options: boolean;
+	multiple: boolean;
 };
 
 export type Integrations = {

@@ -63,6 +63,15 @@ export type Event = {
 	created_at: string;
 	updated_at: string;
 	calendar: Calendar;
+	additional_settings: AdditionalSettings;
+};
+
+export type AdditionalSettings = {
+	allow_attendees_to_select_duration?: boolean;
+	duration?: number;
+	allow_additional_guests?: boolean;
+	max_invitees: number;
+	show_remaining: boolean;
 };
 
 export type Location = {
@@ -153,3 +162,24 @@ export interface EventMetaData {
 	updated_at: string;
 	create_at: string;
 }
+
+export interface EventMetaData {
+	id: number;
+	event_id: number;
+	event: Event;
+	meta_key: string;
+	meta_value: string;
+	updated_at: string;
+	create_at: string;
+}
+
+export type NotificationType = {
+	label: string;
+	type: string;
+	default: boolean;
+	template: {
+		subject: string;
+		message: string;
+	};
+	times?: Array<{ unit: string; value: number }>;
+};

@@ -176,7 +176,6 @@ class Admin_Loader {
 		wp_auth_check_load();
 
 		do_action( 'quillbooking_admin_enqueue_scripts' );
-		wp_enqueue_media();
 		// Enqueue scripts.
 		wp_enqueue_script( 'quillbooking-config' );
 		wp_enqueue_script( 'quillbooking-admin' );
@@ -197,7 +196,12 @@ class Admin_Loader {
 			.s11 { fill: url(#g8) }'
 		);
 		wp_enqueue_script( 'jquery' );
+		if ( ! class_exists( '_WP_Editors' ) ) {
+			require ABSPATH . 'wp-includes/class-wp-editor.php';
+		}
 
+		\_WP_Editors::enqueue_default_editor();
+		wp_enqueue_media();
 		?>
 		<div class="quillbooking-wrap">
 			<div id="quillbooking-admin-root">

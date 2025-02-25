@@ -56,6 +56,13 @@ abstract class Field_Type {
 	public $has_options = false;
 
 	/**
+	 * Multiple
+	 * 
+	 * @var boolean
+	 */
+	public $multiple = false;
+
+	/**
 	 * Attributes
 	 *
 	 * @var string

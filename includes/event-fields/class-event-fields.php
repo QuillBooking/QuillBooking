@@ -62,69 +62,6 @@ class Event_Fields {
 	}
 
 	/**
-	 * Get additional settings
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $event_type Event type
-	 *
-	 * @return array
-	 */
-	public function get_additional_settings( $event_type ) {
-		$settings = array(
-			'duration' => array(
-				'allow_attendees_to_select_duration' => array(
-					'label'   => __( 'Allow attendees to select duration', 'quillbooking' ),
-					'type'    => 'checkbox',
-					'default' => false,
-				),
-				'duration'                           => array(
-					'label'      => __( 'Duration Options', 'quillbooking' ),
-					'type'       => 'select',
-					'options'    => $this->get_duration_options(),
-					'conditions' => array(
-						array(
-							'field'    => 'duration.allow_attendees_to_select_duration',
-							'operator' => '==',
-							'value'    => true,
-						),
-					),
-				),
-			),
-		);
-
-		switch ( $event_type ) {
-			case 'one-to-one':
-			case 'round-robin':
-			case 'collective':
-				$settings['invitee'] = array(
-					'allow_additional_guests' => array(
-						'label'   => __( 'Allow additional guests', 'quillbooking' ),
-						'type'    => 'checkbox',
-						'default' => false,
-					),
-				);
-				break;
-			case 'group':
-				$settings['invitee'] = array(
-					'max_invites'    => array(
-						'label'   => __( 'Maximum Invites', 'quillbooking' ),
-						'type'    => 'number',
-						'default' => 4,
-					),
-					'show_remaining' => array(
-						'label'   => __( 'Show remaining invites', 'quillbooking' ),
-						'type'    => 'checkbox',
-						'default' => false,
-					),
-				);
-				break;
-		}
-
-		return $settings;
-	}
-
-	/**
 	 * Get default additional settings values
 	 *
 	 * @since 1.0.0
@@ -134,13 +71,27 @@ class Event_Fields {
 	 * @return array
 	 */
 	public function get_default_additional_settings( $event_type ) {
-		$settings = $this->get_additional_settings( $event_type );
-		$values   = array();
+		$values = array(
+			'duration' => array(
+				'allow_attendees_to_select_duration' => false,
+				'duration'                           => 60,
+			),
+		);
 
-		foreach ( $settings as $section => $fields ) {
-			foreach ( $fields as $field => $data ) {
-				$values[ $section ][ $field ] = $data['default'] ?? null;
-			}
+		switch ( $event_type ) {
+			case 'one-to-one':
+			case 'round-robin':
+			case 'collective':
+				$values['invitee'] = array(
+					'allow_additional_guests' => false,
+				);
+				break;
+			case 'group':
+				$values['invitees'] = array(
+					'max_invitees'   => 4,
+					'show_remaining' => false,
+				);
+				break;
 		}
 
 		return $values;
@@ -166,162 +117,6 @@ class Event_Fields {
 	}
 
 	/**
-	 * Get limit settings
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_limit_settings() {
-		return array(
-			'general'       => array(
-				'buffer_before'       => array(
-					'label'   => __( 'Buffer Before', 'quillbooking' ),
-					'type'    => 'number',
-					'default' => 0,
-					'group'   => 'buffer',
-				),
-				'buffer_after'        => array(
-					'label'   => __( 'Buffer After', 'quillbooking' ),
-					'type'    => 'number',
-					'group'   => 'buffer',
-					'default' => 0,
-				),
-				'minimum_notices'     => array(
-					'label'   => __( 'Minimum Notice', 'quillbooking' ),
-					'type'    => 'number',
-					'default' => 4,
-					'group'   => 'notice',
-				),
-				'minimum_notice_unit' => array(
-					'label'   => __( 'Minimum Notice Unit', 'quillbooking' ),
-					'type'    => 'select',
-					'options' => array(
-						'minutes' => __( 'Minutes', 'quillbooking' ),
-						'hours'   => __( 'Hours', 'quillbooking' ),
-						'days'    => __( 'Days', 'quillbooking' ),
-					),
-					'default' => 'hours',
-					'group'   => 'notice',
-				),
-				'time_slot'           => array(
-					'label'   => __( 'Time Slot', 'quillbooking' ),
-					'type'    => 'select',
-					'default' => 0,
-					'options' => $this->get_time_slot_options(),
-					'group'   => 'notice',
-				),
-			),
-			'frequency'     => array(
-				'enable' => array(
-					'label'   => __( 'Limit booking frequency', 'quillbooking' ),
-					'desc'    => __( 'Limit how often a user can book this event', 'quillbooking' ),
-					'type'    => 'checkbox',
-					'default' => false,
-				),
-				'limits' => array(
-					'label'      => __( 'Frequency Limits', 'quillbooking' ),
-					'type'       => 'repeater',
-					'default'    => array(
-						array(
-							'limit' => 5,
-							'unit'  => 'days',
-						),
-					),
-					'fields'     => array(
-						'limit' => array(
-							'label' => __( 'Limit (Booking)', 'quillbooking' ),
-							'type'  => 'number',
-						),
-						'unit'  => array(
-							'label'   => __( 'Unit', 'quillbooking' ),
-							'type'    => 'select',
-							'options' => array(
-								'minutes' => __( 'Minutes', 'quillbooking' ),
-								'hours'   => __( 'Hours', 'quillbooking' ),
-								'days'    => __( 'Days', 'quillbooking' ),
-								'weeks'   => __( 'Weeks', 'quillbooking' ),
-								'months'  => __( 'Months', 'quillbooking' ),
-							),
-							'default' => 'days',
-						),
-					),
-					'conditions' => array(
-						array(
-							'field'    => 'frequency.enable',
-							'operator' => '==',
-							'value'    => true,
-						),
-					),
-				),
-			),
-			'duration'      => array(
-				'enable' => array(
-					'label'   => __( 'Limit booking duration', 'quillbooking' ),
-					'desc'    => __( 'Limit how long a user can book this event', 'quillbooking' ),
-					'type'    => 'checkbox',
-					'default' => false,
-				),
-				'limits' => array(
-					'label'      => __( 'Duration Limits', 'quillbooking' ),
-					'type'       => 'repeater',
-					'default'    => array(
-						array(
-							'limit' => 120,
-							'unit'  => 'hours',
-						),
-					),
-					'fields'     => array(
-						'limit' => array(
-							'label' => __( 'Limit (Minutes)', 'quillbooking' ),
-							'type'  => 'number',
-						),
-						'unit'  => array(
-							'label'   => __( 'Unit', 'quillbooking' ),
-							'type'    => 'select',
-							'options' => array(
-								'minutes' => __( 'Minutes', 'quillbooking' ),
-								'hours'   => __( 'Hours', 'quillbooking' ),
-								'days'    => __( 'Days', 'quillbooking' ),
-								'weeks'   => __( 'Weeks', 'quillbooking' ),
-								'months'  => __( 'Months', 'quillbooking' ),
-							),
-							'default' => 'hours',
-						),
-					),
-					'conditions' => array(
-						array(
-							'field'    => 'duration.enable',
-							'operator' => '==',
-							'value'    => true,
-						),
-					),
-				),
-			),
-			'timezone_lock' => array(
-				'enable'   => array(
-					'label'   => __( 'Lock timezone on booking page', 'quillbooking' ),
-					'type'    => 'checkbox',
-					'default' => false,
-				),
-				'timezone' => array(
-					'label'      => __( 'Timezone', 'quillbooking' ),
-					'type'       => 'select',
-					'options'    => Utils::get_timezones(),
-					'default'    => wp_timezone_string(),
-					'conditions' => array(
-						array(
-							'field'    => 'timezone.enable',
-							'operator' => '==',
-							'value'    => true,
-						),
-					),
-				),
-			),
-		);
-	}
-
-	/**
 	 * Get default limit settings values
 	 *
 	 * @since 1.0.0
@@ -329,14 +124,37 @@ class Event_Fields {
 	 * @return array
 	 */
 	public function get_default_limit_settings() {
-		$settings = $this->get_limit_settings();
-		$values   = array();
-
-		foreach ( $settings as $section => $fields ) {
-			foreach ( $fields as $field => $data ) {
-				$values[ $section ][ $field ] = $data['default'] ?? null;
-			}
-		}
+		$values = array(
+			'general'       => array(
+				'buffer_before'       => 0,
+				'buffer_after'        => 0,
+				'minimum_notices'     => 4,
+				'minimum_notice_unit' => 'hours',
+				'time_slot'           => 0,
+			),
+			'frequency'     => array(
+				'enable' => false,
+				'limits' => array(
+					array(
+						'limit' => 5,
+						'unit'  => 'days',
+					),
+				),
+			),
+			'duration'      => array(
+				'enable' => false,
+				'limits' => array(
+					array(
+						'limit' => 120,
+						'unit'  => 'hours',
+					),
+				),
+			),
+			'timezone_lock' => array(
+				'enable'   => false,
+				'timezone' => wp_timezone_string(),
+			),
+		);
 
 		return $values;
 	}
@@ -348,11 +166,10 @@ class Event_Fields {
 	 *
 	 * @return array
 	 */
-	public function get_email_notification_settings() {
+	public function get_default_email_notification_settings() {
 		return array(
 			'attendee_confirmation'          => array(
 				'label'    => __( 'Attendee Confirmation', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'Booking Confirmation', 'quillbooking' ),
@@ -361,7 +178,6 @@ class Event_Fields {
 			),
 			'organizer_notification'         => array(
 				'label'    => __( 'Organizer Notification', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'New Booking', 'quillbooking' ),
@@ -370,7 +186,6 @@ class Event_Fields {
 			),
 			'attendee_reminder'              => array(
 				'label'    => __( 'Attendee Reminder', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => false,
 				'template' => array(
 					'subject' => __( 'Booking Reminder', 'quillbooking' ),
@@ -385,7 +200,6 @@ class Event_Fields {
 			),
 			'organizer_reminder'             => array(
 				'label'    => __( 'Organizer Reminder', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => false,
 				'template' => array(
 					'subject' => __( 'Booking Reminder', 'quillbooking' ),
@@ -400,7 +214,6 @@ class Event_Fields {
 			),
 			'attendee_cancelled_organizer'   => array(
 				'label'    => __( 'Booking Cancelled by Attendee to Organizer', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'Booking Cancelled', 'quillbooking' ),
@@ -409,7 +222,6 @@ class Event_Fields {
 			),
 			'organizer_cancelled_attendee'   => array(
 				'label'    => __( 'Booking Cancelled by Organizer to Attendee', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'Booking Cancelled', 'quillbooking' ),
@@ -418,7 +230,6 @@ class Event_Fields {
 			),
 			'attendee_rescheduled_organizer' => array(
 				'label'    => __( 'Booking Rescheduled by Attendee to Organizer', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'Booking Rescheduled', 'quillbooking' ),
@@ -427,7 +238,6 @@ class Event_Fields {
 			),
 			'organizer_rescheduled_attendee' => array(
 				'label'    => __( 'Booking Rescheduled by Organizer to Attendee', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'Booking Rescheduled', 'quillbooking' ),
@@ -436,7 +246,6 @@ class Event_Fields {
 			),
 			'host_approval'                  => array(
 				'label'    => __( 'Host Approval', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'Booking Request', 'quillbooking' ),
@@ -445,7 +254,6 @@ class Event_Fields {
 			),
 			'host_rejection'                 => array(
 				'label'    => __( 'Host Rejection', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'Booking Rejected', 'quillbooking' ),
@@ -454,7 +262,6 @@ class Event_Fields {
 			),
 			'host_approved_attendee'         => array(
 				'label'    => __( 'Host Approved to Attendee', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'Your Booking is Confirmed!', 'quillbooking' ),
@@ -463,7 +270,6 @@ class Event_Fields {
 			),
 			'attendee_submitted'             => array(
 				'label'    => __( 'Booking Submitted by Attendee', 'quillbooking' ),
-				'type'     => 'checkbox',
 				'default'  => true,
 				'template' => array(
 					'subject' => __( 'Booking Pending Confirmation', 'quillbooking' ),
@@ -790,7 +596,7 @@ class Event_Fields {
 	 *
 	 * @return array
 	 */
-	public function get_sms_notification_settings() {
+	public function get_default_sms_notification_settings() {
 		return array(
 			'attendee_confirmation'  => array(
 				'label'    => __( 'Attendee Confirmation', 'quillbooking' ),
@@ -900,282 +706,6 @@ class Event_Fields {
 	}
 
 	/**
-	 * Get default SMS notification settings values
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_default_sms_notification_settings() {
-		$settings = $this->get_sms_notification_settings();
-		$values   = array();
-
-		foreach ( $settings as $field => $data ) {
-			$values[ $field ] = array(
-				'enabled'  => $data['default'],
-				'template' => $data['template'],
-			);
-		}
-
-		return $values;
-	}
-
-	/**
-	 * Get default email notification settings values
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_default_email_notification_settings() {
-		$settings = $this->get_email_notification_settings();
-		$values   = array();
-
-		foreach ( $settings as $field => $data ) {
-			$values[ $field ] = array(
-				'enabled'  => $data['default'],
-				'template' => $data['template'],
-			);
-		}
-
-		return $values;
-	}
-
-	/**
-	 * Default advanced settings.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_advanced_settings() {
-		return array(
-			'submit_button_text'           => array(
-				'label'   => __( 'Submit Button Text', 'quillbooking' ),
-				'type'    => 'text',
-				'default' => __( 'Submit Booking', 'quillbooking' ),
-			),
-			'redirect_after_submit'        => array(
-				'label'   => __( 'Redirect After Submit', 'quillbooking' ),
-				'type'    => 'text',
-				'default' => '',
-			),
-			'redirect_url'                 => array(
-				'label'      => __( 'Redirect URL', 'quillbooking' ),
-				'type'       => 'url',
-				'default'    => '',
-				'conditions' => array(
-					array(
-						'field'     => 'redirect_after_submit',
-						'condition' => '==',
-						'value'     => 'custom',
-					),
-				),
-			),
-			'require_confirmation'         => array(
-				'label'   => __( 'Require Confirmation', 'quillbooking' ),
-				'type'    => 'checkbox',
-				'default' => false,
-			),
-			'confirmation_time'            => array(
-				'label'      => __( 'Confirmation Time', 'quillbooking' ),
-				'type'       => 'select',
-				'default'    => 'always',
-				'options'    => array(
-					'always'         => __( 'Always', 'quillbooking' ),
-					'booking_notice' => __( 'Booking Notice Less Than', 'quillbooking' ),
-				),
-				'conditions' => array(
-					array(
-						'field'     => 'require_confirmation',
-						'condition' => '==',
-						'value'     => true,
-					),
-				),
-			),
-			'confirmation_time_value'      => array(
-				'label'      => __( 'Confirmation Time Value', 'quillbooking' ),
-				'type'       => 'number',
-				'default'    => 24,
-				'conditions' => array(
-					array(
-						'field'     => 'require_confirmation',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'confirmation_time',
-						'condition' => '==',
-						'value'     => 'booking_notice',
-					),
-				),
-			),
-			'confirmation_time_unit'       => array(
-				'label'      => __( 'Confirmation Time Unit', 'quillbooking' ),
-				'type'       => 'select',
-				'default'    => 'hours',
-				'options'    => array(
-					'minutes' => __( 'Minutes', 'quillbooking' ),
-					'hours'   => __( 'Hours', 'quillbooking' ),
-				),
-				'conditions' => array(
-					array(
-						'field'     => 'require_confirmation',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'confirmation_time',
-						'condition' => '==',
-						'value'     => 'booking_notice',
-					),
-				),
-			),
-			'allow_multiple_bookings'      => array(
-				'label'   => __( 'Allow Multiple Bookings', 'quillbooking' ),
-				'type'    => 'checkbox',
-				'default' => false,
-			),
-			'maximum_bookings'             => array(
-				'label'      => __( 'Maximum Bookings', 'quillbooking' ),
-				'type'       => 'number',
-				'default'    => 1,
-				'conditions' => array(
-					array(
-						'field'     => 'allow_multiple_bookings',
-						'condition' => '==',
-						'value'     => true,
-					),
-				),
-			),
-			'attendee_cannot_cancel'       => array(
-				'label'   => __( 'Attendee Cannot Cancel', 'quillbooking' ),
-				'type'    => 'checkbox',
-				'default' => false,
-			),
-			'cannot_canel_time'            => array(
-				'label'      => __( 'Cannot Cancel Time', 'quillbooking' ),
-				'type'       => 'select',
-				'default'    => 'event_start',
-				'options'    => array(
-					'alway'       => __( 'Always', 'quillbooking' ),
-					'event_start' => __( 'Event Start', 'quillbooking' ),
-				),
-				'conditions' => array(
-					array(
-						'field'     => 'attendee_cannot_cancel',
-						'condition' => '==',
-						'value'     => true,
-					),
-				),
-			),
-			'cannot_cancel_time_value'     => array(
-				'label'      => __( 'Cannot Cancel Time Value', 'quillbooking' ),
-				'type'       => 'number',
-				'default'    => 24,
-				'conditions' => array(
-					array(
-						'field'     => 'attendee_cannot_cancel',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'cannot_canel_time',
-						'condition' => '==',
-						'value'     => 'event_start',
-					),
-				),
-			),
-			'cannot_cancel_time_unit'      => array(
-				'label'      => __( 'Cannot Cancel Time Unit', 'quillbooking' ),
-				'type'       => 'select',
-				'default'    => 'hours',
-				'options'    => array(
-					'minutes' => __( 'Minutes', 'quillbooking' ),
-					'hours'   => __( 'Hours', 'quillbooking' ),
-				),
-				'conditions' => array(
-					array(
-						'field'     => 'attendee_cannot_cancel',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'cannot_canel_time',
-						'condition' => '==',
-						'value'     => 'event_start',
-					),
-				),
-			),
-			'attendee_cannot_reschedule'   => array(
-				'label'   => __( 'Attendee Cannot Reschedule', 'quillbooking' ),
-				'type'    => 'checkbox',
-				'default' => false,
-			),
-			'cannot_reschedule_time'       => array(
-				'label'      => __( 'Cannot Reschedule Time', 'quillbooking' ),
-				'type'       => 'select',
-				'default'    => 'event_start',
-				'options'    => array(
-					'alway'       => __( 'Always', 'quillbooking' ),
-					'event_start' => __( 'Event Start', 'quillbooking' ),
-				),
-				'conditions' => array(
-					array(
-						'field'     => 'attendee_cannot_reschedule',
-						'condition' => '==',
-						'value'     => true,
-					),
-				),
-			),
-			'cannot_reschedule_time_value' => array(
-				'label'      => __( 'Cannot Reschedule Time Value', 'quillbooking' ),
-				'type'       => 'number',
-				'default'    => 24,
-				'conditions' => array(
-					array(
-						'field'     => 'attendee_cannot_reschedule',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'cannot_reschedule_time',
-						'condition' => '==',
-						'value'     => 'event_start',
-					),
-				),
-			),
-			'cannot_reschedule_time_unit'  => array(
-				'label'      => __( 'Cannot Reschedule Time Unit', 'quillbooking' ),
-				'type'       => 'select',
-				'default'    => 'hours',
-				'options'    => array(
-					'minutes' => __( 'Minutes', 'quillbooking' ),
-					'hours'   => __( 'Hours', 'quillbooking' ),
-					'days'    => __( 'Days', 'quillbooking' ),
-				),
-				'conditions' => array(
-					array(
-						'field'     => 'attendee_cannot_reschedule',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'cannot_reschedule_time',
-						'condition' => '==',
-						'value'     => 'event_start',
-					),
-				),
-			),
-			'event_slug'                   => array(
-				'label'   => __( 'Event Slug', 'quillbooking' ),
-				'type'    => 'text',
-				'default' => '',
-			),
-		);
-	}
-
-	/**
 	 * Get default booking advanced settings values
 	 *
 	 * @since 1.0.0
@@ -1183,144 +713,29 @@ class Event_Fields {
 	 * @return array
 	 */
 	public function get_default_advanced_settings() {
-		$settings = $this->get_advanced_settings();
-		$values   = array();
-
-		foreach ( $settings as $field => $data ) {
-			$values[ $field ] = $data['default'];
-		}
-
-		return $values;
-	}
-
-	/**
-	 * Get payment settings.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return array
-	 */
-	public function get_payments_settings() {
 		return array(
-			'enable_payment' => array(
-				'label'   => __( 'Enable Payment', 'quillbooking' ),
-				'type'    => 'checkbox',
-				'default' => false,
-			),
-			'type'           => array(
-				'label'      => __( 'Payment Type', 'quillbooking' ),
-				'type'       => 'select',
-				'default'    => 'native',
-				'options'    => array(
-					'native' => __( 'Native QuillForms Payment', 'quillbooking' ),
-					'woo'    => __( 'WooCommerce', 'quillbooking' ),
-				),
-				'conditions' => array(
-					array(
-						'field'     => 'enable_payment',
-						'condition' => '==',
-						'value'     => true,
-					),
-				),
-			),
-			'woo_product'    => array(
-				'label'      => __( 'WooCommerce Product', 'quillbooking' ),
-				'type'       => 'select',
-				'default'    => '',
-				'options'    => array(),
-				'conditions' => array(
-					array(
-						'field'     => 'enable_payment',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'type',
-						'condition' => '==',
-						'value'     => 'woo',
-					),
-				),
-			),
-			'enable_paypal'  => array(
-				'label'      => __( 'Enable PayPal', 'quillbooking' ),
-				'type'       => 'checkbox',
-				'default'    => false,
-				'conditions' => array(
-					array(
-						'field'     => 'enable_payment',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'type',
-						'condition' => '==',
-						'value'     => 'native',
-					),
-				),
-			),
-			'enable_stripe'  => array(
-				'label'      => __( 'Enable Stripe', 'quillbooking' ),
-				'type'       => 'checkbox',
-				'default'    => false,
-				'conditions' => array(
-					array(
-						'field'     => 'enable_payment',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'type',
-						'condition' => '==',
-						'value'     => 'native',
-					),
-				),
-			),
-			'items'          => array(
-				'label'      => __( 'Items', 'quillbooking' ),
-				'type'       => 'repeater',
-				'default'    => array(
-					array(
-						'item'  => 'Booking',
-						'price' => 100,
-					),
-				),
-				'fields'     => array(
-					'item'  => array(
-						'label' => __( 'Item', 'quillbooking' ),
-						'type'  => 'text',
-					),
-					'price' => array(
-						'label' => __( 'Price', 'quillbooking' ),
-						'type'  => 'number',
-					),
-				),
-				'conditions' => array(
-					array(
-						'field'     => 'enable_payment',
-						'condition' => '==',
-						'value'     => true,
-					),
-					array(
-						'field'     => 'type',
-						'condition' => '==',
-						'value'     => 'native',
-					),
-				),
-			),
-			'currency'       => array(
-				'label'      => __( 'Currency', 'quillbooking' ),
-				'type'       => 'text',
-				'default'    => 'USD',
-				'conditions' => array(
-					array(
-						'field'     => 'enable_payment',
-						'condition' => '==',
-						'value'     => true,
-					),
-				),
-			),
+			'submit_button_text'           => __( 'Submit Booking', 'quillbooking' ),
+			'redirect_after_submit'        => '',
+			'redirect_url'                 => '',
+			'require_confirmation'         => false,
+			'confirmation_time'            => 'always',
+			'confirmation_time_value'      => 24,
+			'confirmation_time_unit'       => 'hours',
+			'allow_multiple_bookings'      => false,
+			'maximum_bookings'             => 1,
+			'attendee_cannot_cancel'       => false,
+			'cannot_canel_time'            => 'event_start',
+			'cannot_cancel_time_value'     => 24,
+			'cannot_cancel_time_unit'      => 'hours',
+			'attendee_cannot_reschedule'   => false,
+			'cannot_reschedule_time'       => 'event_start',
+			'cannot_reschedule_time_value' => 24,
+			'cannot_reschedule_time_unit'  => 'hours',
+			'event_slug'                   => '',
 		);
 	}
+
+
 
 	/**
 	 * Get default payment settings values
@@ -1330,14 +745,20 @@ class Event_Fields {
 	 * @return array
 	 */
 	public function get_default_payments_settings() {
-		$settings = $this->get_payments_settings();
-		$values   = array();
-
-		foreach ( $settings as $field => $data ) {
-			$values[ $field ] = $data['default'];
-		}
-
-		return $values;
+		return array(
+			'enable_payment' => false,
+			'type'           => 'native',
+			'woo_product'    => '',
+			'enable_paypal'  => false,
+			'enable_stripe'  => false,
+			'items'          => array(
+				array(
+					'item'  => 'Booking',
+					'price' => 100,
+				),
+			),
+			'currency'       => 'USD',
+		);
 	}
 
 	/**

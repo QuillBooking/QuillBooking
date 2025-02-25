@@ -21,7 +21,7 @@ import Home from '../pages/home';
 import Calendars from '../pages/calendars';
 import Calendar from '../pages/calendar';
 import Availability from '../pages/availability';
-import AvailabilityDetails from '../pages/availabilityDetails';
+import AvailabilityDetails from '../pages/availability-details';
 import CreateEvent from '../pages/create-event';
 
 export const Controller = ({ page }) => {

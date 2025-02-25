@@ -131,14 +131,25 @@ const EventFieldsTab: React.FC = () => {
         setIsAddFieldModalVisible(false);
     };
 
-    const removeField = (fieldKey: string, group: 'system' | 'location' | 'custom') => {
-        setFields((prevFields) => {
-            if (!prevFields) {
-                return { system: {}, location: {}, custom: {} };
-            }
-            const updatedFields = { ...prevFields };
-            delete updatedFields[group][fieldKey];
-            return updatedFields;
+    const removeField = async (fieldKey: string, group: 'system' | 'location' | 'custom') => {
+        if (!event || !fields) return;
+        
+        const updatedFields = { ...fields };
+        delete updatedFields[group][fieldKey];
+        
+        await saveApi({
+            path: `events/${event.id}`,
+            method: 'POST',
+            data: {
+                fields: updatedFields,
+            },
+            onSuccess() {
+                setFields(updatedFields);
+                successNotice(__('Field deleted successfully', 'quillbooking'));
+            },
+            onError(error) {
+                errorNotice(error.message);
+            },
         });
     };
 
@@ -216,9 +227,14 @@ const EventFieldsTab: React.FC = () => {
                                     {__('Edit', 'quillbooking')}
                                 </Button>
                                 {allFields[fieldKey].group === 'custom' && (
-                                    <Button danger onClick={() => removeField(fieldKey, 'custom')}>
-                                        {__('Remove', 'quillbooking')}
-                                    </Button>
+                                    <Popconfirm
+                                        title={__('Are you sure to delete this field?', 'quillbooking')}
+                                        onConfirm={() => removeField(fieldKey, allFields[fieldKey].group as 'system' | 'location' | 'custom')}
+                                        okText={__('Yes', 'quillbooking')}
+                                        cancelText={__('No', 'quillbooking')}
+                                    >
+                                        <Button danger>{__('Delete', 'quillbooking')}</Button>
+                                    </Popconfirm>
                                 )}
                             </Flex>
                         </List.Item>

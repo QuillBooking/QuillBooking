@@ -41,10 +41,7 @@ const AvailabilityList: React.FC<AvailabilityListProps> = ({ isFiltered }) => {
 	// Fetch availabilities when the component mounts or isFiltered changes.
 	const fetchAvailabilities = useCallback(async () => {
 		callApi({
-			path: addQueryArgs(
-				'availabilities',
-			{ filter: isFiltered ? { 'filter[user]': 'all' } : undefined }
-			),
+			path: addQueryArgs({ filter: isFiltered ? { 'filter[user]': 'all' } : undefined }),
 			method: 'GET',
 			onSuccess: (data) => {
 				setAvailabilities(data);

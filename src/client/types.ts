@@ -34,7 +34,7 @@ export type Calendar = {
 		calendar_id: number;
 		name: string;
 		duration: number;
-		type: 'one-to-one' | 'group' | 'round-robin';
+		type: EventTypes;
 		slug: string;
 	}[];
 	created_at: string;
@@ -54,7 +54,7 @@ export type Event = {
 	description: string | null;
 	slug: string;
 	status: 'active' | 'inactive' | 'deleted';
-	type: 'one-to-one' | 'group' | 'round-robin';
+	type: EventTypes;
 	duration: number;
 	color: string;
 	visibility: 'public' | 'private';
@@ -183,3 +183,45 @@ export type NotificationType = {
 	};
 	times?: Array<{ unit: string; value: number }>;
 };
+
+export type BookingsTabsTypes =
+	| 'Upcoming'
+	| 'Completed'
+	| 'Pending'
+	| 'LatestBookings'
+	| 'All';
+
+export type EventTypes = 'one-to-one' | 'group' | 'round-robin';
+
+export type EventTypesOptions =
+	| 'All Event Types'
+	| 'One to One'
+	| 'Group'
+	| 'Round Robin';
+
+export type GeneralOptions = { value: string; label: string };
+
+export interface BookingResponse {
+	id: number;
+	hash_id: string;
+	event_id: number;
+	calendar_id: number;
+	guest_id: number;
+	start_time: string;
+	end_time: string;
+	slot_time: number;
+	source: string;
+	status: 'scheduled' | 'cancelled' | 'completed';
+	cancelled_by: string | null;
+	event_url: string;
+	created_at: string;
+	updated_at: string;
+	timezone: string;
+	fields: any | null;
+	location: string;
+	event: Event;
+};
+
+export interface Booking extends BookingResponse {
+	time_span: string;
+}

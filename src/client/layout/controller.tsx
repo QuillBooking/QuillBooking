@@ -23,6 +23,7 @@ import Calendar from '../pages/calendar';
 import Availability from '../pages/availability';
 import AvailabilityDetails from '../pages/availability-details';
 import CreateEvent from '../pages/create-event';
+import Bookings from '../pages/bookings';
 
 export const Controller = ({ page }) => {
 	useEffect(() => {
@@ -76,3 +77,9 @@ registerAdminPage('create-event', {
 	component: () => <CreateEvent />,
 	label: __('Create Event', 'quillbooking'),
 });
+
+registerAdminPage('bookings', {
+	path: 'bookings',
+	component: () => <Bookings />,
+	label: __('Bookings', 'quillbooking'),
+})

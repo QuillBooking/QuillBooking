@@ -72,9 +72,10 @@ class Event_Fields {
 	 */
 	public function get_default_additional_settings( $event_type ) {
 		$values = array(
-			'duration' => array(
-				'allow_attendees_to_select_duration' => false,
-				'duration'                           => 60,
+			'allow_attendees_to_select_duration' => false,
+			'default_duration'                   => '',
+			'selectable_durations'               => array(
+				15,
 			),
 		);
 
@@ -715,7 +716,7 @@ class Event_Fields {
 	public function get_default_advanced_settings() {
 		return array(
 			'submit_button_text'           => __( 'Submit Booking', 'quillbooking' ),
-			'redirect_after_submit'        => '',
+			'redirect_after_submit'        => false,
 			'redirect_url'                 => '',
 			'require_confirmation'         => false,
 			'confirmation_time'            => 'always',
@@ -727,10 +728,12 @@ class Event_Fields {
 			'cannot_canel_time'            => 'event_start',
 			'cannot_cancel_time_value'     => 24,
 			'cannot_cancel_time_unit'      => 'hours',
+			'permission_denied_message'    => __( 'You do not have permission to view this page.', 'quillbooking' ),
 			'attendee_cannot_reschedule'   => false,
 			'cannot_reschedule_time'       => 'event_start',
 			'cannot_reschedule_time_value' => 24,
 			'cannot_reschedule_time_unit'  => 'hours',
+			'reschedule_denied_message'    => __( 'You do not have permission to view this page.', 'quillbooking' ),
 			'event_slug'                   => '',
 		);
 	}
@@ -746,18 +749,20 @@ class Event_Fields {
 	 */
 	public function get_default_payments_settings() {
 		return array(
-			'enable_payment' => false,
-			'type'           => 'native',
-			'woo_product'    => '',
-			'enable_paypal'  => false,
-			'enable_stripe'  => false,
-			'items'          => array(
+			'enable_payment'                 => false,
+			'type'                           => 'native',
+			'enable_items_based_on_duration' => false,
+			'woo_product'                    => '',
+			'enable_paypal'                  => false,
+			'enable_stripe'                  => false,
+			'items'                          => array(
 				array(
 					'item'  => 'Booking',
 					'price' => 100,
 				),
 			),
-			'currency'       => 'USD',
+			'multi_duration_items'           => array(),
+			'currency'                       => 'USD',
 		);
 	}
 

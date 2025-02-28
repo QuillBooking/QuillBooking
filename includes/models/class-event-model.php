@@ -116,6 +116,7 @@ class Event_Model extends Model {
 	protected $appends = array(
 		'dynamic_duration',
 		'location',
+		'additional_settings',
 	);
 
 	/**

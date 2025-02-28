@@ -55,6 +55,7 @@ const EventFieldsTab: React.FC = () => {
     const { state: event } = useEventContext();
     const { callApi, loading } = useApi();
     const { callApi: saveApi, loading: saveLoading } = useApi();
+    const { callApi: deleteApi} = useApi();
     const { successNotice, errorNotice } = useNotice();
     const [fields, setFields] = useState<Fields | null>(null);
     const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
@@ -137,7 +138,7 @@ const EventFieldsTab: React.FC = () => {
         const updatedFields = { ...fields };
         delete updatedFields[group][fieldKey];
         
-        await saveApi({
+        await deleteApi({
             path: `events/${event.id}`,
             method: 'POST',
             data: {

@@ -67,9 +67,10 @@ export type Event = {
 };
 
 export type AdditionalSettings = {
-	allow_attendees_to_select_duration?: boolean;
-	duration?: number;
-	allow_additional_guests?: boolean;
+	allow_attendees_to_select_duration: boolean;
+	default_duration: number;
+	selectable_durations: number[];
+	allow_additional_guests: boolean;
 	max_invitees: number;
 	show_remaining: boolean;
 };

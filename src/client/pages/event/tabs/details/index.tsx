@@ -7,7 +7,7 @@ import { useEffect, useState } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Typography, Input, Select, InputNumber, Skeleton } from 'antd';
+import { Card, Flex, Button, Typography, Input, Select, InputNumber, Skeleton, Switch } from 'antd';
 
 /**
  * Internal dependencies
@@ -17,6 +17,7 @@ import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import ColorSelector from './color-selector';
 import Locations from './locations';
+import { get } from 'lodash';
 
 /**
  * Event General Settings Component.
@@ -27,7 +28,6 @@ const EventDetails: React.FC = () => {
     const { successNotice, errorNotice } = useNotice();
     const setBreadcrumbs = useBreadcrumbs();
     const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset');
-
 
     useEffect(() => {
         if (!event) {
@@ -68,6 +68,16 @@ const EventDetails: React.FC = () => {
         actions.setEvent({ ...event, [key]: value });
     };
 
+    const handleAdditionalSettingsChange = (key: string, value: any) => {
+        actions.setEvent({
+            ...event,
+            additional_settings: {
+                ...event.additional_settings,
+                [key]: value,
+            },
+        });
+    };
+
     const validate = () => {
         if (!event.name) {
             errorNotice(__('Please enter a name for the event.', 'quillbooking'));
@@ -82,13 +92,10 @@ const EventDetails: React.FC = () => {
         return true;
     };
 
-    const durationOptions = [
-        { value: 15, label: '15' },
-        { value: 30, label: '30' },
-        { value: 45, label: '45' },
-        { value: 60, label: '60' },
-        { value: 'custom', label: __('Custom', 'quillbooking') },
-    ];
+    const durationOptions = Array.from({ length: 96 }, (_, i) => ({
+        value: (i + 1) * 5,
+        label: `${(i + 1) * 5} minutes`,
+    }));
 
     const handleDurationChange = (value: number | string) => {
         if (value === 'custom') {
@@ -97,6 +104,15 @@ const EventDetails: React.FC = () => {
             setDurationMode('preset');
             handleChange('duration', value);
         }
+    };
+
+    const getDefaultDurationOptions = () => {
+        const options = get(event, 'additional_settings.selectable_durations') ? get(event, 'additional_settings.selectable_durations').map((duration) => ({
+            value: duration,
+            label: `${duration} minutes`,
+        })) : [];
+
+        return options;
     };
 
     return (
@@ -146,17 +162,57 @@ const EventDetails: React.FC = () => {
                 <Card>
                     <Flex gap={20} vertical>
                         <FieldWrapper
-                            label={__('Event Duration', 'quillbooking')}
-                            description={__('The duration of the event in minutes', 'quillbooking')}
-                            style={{ flex: 1 }}
+                            label={__('Allow Attendees to Select Duration', 'quillbooking')}
+                            description={__('Allow attendees to select the duration of the event', 'quillbooking')}
+                            type="horizontal"
                         >
-                            <Select
-                                options={durationOptions}
-                                value={durationMode === 'custom' ? 'custom' : event.duration}
-                                onChange={handleDurationChange}
+                            <Switch
+                                checked={event.additional_settings.allow_attendees_to_select_duration}
+                                onChange={(checked) => {
+                                    handleAdditionalSettingsChange('allow_attendees_to_select_duration', checked);
+                                }}
                             />
                         </FieldWrapper>
-                        {durationMode === 'custom' && (
+                        {event.additional_settings.allow_attendees_to_select_duration ? (
+                            <>
+                                <FieldWrapper
+                                    label={__('Selectable Durations', 'quillbooking')}
+                                    description={__('Select the durations that attendees can choose from', 'quillbooking')}
+                                    style={{ flex: 1 }}
+                                >
+                                    <Select
+                                        mode="multiple"
+                                        options={durationOptions}
+                                        value={event.additional_settings.selectable_durations}
+                                        onChange={(values) => handleAdditionalSettingsChange('selectable_durations', values)}
+                                    />
+                                </FieldWrapper>
+                                <FieldWrapper
+                                    label={__('Default Duration', 'quillbooking')}
+                                    description={__('The default duration for the event', 'quillbooking')}
+                                    style={{ flex: 1 }}
+                                >
+                                    <Select
+                                        options={getDefaultDurationOptions()}
+                                        value={event.additional_settings.default_duration}
+                                        onChange={(value) => handleAdditionalSettingsChange('default_duration', value)}
+                                    />
+                                </FieldWrapper>
+                            </>
+                        ) : (
+                            <FieldWrapper
+                                label={__('Event Duration', 'quillbooking')}
+                                description={__('The duration of the event in minutes', 'quillbooking')}
+                                style={{ flex: 1 }}
+                            >
+                                <Select
+                                    options={durationOptions}
+                                    value={durationMode === 'custom' ? 'custom' : event.duration}
+                                    onChange={handleDurationChange}
+                                />
+                            </FieldWrapper>
+                        )}
+                        {durationMode === 'custom' && !event.additional_settings.allow_attendees_to_select_duration && (
                             <FieldWrapper
                                 label={__('Custom Duration', 'quillbooking')}
                                 description={__('Enter a custom duration in minutes', 'quillbooking')}

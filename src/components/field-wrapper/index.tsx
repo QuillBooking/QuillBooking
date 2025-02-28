@@ -11,7 +11,7 @@ import { Typography, Flex } from 'antd';
 const { Text } = Typography;
 
 interface FieldWrapperProps {
-    label: string;
+    label?: string;
     description?: string;
     children: React.ReactNode;
     style?: React.CSSProperties;
@@ -35,7 +35,7 @@ const FieldWrapper: React.FC<FieldWrapperProps> = ({ label, description, childre
             style={style}
         >
             <Flex vertical gap={5}>
-                <Text>{label}</Text>
+                {label && <Text>{label}</Text>}
                 {type === 'horizontal' && <DescriptionText text={description} />}
             </Flex>
             {children}

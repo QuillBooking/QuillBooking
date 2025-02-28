@@ -76,7 +76,7 @@ class Integration extends Abstract_Integration {
 	 */
 	public function __construct() {
 		parent::__construct();
-		new Notifications( $this );
+		// new Notifications( $this );
 	}
 
 	/**

@@ -16,6 +16,7 @@ import { FieldWrapper, TimezoneSelect } from '@quillbooking/components';
 import { Availability } from 'client/types';
 import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
+
 interface AddAvailabilityModalProps {
 	open: boolean;
 	onClose: () => void;

@@ -217,11 +217,15 @@ class REST_Booking_Controller extends REST_Controller {
 	 */
 	public function get_items( $request ) {
 		try {
-			$page     = $request->get_param( 'page' ) ? $request->get_param( 'page' ) : 1;
-			$per_page = $request->get_param( 'per_page' ) ? $request->get_param( 'per_page' ) : 10;
-			$keyword  = $request->get_param( 'keyword' ) ? $request->get_param( 'keyword' ) : '';
-			$filter   = $request->get_param( 'filter' ) ? $request->get_param( 'filter' ) : array();
-			$user     = Arr::get( $filter, 'user' ) ? Arr::get( $filter, 'user' ) : 'own';
+			$page       = $request->get_param( 'page' ) ? $request->get_param( 'page' ) : 1;
+			$per_page   = $request->get_param( 'per_page' ) ? $request->get_param( 'per_page' ) : 10;
+			$keyword    = $request->get_param( 'keyword' ) ? $request->get_param( 'keyword' ) : '';
+			$filter     = $request->get_param( 'filter' ) ? $request->get_param( 'filter' ) : array();
+			$user       = Arr::get( $filter, 'user' ) ? Arr::get( $filter, 'user' ) : 'own';
+			$period     = Arr::get( $filter, 'period' ) ? Arr::get( $filter, 'period' ) : 'all';
+			$event      = Arr::get( $filter, 'event' ) ? Arr::get( $filter, 'event' ) : 'all';
+			$event_type = Arr::get( $filter, 'event_type' ) ? Arr::get( $filter, 'event_type' ) : 'all';
+			$search     = Arr::get( $filter, 'search' ) ? Arr::get( $filter, 'search' ) : '';
 
 			if ( 'own' === $user ) {
 				$user = get_current_user_id();
@@ -244,6 +248,58 @@ class REST_Booking_Controller extends REST_Controller {
 
 			if ( ! empty( $keyword ) ) {
 				$query->where( 'name', 'LIKE', '%' . $keyword . '%' );
+			}
+
+			// Filter by period
+			if ( 'all' !== $period ) {
+				if ( 'latest' === $period ) {
+					$query->orderBy( 'created_at', 'desc' );
+				}
+
+				if ( 'upcoming' === $period ) {
+					$query->where( 'start_time', '>', date( 'Y-m-d H:i:s' ) )->orderBy( 'start_time' );
+				}
+
+				if ( 'pending' === $period ) {
+					$query->where( 'status', 'pending' );
+				}
+
+				if ( 'completed' === $period ) {
+					$query->where( 'status', 'completed' );
+				}
+			} else {
+				$query->orderBy( 'start_time' );
+			}
+
+			// Get the count of pending bookings
+			// $pending_count = $query->where( 'status', 'pending' )->count();
+
+			if ( 'all' !== $user ) {
+				// Filter by event type
+				if ( 'all' !== $event_type ) {
+					$query->whereHas(
+						'event',
+						function ( $query ) use ( $event_type ) {
+							$query->where( 'type', $event_type );
+						}
+					);
+				}
+
+				// Filter by event
+				if ( 'all' !== $event ) {
+					$query->where( 'event_id', $event );
+				}
+			}
+
+			// search by event name or email
+			if ( ! empty( $search ) ) {
+				$query->whereHas(
+					'guest',
+					function ( $query ) use ( $search ) {
+						$query->where( 'name', 'LIKE', '%' . $search . '%' )
+							->orWhere( 'email', 'LIKE', '%' . $search . '%' );
+					}
+				);
 			}
 
 			$bookings = $query->with( 'event', 'event.calendar' )->paginate( $per_page, array( '*' ), 'page', $page );
@@ -351,6 +407,7 @@ class REST_Booking_Controller extends REST_Controller {
 	 */
 	protected function book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $guest_data, $additional_guests ) {
 		$guest = Guest_Model::create( $guest_data );
+
 		if ( ! $guest ) {
 			throw new \Exception( __( 'Failed to create guest', 'quillbooking' ) );
 		}
@@ -369,13 +426,13 @@ class REST_Booking_Controller extends REST_Controller {
 		$booking->event_url   = home_url();
 		$booking->source      = 'event-page';
 		$booking->slot_time   = $duration;
+		$booking->guest_id    = $guest->id;
 		$booking->save();
 
 		if ( ! $booking->id ) {
 			throw new \Exception( __( 'Failed to book', 'quillbooking' ) );
 		}
 
-		$booking->guest_id = $guest->id;
 		$booking->timezone = $timezone;
 		if ( ! $booking->save() ) {
 			$guest->delete();

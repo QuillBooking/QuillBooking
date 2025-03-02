@@ -186,11 +186,11 @@ export type NotificationType = {
 };
 
 export type BookingsTabsTypes =
-	| 'Upcoming'
-	| 'Completed'
-	| 'Pending'
-	| 'LatestBookings'
-	| 'All';
+	| 'upcoming'
+	| 'completed'
+	| 'pending'
+	| 'latest'
+	| 'all';
 
 export type EventTypes = 'one-to-one' | 'group' | 'round-robin';
 

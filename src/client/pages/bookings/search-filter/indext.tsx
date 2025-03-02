@@ -9,7 +9,12 @@ import { useEffect, useState } from '@wordpress/element';
  * Internal dependencies
  */
 import './style.scss';
-import { Event, EventTypes, EventTypesOptions, GeneralOptions } from 'client/types';
+import {
+	Event,
+	EventTypes,
+	EventTypesOptions,
+	GeneralOptions,
+} from 'client/types';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { __ } from '@wordpress/i18n';
 
@@ -30,10 +35,22 @@ const eventTypesOptions: EventTypesSelect = [
 
 const { Search } = Input;
 type SearchFilterProps = {
-	events:GeneralOptions[];
+	events: GeneralOptions[];
+	author: string;
+	handleSearch: (val: string) => void;
+	setEventType: (val: string) => void;
+	setEvent: (val: string | number) => void;
+	setAuthor: (val: string) => void;
 };
 
-const SearchFilter: React.FC<SearchFilterProps> = ({ events }) => {
+const SearchFilter: React.FC<SearchFilterProps> = ({
+	events,
+	author,
+	setAuthor,
+	setEvent,
+	setEventType,
+	handleSearch,
+}) => {
 	return (
 		<Flex gap={10}>
 			<Search
@@ -42,30 +59,34 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ events }) => {
 				allowClear
 				enterButton="Search"
 				size="middle"
-				// onSearch={onSearch}
+				onSearch={(val) => handleSearch(val)}
 				style={{ width: 250 }}
 			/>
 
-			<Select
-				defaultValue="all"
-				style={{ width: 150 }}
-				// onChange={handleChange}
-				options={eventTypesOptions}
-			/>
+			{author === 'own' && (
+				<>
+					<Select
+						defaultValue="all"
+						style={{ width: 150 }}
+						onChange={(val) => setEventType(val)}
+						options={eventTypesOptions}
+					/>
 
+					<Select
+						defaultValue="all"
+						style={{ width: 150 }}
+						onChange={(val) => setEvent(val)}
+						options={events}
+					/>
+				</>
+			)}
 			<Select
-				defaultValue="all"
+				defaultValue="own"
 				style={{ width: 150 }}
-				// onChange={handleChange}
-				options={events}
-			/>
-			<Select
-				defaultValue="all"
-				style={{ width: 150 }}
-				// onChange={handleChange}
+				onChange={(val) => setAuthor(val)}
 				options={[
 					{ value: 'all', label: 'All Meetings' },
-					{ value: 'myMeetings', label: 'My Meetings' },
+					{ value: 'own', label: 'My Meetings' },
 				]}
 			/>
 		</Flex>

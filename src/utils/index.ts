@@ -40,24 +40,36 @@ export const convertTimezone = (
 	};
 };
 
-
-
 export const groupBookingsByDate = (bookings: Booking[]) => {
 	return bookings.reduce<Record<string, Booking[]>>((groups, booking) => {
+		const currentTimezone = getCurrentTimezone();
 		// Convert booking.start_time into a Date object in the current timezone.
-		const {date, time: startTime} = convertTimezone(
+		const { date, time: startTime } = convertTimezone(
 			booking.start_time,
 			booking.timezone,
-			getCurrentTimezone()
+			currentTimezone
 		);
 
-		const {time: endTime} = convertTimezone(
+		const { time: endTime } = convertTimezone(
 			booking.end_time,
 			booking.timezone,
-			getCurrentTimezone()
+			currentTimezone
 		);
 
-		booking.time_span = `${startTime} - ${endTime}`;
+		// Format startTime and endTime to 12-hour format with AM/PM
+		const formattedStartTime = format(
+			new Date(`1970-01-01T${startTime}:00`),
+			'hh:mm a'
+		);
+		const formattedEndTime = format(
+			new Date(`1970-01-01T${endTime}:00`),
+			'hh:mm a'
+		);
+
+		const bookingWithTimeSpan = {
+			...booking,
+			time_span: `${formattedStartTime.toLowerCase()} - ${formattedEndTime.toLowerCase()}`,
+		};
 
 		let groupKey: string;
 
@@ -70,10 +82,9 @@ export const groupBookingsByDate = (bookings: Booking[]) => {
 		}
 
 		// Initialize the group if it doesn't exist
-		if (!groups[groupKey]) {
-			groups[groupKey] = [];
-		}
-		groups[groupKey].push(booking);
+		groups[groupKey] = groups[groupKey] || [];
+
+		groups[groupKey].push(bookingWithTimeSpan);
 		return groups;
 	}, {});
 };

@@ -37,6 +37,8 @@ const { Search } = Input;
 type SearchFilterProps = {
 	events: GeneralOptions[];
 	author: string;
+	event: string | number;
+	eventType: string;
 	handleSearch: (val: string) => void;
 	setEventType: (val: string) => void;
 	setEvent: (val: string | number) => void;
@@ -46,6 +48,8 @@ type SearchFilterProps = {
 const SearchFilter: React.FC<SearchFilterProps> = ({
 	events,
 	author,
+	event,
+	eventType,
 	setAuthor,
 	setEvent,
 	setEventType,
@@ -66,14 +70,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 			{author === 'own' && (
 				<>
 					<Select
-						defaultValue="all"
+						defaultValue={eventType}
 						style={{ width: 150 }}
 						onChange={(val) => setEventType(val)}
 						options={eventTypesOptions}
 					/>
 
 					<Select
-						defaultValue="all"
+						defaultValue={event}
 						style={{ width: 150 }}
 						onChange={(val) => setEvent(val)}
 						options={events}
@@ -81,7 +85,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 				</>
 			)}
 			<Select
-				defaultValue="own"
+				defaultValue={author}
 				style={{ width: 150 }}
 				onChange={(val) => setAuthor(val)}
 				options={[

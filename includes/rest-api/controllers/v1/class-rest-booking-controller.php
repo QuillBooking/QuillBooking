@@ -250,6 +250,10 @@ class REST_Booking_Controller extends REST_Controller {
 				$query->where( 'name', 'LIKE', '%' . $keyword . '%' );
 			}
 
+			// Clone the query here to get the count of pending bookings
+			$pending_count   = ( clone $query )->where( 'status', 'pending' )->count();
+			$cancelled_count = ( clone $query )->where( 'status', 'cancelled' )->count();
+
 			// Filter by period
 			if ( 'all' !== $period ) {
 				if ( 'latest' === $period ) {
@@ -267,12 +271,13 @@ class REST_Booking_Controller extends REST_Controller {
 				if ( 'completed' === $period ) {
 					$query->where( 'status', 'completed' );
 				}
+
+				if ( 'cancelled' === $period ) {
+					$query->where( 'status', 'cancelled' );
+				}
 			} else {
 				$query->orderBy( 'start_time' );
 			}
-
-			// Get the count of pending bookings
-			// $pending_count = $query->where( 'status', 'pending' )->count();
 
 			if ( 'all' !== $user ) {
 				// Filter by event type
@@ -304,7 +309,15 @@ class REST_Booking_Controller extends REST_Controller {
 
 			$bookings = $query->with( 'event', 'event.calendar' )->paginate( $per_page, array( '*' ), 'page', $page );
 
-			return $bookings;
+			return new WP_REST_Response(
+				array(
+					'bookings'        => $bookings,
+					'pending_count'   => $pending_count,
+					'cancelled_count' => $cancelled_count,
+				),
+				200
+			);
+
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
 		}

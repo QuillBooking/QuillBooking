@@ -12,7 +12,6 @@ import { addQueryArgs } from '@wordpress/url';
 import { Button, Flex, Input, Modal, Popover, Typography } from 'antd';
 import { filter } from 'lodash';
 
-
 /**
  * Internal dependencies
  */
@@ -40,6 +39,8 @@ const Bookings: React.FC = () => {
 	const [event, setEvent] = useState<string | number>('all');
 	const [eventType, setEventType] = useState<string>('all');
 	const [pendingBookingCount, setPendingBookingCount] = useState<number>(0);
+	const [cancelledBookingCount, setCancelledBookingCount] =
+		useState<number>(0);
 
 	const [bookings, setBookings] = useState<Record<string, Booking[]>>({});
 	const [eventsOptions, setEventsOptions] = useState<GeneralOptions[]>([
@@ -80,11 +81,9 @@ const Bookings: React.FC = () => {
 			}),
 			method: 'GET',
 			onSuccess: (res) => {
-				const bookings = groupBookingsByDate(res.data);
-				const pendingCount = filter(res.data, {
-					status: 'pending',
-				}).length;
-				setPendingBookingCount(pendingCount);
+				const bookings = groupBookingsByDate(res.bookings.data);
+				setPendingBookingCount(res.pending_count);
+				setCancelledBookingCount(res.cancelled_count);
 				setBookings(bookings);
 			},
 			onError: () => {
@@ -115,8 +114,11 @@ const Bookings: React.FC = () => {
 				<BookingsTabs
 					setPeriod={setPeriod}
 					pendingCount={pendingBookingCount}
+					cancelled={cancelledBookingCount}
 				/>
 				<SearchFilter
+					event={event}
+					eventType={eventType}
 					author={author}
 					events={eventsOptions}
 					setAuthor={setAuthor}
@@ -126,7 +128,7 @@ const Bookings: React.FC = () => {
 				/>
 			</Flex>
 
-			<BookingList bookings={bookings} period={period}/>
+			<BookingList bookings={bookings} period={period} />
 		</>
 	);
 };

@@ -190,6 +190,7 @@ export type BookingsTabsTypes =
 	| 'completed'
 	| 'pending'
 	| 'latest'
+	| 'cancelled'
 	| 'all';
 
 export type EventTypes = 'one-to-one' | 'group' | 'round-robin';
@@ -221,7 +222,7 @@ export interface BookingResponse {
 	fields: any | null;
 	location: string;
 	event: Event;
-};
+}
 
 export interface Booking extends BookingResponse {
 	time_span: string;

@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { Button, Col, Divider, List, Row, Space, Tag, Typography } from 'antd';
+import { Button, Col, List, Row, Space, Tag, Typography } from 'antd';
 
 /**
  * Internal dependencies

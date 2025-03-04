@@ -3,27 +3,23 @@
  */
 import { __ } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
-import { PlusOutlined } from '@ant-design/icons';
 import { addQueryArgs } from '@wordpress/url';
 
 /**
  * External dependencies
  */
-import { Button, Flex, Input, Modal, Popover, Typography } from 'antd';
-import { filter } from 'lodash';
+import { Flex } from 'antd';
 
 /**
  * Internal dependencies
  */
-import { FieldWrapper, TimezoneSelect } from '@quillbooking/components';
 import {
-	Availability,
 	Booking,
 	BookingsTabsTypes,
 	Event,
 	GeneralOptions,
 } from 'client/types';
-import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
+import { useApi, useNotice } from '@quillbooking/hooks';
 import BookingsHeader from './header';
 import BookingsTabs from './tabs';
 import SearchFilter from './search-filter/indext';

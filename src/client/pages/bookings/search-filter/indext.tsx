@@ -1,21 +1,13 @@
 /**
  * External dependencies
  */
-import { AudioOutlined, DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Flex, Input, Select, Space } from 'antd';
-import { useEffect, useState } from '@wordpress/element';
+import { Flex, Input, Select } from 'antd';
 
 /**
  * Internal dependencies
  */
 import './style.scss';
-import {
-	Event,
-	EventTypes,
-	EventTypesOptions,
-	GeneralOptions,
-} from 'client/types';
-import { useApi, useNotice } from '@quillbooking/hooks';
+import { EventTypes, EventTypesOptions, GeneralOptions } from 'client/types';
 import { __ } from '@wordpress/i18n';
 
 /**

@@ -64,8 +64,9 @@ const BookingList: React.FC<BookingListProps> = ({ bookings, period }) => {
 													marginBottom: 4,
 												}}
 											>
-												{booking.event.name ??
-													'Untitled Booking'}
+												{renderBookingDescription(
+													booking
+												)}
 											</div>
 											<Space wrap>
 												<Tag
@@ -116,3 +117,24 @@ function getColorByStatus(status: string) {
 			return 'default';
 	}
 }
+
+const renderBookingDescription = (booking: Booking) => {
+	if (booking.event.type === 'group') {
+		const guestCount = Array.isArray(booking.guest)
+			? booking.guest.length
+			: 1;
+		return (
+			<span>
+				{guestCount} {__('guests with', 'quillbooking')}{' '}
+				{__('as group booking type', 'quillbooking')}
+			</span>
+		);
+	}
+	return (
+		<span>
+			{booking.event.name} {__('meeting between', 'quillbooking')}{' '}
+			{Array.isArray(booking.guest) ? '' : booking.guest?.name}{' '}
+			{__('and', 'quillbooking')} {booking.calendar?.user?.display_name}
+		</span>
+	);
+};

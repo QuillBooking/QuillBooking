@@ -8,3 +8,4 @@ export { default as TextField } from './text-field';
 export { default as OverrideSection } from './override-section';
 export { default as OverrideModal } from './override-modal';
 export { default as ProductSelect } from './product-select';
+export { default as CurrentTimeInTimezone } from './current-time';

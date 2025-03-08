@@ -81,8 +81,8 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 				style={{ width: 150 }}
 				onChange={(val) => setAuthor(val)}
 				options={[
-					{ value: 'all', label: 'All Meetings' },
 					{ value: 'own', label: 'My Meetings' },
+					{ value: 'all', label: 'All Meetings' },
 				]}
 			/>
 		</Flex>

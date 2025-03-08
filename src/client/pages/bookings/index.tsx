@@ -25,11 +25,13 @@ import BookingsTabs from './tabs';
 import SearchFilter from './search-filter/indext';
 import { groupBookingsByDate } from '@quillbooking/utils';
 import BookingList from './booking-list';
+import AddBookingModal from './add-booking-modal';
 
 /**
  * Main Bookings Component.
  */
 const Bookings: React.FC = () => {
+	const [open, setOpen] = useState<boolean>(false);
 	const [period, setPeriod] = useState<BookingsTabsTypes>('all');
 	const [author, setAuthor] = useState<string>('own');
 	const [event, setEvent] = useState<string | number>('all');
@@ -97,14 +99,13 @@ const Bookings: React.FC = () => {
 		fetchBookings();
 	}, []);
 
-	// Refetch bookings whenever any filter value changes.
 	useEffect(() => {
 		fetchBookings();
 	}, [period, author, event, eventType]);
 
 	return (
 		<>
-			<BookingsHeader />
+			<BookingsHeader handleOpen={setOpen}/>
 
 			<Flex justify="space-between" align="middle">
 				<BookingsTabs
@@ -125,6 +126,14 @@ const Bookings: React.FC = () => {
 			</Flex>
 
 			<BookingList bookings={bookings} period={period} />
+
+			{open && (
+				<AddBookingModal
+					open={open}
+					onClose={() => setOpen(false)}
+					onSaved={() => setOpen(false)}
+				/>
+			)}
 		</>
 	);
 };

@@ -39,6 +39,7 @@ export type Calendar = {
 	}[];
 	created_at: string;
 	updated_at: string;
+	user?:User;
 };
 
 export type CalendarResponse = Response & {
@@ -203,6 +204,17 @@ export type EventTypesOptions =
 
 export type GeneralOptions = { value: string; label: string };
 
+export type Guest = {
+	booking_id: number;
+	create_at: string;
+	email: string;
+	id: number;
+	name: string;
+	phone?: string;
+	updated_at: string;
+	user_id: number;
+}
+
 export interface BookingResponse {
 	id: number;
 	hash_id: string;
@@ -226,4 +238,14 @@ export interface BookingResponse {
 
 export interface Booking extends BookingResponse {
 	time_span: string;
+	guest?:  Guest | Guest[];
+	calendar?: Calendar;
+
+}
+
+export type User = {
+	id: number;
+	display_name: string;
+	user_login: string;
+	user_email: string;
 }

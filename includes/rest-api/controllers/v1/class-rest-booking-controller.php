@@ -307,7 +307,7 @@ class REST_Booking_Controller extends REST_Controller {
 				);
 			}
 
-			$bookings = $query->with( 'event', 'event.calendar' )->paginate( $per_page, array( '*' ), 'page', $page );
+			$bookings = $query->with( 'event', 'event.calendar', 'guest', 'calendar.user' )->paginate( $per_page, array( '*' ), 'page', $page );
 
 			return new WP_REST_Response(
 				array(
@@ -521,7 +521,7 @@ class REST_Booking_Controller extends REST_Controller {
 				return new WP_Error( 'rest_booking_error', __( 'Booking not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			$booking->load( 'guest' );
+			$booking->load( 'guest', 'event', 'calendar.user' );
 
 			return new WP_REST_Response( $booking, 200 );
 		} catch ( Exception $e ) {

@@ -24,6 +24,7 @@ import Availability from '../pages/availability';
 import AvailabilityDetails from '../pages/availability-details';
 import CreateEvent from '../pages/create-event';
 import Bookings from '../pages/bookings';
+import BookingDetails from '../pages/booking-details';
 
 export const Controller = ({ page }) => {
 	useEffect(() => {
@@ -83,3 +84,10 @@ registerAdminPage('bookings', {
 	component: () => <Bookings />,
 	label: __('Bookings', 'quillbooking'),
 })
+
+registerAdminPage('booking-details', {
+	path: 'bookings/:id',
+	component: () => <BookingDetails />,
+	label: __('Booking Details', 'quillbooking'),
+	hidden: true,
+});

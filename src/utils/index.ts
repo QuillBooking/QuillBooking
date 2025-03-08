@@ -1,7 +1,8 @@
 import { isToday, isTomorrow } from 'date-fns';
 import { format, fromZonedTime, toZonedTime } from 'date-fns-tz';
 
-import { Booking } from '../client';
+import dayjs, { Dayjs } from 'dayjs';
+import { Booking, EventAvailability, WeeklyHours } from '../client';
 
 export const getCurrentTimeInTimezone = (timezone: string): string => {
 	const options: Intl.DateTimeFormatOptions = {
@@ -87,4 +88,106 @@ export const groupBookingsByDate = (bookings: Booking[]) => {
 		groups[groupKey].push(bookingWithTimeSpan);
 		return groups;
 	}, {});
+};
+
+const DAYS = [
+	'sunday',
+	'monday',
+	'tuesday',
+	'wednesday',
+	'thursday',
+	'friday',
+	'saturday',
+] as const;
+
+type DayKey = (typeof DAYS)[number];
+type TimeSlot = { start: string; end: string };
+
+export const getOffDays = (weeklyHours: WeeklyHours): number[] => {
+	return DAYS.reduce((acc: number[], day: DayKey, index: number) => {
+		if (weeklyHours[day]?.off) {
+			acc.push(index);
+		}
+		return acc;
+	}, []);
+};
+
+export const getDisabledDates = (
+	current: Dayjs,
+	selectedAvailability: EventAvailability | null
+) => {
+	if (!selectedAvailability) return false;
+
+	// Disable based on weekly off days.
+	const offDays = getOffDays(selectedAvailability.availability.weekly_hours);
+
+	const dateKey = current.format('YYYY-MM-DD');
+	const override = selectedAvailability.availability.override?.[dateKey];
+
+	return (
+		offDays.includes(current.day()) ||
+		override?.some((slot) => slot.start === slot.end) ||
+		current.isBefore(dayjs(), 'day')
+	);
+};
+
+export const getTimeSlots = (
+	date: Dayjs,
+	selectedAvailability: EventAvailability | null,
+	duration: number,
+	showAllTimes: boolean = false
+): string[] => {
+	if (duration <= 0) throw new Error('Duration must be positive');
+	if (!selectedAvailability) return [];
+
+	const dateKey = date.format('YYYY-MM-DD');
+	const slots: string[] = [];
+
+	if (showAllTimes) {
+		return generateAllDaySlots(date, duration);
+	}
+
+	const override = selectedAvailability.availability.override?.[dateKey];
+	const daySchedule = getDaySchedule(selectedAvailability, date.day());
+
+	const addSlots = (start: string, end: string) => {
+		let current = dayjs(`${dateKey} ${start}`, 'YYYY-MM-DD HH:mm');
+		const endTime = dayjs(`${dateKey} ${end}`, 'YYYY-MM-DD HH:mm');
+
+		while (current.isBefore(endTime)) {
+			slots.push(current.format('HH:mm'));
+			current = current.add(duration, 'minute');
+		}
+	};
+
+	if (override?.length) {
+		override.forEach(({ start, end }) => addSlots(start, end));
+	} else if (daySchedule?.times?.length) {
+		daySchedule.times.forEach(({ start, end }) => addSlots(start, end));
+	}
+
+	return slots;
+};
+
+const generateAllDaySlots = (date: Dayjs, duration: number): string[] => {
+	const slots: string[] = [];
+	const start = date.startOf('day');
+	const end = date.endOf('day');
+	let current = start;
+
+	while (current.isBefore(end)) {
+		slots.push(current.format('h:mm A'));
+		current = current.add(duration, 'minute');
+
+		// Prevent infinite loop with zero duration
+		if (duration === 0) break;
+	}
+	return slots;
+};
+
+const getDaySchedule = (
+	availability: EventAvailability,
+	dayOfWeek: number
+): { times: TimeSlot[] } | undefined => {
+	return availability.availability.weekly_hours[DAYS[dayOfWeek]];
 };

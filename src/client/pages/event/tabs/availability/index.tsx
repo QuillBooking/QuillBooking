@@ -23,7 +23,7 @@ import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import { RangeSection, AvailabilitySection } from './sections';
-import { OverrideModal, OverrideSection} from '@quillbooking/components';
+import { OverrideModal, OverrideSection } from '@quillbooking/components';
 
 const AvailabilityTab: React.FC = () => {
 	const [range, setRange] = useState<AvailabilityRange | null>(null);
@@ -35,7 +35,7 @@ const AvailabilityTab: React.FC = () => {
 	);
 	const { state: event } = useEventContext();
 	const { callApi, loading } = useApi();
-	const { errorNotice } = useNotice();
+	const { successNotice, errorNotice } = useNotice();
 
 	// State for the date override modal
 	const [isOverrideModalVisible, setIsOverrideModalVisible] = useState(false);
@@ -68,11 +68,28 @@ const AvailabilityTab: React.FC = () => {
 
 	// Handle saving changes
 	const handleSave = () => {
+		if (!event) return;
+
 		const updatedAvailability = {
 			...availability,
 			override: dateOverrides,
 		};
 		console.log(updatedAvailability);
+
+		callApi({
+			path: `events/${event.id}`,
+			method: 'POST',
+			data: {
+				availability: updatedAvailability,
+			},
+			onSuccess() {
+				successNotice(__('Settings saved successfully', 'quillbooking'));
+			},
+			onError(error) {
+				errorNotice(error.message);
+			},
+		});
+
 	};
 
 	// Open the date override modal
@@ -124,8 +141,8 @@ const AvailabilityTab: React.FC = () => {
 							end_date:
 								type === 'date_range'
 									? dayjs()
-											.add(90, 'days')
-											.format('YYYY-MM-DD')
+										.add(90, 'days')
+										.format('YYYY-MM-DD')
 									: undefined,
 						});
 					}}

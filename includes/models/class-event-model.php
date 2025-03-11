@@ -875,6 +875,9 @@ class Event_Model extends Model {
 					$day_start = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
 					$day_end   = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
 
+					$day_start->setTimezone( new \DateTimeZone( $timezone ) );
+					$day_end->setTimezone( new \DateTimeZone( $timezone ) );
+
 					$slots = $this->generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots );
 				}
 			}
@@ -915,10 +918,10 @@ class Event_Model extends Model {
 			if ( $min_notice_limit >= $day_start ) {
 				$day_start = clone $min_notice_limit; // Start from the minimum notice limit
 			}
-		}
 
-		// Check if time like 10:48:12 go to the next valid slot 11:00:00 depending on the duration
-		$day_start->setTime( $day_start->format( 'H' ), ceil( $day_start->format( 'i' ) / $duration ) * $duration, 0 );
+			// Check if time like 10:48:12 go to the next valid slot 11:00:00 depending on the duration
+			$day_start->setTime( $day_start->format( 'H' ), ceil( $day_start->format( 'i' ) / $duration ) * $duration, 0 );
+		}
 
 		$current_slot_start = clone $day_start;
 

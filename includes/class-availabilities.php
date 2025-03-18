@@ -133,6 +133,7 @@ class Availabilities {
 	public static function get_system_availability() {
 		return array(
 			'id'           => 'default',
+			'is_default'   => true,
 			'user_id'      => 'system',
 			'name'         => __( 'Default', 'quill-booking' ),
 			'weekly_hours' => array(

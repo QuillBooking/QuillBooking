@@ -436,17 +436,16 @@ class REST_Event_Controller extends REST_Controller {
 				'color'       => $color,
 				'visibility'  => $visibility,
 			);
+
 			$event_data = array_filter( $event_data );
-
-			$event = Event_Model::create( $event_data );
-
+			$event      = Event_Model::create( $event_data );
 			if ( ! $event->id ) {
 				return new WP_Error( 'rest_event_error', __( 'Event not created', 'quillbooking' ), array( 'status' => 500 ) );
 			}
 
 			$default_availability = Availabilities::get_default_availability( get_current_user_id() );
-
-			if ( !$default_availability) {
+			if ( ! $default_availability ) {
+				$event->delete();
 				return new WP_Error( 'rest_event_error', __( 'Default availability not found', 'quillbooking' ), array( 'status' => 500 ) );
 			}
 

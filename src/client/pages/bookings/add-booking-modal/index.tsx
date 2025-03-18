@@ -22,21 +22,18 @@ import { Dayjs } from 'dayjs';
 /**
  * Internal dependencies
  */
-
 import { TimezoneSelect } from '@quillbooking/components';
-import {
-	getCurrentTimezone,
-	getDisabledDates,
-	getTimeSlots,
-} from '@quillbooking/utils';
-import { Calendar, Event, EventAvailability } from 'client/types';
-import { useApi } from '@quillbooking/hooks';
+import { fetchAjax, getCurrentTimezone, getFields } from '@quillbooking/utils';
+import { Booking, Calendar, Event, EventAvailability } from 'client/types';
+import { useApi, useNotice } from '@quillbooking/hooks';
 import { CurrentTimeInTimezone } from '@quillbooking/components';
+import { DynamicFormField } from '@quillbooking/components';
 
 interface AddBookingModalProps {
 	open: boolean;
 	onClose: () => void;
 	onSaved: () => void;
+	booking?: Booking;
 }
 
 /**
@@ -49,29 +46,25 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	open,
 	onClose,
 	onSaved,
+	booking,
 }) => {
 	const [form] = Form.useForm();
 	const [currentTimezone, setCurrentTimezone] = useState<string | null>(
 		getCurrentTimezone()
 	);
 	const [calendars, setCalendars] = useState<Calendar[]>([]);
+	const [allTimeSlots, setAllTimeSlots] = useState<string[]>([]);
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 	const [selectedAvailability, setSelectedAvailability] =
 		useState<EventAvailability>();
 	const [timeOptions, setTimeOptions] = useState<string[]>([]);
 	const [showAllTimes, setShowAllTimes] = useState(false);
+	const [fields, setFields] = useState<{
+		[key: string]: string;
+	}>();
 
 	const { callApi } = useApi();
-
-	// Reset form when closing modal
-	useEffect(() => {
-		if (!open) {
-			form.resetFields();
-			setSelectedEvent(null);
-			setSelectedAvailability(undefined);
-			setTimeOptions([]);
-		}
-	}, [open, form]);
+	const { errorNotice, successNotice } = useNotice();
 
 	const fetchCalendar = () => {
 		callApi({
@@ -81,7 +74,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 				setCalendars(res.data);
 			},
 			onError: () => {
-				console.log('error fetching calendars');
+				errorNotice('error fetching calendars');
 			},
 		});
 	};
@@ -91,43 +84,78 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			path: `events/${value}`,
 			method: 'GET',
 			onSuccess: (event: Event) => {
+				console.log(event);
 				setSelectedEvent(event);
-				form.setFieldsValue({ duration: event.duration });
+				form.setFieldsValue({
+					duration: event.duration,
+					location: event.location[0].type,
+				});
+				form.resetFields(['selectDate', 'selectTime']);
+				setTimeOptions([]);
 				fetchAvailability(event.id);
+				getEventFields(event);
 			},
 			onError: () => {
-				console.log('error fetching events');
+				errorNotice('error fetching events');
+			},
+		});
+	};
+
+	const getEventFields = (event: Event) => {
+		callApi({
+			path: `events/${event.id}/fields`,
+			method: 'GET',
+			onSuccess: (fields) => {
+				setFields(fields);
+			},
+			onError: () => {
+				errorNotice('error fetching event fields');
 			},
 		});
 	};
 
 	const fetchAvailability = (value: number) => {
-		callApi({
-			path: `events/${value}/availability`,
-			method: 'GET',
-			onSuccess: (availability: EventAvailability) => {
-				setSelectedAvailability(availability);
-			},
-			onError: () => {
-				console.log('error fetching availability');
-			},
-		});
+		const formData = new FormData();
+		formData.append('action', 'quillbooking_booking_slots');
+		formData.append('id', value.toString());
+		formData.append('timezone', currentTimezone || '');
+		formData.append('start_date', new Date().toISOString());
+		formData.append('duration', selectedEvent?.duration.toString() || '30');
+		fetchAjax('admin-ajax.php', {
+			method: 'POST',
+			body: formData,
+		})
+			.then((res) => {
+				setSelectedAvailability(res.data.slots);
+			})
+			.catch(() => {
+				errorNotice('error fetching availability');
+			});
 	};
 
 	const disabledDate = (current: Dayjs): boolean => {
 		if (showAllTimes) {
 			return false;
 		}
-		return getDisabledDates(current, selectedAvailability || null);
+		if (!selectedAvailability) {
+			return true;
+		}
+		return selectedAvailability[current.format('YYYY-MM-DD')] === undefined;
 	};
 
 	const generateTimeSlots = (date: Dayjs): string[] => {
-		return getTimeSlots(
-			date,
-			selectedAvailability || null,
-			selectedEvent?.duration || 30,
-			showAllTimes
-		);
+		if (showAllTimes) {
+			return allTimeSlots;
+		}
+		return selectedAvailability
+			? selectedAvailability[date.format('YYYY-MM-DD')].map(
+					(slot: { start: string; end: string }) => {
+						const timeString = slot.start.split(' ')[1];
+						const time = timeString.split(':');
+						return `${time[0]}:${time[1]}`;
+					}
+				)
+			: [];
 	};
 
 	const handleDateChange = (date: Dayjs | null) => {
@@ -135,9 +163,103 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		form.setFieldsValue({ selectTime: null });
 	};
 
+	const handleSubmit = async (values: any) => {
+		const {
+			selectDate,
+			selectTime,
+			event,
+			duration,
+			name,
+			email,
+			status,
+		} = values;
+
+		const fields = getFields(values);
+		const startDateTime =
+			selectDate.clone().format('YYYY-MM-DD') + ` ${selectTime}:00`;
+
+		try {
+			await form.validateFields();
+			await callApi({
+				path: 'bookings',
+				method: 'POST',
+				data: {
+					event_id: event,
+					start_date: startDateTime,
+					slot_time:duration,
+					timezone: currentTimezone,
+					fields,
+					name,
+					email,
+					status,
+				},
+				onSuccess: () => {
+					successNotice('Booking added successfully');
+					onSaved();
+					onClose();
+				},
+				onError: () => {
+					errorNotice('error adding booking');
+				},
+			});
+		} catch (error) {
+			errorNotice('Validation failed');
+		}
+	};
+
+	useEffect(() => {
+		if (!open) {
+			form.resetFields();
+			setSelectedEvent(null);
+			setSelectedAvailability(undefined);
+			setTimeOptions([]);
+		}
+	}, [open, form]);
+
 	useEffect(() => {
 		fetchCalendar();
+		if (booking) {
+			handleEventChange(booking.event.id);
+			setCurrentTimezone(booking.timezone);
+			form.setFieldsValue({
+				name: Array.isArray(booking.guest)
+					? booking.guest[0]?.name
+					: booking.guest?.name,
+				email: Array.isArray(booking.guest)
+					? booking.guest[0]?.email
+					: booking.guest?.email,
+				status: booking.status,
+				timezone: booking.timezone,
+			});
+		}
 	}, []);
+
+	useEffect(() => {
+		if (selectedEvent) {
+			form.resetFields(['selectDate', 'selectTime']);
+			setTimeOptions([]);
+			fetchAvailability(selectedEvent.id);
+		}
+	}, [currentTimezone]);
+
+	useEffect(() => {
+		if (selectedEvent?.duration) {
+			const duration = selectedEvent.duration;
+			const slots: string[] = [];
+			for (
+				let minutes = 0;
+				minutes < 24 * 60;
+				minutes += Number(duration)
+			) {
+				const hours = Math.floor(minutes / 60);
+				const mins = minutes % 60;
+				slots.push(
+					`${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+				);
+			}
+			setAllTimeSlots(slots);
+		}
+	}, [selectedEvent?.duration]);
 
 	return (
 		<Modal
@@ -148,12 +270,20 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 				<Button key="back" onClick={onClose}>
 					{__('Cancel')}
 				</Button>,
-				<Button key="submit" type="primary" onClick={onSaved}>
+				<Button key="submit" type="primary" onClick={form.submit}>
 					{__('Save')}
 				</Button>,
 			]}
 		>
-			<Form layout="vertical" form={form}>
+			<Form
+				layout="vertical"
+				form={form}
+				initialValues={{
+					status: 'scheduled',
+					timezone: currentTimezone,
+				}}
+				onFinish={handleSubmit}
+			>
 				<Form.Item
 					name="event"
 					label={__('Select Event', 'quillbooking')}
@@ -190,22 +320,23 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 				</Form.Item>
 
 				{currentTimezone && (
-					<Form.Item
-						name="timezone"
-						label={__("Attendee's Timezone", 'quillbooking')}
-						rules={[{ required: true }]}
-					>
-						<TimezoneSelect
-							value={currentTimezone}
-							onChange={setCurrentTimezone}
-						/>
+					<>
+						<Form.Item
+							name="timezone"
+							label={__("Attendee's Timezone", 'quillbooking')}
+							rules={[{ required: true }]}
+						>
+							<TimezoneSelect
+								value={currentTimezone}
+								onChange={setCurrentTimezone}
+							/>
+						</Form.Item>
 						<CurrentTimeInTimezone
 							currentTimezone={currentTimezone}
 						/>
-					</Form.Item>
+					</>
 				)}
 
-				{/* meeting duration (disabled until the event is selected) */}
 				<Form.Item
 					name="duration"
 					label={__('Meeting Duration', 'quillbooking')}
@@ -224,12 +355,24 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					</Select>
 				</Form.Item>
 
-				{/* ignore availability checkbox */}
+				{booking?.event.id && (
+					<Form.Item
+						name="event"
+						initialValue={booking.event.id}
+						hidden
+					>
+						<Input type="hidden" />
+					</Form.Item>
+				)}
+
 				<Form.Item name="ignoreAvailability">
 					<Checkbox
+						checked={showAllTimes}
 						disabled={!selectedEvent}
 						onChange={(e) => {
 							setShowAllTimes(e.target.checked);
+							form.resetFields(['selectDate', 'selectTime']);
+							setTimeOptions([]);
 							if (form.getFieldValue('selectDate')) {
 								setTimeOptions(
 									generateTimeSlots(
@@ -243,7 +386,6 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					</Checkbox>
 				</Form.Item>
 
-				{/* select data - selectTime both are disabled until event is selected */}
 				<Flex gap={20}>
 					<Form.Item
 						name="selectDate"
@@ -274,20 +416,24 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					</Form.Item>
 				</Flex>
 
-				{/* select status disabled (scheduled / pending / completed ) */}
 				<Form.Item
 					name="status"
 					label={__('Status', 'quillbooking')}
 					rules={[{ required: true }]}
 				>
-					<Select defaultValue="scheduled" disabled={!selectedEvent}>
-						<Option value="scheduled">Scheduled</Option>
-						<Option value="pending">Pending</Option>
-						<Option value="completed">Completed</Option>
+					<Select disabled={!selectedEvent}>
+						<Option value="scheduled">
+							{__('Scheduled', 'quillbooking')}
+						</Option>
+						<Option value="pending">
+							{__('Pending', 'quillbooking')}
+						</Option>
+						<Option value="completed">
+							{__('Completed', 'quillbooking')}
+						</Option>
 					</Select>
 				</Form.Item>
 
-				{/* attendee's name */}
 				<Form.Item
 					name="name"
 					label={__("Attendee's Name", 'quillbooking')}
@@ -296,7 +442,6 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					<Input />
 				</Form.Item>
 
-				{/* attendee's email  */}
 				<Form.Item
 					name="email"
 					rules={[{ required: true }]}
@@ -305,7 +450,22 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					<Input />
 				</Form.Item>
 
-				{/* hidden input, appear depedning on the event info */}
+				{fields && (
+					<>
+						{fields.system &&
+							Object.entries(fields.system)
+								.slice(2)
+								.map(([key, field]) => (
+									<DynamicFormField key={key} field={field} />
+								))}
+						{fields.custom &&
+							Object.entries(fields.custom).map(
+								([key, field]) => (
+									<DynamicFormField key={key} field={field} />
+								)
+							)}
+					</>
+				)}
 			</Form>
 		</Modal>
 	);

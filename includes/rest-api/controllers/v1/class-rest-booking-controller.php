@@ -19,6 +19,8 @@ use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
 use QuillBooking\Models\Booking_Model;
 use Illuminate\Support\Arr;
+use QuillBooking\Booking\Booking_Validator;
+use QuillBooking\Booking_Service;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Models\Guest_Model;
 use QuillBooking\Capabilities;
@@ -143,17 +145,8 @@ class REST_Booking_Controller extends REST_Controller {
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
 				),
-				'start_time'   => array(
-					'description' => __( 'Start time.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'required'    => true,
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-				'end_time'     => array(
-					'description' => __( 'End time.', 'quillbooking' ),
+				'start_date'   => array(
+					'description' => __( 'Start date.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
 					'required'    => true,
@@ -348,55 +341,58 @@ class REST_Booking_Controller extends REST_Controller {
 	public function create_item( $request ) {
 		try {
 			$event_id    = $request->get_param( 'event_id' );
-			$start_time  = $request->get_param( 'start_time' );
-			$end_time    = $request->get_param( 'end_time' );
-			$slot_time   = $request->get_param( 'slot_time' );
+			$start_date  = $request->get_param( 'start_date' );
+			$duration    = $request->get_param( 'slot_time' );
 			$timezone    = $request->get_param( 'timezone' );
 			$name        = $request->get_param( 'name' );
 			$email       = $request->get_param( 'email' );
+			$status      = $request->get_param( 'status' );
+			$location    = $request->get_param( 'location' );
 			$message     = $request->get_param( 'message' );
 			$current_url = $request->get_param( 'current_url' );
-			// We will add custom fields later.
-			$fields            = $request->get_param( 'fields' );
-			$additional_guests = $request->get_param( 'additional_guests' ) ?? array();
+			$fields      = $request->get_param( 'fields' );
 
-			if ( empty( $name ) ) {
-				return new WP_Error( 'rest_booking_error', 'Attendee name is required', array( 'status' => 400 ) );
+			// will be updated later
+			$location = 'zoom';
+
+			$event      = Booking_Validator::validate_event( $event_id );
+			$start_date = Booking_Validator::validate_start_date( $start_date, $timezone );
+			$duration   = Booking_Validator::validate_duration( $duration, $event->duration );
+
+			$available_slots = $event->get_booking_available_slots( $start_date, $duration, $timezone );
+			if ( ! $available_slots ) {
+				throw new \Exception( __( 'Sorry, This booking is not available', 'quillbooking' ) );
 			}
 
-			if ( empty( $email ) ) {
-				return new WP_Error( 'rest_booking_error', 'Attendee email is required', array( 'status' => 400 ) );
-			}
-
-			$start_time = new \DateTime( $start_time, new \DateTimeZone( $timezone ) );
-			$end_time   = new \DateTime( $end_time, new \DateTimeZone( $timezone ) );
-
-			if ( ! $start_time || ! $end_time ) {
-				return new WP_Error( 'rest_booking_error', 'Invalid date format', array( 'status' => 400 ) );
-			}
-
-			$guest_data = array(
-				'name'  => $name,
-				'email' => $email,
+			$invitee = array(
+				array(
+					'name'  => $name,
+					'email' => $email,
+				),
 			);
 
-			if ( get_current_user_id() ) {
-				$guest_data['user_id'] = get_current_user_id();
-			}
+			$booking_service  = new Booking_Service();
+			$validate_invitee = $booking_service->validate_invitee( $event, $invitee );
+			$calendar_id      = $event->calendar_id;
+			$booking          = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields );
 
-			$bookings = array();
-			$event    = Event_Model::find( $event_id );
+			$bookings   = array();
+			$bookings[] = $booking;
 
-			if ( 'collective' === $event->type ) {
-				$teamMembers = $event->calendar->teamMembers;
-				foreach ( $teamMembers as $teamMember ) {
-					$booking    = $this->book_event_slot( $event, $teamMember, $start_time, $slot_time, $timezone, $guest_data, $additional_guests );
-					$bookings[] = $booking;
-				}
-			} else {
-				$booking    = $this->book_event_slot( $event, $event->calendar_id, $start_time, $slot_time, $timezone, $guest_data, $additional_guests );
-				$bookings[] = $booking;
-			}
+			// if ( get_current_user_id() ) {
+			// $guest_data['user_id'] = get_current_user_id();
+			// }
+
+			// if ( 'collective' === $event->type ) {
+			// $teamMembers = $event->calendar->teamMembers;
+			// foreach ( $teamMembers as $teamMember ) {
+			// $booking    = $this->book_event_slot( $event, $teamMember, $start_time, $slot_time, $timezone, $guest_data, $additional_guests, $location, $status );
+			// $bookings[] = $booking;
+			// }
+			// } else {
+			// $booking    = $this->book_event_slot( $event, $event->calendar_id, $start_time, $slot_time, $timezone, $guest_data, $additional_guests, $location, $status );
+			// $bookings[] = $booking;
+			// }
 
 			return new WP_REST_Response( $bookings, 200 );
 		} catch ( Exception $e ) {
@@ -404,90 +400,6 @@ class REST_Booking_Controller extends REST_Controller {
 		}
 	}
 
-	/**
-	 * Book an event slot.
-	 *
-	 * @param Event_Model $event The event being booked.
-	 * @param int         $calendar_id The calendar ID.
-	 * @param \DateTime   $start_date The start date/time of the booking.
-	 * @param int         $duration The duration of the booking in minutes.
-	 * @param string      $timezone The timezone of the booking.
-	 * @param array       $guest_data The invitees for the booking.
-	 * @param array       $additional_guests The additional guests for the booking.
-	 *
-	 * @return Booking_Model
-	 * @throws \Exception If booking fails.
-	 */
-	protected function book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $guest_data, $additional_guests ) {
-		$guest = Guest_Model::create( $guest_data );
-
-		if ( ! $guest ) {
-			throw new \Exception( __( 'Failed to create guest', 'quillbooking' ) );
-		}
-
-		$slot_start = clone $start_date;
-		$slot_start->setTimezone( new \DateTimeZone( 'UTC' ) );
-		$slot_end = clone $slot_start;
-		$slot_end->modify( "+{$duration} minutes" );
-
-		$booking              = new Booking_Model();
-		$booking->event_id    = $event->id;
-		$booking->calendar_id = $calendar_id;
-		$booking->start_time  = $slot_start->format( 'Y-m-d H:i:s' );
-		$booking->end_time    = $slot_end->format( 'Y-m-d H:i:s' );
-		$booking->status      = 'scheduled';
-		$booking->event_url   = home_url();
-		$booking->source      = 'event-page';
-		$booking->slot_time   = $duration;
-		$booking->guest_id    = $guest->id;
-		$booking->save();
-
-		if ( ! $booking->id ) {
-			throw new \Exception( __( 'Failed to book', 'quillbooking' ) );
-		}
-
-		$booking->timezone = $timezone;
-		if ( ! $booking->save() ) {
-			$guest->delete();
-			throw new \Exception( __( 'Failed to update booking with guest ID', 'quillbooking' ) );
-		}
-
-		$guest->booking_id = $booking->id;
-		if ( ! $guest->save() ) {
-			$booking->delete();
-			throw new \Exception( __( 'Failed to book', 'quillbooking' ) );
-		}
-
-		if ( 'group' !== $booking->event->type ) {
-			$additional_guests = array_filter(
-				$additional_guests,
-				function( $guest ) {
-					return is_email( sanitize_email( $guest ) );
-				}
-			);
-
-			if ( ! empty( $additional_guests ) ) {
-				$booking->meta()->create(
-					array(
-						'meta_key'   => 'additional_guests',
-						'meta_value' => $additional_guests,
-					)
-				);
-			}
-		}
-
-		$booking->logs()->create(
-			array(
-				'status'  => 'open',
-				'type'    => 'info',
-				'source'  => 'system',
-				'message' => __( 'Booking created', 'quillbooking' ),
-				'details' => sprintf( __( 'Booking created by %s', 'quillbooking' ), get_current_user() ),
-			)
-		);
-
-		return $booking;
-	}
 
 	/**
 	 * Create item permissions check
@@ -521,7 +433,7 @@ class REST_Booking_Controller extends REST_Controller {
 				return new WP_Error( 'rest_booking_error', __( 'Booking not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			$booking->load( 'guest', 'event', 'calendar.user' );
+			$booking->load( 'guest', 'event', 'calendar.user', 'logs', 'meta' );
 
 			return new WP_REST_Response( $booking, 200 );
 		} catch ( Exception $e ) {

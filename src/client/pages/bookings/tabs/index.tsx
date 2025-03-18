@@ -37,7 +37,7 @@ const BookingsTabs: React.FC<BookingsTabsProps> = ({
 		});
 	}
 
-	if (cancelled && cancelled == 0) {
+	if (cancelled && cancelled > 0) {
 		tabs.splice(3, 0, {
 			value: 'cancelled',
 			label: 'Cancelled',

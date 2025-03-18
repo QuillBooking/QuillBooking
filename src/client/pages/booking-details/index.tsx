@@ -3,41 +3,48 @@
  */
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
+import { addQueryArgs } from '@wordpress/url';
 
 /**
  * External dependencies
  */
+import { Flex } from 'antd';
 
 /**
  * Internal dependencies
  */
-import { NavLink as Link, useParams } from '@quillbooking/navigation';
-import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
-import type {
-	Availability,
-	TimeSlot,
-	DateOverrides,
-	Booking,
-} from '@quillbooking/client';
-import { TimezoneSelect } from '@quillbooking/components';
-import { OverrideSection, OverrideModal } from '@quillbooking/components';
-import { Card, Flex, Space, Typography } from 'antd';
+import { useParams } from '@quillbooking/navigation';
+import { useApi, useNotice } from '@quillbooking/hooks';
+import type { Booking } from '@quillbooking/client';
+import { groupBookingsByDate } from '@quillbooking/utils';
+import AddBookingModal from '../bookings/add-booking-modal';
+import BookingList from './booking-list';
+import MeetingInformation from './meeting-information';
+import InviteeInformation from './invitee-information';
+import MeetingActivities from './booking-activities';
 
 /*
  * Main Booking Details Component
  */
-const { Title, Text } = Typography;
 
 const BookingDetails: React.FC = () => {
 	const [booking, setBooking] = useState<Booking | null>(null);
+	const [open, setOpen] = useState<boolean>(false);
+
 	const { callApi } = useApi();
+	const [bookings, setBookings] = useState<Record<string, Booking[]>>({});
+	const { errorNotice } = useNotice();
+	const [refresh, setRefresh] = useState(false);
+
+	const handleStatusUpdated = () => {
+		setRefresh((prev) => !prev);
+	};
 
 	const fetchBooking = async () => {
 		callApi({
 			path: `bookings/${bookingId}`,
 			method: 'GET',
 			onSuccess: (response) => {
-				console.log(response);
 				setBooking(response);
 			},
 			onError: (error) => {
@@ -45,100 +52,63 @@ const BookingDetails: React.FC = () => {
 			},
 		});
 	};
+	const { id: bookingId, period = 'all' } = useParams<{
+		id: string;
+		period: string;
+	}>();
+
 	useEffect(() => {
 		fetchBooking();
-	}, []);
-	const { id: bookingId } = useParams<{ id: string }>();
+	}, [bookingId, refresh]);
+
+	useEffect(() => {
+		const fetchBookings = () => {
+			callApi({
+				path: addQueryArgs('bookings', {
+					filter: {
+						period: period,
+						user: 'own',
+					},
+				}),
+				method: 'GET',
+				onSuccess: (res) => {
+					const bookings = groupBookingsByDate(res.bookings.data);
+					setBookings(bookings);
+				},
+				onError: () => {
+					errorNotice(__('Error fetching bookings', 'quillbooking'));
+				},
+			});
+		};
+
+		fetchBookings();
+	}, [period]);
+
 	return (
-		<Flex gap={16} align="start">
-			{/* Left Card - No Bookings Found */}
-			<Card style={{ flex: 1, minHeight: 250 }}>
-				<Title level={5} type="secondary">
-					No bookings found based on your filter
-				</Title>
-			</Card>
+		<>
+			<Flex gap={16} align="start">
+				<BookingList bookings={bookings} period={period} />
 
-			{/* Main Booking Information */}
-			{booking && (
-				<>
-					<Card
-						title={
-							<Text strong>
-								meeting between and {booking.guest?.name} @{' '}
-								{booking.start_time} - {booking.status}
-							</Text>
-						}
-						style={{ flex: 2 }}
-					>
-						<Title level={4}>Invitees Information</Title>
+				{/* Main Booking Information */}
+				{booking && (
+					<Flex vertical gap={16}>
+						<InviteeInformation booking={booking} handleStatusUpdated={handleStatusUpdated} />
+						<MeetingInformation booking={booking} />
+					</Flex>
+				)}
 
-						<Space
-							direction="vertical"
-							size="middle"
-							style={{ display: 'flex' }}
-						>
-							<Space>
-								<Title level={5}>Invitee Name</Title>
-								<Text>{booking.calendar?.display_name}</Text>
-							</Space>
-
-							<Space>
-								<Title level={5}>Invitee Email</Title>
-								<Text>{booking.guest?.email}</Text>
-							</Space>
-
-							<Space>
-								<Title level={5}>Invitee Timezone</Title>
-								<Text>{booking.timezone}</Text>
-							</Space>
-
-							<Space>
-								<Title level={5}>Booked At</Title>
-								<Text>{booking.created_at}</Text>
-							</Space>
-						</Space>
-					</Card>
-
-					{/* Meeting Information */}
-					<Card title="Meeting Information" style={{ flex: 1 }}>
-						<Space
-							direction="vertical"
-							size="middle"
-							style={{ display: 'flex' }}
-						>
-							<Text>
-								<strong>Meeting Host:</strong> {booking.calendar?.user?.display_name}
-							</Text>
-
-							<Text>
-								<strong>Meeting Title:</strong>{' '}
-								{booking.event?.name}
-							</Text>
-
-							<Text>
-								<strong>Meeting Duration:</strong>{' '}
-								{booking.event?.duration} minutes
-							</Text>
-
-							<Text>
-								<strong>Location:</strong> {booking.location}
-							</Text>
-
-							<Text>
-								<strong>Status:</strong> {booking.status}
-							</Text>
-						</Space>
-					</Card>
-				</>
+				{/* Meeting Activities */}
+				{booking && <MeetingActivities booking={booking} />}
+			</Flex>
+			{open && (
+				<AddBookingModal
+					open={open}
+					onClose={() => setOpen(false)}
+					onSaved={() => setOpen(false)}
+					booking={booking || undefined}
+				/>
 			)}
-
-			{/* Meeting Activities */}
-			<Card title="Meeting Activities" style={{ flex: 1 }}>
-				<Text type="secondary">
-					No activities have been recorded for this booking
-				</Text>
-			</Card>
-		</Flex>
+		</>
 	);
 };
 

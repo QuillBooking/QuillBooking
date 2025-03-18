@@ -94,7 +94,7 @@ registerAdminPage('bookings', {
 })
 
 registerAdminPage('booking-details', {
-	path: 'bookings/:id',
+	path: 'bookings/:id/:period?',
 	component: () => <BookingDetails />,
 	label: __('Booking Details', 'quillbooking'),
 	hidden: true,

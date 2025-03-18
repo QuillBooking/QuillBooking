@@ -40,7 +40,9 @@ const BookingList: React.FC<BookingListProps> = ({ bookings, period }) => {
 					<List
 						dataSource={groupBookings}
 						renderItem={(booking) => (
-							<Link to={`bookings/${booking.id}`}>
+							<Link
+								to={`bookings/${booking.id}/${period}`}
+							>
 								<List.Item
 									key={booking.id}
 									style={{ padding: '12px 0' }}

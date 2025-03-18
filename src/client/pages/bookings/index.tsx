@@ -105,7 +105,7 @@ const Bookings: React.FC = () => {
 
 	return (
 		<>
-			<BookingsHeader handleOpen={setOpen}/>
+			<BookingsHeader handleOpen={setOpen} />
 
 			<Flex justify="space-between" align="middle">
 				<BookingsTabs
@@ -131,7 +131,10 @@ const Bookings: React.FC = () => {
 				<AddBookingModal
 					open={open}
 					onClose={() => setOpen(false)}
-					onSaved={() => setOpen(false)}
+					onSaved={() => {
+						setOpen(false);
+						fetchBookings();
+					}}
 				/>
 			)}
 		</>

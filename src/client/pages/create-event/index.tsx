@@ -44,6 +44,10 @@ const CreateEvent: React.FC = () => {
         additional_settings: {
             max_invitees: 1,
             show_remaining: true,
+            selectable_durations: [],
+            default_duration: 15,
+            allow_attendees_to_select_duration: false,
+            allow_additional_guests: false,
         },
     });
     const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset');
@@ -93,9 +97,9 @@ const CreateEvent: React.FC = () => {
             path: 'events',
             method: 'POST',
             data: event,
-            onSuccess: () => {
+            onSuccess: (response: Event) => {
                 successNotice(__('Event created successfully', 'quillbooking'));
-                navigate(`calendars/${id}`);
+                navigate(`calendars/${id}/${response.id}`);
             },
             onError: (error: string) => {
                 errorNotice(error);

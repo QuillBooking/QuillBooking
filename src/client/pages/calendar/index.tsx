@@ -19,16 +19,12 @@ import { useApi, useNotice, useBreadcrumbs, useNavigate } from '@quillbooking/ho
 import { useParams } from '@quillbooking/navigation';
 import { Provider } from './state/context';
 import { GeneralSettings, Integrations } from './tabs';
-import Event from '../event';
 
 /**
  * Main Calendars Component.
  */
 const Calendar: React.FC = () => {
     const { id, tab } = useParams<{ id: string; tab: string }>();
-    if (tab?.match(/^\d+$/)) {
-        return <Event />;
-    }
     const { callApi } = useApi();
     const { errorNotice } = useNotice();
     const [calendar, setCalendar] = useState<CalendarType | null>(null);

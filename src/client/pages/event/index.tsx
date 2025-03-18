@@ -22,7 +22,7 @@ import Calendar from '../calendar';
 import { EventDetails, Availability, Limits, Fields, Notifications, AdvancedSettings, Payments } from './tabs';
 
 const Event: React.FC = () => {
-    const { id: calendarId, tab: id, subtab: tab } = useParams<{ id: string; tab: string; subtab: string }>();
+    const { id: calendarId, eventId: id,  tab } = useParams<{ id: string; eventId: string; tab: string }>();
     if (!id?.match(/^\d+$/)) {
         return <Calendar />;
     }
@@ -133,7 +133,7 @@ const Event: React.FC = () => {
                     tabBarStyle={{ width: 200 }}
                     onChange={(key) => {
                         if (event) {
-                            navigate(`calendars/${event.calendar.id}/${event.id}/${key}`);
+                            navigate(`calendars/${event.calendar.id}/events/${event.id}/${key}`);
                         }
                     }}
                 />

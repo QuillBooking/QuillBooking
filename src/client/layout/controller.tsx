@@ -25,6 +25,7 @@ import AvailabilityDetails from '../pages/availability-details';
 import CreateEvent from '../pages/create-event';
 import Bookings from '../pages/bookings';
 import BookingDetails from '../pages/booking-details';
+import Event from '../pages/event';
 
 export const Controller = ({ page }) => {
 	useEffect(() => {
@@ -58,6 +59,13 @@ registerAdminPage('calendar', {
 	path: 'calendars/:id/:tab?/:subtab?',
 	component: () => <Calendar />,
 	label: __('Calendar', 'quillbooking'),
+	hidden: true,
+});
+
+registerAdminPage('event', {
+	path: 'calendars/:id/events/:eventId/:tab?',
+	component: () => <Event />,
+	label: __('Event', 'quillbooking'),
 	hidden: true,
 });
 

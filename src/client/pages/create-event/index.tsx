@@ -99,7 +99,7 @@ const CreateEvent: React.FC = () => {
             data: event,
             onSuccess: (response: Event) => {
                 successNotice(__('Event created successfully', 'quillbooking'));
-                navigate(`calendars/${id}/${response.id}`);
+                navigate(`calendars/${id}/events/${response.id}`);
             },
             onError: (error: string) => {
                 errorNotice(error);

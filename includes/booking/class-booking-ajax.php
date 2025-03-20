@@ -118,7 +118,9 @@ class Booking_Ajax {
 		// check_ajax_referer( 'quillbooking', 'nonce' );
 
 		try {
-			$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
+			$id          = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
+			$calendar_id = isset( $_POST['calendar'] ) ? intval( $_POST['calendar_id'] ) : null;
+
 			if ( ! $id ) {
 				throw new \Exception( __( 'Invalid event', 'quillbooking' ) );
 			}
@@ -138,7 +140,7 @@ class Booking_Ajax {
 			$duration = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : $event->duration;
 			$duration = Booking_Validator::validate_duration( $duration, $event->duration );
 
-			$available_slots = $event->get_available_slots( $start_date, $timezone, $duration );
+			$available_slots = $event->get_available_slots( $start_date, $timezone, $duration, $calendar_id );
 
 			wp_send_json_success( array( 'slots' => $available_slots ) );
 		} catch ( \Exception $e ) {

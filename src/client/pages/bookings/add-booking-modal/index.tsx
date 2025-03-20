@@ -114,13 +114,16 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		});
 	};
 
-	const fetchAvailability = (value: number) => {
+	const fetchAvailability = (value: number, calendar_id?:number ) => {
 		const formData = new FormData();
 		formData.append('action', 'quillbooking_booking_slots');
 		formData.append('id', value.toString());
 		formData.append('timezone', currentTimezone || '');
 		formData.append('start_date', new Date().toISOString());
 		formData.append('duration', selectedEvent?.duration.toString() || '30');
+		if(calendar_id){
+			formData.append('calendar_id', calendar_id.toString());
+		}
 		fetchAjax('admin-ajax.php', {
 			method: 'POST',
 			body: formData,
@@ -164,15 +167,8 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	};
 
 	const handleSubmit = async (values: any) => {
-		const {
-			selectDate,
-			selectTime,
-			event,
-			duration,
-			name,
-			email,
-			status,
-		} = values;
+		const { selectDate, selectTime, event, duration, name, email, status } =
+			values;
 
 		const fields = getFields(values);
 		const startDateTime =
@@ -186,7 +182,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 				data: {
 					event_id: event,
 					start_date: startDateTime,
-					slot_time:duration,
+					slot_time: duration,
 					timezone: currentTimezone,
 					fields,
 					name,
@@ -318,6 +314,33 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 						)}
 					</Select>
 				</Form.Item>
+
+				{selectedEvent?.hosts && (
+					<Form.Item
+						name="hosts"
+						label={__('Select Host', 'quillbooking')}
+					>
+						<Select
+							placeholder={__('Select Host', 'quillbooking')}
+							showSearch
+							filterOption={(input, option) =>
+								(typeof option?.children === 'string'
+									? (option.children as string).toLowerCase()
+									: ''
+								).includes(input.toLowerCase())
+							}
+							onChange={(calendar_id: number) =>
+								fetchAvailability(selectedEvent.id, calendar_id)
+							}
+						>
+							{selectedEvent.hosts.map((host) => (
+								<Option value={host.id} key={host.id}>
+									{host.name}
+								</Option>
+							))}
+						</Select>
+					</Form.Item>
+				)}
 
 				{currentTimezone && (
 					<>

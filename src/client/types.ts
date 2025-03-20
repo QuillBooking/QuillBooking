@@ -65,6 +65,7 @@ export type Event = {
 	updated_at: string;
 	calendar: Calendar;
 	additional_settings: AdditionalSettings;
+	hosts?: Host[];
 };
 
 export type AdditionalSettings = {
@@ -259,4 +260,9 @@ export type User = {
 	display_name: string;
 	user_login: string;
 	user_email: string;
+}
+
+export type Host = {
+	id: number;
+	name: string;
 }

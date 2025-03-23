@@ -1,8 +1,8 @@
 .quillbooking-calendar-events{
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
     gap: 20px;
-    grid-template-columns: repeat(3, 1fr);
-
+    
     .quillbooking-calendar-event{
         cursor: pointer;
         transition: all 0.3s;

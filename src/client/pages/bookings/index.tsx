@@ -110,6 +110,7 @@ const Bookings: React.FC = () => {
 			<Flex justify="space-between" align="middle">
 				<BookingsTabs
 					setPeriod={setPeriod}
+					period={period}
 					pendingCount={pendingBookingCount}
 					cancelled={cancelledBookingCount}
 				/>

@@ -8,7 +8,8 @@ import { useState } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Button, Flex, Popover, Typography } from 'antd';
+import { Button, Flex, Popover } from 'antd';
+import { Header } from '@quillbooking/components';
 
 interface BookingsHeaderProps {
 	handleOpen: (state: boolean) => void;
@@ -16,14 +17,18 @@ interface BookingsHeaderProps {
 /**
  * Main Bookings Component.
  */
-const { Title } = Typography;
-
 const BookingsHeader: React.FC<BookingsHeaderProps> = ({ handleOpen }) => {
 	const [visible, setVisible] = useState<boolean>(false);
 
 	return (
 		<Flex justify="space-between" align="center">
-			<Title level={3}>{__('Bookings', 'quillbooking')}</Title>
+			<Header
+				header={__('Bookings', 'quillbooking')}
+				subHeader={__(
+					'See your scheduled events from your calendar events links.',
+					'quillbooking'
+				)}
+			/>
 			<Popover
 				content={
 					<Button

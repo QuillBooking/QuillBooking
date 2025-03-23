@@ -36,6 +36,7 @@ export type Calendar = {
 		duration: number;
 		type: EventTypes;
 		slug: string;
+		location: Location[]; 
 	}[];
 	created_at: string;
 	updated_at: string;

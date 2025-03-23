@@ -10,7 +10,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import './style.scss';
 import { EventTypes, EventTypesOptions, GeneralOptions } from 'client/types';
 import { __ } from '@wordpress/i18n';
-
+import { SearchIcon } from '@quillbooking/components';
 /**
  * Main Search Filter Component
  */
@@ -53,7 +53,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 			<Input
 				size="small"
 				placeholder={__('Search Events', 'quillbooking')}
-				prefix={<SearchOutlined />}
+				prefix={<SearchIcon />}
 				onChange={(e) => handleSearch(e.target.value)}
 				className='w-56 py-2 px-4 h-7'
 			/>

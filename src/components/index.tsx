@@ -1,3 +1,4 @@
+export * from './icons';
 export { default as NavBar } from './navbar';
 export { default as UserSelect } from './user-select';
 export { default as HostSelect } from './host-select';

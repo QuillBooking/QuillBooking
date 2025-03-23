@@ -1,6 +1,6 @@
 import { Input } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
 import { InputProps } from 'antd/es/input';
+import { SearchIcon } from '@quillbooking/components';
 
 const SearchInput: React.FC<InputProps> = ({
 	placeholder = 'Search...',
@@ -13,7 +13,7 @@ const SearchInput: React.FC<InputProps> = ({
 			className={`rounded-lg ${className}`}
 			placeholder={placeholder}
 			onChange={onChange}
-			prefix={<SearchOutlined className="mr-1 text-[20px]" />}
+			prefix={<SearchIcon  />}
 			{...rest}
 		/>
 	);

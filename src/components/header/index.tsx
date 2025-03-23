@@ -10,7 +10,7 @@ const Header: React.FC<HeaderProps> = ({ header, subHeader }) => {
 	return (
 		<div>
 			<h1
-				className='text-3xl font-bold'
+				className='text-3xl font-bold pb-1'
 			>
 				{header}
 			</h1>

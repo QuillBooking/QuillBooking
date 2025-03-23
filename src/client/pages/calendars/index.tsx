@@ -236,7 +236,7 @@ const Calendars: React.FC = () => {
 						<SearchInput
 							placeholder={__('Search Events', 'quillbooking')}
 							onChange={(e) => setSearch(e.target.value)}
-							size='small'
+							size="small"
 							allowClear
 							className="w-[280px]"
 						/>
@@ -258,7 +258,7 @@ const Calendars: React.FC = () => {
 							title={__('sort-by', 'quillbooking')}
 							onChange={(value) => console.log(value)}
 							Icon={IoFilterOutline}
-							containerClassName='pl-2'
+							containerClassName="pl-2"
 						/>
 						<MultiSelect
 							options={[
@@ -355,7 +355,9 @@ const Calendars: React.FC = () => {
 																	id
 																) =>
 																	deleteCalendar(
-																		{id: id} as Calendar
+																		{
+																			id: id,
+																		} as Calendar
 																	)
 																}
 															/>

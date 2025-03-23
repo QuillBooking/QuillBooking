@@ -4,9 +4,24 @@
 import { __ } from '@wordpress/i18n';
 
 /**
+ * External dependencies
+ */
+import { Flex } from 'antd';
+
+/**
  * Internal dependencies
  */
 import { BookingsTabsTypes } from 'client/types';
+import {
+	AllCalendarIcon,
+	CancelledCalendarIcon,
+	CompletedCalendarIcon,
+	LatestCalendarIcon,
+	PendingCalendarIcon,
+	UpcompingCalendarIcon,
+} from '@quillbooking/components';
+import { IconType } from 'react-icons';
+import React from 'react';
 
 /**
  * Main Bookings Tabs Component
@@ -21,7 +36,7 @@ interface BookingsTabsProps {
 type TabItem = {
 	value: BookingsTabsTypes;
 	label: string;
-	icon: string;
+	icon: IconType;
 };
 
 const BookingsTabs: React.FC<BookingsTabsProps> = ({
@@ -31,42 +46,77 @@ const BookingsTabs: React.FC<BookingsTabsProps> = ({
 	cancelled,
 }) => {
 	let tabs: TabItem[] = [
-		{ value: 'upcoming', label: 'Upcoming', icon: 'calendars/icon-2.svg' },
-		{ value: 'completed', label: 'Completed', icon: 'calendars/icon-2.svg' },
-		{ value: 'latest', label: 'Latest Bookings', icon: 'calendars/icon-2.svg' },
-		{ value: 'all', label: 'All', icon: 'calendars/icon-2.svg' },
+		{
+			value: 'all',
+			label: __('All', 'quillbooking'),
+			icon: AllCalendarIcon as IconType,
+		},
+		{
+			value: 'upcoming',
+			label: __('Upcoming', 'quillbooking'),
+			icon: UpcompingCalendarIcon as IconType,
+		},
+		{
+			value: 'completed',
+			label: __('Completed', 'quillbooking'),
+			icon: CompletedCalendarIcon as IconType,
+		},
+		{
+			value: 'latest',
+			label: __('Latest Bookings', 'quillbooking'),
+			icon: LatestCalendarIcon as IconType,
+		},
 	];
 
 	if (pendingCount && pendingCount > 0) {
 		tabs.splice(2, 0, {
 			value: 'pending',
-			label: `Pending (${pendingCount})`,
-			icon: 'calendars/icon-2.svg',
+			label: `${__('Pending', 'quillbooking')} (${pendingCount})`,
+			icon: PendingCalendarIcon as IconType,
 		});
 	}
 
 	if (cancelled && cancelled > 0) {
 		tabs.splice(3, 0, {
 			value: 'cancelled',
-			label: 'Cancelled',
-			icon: 'calendars/icon-2.svg',
+			label: __('Cancelled', 'quillbooking'),
+			icon: CancelledCalendarIcon as IconType,
 		});
 	}
 	return (
-		<div className='flex space-x-4 items-baseline'>
-			{tabs.map((tab) => (
-				<div
-					key={tab.value}
-					onClick={() => setPeriod(tab.value)}
-					className={`cursor-pointe cursor-pointer px-2 py-1 rounded-md font-bold ${tab.value === period ? 'bg-color-tertiary text-color-primary' : ''}`}
-				>
-					<span>
-						{/* <img src={tab.icon} alt={tab.label} /> */}
-					</span>
-					<span>{__(tab.label, 'quillbooking')}</span>
-				</div>
-			))}
-		</div>
+		<Flex align="center" gap={10} wrap="wrap">
+			{tabs.map((tab) => {
+				const isActive = tab.value === period;
+				return (
+					<div
+						key={tab.value}
+						onClick={() => setPeriod(tab.value)}
+						className={`group flex items-center space-y-1 gap-2 cursor-pointer p-3 rounded-md font-bold transition-colors duration-200 ${
+							isActive
+								? 'bg-color-tertiary text-color-primary'
+								: 'text-gray-400'
+						}`}
+					>
+						<span
+							className={`${
+								isActive
+									? 'text-color-primary'
+									: 'text-color-primary-text'
+							} group-hover:text-color-primary`}
+						>
+							{React.createElement(tab.icon, {
+								style: {
+									fill: 'currentColor',
+								},
+							})}
+						</span>
+						<span className="group-hover:text-color-primary">
+							{tab.label}
+						</span>
+					</div>
+				);
+			})}
+		</Flex>
 	);
 };
 

@@ -1,32 +1,46 @@
+/*
+ * WordPress dependencies
+ */
+import { __ } from '@wordpress/i18n';
+
 /**
  * External dependencies
  */
-import { Flex, Input, Select } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Flex } from 'antd';
+import { IoFilterOutline } from 'react-icons/io5';
+import { IconType } from 'react-icons';
 
 /**
  * Internal dependencies
  */
-import './style.scss';
-import { EventTypes, EventTypesOptions, GeneralOptions } from 'client/types';
-import { __ } from '@wordpress/i18n';
-import { SearchIcon } from '@quillbooking/components';
+import { EventTypes, GeneralOptions } from 'client/types';
+import {
+	AllCalendarIcon,
+	MultiSelect,
+	SearchInput,
+} from '@quillbooking/components';
+
 /**
  * Main Search Filter Component
  */
 
 type EventTypesSelect = {
 	value: 'all' | EventTypes;
-	label: EventTypesOptions;
+	label: string;
 }[];
 const eventTypesOptions: EventTypesSelect = [
-	{ value: 'all', label: 'All Event Types' },
-	{ value: 'one-to-one', label: 'One to One' },
-	{ value: 'group', label: 'Group' },
-	{ value: 'round-robin', label: 'Round Robin' },
+	{ value: 'all', label: __('Event Types: All', 'quillbooking') },
+	{
+		value: 'one-to-one',
+		label: __('Event Types: One to One', 'quillbooking'),
+	},
+	{ value: 'group', label: __('Event Types: Group', 'quillbooking') },
+	{
+		value: 'round-robin',
+		label: __('Event Types: Round Robin', 'quillbooking'),
+	},
 ];
 
-const { Search } = Input;
 type SearchFilterProps = {
 	events: GeneralOptions[];
 	author: string;
@@ -49,40 +63,52 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 	handleSearch,
 }) => {
 	return (
-		<Flex gap={10}>
-			<Input
-				size="small"
+		<Flex gap={10} justify="center" align="center" className='px-2'>
+			<SearchInput
 				placeholder={__('Search Events', 'quillbooking')}
-				prefix={<SearchIcon />}
+				className="w-[220px]"
+				size="small"
+				allowClear
 				onChange={(e) => handleSearch(e.target.value)}
-				className='w-56 py-2 px-4 h-7'
 			/>
-
 			{author === 'own' && (
 				<>
-					<Select
+					<MultiSelect
+						title={__('Event Type', 'quillbooking')}
 						defaultValue={eventType}
 						style={{ width: 150 }}
-						onChange={(val) => setEventType(val)}
+						onChange={(e) => setEventType(e.target.value)}
 						options={eventTypesOptions}
+						Icon={IoFilterOutline}
+						containerClassName="pl-2 w-[160px] text-color-primary-text"
 					/>
-
-					<Select
+					<MultiSelect
+						title={__('Event', 'quillbooking')}
 						defaultValue={event}
 						style={{ width: 150 }}
-						onChange={(val) => setEvent(val)}
+						onChange={(e) => setEvent(e.target.value)}
 						options={events}
+						Icon={AllCalendarIcon as IconType}
+						containerClassName="pl-2 w-[120px] text-color-primary-text"
 					/>
 				</>
 			)}
-			<Select
+			<MultiSelect
+				title={__('Author', 'quillbooking')}
 				defaultValue={author}
 				style={{ width: 150 }}
-				onChange={(val) => setAuthor(val)}
+				onChange={(e) => setAuthor(e.target.value)}
 				options={[
-					{ value: 'own', label: 'Meetings: Admin' },
-					{ value: 'all', label: 'Meetings: All' },
+					{
+						value: 'own',
+						label: __('Meetings: Admin', 'quillbooking'),
+					},
+					{
+						value: 'all',
+						label: __('Meetings: All', 'quillbooking'),
+					},
 				]}
+				containerClassName="w-[144px]"
 			/>
 		</Flex>
 	);

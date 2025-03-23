@@ -9,6 +9,10 @@ import { useState } from '@wordpress/element';
  * External dependencies
  */
 import { Button, Flex, Popover } from 'antd';
+
+/*
+ * Internal dependencies
+ */
 import { Header } from '@quillbooking/components';
 
 interface BookingsHeaderProps {

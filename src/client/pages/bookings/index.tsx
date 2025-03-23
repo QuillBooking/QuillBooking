@@ -42,7 +42,7 @@ const Bookings: React.FC = () => {
 
 	const [bookings, setBookings] = useState<Record<string, Booking[]>>({});
 	const [eventsOptions, setEventsOptions] = useState<GeneralOptions[]>([
-		{ value: 'all', label: 'All Events' },
+		{ value: 'all', label: __('All Events', 'quillbooking') },
 	]);
 
 	const { errorNotice } = useNotice();
@@ -107,13 +107,20 @@ const Bookings: React.FC = () => {
 		<>
 			<BookingsHeader handleOpen={setOpen} />
 
-			<Flex justify="space-between" align="middle">
+			<Flex
+				justify="space-between"
+				align="middle"
+				className="border-2 border-solid borderColor-[#DEDEDE] rounded-xl p-4 my-6"
+			>
 				<BookingsTabs
 					setPeriod={setPeriod}
 					period={period}
 					pendingCount={pendingBookingCount}
 					cancelled={cancelledBookingCount}
 				/>
+
+				<div className="border-l-2 border-solid borderColor-[#DEDEDE]"></div>
+
 				<SearchFilter
 					event={event}
 					eventType={eventType}

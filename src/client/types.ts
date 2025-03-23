@@ -36,11 +36,11 @@ export type Calendar = {
 		duration: number;
 		type: EventTypes;
 		slug: string;
-		location: Location[]; 
+		location: Location[];
 	}[];
 	created_at: string;
 	updated_at: string;
-	user?:User;
+	user?: User;
 };
 
 export type CalendarResponse = Response & {
@@ -215,7 +215,7 @@ export type Guest = {
 	phone?: string;
 	updated_at: string;
 	user_id: number;
-}
+};
 
 export type BookingLog = {
 	booking_id: number;
@@ -250,10 +250,9 @@ export interface BookingResponse {
 
 export interface Booking extends BookingResponse {
 	time_span: string;
-	guest?:  Guest | Guest[];
+	guest?: Guest | Guest[];
 	calendar?: Calendar;
 	logs?: BookingLog[];
-
 }
 
 export type User = {
@@ -261,9 +260,14 @@ export type User = {
 	display_name: string;
 	user_login: string;
 	user_email: string;
-}
+};
 
 export type Host = {
 	id: number;
 	name: string;
-}
+};
+
+export type IconProps = {
+	width?: number;
+	height?: number;
+};

@@ -12,22 +12,11 @@ import {
 	Card,
 	Flex,
 	Button,
-	Typography,
-	Avatar,
 	Popover,
 	Skeleton,
-	Input,
-	Select,
-	Popconfirm,
 } from 'antd';
 import {
-	SettingOutlined,
-	UserOutlined,
-	CopyOutlined,
-	LinkOutlined,
-	DeleteOutlined,
 	PlusOutlined,
-	SearchOutlined,
 } from '@ant-design/icons';
 import { map, filter } from 'lodash';
 
@@ -46,14 +35,10 @@ import {
 	useCopyToClipboard,
 	useNavigate,
 } from '@quillbooking/hooks';
-import AddIcon from '../../../components/icons/add-icon';
-import PeopleWhiteIcon from '../../../components/icons/people-white-icon';
-import ProfileIcon from '../../../components/icons/profile-icon';
-import PeopleFillIcon from '../../../components/icons/people-fill-icon';
+import { Header, AddIcon, PeopleWhiteIcon, ProfileIcon, PeopleFillIcon, MultiSelect, SearchInput } from '@quillbooking/components';
 import { IoFilterOutline } from 'react-icons/io5';
 import { SlOptions } from 'react-icons/sl';
-import CalendarActions from '../../../components/calendar-options';
-import { MultiSelect, SearchInput } from '@quillbooking/components';
+import CalendarActions from './calendar-actions';
 
 /**
  * Main Calendars Component.
@@ -170,32 +155,28 @@ const Calendars: React.FC = () => {
 	return (
 		<div className="quillbooking-calendars">
 			<div className="calendars-header pb-5 flex justify-between items-center">
-				<div className="calendars-header-title">
-					<h1 className="text-[30px] font-[700] text-[#09090B]">
-						{__('Calendars', 'quillbooking')}
-					</h1>
-					<span className="text-[#71717A] font-[500] text-[14px]">
-						{__(
-							'Create events to share for people to book on your calendar.',
-							'quillbooking'
-						)}
-					</span>
-				</div>
+				<Header
+					header={__('Calendars', 'quillbooking')}
+					subHeader={__(
+						'Create events to share for people to book on your calendar.',
+						'quillbooking'
+					)}
+				/>
 				<Flex gap={12}>
 					<Button
 						type="text"
 						onClick={() => setType('host')}
-						className="bg-[#FBF9FC] pt-2 pb-7 px-4 flex items-start"
+						className="bg-color-tertiary pt-2 pb-7 px-4 flex items-start"
 					>
 						<AddIcon />
-						<span className="text-[#953AE4] text-[14px] font-[500]">
+						<span className="text-color-primary text-[14px] font-[500]">
 							{__('Add Host', 'quillbooking')}
 						</span>
 					</Button>
 					<Button
 						type="text"
 						onClick={() => setType('team')}
-						className="bg-[#953AE4] pt-2 pb-7 px-4 flex items-start hover:text-[#953AE4]"
+						className="bg-color-primary pt-2 pb-7 px-4 flex items-start hover:text-color-primary"
 					>
 						<PeopleWhiteIcon />
 						<span className="text-white text-[14px] font-[500]">
@@ -212,7 +193,7 @@ const Calendars: React.FC = () => {
 							onClick={() =>
 								setFilters({ ...filters, type: 'host' })
 							}
-							className={`${filters.type === 'host' ? 'bg-[#FBF9FC] text-[#953AE4]' : 'text-[#A1A5B7]'} pt-2 pb-7 px-4 flex items-start`}
+							className={`${filters.type === 'host' ? 'bg-color-tertiary text-color-primary' : 'text-[#A1A5B7]'} pt-2 pb-7 px-4 flex items-start`}
 						>
 							<ProfileIcon />
 							<span className="text-[14px] font-[500]">
@@ -224,7 +205,7 @@ const Calendars: React.FC = () => {
 							onClick={() =>
 								setFilters({ ...filters, type: 'team' })
 							}
-							className={`${filters.type === 'team' ? 'bg-[#FBF9FC] text-[#953AE4]' : 'text-[#A1A5B7]'} pt-2 pb-7 px-4 flex items-start`}
+							className={`${filters.type === 'team' ? 'bg-color-tertiary text-color-primary' : 'text-[#A1A5B7]'} pt-2 pb-7 px-4 flex items-start`}
 						>
 							<PeopleFillIcon />
 							<span className="text-[14px] font-[500]">
@@ -240,6 +221,8 @@ const Calendars: React.FC = () => {
 							allowClear
 							className="w-[280px]"
 						/>
+
+						{/* static */}
 						<MultiSelect
 							options={[
 								{
@@ -260,6 +243,8 @@ const Calendars: React.FC = () => {
 							Icon={IoFilterOutline}
 							containerClassName='pl-2'
 						/>
+
+						{/* static */}
 						<MultiSelect
 							options={[
 								{
@@ -355,7 +340,7 @@ const Calendars: React.FC = () => {
 																	id
 																) =>
 																	deleteCalendar(
-																		{id: id} as Calendar
+																		{ id: id } as Calendar
 																	)
 																}
 															/>
@@ -394,7 +379,7 @@ const Calendars: React.FC = () => {
 														<Button
 															type="text"
 															icon={
-																<SlOptions className="text-[#292D32] text-[18px]" />
+																<SlOptions className="text-color-primary-text text-[18px]" />
 															}
 															className="border-[#EDEBEB]"
 														/>
@@ -437,8 +422,8 @@ const Calendars: React.FC = () => {
 															</Flex>
 														}
 													>
-														<Button className="text-[#953AE4] border-2 border-[#C497EC] bg-[#FBF9FC] border-dashed font-[600] flex items-center justify-center h-[56px] w-[310px] text-[16px]">
-															<PlusOutlined className="text-[#953AE4]" />
+														<Button className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] flex items-center justify-center h-[56px] w-[310px] text-[16px]">
+															<PlusOutlined className="text-color-primary" />
 															<span className="pt-[8.5px]">
 																{__(
 																	'Create New Event Type',

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "webpack.config.js",
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.8",
     "@wordpress/api-fetch": "^7.14.0",
     "@wordpress/components": "^29.0.0",
     "@wordpress/core-data": "^7.14.0",

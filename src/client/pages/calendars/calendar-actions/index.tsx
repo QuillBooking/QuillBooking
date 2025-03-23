@@ -1,12 +1,8 @@
 import React from "react";
 import { __ } from '@wordpress/i18n';
 import { Button, Popconfirm, Flex } from "antd";
-import EditIcon from "../icons/edit-icon";
-import DisableIcon from "../icons/disable-icon";
-import CloneIcon from "../icons/clone-icon";
-import TrashIcon from "../icons/trash-icon";
+import {EditIcon, DisableIcon, CloneIcon, TrashIcon} from "@quillbooking/components"
 import type { Calendar } from '@quillbooking/client';
-
 
 // Define the props type
 interface CalendarActionsProps {
@@ -27,7 +23,7 @@ const CalendarActions: React.FC<CalendarActionsProps> = ({
     onDelete
 }) => {
     return (
-        <Flex vertical gap={10} className="items-start text-[#292D32]">
+        <Flex vertical gap={10} className="items-start text-color-primary-text">
             <Button type="text" icon={<EditIcon />} onClick={() => onEdit(calendar.id)}>
                 {__('Edit', 'quillbooking')}
             </Button>

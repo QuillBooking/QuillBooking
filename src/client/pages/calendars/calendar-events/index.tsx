@@ -6,28 +6,21 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Typography, Popover, Empty, Tooltip, Avatar, Popconfirm } from 'antd';
-import { SettingOutlined, CopyOutlined, LinkOutlined, DeleteOutlined, ShareAltOutlined, UserOutlined, PlusOutlined } from '@ant-design/icons';
+import { Card, Flex, Button, Typography, Popover, Empty } from 'antd';
 
 /**
  * Internal dependencies
  */
 import type { Calendar } from '@quillbooking/client';
 import ConfigAPI from '@quillbooking/config';
+import { CloneIcon, ShareIcon, TimeIcon, LocationIcon, DateIcon, PriceIcon, CalendarAddIcon, BookingNumIcon } from "@quillbooking/components";
 import { useCopyToClipboard, useApi, useNotice, useNavigate } from '@quillbooking/hooks';
-import CloneIcon from '../../../../components/icons/clone-icon';
-import ShareIcon from '../../../../components/icons/share-icon';
 import { SlOptions } from 'react-icons/sl';
-import TimeIcon from '../../../../components/icons/time-icon';
-import LocationIcon from '../../../../components/icons/location-icon';
-import DateIcon from '../../../../components/icons/date-icon';
-import PriceIcon from '../../../../components/icons/price-icon';
 import { map } from 'lodash';
-import CalendarAddIcon from '../../../../components/icons/calender-add-icon';
 import { useState } from 'react';
-import CalendarActions from '../../../../components/calendar-options';
+import CalendarActions from '../calendar-actions';
 import CloneEventModal from '../clone-event-modal';
-import BookingNumIcon from '../../../../components/icons/booking-num-icon';
+import ShareModal from '../share-modal';
 
 /**
  * Calendar Events Component.
@@ -35,7 +28,8 @@ import BookingNumIcon from '../../../../components/icons/booking-num-icon';
 const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string, string>; onDeleted: (id: number, calendarId: number) => void; onDuplicated: (event: Record<string, any>, calendarId: number) => void }> = ({ calendar, typesLabels, onDeleted, onDuplicated }) => {
     const siteUrl = ConfigAPI.getSiteUrl();
     const copyToClipboard = useCopyToClipboard();
-    const [cloneEvent, setCloneEvent] = useState<Calendar | null>(null);
+    const [cloneCalendar, setCloneCalendar] = useState<Calendar | null>(null);
+    const [modalShareId, setModalShareId] = useState<number | null>(null);
     const [disabledEvent, setDisabledEvent] = useState({});
     const { callApi: deleteApi } = useApi();
     const { callApi: duplicateApi, loading } = useApi();
@@ -91,12 +85,12 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                         return (
                             <Card
                                 key={event.id}
-                                className="quillbooking-calendar-event w-[310px] border-t-4 border-t-[#953AE4] rounded-xl"
+                                className="quillbooking-calendar-event w-[310px] border-t-4 border-t-color-primary rounded-xl"
                                 style={{
                                     opacity: isDisabled ? 0.5 : 1,
                                     pointerEvents: isDisabled ? "none" : "auto",
                                 }}
-                                //onClick={() => navigate(`calendars/${calendar.id}/events/${event.id}`)}
+                            //onClick={() => navigate(`calendars/${calendar.id}/events/${event.id}`)}
                             >
                                 <Flex gap={20} vertical>
                                     <Flex justify="space-between" className='border-b pb-2'>
@@ -115,7 +109,7 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                                                     onEdit={(id) => navigate(`calendars/${calendar.id}/events/${event.id}`)}
                                                     onDisable={(id) => handleDisableEvent(id)}
                                                     isDisabled={isDisabled}
-                                                    onClone={(event) => setCloneEvent(event)}
+                                                    onClone={(event) => setCloneCalendar(event)}
                                                     onDelete={(id) => handleDelete(id)}
                                                 />
                                                 // <Flex vertical gap={10}>
@@ -145,14 +139,14 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                                                 // </Flex>
                                             )}
                                         >
-                                            <Button icon={<SlOptions className='text-[#292D32] text-[16px]' />} className='bg-[#EDEBEB] border-none rounded-xl' />
+                                            <Button icon={<SlOptions className='text-color-primary-text text-[16px]' />} className='bg-[#EDEBEB] border-none rounded-xl' />
                                         </Popover>
                                     </Flex>
                                     <Flex vertical justify='center' gap={10}>
                                         <Flex gap={10} className='items-center'>
                                             <LocationIcon />
                                             <div className='flex flex-col'>
-                                                <span className='text-[#71717A] text-[12px]'>Location</span>
+                                                <span className='text-[#71717A] text-[12px]'>{__('Location', 'quillbooking')}</span>
                                                 <span className="text-[#09090B] text-[14px] font-[500] capitalize">
                                                     {event.location.map((loc, index) => (
                                                         <span key={index}>
@@ -165,21 +159,25 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                                         <Flex gap={10} className='items-center'>
                                             <DateIcon />
                                             <div className='flex flex-col'>
-                                                <span className='text-[#71717A] text-[12px]'>Event Type</span>
+                                                <span className='text-[#71717A] text-[12px]'>{__('Event Type', 'quillbooking')}</span>
                                                 <span className='text-[#09090B] text-[14px] font-[500] capitalize'>{event.type}</span>
                                             </div>
                                         </Flex>
+
+                                        {/* static */}
                                         <Flex gap={10} className='items-center'>
                                             <BookingNumIcon />
                                             <div className='flex flex-col'>
-                                                <span className='text-[#71717A] text-[12px]'>Number of Bookings</span>
+                                                <span className='text-[#71717A] text-[12px]'>{__('Number of Bookings', 'quillbooking')}</span>
                                                 <span className='text-[#09090B] text-[14px] font-[500] capitalize'>24</span>
                                             </div>
                                         </Flex>
+
+                                        {/* static */}
                                         <Flex gap={10} className='items-center'>
                                             <PriceIcon />
                                             <div className='flex flex-col'>
-                                                <span className='text-[#71717A] text-[12px]'>Price</span>
+                                                <span className='text-[#71717A] text-[12px]'>{__('Price', 'quillbooking')}</span>
                                                 <span className='text-[#007AFF] text-[14px] font-[500] capitalize'>Free</span>
                                             </div>
                                         </Flex>
@@ -203,9 +201,17 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                                             type='text'
                                             icon={<ShareIcon />}
                                             style={{ paddingLeft: 0, paddingRight: 0 }}
+                                            onClick={() => setModalShareId(event.id)}
                                         >
                                             {__('Share', 'quillbooking')}
                                         </Button>
+                                        {modalShareId !== null && (
+                                            <ShareModal
+                                                open={modalShareId !== null}
+                                                onClose={() => setModalShareId(null)}
+                                                url={`${siteUrl}?quillbooking_event=${event.slug}`}
+                                            />
+                                        )}
                                     </Flex>
                                 </Flex>
                             </Card>
@@ -232,9 +238,9 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                                 </Flex>
                             )}
                         >
-                            <Button className='text-[#953AE4] border-2 border-[#C497EC] bg-[#FBF9FC] border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]'>
+                            <Button className='text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]'>
                                 <CalendarAddIcon />
-                                <span className='pt-[8.5px] text-center text-[#953AE4]' style={{ alignSelf: "center" }}>{__('Create Event', 'quillbooking')}</span>
+                                <span className='pt-[8.5px] text-center text-color-primary self-center'>{__('Create Event', 'quillbooking')}</span>
                             </Button>
                         </Popover>
                     )}
@@ -244,12 +250,12 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={__('No events found', 'quillbooking')} />
                 </div>
             )}
-            {/* {cloneEvent && (
+            {/* {cloneCalendar && (
                 <CloneEventModal
-                    open={!!cloneEvent}
-                    calendar={cloneEvent}
-                    onClose={() => setCloneEvent(null)}
-                    excludedEvents={map(cloneEvent.events, 'id')}
+                    open={!!cloneCalendar}
+                    calendar={cloneCalendar}
+                    onClose={() => setCloneCalendar(null)}
+                    excludedEvents={map(cloneCalendar.events, 'id')}
                     onSaved={handleSaved}
                 />
             )} */}

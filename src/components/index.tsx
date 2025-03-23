@@ -14,3 +14,4 @@ export { default as CurrentTimeInTimezone } from './current-time';
 export { default as DynamicFormField } from './dynamic-fields';
 export { default as Header } from './header';
 export { default as MultiSelect } from './multi-select';
+export { default as CalendarActions } from '../client/pages/calendars/calendar-actions'

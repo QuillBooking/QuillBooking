@@ -29,13 +29,8 @@ import Event from '../pages/event';
 import Settings from '../pages/settings';
 import Help from '../pages/help';
 import Logout from '../pages/logout';
-import AvailaibilityIcon from '../../components/icons/availability-icon';
-import BookingIcon from '../../components/icons/booking-icon';
-import CalendarsIcon from '../../components/icons/calendars-icon';
-import HelpIcon from '../../components/icons/help-icon';
-import HomeIcon from '../../components/icons/home-icon';
-import SettingsIcon from '../../components/icons/settings-icon';
-import LogoutIcon from '../../components/icons/logout-icon';
+import { AvailabilityIcon, BookingIcon, CalendarsIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon } from '@quillbooking/components';
+import Navmenu from './navmenu';
 
 
 export const Controller = ({ page }) => {
@@ -58,10 +53,7 @@ registerAdminPage('home', {
 	path: '/',
 	component: () => <Home />,
 	label: (
-		<span style={{ display: "flex", alignItems: "center", color: "#292D32", fontWeight: "500", fontSize: "16px" }}>
-			<HomeIcon/>
-			<span>{__('Home', 'quillbooking')}</span>
-		</span>
+		<Navmenu icon={<HomeIcon />} title={__('Home', 'quillbooking')} />
 	),
 });
 
@@ -69,10 +61,7 @@ registerAdminPage('calendars', {
 	path: 'calendars',
 	component: () => <Calendars />,
 	label: (
-		<span style={{ display: "flex", alignItems: "center", color: "#292D32", fontWeight: "500", fontSize: "16px" }}>
-			<CalendarsIcon/>
-			<span>{__('Calendars', 'quillbooking')}</span>
-		</span>
+		<Navmenu icon={<CalendarsIcon />} title={__('Calendars', 'quillbooking')} />
 	),
 });
 
@@ -87,10 +76,7 @@ registerAdminPage('bookings', {
 	path: 'bookings',
 	component: () => <Bookings />,
 	label: (
-		<span style={{ display: "flex", alignItems: "center", color: "#292D32", fontWeight: "500", fontSize: "16px" }}>
-			<BookingIcon />
-			<span>{__('Bookings', 'quillbooking')}</span>
-		</span>
+		<Navmenu icon={<BookingIcon />} title={__('Bookings', 'quillbooking')} />
 	),
 })
 
@@ -105,10 +91,7 @@ registerAdminPage('availability', {
 	path: 'availability',
 	component: () => <Availability />,
 	label: (
-		<span style={{ display: "flex", alignItems: "center", color: "#292D32", fontWeight: "500", fontSize: "16px" }}>
-			<AvailaibilityIcon/>
-			<span>{__('Availability', 'quillbooking')}</span>
-		</span>
+		<Navmenu icon={<AvailabilityIcon />} title={__('Availability', 'quillbooking')} />
 	),
 });
 
@@ -116,30 +99,24 @@ registerAdminPage('settings', {
 	path: 'settings',
 	component: () => <Settings />,
 	label: (
-		<span style={{ display: "flex", alignItems: "center", color: "#292D32", fontWeight: "500", fontSize: "16px" }}>
-			<SettingsIcon/>
-			<span>{__('Settings', 'quillbooking')}</span>
-		</span>),
+		<Navmenu icon={<SettingsIcon />} title={__('Settings', 'quillbooking')} />
+	),
 });
 
 registerAdminPage('help', {
 	path: 'help',
 	component: () => <Help />,
 	label: (
-		<span style={{ display: "flex", alignItems: "center", color: "#292D32", fontWeight: "500", fontSize: "16px" }}>
-			<HelpIcon/>
-			<span>{__('Help and Support', 'quillbooking')}</span>
-		</span>),
+		<Navmenu icon={<HelpIcon />} title={__('Help and Support', 'quillbooking')} />
+	),
 });
 
 registerAdminPage('logout', {
 	path: 'logout',
 	component: () => <Logout />,
 	label: (
-		<span style={{ display: "flex", alignItems: "center", color: "#292D32", fontWeight: "500", fontSize: "16px" }}>
-			<LogoutIcon/>
-			<span>{__('Logout', 'quillbooking')}</span>
-		</span>),
+		<Navmenu icon={<LogoutIcon />} title={__('Logout', 'quillbooking')} />
+	),
 });
 
 registerAdminPage('availability', {

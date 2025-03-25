@@ -4,11 +4,6 @@
 import { __ } from '@wordpress/i18n';
 
 /**
- * External dependencies
- */
-import { Typography } from 'antd';
-
-/**
  * Internal dependencies
  */
 import {
@@ -16,19 +11,24 @@ import {
 	getCurrentTimezone,
 } from '@quillbooking/utils';
 
-interface CurrentTimeInTimezoneProps {
-	currentTimezone?: string;
+interface CurrentTimeInTimezoneProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  currentTimezone?: string;
+	timeClassName?: string;
 }
 
-const { Text } = Typography;
 const CurrentTimeInTimezone: React.FC<CurrentTimeInTimezoneProps> = ({
 	currentTimezone,
+	timeClassName,
+	...rest
 }) => {
 	return (
-		<Text>
+		<div {...rest}>
 			{__('Current DateTime', 'quillbooking')}:{' '}
-			{getCurrentTimeInTimezone(currentTimezone || getCurrentTimezone())}
-		</Text>
+			<span className={timeClassName}>
+				{getCurrentTimeInTimezone(currentTimezone || getCurrentTimezone())}
+			</span>
+		</div>
 	);
 };
 

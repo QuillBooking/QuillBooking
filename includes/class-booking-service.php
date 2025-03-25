@@ -25,17 +25,17 @@ class Booking_Service {
 	 * @return Booking_Model
 	 * @throws \Exception If booking fails.
 	 */
-	public function book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $invitees, $location, $status = 'scheduled', $fields = array() ) {
+	public function book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $invitees, $location, $status, $fields = array() ) {
 		$end_date = clone $start_date;
 		$end_date->modify( "+{$duration} minutes" );
 		$pending_type = null;
 
-		if ( $event->requireConfirmation( $start_date ) ) {
+		if ( $event->requireConfirmation( $start_date ) && ! $status ) {
 			$pending_type = 'confirmation';
 			$status       = 'pending';
 		}
 
-		if ( $event->requirePayment() ) {
+		if ( $event->requirePayment() && ! $status ) {
 			$pending_type = 'payment';
 			$status       = 'pending';
 		}

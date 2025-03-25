@@ -270,4 +270,5 @@ export type Host = {
 export type IconProps = {
 	width?: number;
 	height?: number;
+	rectFill?: boolean;
 };

@@ -26,10 +26,15 @@ import SearchFilter from './search-filter/indext';
 import { groupBookingsByDate } from '@quillbooking/utils';
 import BookingList from './booking-list';
 import AddBookingModal from './add-booking-modal';
+import MonthSelector from './month-selector';
 
 /**
  * Main Bookings Component.
  */
+interface GroupedBookings {
+	[monthYear: string]: Record<string, Booking[]>;
+}
+
 const Bookings: React.FC = () => {
 	const [open, setOpen] = useState<boolean>(false);
 	const [period, setPeriod] = useState<BookingsTabsTypes>('all');
@@ -40,10 +45,18 @@ const Bookings: React.FC = () => {
 	const [cancelledBookingCount, setCancelledBookingCount] =
 		useState<number>(0);
 
+	const [groupedBookings, setGroupedBookings] = useState<GroupedBookings>({});
 	const [bookings, setBookings] = useState<Record<string, Booking[]>>({});
 	const [eventsOptions, setEventsOptions] = useState<GeneralOptions[]>([
 		{ value: 'all', label: __('All Events', 'quillbooking') },
 	]);
+	const currentYear = new Date().getFullYear();
+	const [year, setYear] = useState(currentYear);
+	const currentMonth = new Date().toLocaleString('default', {
+		month: 'long',
+	});
+	const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
+	const [updateStatus, setUpdateStatus] = useState<boolean>(false);
 
 	const { errorNotice } = useNotice();
 	const { callApi } = useApi();
@@ -80,9 +93,9 @@ const Bookings: React.FC = () => {
 			method: 'GET',
 			onSuccess: (res) => {
 				const bookings = groupBookingsByDate(res.bookings.data);
+				setGroupedBookings(bookings);
 				setPendingBookingCount(res.pending_count);
 				setCancelledBookingCount(res.cancelled_count);
-				setBookings(bookings);
 			},
 			onError: () => {
 				errorNotice(__('Error fetching bookings', 'quillbooking'));
@@ -101,8 +114,17 @@ const Bookings: React.FC = () => {
 
 	useEffect(() => {
 		fetchBookings();
-	}, [period, author, event, eventType]);
+	}, [period, author, event, eventType, updateStatus]);
 
+	useEffect(() => {
+		if (groupedBookings[`${selectedMonth.toLowerCase()}-${year}`]) {
+			setBookings(
+				groupedBookings[`${selectedMonth.toLowerCase()}-${year}`]
+			);
+		} else {
+			setBookings({});
+		}
+	}, [year, selectedMonth, groupedBookings]);
 	return (
 		<>
 			<BookingsHeader handleOpen={setOpen} />
@@ -133,7 +155,14 @@ const Bookings: React.FC = () => {
 				/>
 			</Flex>
 
-			<BookingList bookings={bookings} period={period} />
+			<MonthSelector
+				year={year}
+				setYear={setYear}
+				selectedMonth={selectedMonth}
+				setSelectedMonth={setSelectedMonth}
+			/>
+
+			<BookingList bookings={bookings} period={period} onStatusUpdated={() => setUpdateStatus((prev) => !prev)} />
 
 			{open && (
 				<AddBookingModal

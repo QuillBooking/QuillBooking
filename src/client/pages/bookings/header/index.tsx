@@ -3,12 +3,11 @@
  */
 import { __ } from '@wordpress/i18n';
 import { PlusOutlined } from '@ant-design/icons';
-import { useState } from '@wordpress/element';
 
 /**
  * External dependencies
  */
-import { Button, Flex, Popover } from 'antd';
+import { Button, Flex } from 'antd';
 
 /*
  * Internal dependencies
@@ -22,8 +21,6 @@ interface BookingsHeaderProps {
  * Main Bookings Component.
  */
 const BookingsHeader: React.FC<BookingsHeaderProps> = ({ handleOpen }) => {
-	const [visible, setVisible] = useState<boolean>(false);
-
 	return (
 		<Flex justify="space-between" align="center">
 			<Header
@@ -33,26 +30,17 @@ const BookingsHeader: React.FC<BookingsHeaderProps> = ({ handleOpen }) => {
 					'quillbooking'
 				)}
 			/>
-			<Popover
-				content={
-					<Button
-						type="link"
-						onClick={() => {
-							handleOpen(true);
-							setVisible(false);
-						}}
-					>
-						{__('Create Booking Manually', 'quillbooking')}
-					</Button>
-				}
-				trigger={'click'}
-				open={visible}
-				onOpenChange={(visible) => setVisible(visible)}
+			<Button
+				type="primary"
+				className="bg-color-primary text-white"
+				size='large'
+				onClick={() => {
+					handleOpen(true);
+				}}
 			>
-				<Button>
-					<PlusOutlined />
-				</Button>
-			</Popover>
+				<PlusOutlined />
+				{__('Booking Manually', 'quillbooking')}
+			</Button>
 		</Flex>
 	);
 };

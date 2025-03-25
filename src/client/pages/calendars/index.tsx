@@ -8,16 +8,8 @@ import { addQueryArgs } from '@wordpress/url';
 /**
  * External dependencies
  */
-import {
-	Card,
-	Flex,
-	Button,
-	Popover,
-	Skeleton,
-} from 'antd';
-import {
-	PlusOutlined,
-} from '@ant-design/icons';
+import { Card, Flex, Button, Popover, Skeleton } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { map, filter } from 'lodash';
 
 /**
@@ -35,7 +27,15 @@ import {
 	useCopyToClipboard,
 	useNavigate,
 } from '@quillbooking/hooks';
-import { Header, AddIcon, PeopleWhiteIcon, ProfileIcon, PeopleFillIcon, MultiSelect, SearchInput } from '@quillbooking/components';
+import {
+	Header,
+	AddIcon,
+	PeopleWhiteIcon,
+	ProfileIcon,
+	PeopleFillIcon,
+	MultiSelect,
+	SearchInput,
+} from '@quillbooking/components';
 import { IoFilterOutline } from 'react-icons/io5';
 import { SlOptions } from 'react-icons/sl';
 import CalendarActions from './calendar-actions';

@@ -194,6 +194,7 @@ export type BookingsTabsTypes =
 	| 'pending'
 	| 'latest'
 	| 'cancelled'
+	| 'no-show'
 	| 'all';
 
 export type EventTypes = 'one-to-one' | 'group' | 'round-robin';

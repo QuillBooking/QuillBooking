@@ -63,7 +63,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 	handleSearch,
 }) => {
 	return (
-		<Flex gap={10} justify="center" align="center" className='px-2'>
+		<Flex gap={10} justify="center" align="center" className="px-2">
 			<SearchInput
 				placeholder={__('Search Events', 'quillbooking')}
 				className="w-[220px]"

@@ -33,7 +33,7 @@ const BookingsHeader: React.FC<BookingsHeaderProps> = ({ handleOpen }) => {
 			<Button
 				type="primary"
 				className="bg-color-primary text-white"
-				size='large'
+				size="large"
 				onClick={() => {
 					handleOpen(true);
 				}}

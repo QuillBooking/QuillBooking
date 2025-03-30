@@ -14,8 +14,7 @@ import { Flex, Timeline } from 'antd';
 import { Booking } from 'client/types';
 import { CompletedCalendarIcon } from '@quillbooking/components';
 import CardDetails from '../card-details';
-import { NavLink as Link } from '@quillbooking/navigation';
-import BookingActions from './booking-actions';
+import { BookingActions } from '@quillbooking/components';
 
 /**
  * Main Bookings List Component.
@@ -49,41 +48,37 @@ const BookingList: React.FC<BookingListProps> = ({
 
 						<div className="w-full">
 							{bookings.length > 1 && (
-								<Timeline>
-									{bookings.map((booking) => (
-										<Timeline.Item
-											dot={
-												<CompletedCalendarIcon
-													width={24}
-													height={25}
-												/>
-											}
-											key={booking.id}
-											color="#953AE4"
-										>
+								<Timeline
+									items={bookings.map((booking) => ({
+										dot: (
+											<CompletedCalendarIcon
+												width={24}
+												height={25}
+											/>
+										),
+										color: '#953AE4',
+										children: (
 											<Flex
 												justify="space-between"
 												align="center"
 												key={booking.id}
 												className="border-b border-dashed border-[#DEE1E6] pb-8"
 											>
-												<Link
-													to={`bookings/${booking.id}/${period}`}
-												>
-													<CardDetails
-														booking={booking}
-													/>
-												</Link>
+												<CardDetails
+													booking={booking}
+													period={period}
+												/>
 												<BookingActions
 													booking={booking}
+													type="popover"
 													onStatusUpdated={
 														onStatusUpdated
 													}
 												/>
 											</Flex>
-										</Timeline.Item>
-									))}
-								</Timeline>
+										),
+									}))}
+								/>
 							)}
 
 							{bookings.length === 1 &&
@@ -93,12 +88,12 @@ const BookingList: React.FC<BookingListProps> = ({
 										align="center"
 										key={booking.id}
 									>
-										<Link
-											to={`bookings/${booking.id}/${period}`}
-										>
-											<CardDetails booking={booking} />
-										</Link>
+										<CardDetails
+											booking={booking}
+											period={period}
+										/>
 										<BookingActions
+											type="popover"
 											booking={booking}
 											onStatusUpdated={onStatusUpdated}
 										/>

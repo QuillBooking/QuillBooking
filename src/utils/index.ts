@@ -41,7 +41,7 @@ export const convertTimezone = (
 };
 
 export const groupBookingsByDate = (bookings: Booking[]) => {
-	return bookings.reduce<Record<string, Record<string, Booking[]>>>(
+	return bookings.reduce<Record<string, Booking[]>>(
 		(groups, booking) => {
 			const currentTimezone = getCurrentTimezone();
 			// Convert booking.start_time into a Date object in the current timezone.
@@ -69,9 +69,6 @@ export const groupBookingsByDate = (bookings: Booking[]) => {
 				time_span: `${formattedStartTime.toLowerCase()} - ${formattedEndTime.toLowerCase()}`,
 			};
 
-			// Outer key: group by month-year in lower case (e.g., "march-2025")
-			const monthYearKey = format(date, 'MMMM-yyyy').toLowerCase();
-
 			// Determine the inner key:
 			// If the booking date is today or tomorrow, use "today-" or "tomorrow-" prefix.
 			// Otherwise, use the three-letter day abbreviation and the day number (e.g., "tue-20").
@@ -84,16 +81,11 @@ export const groupBookingsByDate = (bookings: Booking[]) => {
 				dayKey = `${format(date, 'eee').toLowerCase()}-${format(date, 'd')}`;
 			}
 
-			// Initialize the outer monthYear group if it doesn't exist.
-			if (!groups[monthYearKey]) {
-				groups[monthYearKey] = {};
-			}
-			// Initialize the inner day group if it doesn't exist.
-			if (!groups[monthYearKey][dayKey]) {
-				groups[monthYearKey][dayKey] = [];
+			if (!groups[dayKey]) {
+				groups[dayKey] = [];
 			}
 
-			groups[monthYearKey][dayKey].push(bookingWithTimeSpan);
+			groups[dayKey].push(bookingWithTimeSpan);
 			return groups;
 		},
 		{}

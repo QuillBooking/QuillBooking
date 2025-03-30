@@ -2,9 +2,7 @@
  * External dependencies
  */
 import { __ } from '@wordpress/i18n';
-import {
-	Flex,
-} from 'antd';
+import { Flex } from 'antd';
 
 /**
  * Internal dependencies
@@ -19,21 +17,24 @@ import {
 	CopyWhiteIcon,
 } from '@quillbooking/components';
 import { useCopyToClipboard } from '@quillbooking/hooks';
-
+import { NavLink as Link } from '@quillbooking/navigation';
 
 interface CardDetailsProps {
 	booking: Booking;
+	period: string;
 }
 
-const CardDetails: React.FC<CardDetailsProps> = ({ booking }) => {
+const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 	const copyToClipboard = useCopyToClipboard();
 
 	return (
 		<Flex gap={100}>
 			<div>
-				<p className="text-xl font-bold text-color-primary-text py-1">
-					{booking.event.name}
-				</p>
+				<Link to={`bookings/${booking.id}/${period}`}>
+					<p className="text-xl font-bold text-color-primary-text py-1">
+						{booking.event.name}
+					</p>
+				</Link>
 				<Flex gap={5} align="center" className="my-1">
 					<ClockIcon />
 					<p>

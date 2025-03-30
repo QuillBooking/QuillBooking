@@ -58,3 +58,4 @@ export { default as HostIcon } from './host-icon';
 export { default as StatusIcon } from './status-icon';
 export { default as QuestionOutlineIcon } from './question-outline-icon';
 export { default as QuestionIcon } from './question-icon';
+export { default as CalendarNoshowIcon } from './calendar-noshow-icon';

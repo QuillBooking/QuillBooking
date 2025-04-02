@@ -2,23 +2,22 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
-
-
-/**
- * External dependencies
- */
-import {
-	Card,
-	Space,
-	Typography,
-} from 'antd';
 
 /**
  * Internal dependencies
  */
 import type { Booking } from '@quillbooking/client';
-import { getMetaValue } from '@quillbooking/utils';
+import CardHeader from '../card-header';
+import {
+	AllCalendarIcon,
+	CalendarInformationIcon,
+	ClockIcon,
+	HostIcon,
+	LinkIcon,
+	LocationIcon,
+	StatusIcon,
+} from '@quillbooking/components';
+import InfoItem from '../info-items';
 
 /*
  * Main Meeting Information Component
@@ -27,54 +26,59 @@ interface BookingDetailsProps {
 	booking: Booking;
 }
 
-type FieldItem = {
-	label: string;
-	value: string;
-};
-
-const { Text } = Typography;
-
-const MeetingInformation: React.FC<BookingDetailsProps>= ({booking}) => {
-	const [fields, setFields] = useState<FieldItem[]>([]);
-
-	useEffect(() => {
-		if(booking && booking.meta) setFields(getMetaValue(booking.meta, 'fields'));
-	}
-	, [booking]);
+const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 	return (
-		<Card title="Meeting Information">
-			<Space
-				direction="vertical"
-				size="middle"
-				style={{ display: 'flex' }}
-			>
-				<Text>
-					<strong>{__('Meeting Host', 'quillbooking')}:</strong>{' '}
-					{booking.calendar?.user?.display_name}
-				</Text>
+		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
+			<CardHeader
+				title={__('Booking Information', 'quillbooking')}
+				description={__(
+					'All Data about Booking Information',
+					'quillbooking'
+				)}
+				icon={<CalendarInformationIcon width={24} height={24} />}
+			/>
+			<InfoItem
+				title={__('Event Title', 'quillbooking')}
+				content={booking.event.name}
+				icon={<AllCalendarIcon width={24} height={24} />}
+			/>
 
-				<Text>
-					<strong>{__('Meeting Title', 'quillbooking')}:</strong>{' '}
-					{booking.event?.name}
-				</Text>
-
-				<Text>
-					<strong>{__('Meeting Duration', 'quillbooking')}:</strong>{' '}
-					{booking.event?.duration} {__('minutes', 'quillbooking')}
-				</Text>
-
-				<Text>
-					<strong>{__('Status', 'quillbooking')}:</strong>{' '}
-					{booking.status}
-				</Text>
-
-				{fields.map((field:any, index) => (
-					<Text key={index}>
-						<strong>{field.label}:</strong> {field.value}
-					</Text>
-				))}
-			</Space>
-		</Card>
+			<div className="grid grid-cols-2 gap-4">
+				<InfoItem
+					title={__('Event Host', 'quillbooking')}
+					content={booking.calendar?.user?.display_name}
+					icon={<HostIcon width={24} height={24} />}
+				/>
+				<InfoItem
+					title={__('Event Duration', 'quillbooking')}
+					content={booking.event?.duration}
+					icon={<ClockIcon width={24} height={24} />}
+				/>
+				<InfoItem
+					title={__('Event Location', 'quillbooking')}
+					content={booking.location}
+					icon={
+						<LocationIcon width={24} height={24} rectFill={false} />
+					}
+				/>
+				<InfoItem
+					title={__('Status', 'quillbooking')}
+					content={booking.status}
+					icon={<StatusIcon width={24} height={24} />}
+				/>
+				{/* <InfoItem
+					title={__('Price', 'quillbooking')}
+					content={booking.event.name}
+					icon={<AllCalendarIcon width={24} height={24} />}
+				/> */}
+				<InfoItem
+					title={__('Event Link', 'quillbooking')}
+					content={booking.event_url}
+					icon={<LinkIcon width={24} height={24} />}
+					link={true}
+				/>
+			</div>
+		</div>
 	);
 };
 

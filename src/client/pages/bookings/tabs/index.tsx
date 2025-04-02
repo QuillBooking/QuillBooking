@@ -14,6 +14,7 @@ import { Flex } from 'antd';
 import { BookingsTabsTypes } from 'client/types';
 import {
 	AllCalendarIcon,
+	CalendarNoshowIcon,
 	CancelledCalendarIcon,
 	CompletedCalendarIcon,
 	LatestCalendarIcon,
@@ -31,6 +32,7 @@ interface BookingsTabsProps {
 	period: string;
 	pendingCount?: number;
 	cancelled?: number;
+	noShowCount?: number;
 }
 
 type TabItem = {
@@ -44,6 +46,7 @@ const BookingsTabs: React.FC<BookingsTabsProps> = ({
 	period,
 	pendingCount,
 	cancelled,
+	noShowCount,
 }) => {
 	let tabs: TabItem[] = [
 		{
@@ -81,6 +84,14 @@ const BookingsTabs: React.FC<BookingsTabsProps> = ({
 			value: 'cancelled',
 			label: __('Cancelled', 'quillbooking'),
 			icon: CancelledCalendarIcon as IconType,
+		});
+	}
+
+	if (noShowCount && noShowCount > 0) {
+		tabs.splice(4, 0, {
+			value: 'no-show',
+			label: __('No-Show', 'quillbooking'),
+			icon: CalendarNoshowIcon as IconType,
 		});
 	}
 	return (

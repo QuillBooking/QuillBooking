@@ -14,7 +14,7 @@ const Header: React.FC<HeaderProps> = ({ header, subHeader }) => {
 			>
 				{header}
 			</h1>
-			{subHeader && <p className='text-sm font-medium text-[#71717A]'>{subHeader}</p>}
+			{subHeader && <p className='text-sm font-medium text-[#9B9AC7]'>{subHeader}</p>}
 		</div>
 	);
 };

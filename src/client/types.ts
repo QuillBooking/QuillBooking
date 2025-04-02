@@ -194,6 +194,7 @@ export type BookingsTabsTypes =
 	| 'pending'
 	| 'latest'
 	| 'cancelled'
+	| 'no-show'
 	| 'all';
 
 export type EventTypes = 'one-to-one' | 'group' | 'round-robin';
@@ -270,4 +271,5 @@ export type Host = {
 export type IconProps = {
 	width?: number;
 	height?: number;
+	rectFill?: boolean;
 };

@@ -24,6 +24,7 @@ import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import { RangeSection, AvailabilitySection } from './sections';
 import { OverrideModal, OverrideSection } from '@quillbooking/components';
+import EventLimits from '../limits';
 
 const AvailabilityTab: React.FC = () => {
 	const [range, setRange] = useState<AvailabilityRange | null>(null);
@@ -125,10 +126,9 @@ const AvailabilityTab: React.FC = () => {
 	}
 
 	return (
-		<Card title={__('Availability', 'quillbooking')}>
-			<Flex vertical gap={40}>
+			<div className='grid grid-cols-2 gap-5 px-9'>
 				{/* Availability Range Section */}
-				<RangeSection
+				{/* <RangeSection
 					range={range}
 					onRangeTypeChange={(type) => {
 						setRange({
@@ -150,10 +150,9 @@ const AvailabilityTab: React.FC = () => {
 					onDateRangeChange={(start_date, end_date) =>
 						setRange({ ...range, start_date, end_date })
 					}
-				/>
-
-				<Flex gap={20}>
+				/> */}
 					{/* Custom or Existing Availability Section */}
+					<EventLimits/>
 					<AvailabilitySection
 						isCustomAvailability={isCustomAvailability}
 						availability={availability}
@@ -183,9 +182,10 @@ const AvailabilityTab: React.FC = () => {
 							setIsCustomAvailability(!isCustomAvailability)
 						}
 					/>
+					
 
 					{/* Date Overrides Section */}
-					<OverrideSection
+					{/* <OverrideSection
 						dateOverrides={dateOverrides}
 						onAddOverride={openOverrideModal}
 						onRemoveOverride={(date) => {
@@ -193,16 +193,15 @@ const AvailabilityTab: React.FC = () => {
 							delete updatedOverrides[date];
 							setDateOverrides(updatedOverrides);
 						}}
-					/>
-				</Flex>
+					/> */}
 
 				{/* Save Button */}
-				<Button type="primary" onClick={handleSave}>
+				{/* <Button type="primary" onClick={handleSave}>
 					{__('Save Changes', 'quillbooking')}
-				</Button>
+				</Button> */}
 
 				{/* Date Override Modal */}
-				<OverrideModal
+				{/* <OverrideModal
 					isVisible={isOverrideModalVisible}
 					onClose={closeOverrideModal}
 					onApply={applyOverride}
@@ -227,9 +226,8 @@ const AvailabilityTab: React.FC = () => {
 						setOverrideTimes(updatedTimes);
 					}}
 					onToggleUnavailable={() => setIsUnavailable(!isUnavailable)}
-				/>
-			</Flex>
-		</Card>
+				/> */}
+			</div>
 	);
 };
 

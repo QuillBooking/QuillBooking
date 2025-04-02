@@ -1,0 +1,43 @@
+.custom-switch.ant-switch-checked {
+    background-color: #953AE4;
+}
+
+.custom-radio .ant-radio .ant-radio-inner{
+    background-color: #E1E3EA;
+    border-color: #E1E3EA;
+}
+
+.custom-radio .ant-radio-checked .ant-radio-inner {
+    background-color: #953AE4 !important;
+    border-color: #953AE4 !important; 
+}
+
+/* Change inner dot color */
+.custom-radio .ant-radio-checked .ant-radio-inner::after {
+    background-color: white !important; 
+}
+
+.paypal-img{
+    width: 107px;
+    height: 100px;
+    margin-top: 5px;
+    margin-left: 10px;
+}
+
+.stripe-img{
+    width: 107px;
+    height: 40px;
+    margin-top: 35px;
+    margin-left: 10px;
+}
+
+.custom-check .ant-checkbox .ant-checkbox-inner{
+    background-color: #E1E3EA;
+    border-color: #E1E3EA;
+    width: 16px;
+    height: 16px;
+}
+
+.custom-check .ant-checkbox-checked .ant-checkbox-inner{
+    background-color: #953AE4;
+}

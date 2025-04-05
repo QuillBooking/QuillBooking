@@ -16,13 +16,16 @@ import { map, isEmpty, get } from 'lodash';
 import ConfigAPI from '@quillbooking/config';
 import type { LocationField } from '@quillbooking/config';
 import type { Location } from '@quillbooking/client';
-import { Header, EventLocIcon } from '@quillbooking/components';
+import { Header, EventLocIcon, EditIcon } from '@quillbooking/components';
 import { FaPlus } from 'react-icons/fa';
 import { SiGooglemeet } from "react-icons/si";
 import { BiLogoZoom } from "react-icons/bi";
 import "./style.scss";
 import { BsMicrosoftTeams } from 'react-icons/bs';
 import { FaRegEdit } from "react-icons/fa";
+import meet from "../../../../../../../assets/icons/google/google_meet.png";
+import zoom from "../../../../../../../assets/icons/zoom/zoom_video.png";
+import teams from "../../../../../../../assets/icons/teams/teams.png";
 
 const Locations: React.FC<{
     locations: Location[];
@@ -36,6 +39,7 @@ const Locations: React.FC<{
     const locationTypes = ConfigAPI.getLocations();
 
     console.log(locationTypes);
+    console.log(locations)
 
     const handleLocationTypeChange = (index: number, newType: string) => {
         const locationType = get(locationTypes, newType);
@@ -99,6 +103,16 @@ const Locations: React.FC<{
         }
     };
 
+    const handleEditLocation = (type: string) => {
+        const index = locations.findIndex(loc => loc.type === type);
+        if (index !== -1) {
+            setEditingLocationIndex(index);
+            setNewLocationType(type);
+            form.setFieldsValue(locations[index].fields); // prefill form with existing fields
+            setIsModalVisible(true);
+        }
+    };
+
     const removeLocation = (index: number) => {
         const updatedLocations = locations.filter((_, i) => i !== index);
         onChange(updatedLocations);
@@ -143,11 +157,24 @@ const Locations: React.FC<{
                             ? "border-color-primary bg-color-secondary" // Checked styles
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
-                        checked={locations.some(loc => loc.type === "google_meet")}
-                        onChange={() => handleLocationTypeChange(0, "google_meet")}
+                        onChange={(e) => {
+                            const checked = e.target.checked;
+                            const existingIndex = locations.findIndex(loc => loc.type === "google_meet");
+
+                            if (checked) {
+                                if (existingIndex !== -1) {
+                                    handleLocationTypeChange(existingIndex, "google_meet");
+                                } else {
+                                    handleLocationTypeChange(locations.length, "google_meet");
+                                }
+                            } else {
+                                const updatedLocations = locations.filter(loc => loc.type !== "google_meet");
+                                onChange(updatedLocations);
+                            }
+                        }}
                     >
                         <Flex gap={12} className='items-center ml-2'>
-                            <SiGooglemeet className='text-[24px]' />
+                            <img src={meet} alt='google_meet.png' className='size-7' />
                             <Flex vertical>
                                 <div className="text-[#3F4254] text-[16px] font-semibold">
                                     {__("Google Meet", "quillbooking")}
@@ -164,10 +191,24 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "zoom_video")}
-                        onChange={() => handleLocationTypeChange(1, "zoom_video")}
+                        onChange={(e) => {
+                            const checked = e.target.checked;
+                            const existingIndex = locations.findIndex(loc => loc.type === "zoom_video");
+
+                            if (checked) {
+                                if (existingIndex !== -1) {
+                                    handleLocationTypeChange(existingIndex, "zoom_video");
+                                } else {
+                                    handleLocationTypeChange(locations.length, "zoom_video");
+                                }
+                            } else {
+                                const updatedLocations = locations.filter(loc => loc.type !== "zoom_video");
+                                onChange(updatedLocations);
+                            }
+                        }}
                     >
                         <Flex gap={12} className='items-center ml-2'>
-                            <BiLogoZoom className='text-[24px]' />
+                            <img src={zoom} alt='zoom.png' className='size-7' />
                             <Flex vertical>
                                 <div className="text-[#3F4254] text-[16px] font-semibold">
                                     {__("Zoom Video", "quillbooking")}
@@ -184,10 +225,24 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "ms_teams")}
-                        onChange={() => handleLocationTypeChange(2, "ms_teams")}
+                        onChange={(e) => {
+                            const checked = e.target.checked;
+                            const existingIndex = locations.findIndex(loc => loc.type === "ms_teams");
+
+                            if (checked) {
+                                if (existingIndex !== -1) {
+                                    handleLocationTypeChange(existingIndex, "ms_teams");
+                                } else {
+                                    handleLocationTypeChange(locations.length, "ms_teams");
+                                }
+                            } else {
+                                const updatedLocations = locations.filter(loc => loc.type !== "ms_teams");
+                                onChange(updatedLocations);
+                            }
+                        }}
                     >
                         <Flex gap={12} className='items-center ml-2'>
-                            <BsMicrosoftTeams className='text-[24px]' />
+                            <img src={teams} alt='teams.png' className='size-7' />
                             <Flex vertical>
                                 <div className="text-[#3F4254] text-[16px] font-semibold">
                                     {__("MS Teams", "quillbooking")}
@@ -209,7 +264,21 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "attendee_address")}
-                        onChange={() => handleLocationTypeChange(3, "attendee_address")}
+                        onChange={(e) => {
+                            const checked = e.target.checked;
+                            const existingIndex = locations.findIndex(loc => loc.type === "attendee_address");
+
+                            if (checked) {
+                                if (existingIndex !== -1) {
+                                    handleLocationTypeChange(existingIndex, "attendee_address");
+                                } else {
+                                    handleLocationTypeChange(locations.length, "attendee_address");
+                                }
+                            } else {
+                                const updatedLocations = locations.filter(loc => loc.type !== "attendee_address");
+                                onChange(updatedLocations);
+                            }
+                        }}
                     >
                         <Flex vertical>
                             <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
@@ -226,15 +295,55 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "person_address")}
-                        onChange={() => handleLocationTypeChange(4, "person_address")}
+                        onChange={(e) => {
+                            const checked = e.target.checked;
+                            const existingIndex = locations.findIndex(loc => loc.type === "person_address");
+
+                            if (checked) {
+                                if (existingIndex !== -1) {
+                                    handleLocationTypeChange(existingIndex, "person_address");
+                                } else {
+                                    handleLocationTypeChange(locations.length, "person_address");
+                                }
+                            } else {
+                                const updatedLocations = locations.filter(loc => loc.type !== "person_address");
+                                onChange(updatedLocations);
+                            }
+                        }}
                     >
-                        <Flex vertical>
-                            <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
-                                {__("Organizer Address", "quillbooking")}
-                            </div>
-                            <div className="text-[#3F4254] text-[12px] italic ml-2">
-                                {__("In Person", "quillbooking")}
-                            </div>
+                        <Flex align='center' className='justify-between gap-x-[22rem]'>
+                            <Flex vertical>
+                                <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
+                                    {__("Organizer Address", "quillbooking")}
+                                </div>
+                                <div className="text-[#3F4254] text-[12px] italic ml-2">
+                                    {
+                                        (() => {
+                                            const personAddress = locations.find(loc => loc.type === "person_address");
+                                            return personAddress?.fields?.location
+                                                ? personAddress.fields.location
+                                                : __("In Person", "quillbooking");
+                                        })()
+                                    }
+                                </div>
+                            </Flex>
+                            {
+                                (() => {
+                                    const personAddress = locations.find(loc => loc.type === "person_address");
+                                    if (personAddress?.fields?.location) {
+                                        return (
+                                            <Button
+                                                onClick={() => handleEditLocation("person_address")}
+                                                className='bg-transparent border-none text-[#3F4254]'
+                                            >
+                                                <EditIcon />
+                                                {__('Edit', 'quillbooking')}
+                                            </Button>
+                                        );
+                                    }
+                                    return null;
+                                })()
+                            }
                         </Flex>
                     </Checkbox>
                 </Flex>
@@ -248,7 +357,21 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "attendee_phone")}
-                        onChange={() => handleLocationTypeChange(5, "attendee_phone")}
+                        onChange={(e) => {
+                            const checked = e.target.checked;
+                            const existingIndex = locations.findIndex(loc => loc.type === "attendee_phone");
+
+                            if (checked) {
+                                if (existingIndex !== -1) {
+                                    handleLocationTypeChange(existingIndex, "attendee_phone");
+                                } else {
+                                    handleLocationTypeChange(locations.length, "attendee_phone");
+                                }
+                            } else {
+                                const updatedLocations = locations.filter(loc => loc.type !== "attendee_phone");
+                                onChange(updatedLocations);
+                            }
+                        }}
                     >
                         <Flex vertical>
                             <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
@@ -265,15 +388,55 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "person_phone")}
-                        onChange={() => handleLocationTypeChange(6, "person_phone")}
+                        onChange={(e) => {
+                            const checked = e.target.checked;
+                            const existingIndex = locations.findIndex(loc => loc.type === "person_phone");
+
+                            if (checked) {
+                                if (existingIndex !== -1) {
+                                    handleLocationTypeChange(existingIndex, "person_phone");
+                                } else {
+                                    handleLocationTypeChange(locations.length, "person_phone");
+                                }
+                            } else {
+                                const updatedLocations = locations.filter(loc => loc.type !== "person_phone");
+                                onChange(updatedLocations);
+                            }
+                        }}
                     >
-                        <Flex vertical>
-                            <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
-                                {__("Organizer Phone", "quillbooking")}
-                            </div>
-                            <div className="text-[#3F4254] text-[12px] italic ml-2">
-                                {__("Phone", "quillbooking")}
-                            </div>
+                        <Flex align='center' className='justify-between gap-x-[26rem]'>
+                            <Flex vertical>
+                                <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
+                                    {__("Organizer Phone", "quillbooking")}
+                                </div>
+                                <div className="text-[#3F4254] text-[12px] italic ml-2">
+                                    {
+                                        (() => {
+                                            const personPhone = locations.find(loc => loc.type === "person_phone");
+                                            return personPhone?.fields?.phone
+                                                ? personPhone.fields.phone
+                                                : __("Phone", "quillbooking");
+                                        })()
+                                    }
+                                </div>
+                            </Flex>
+                            {
+                                (() => {
+                                    const personPhone = locations.find(loc => loc.type === "person_phone");
+                                    if (personPhone?.fields?.phone) {
+                                        return (
+                                            <Button
+                                                onClick={() => handleEditLocation("person_phone")}
+                                                className='bg-transparent border-none text-[#3F4254]'
+                                            >
+                                                <EditIcon />
+                                                {__('Edit', 'quillbooking')}
+                                            </Button>
+                                        );
+                                    }
+                                    return null;
+                                })()
+                            }
                         </Flex>
                     </Checkbox>
                     <Checkbox
@@ -282,15 +445,55 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "online")}
-                        onChange={() => handleLocationTypeChange(7, "online")}
+                        onChange={(e) => {
+                            const checked = e.target.checked;
+                            const existingIndex = locations.findIndex(loc => loc.type === "online");
+
+                            if (checked) {
+                                if (existingIndex !== -1) {
+                                    handleLocationTypeChange(existingIndex, "online");
+                                } else {
+                                    handleLocationTypeChange(locations.length, "online");
+                                }
+                            } else {
+                                const updatedLocations = locations.filter(loc => loc.type !== "online");
+                                onChange(updatedLocations);
+                            }
+                        }}
                     >
-                        <Flex vertical>
-                            <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
-                                {__("Online Meeting", "quillbooking")}
-                            </div>
-                            <div className="text-[#3F4254] text-[12px] italic ml-2">
-                                { __("Online", "quillbooking")}
-                            </div>
+                        <Flex align='center' className='justify-between gap-x-[22rem]'>
+                            <Flex vertical>
+                                <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
+                                    {__("Online Meeting", "quillbooking")}
+                                </div>
+                                <div className="text-[#3F4254] text-[12px] italic ml-2">
+                                    {
+                                        (() => {
+                                            const meetingUrl = locations.find(loc => loc.type === "online");
+                                            return meetingUrl?.fields?.meeting_url
+                                                ? meetingUrl.fields.meeting_url
+                                                : __("Online", "quillbooking");
+                                        })()
+                                    }
+                                </div>
+                            </Flex>
+                            {
+                                (() => {
+                                    const meetingUrl = locations.find(loc => loc.type === "online");
+                                    if (meetingUrl?.fields?.meeting_url) {
+                                        return (
+                                            <Button
+                                                onClick={() => handleEditLocation("online")}
+                                                className='bg-transparent border-none text-[#3F4254]'
+                                            >
+                                                <EditIcon />
+                                                {__('Edit', 'quillbooking')}
+                                            </Button>
+                                        );
+                                    }
+                                    return null;
+                                })()
+                            }
                         </Flex>
                     </Checkbox>
                 </Flex>
@@ -321,8 +524,79 @@ const Locations: React.FC<{
                     <div className="text-[#09090B] text-[16px]">
                         {__("Other", "quillbooking")}
                     </div>
+                    {
+                        locations.some(loc => loc.type === "custom") && (
+                            <Checkbox
+                                className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "custom")
+                                    ? "border-color-primary bg-color-secondary"
+                                    : "border-[#D3D4D6] bg-white"
+                                    }`}
+                                checked={locations.some(loc => loc.type === "custom")}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    const existingIndex = locations.findIndex(loc => loc.type === "custom");
+
+                                    if (checked) {
+                                        // Add or edit the custom location
+                                        if (existingIndex !== -1) {
+                                            handleLocationTypeChange(existingIndex, "custom");
+                                        } else {
+                                            handleLocationTypeChange(locations.length, "custom");
+                                        }
+                                    } else {
+                                        // Remove the custom location directly, no modal
+                                        const updatedLocations = locations.filter(loc => loc.type !== "custom");
+                                        onChange(updatedLocations);
+                                    }
+                                }}
+                            >
+                                <Flex align='center' className='justify-between gap-x-[26rem]'>
+                                    <Flex vertical>
+                                        <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
+                                            {
+                                                (() => {
+                                                    const customLocation = locations.find(loc => loc.type === "custom");
+                                                    return customLocation?.fields?.location
+                                                        ? customLocation.fields.location
+                                                        : __("Custom", "quillbooking");
+                                                })()
+                                            }
+                                        </div>
+                                        <div className="text-[#3F4254] text-[12px] italic ml-2">
+                                            {__("description", "quillbooking")}
+                                        </div>
+
+                                    </Flex>
+                                    {
+                                        (() => {
+                                            const customLocation = locations.find(loc => loc.type === "custom");
+                                            if (customLocation?.fields?.location) {
+                                                return (
+                                                    <Button
+                                                        onClick={() => handleEditLocation("custom")}
+                                                        className='bg-transparent border-none text-[#3F4254]'
+                                                    >
+                                                        <EditIcon />
+                                                        {__('Edit', 'quillbooking')}
+                                                    </Button>
+                                                );
+                                            }
+                                            return null;
+                                        })()
+                                    }
+                                </Flex>
+                            </Checkbox>
+                        )
+                    }
                     <Button
-                        onClick={() => handleLocationTypeChange(8, "custom")}
+                        onClick={() => {
+                            const existingIndex = locations.findIndex(loc => loc.type === "custom");
+                            if (existingIndex !== -1) {
+                                handleLocationTypeChange(existingIndex, "custom");
+                            } else {
+                                handleLocationTypeChange(locations.length, "custom"); // Add new one
+                            }
+                        }}
                         icon={<FaPlus className='text-color-primary' />}
                         className='text-color-primary font-semibold outline-none border-none shadow-none'>
                         {__('Add Custom Location', 'quillbooking')}
@@ -394,8 +668,8 @@ const Locations: React.FC<{
                         </Form.Item>
                     </Form>
                 </Modal>
-            </Flex>
-        </Card>
+            </Flex >
+        </Card >
     );
 };
 

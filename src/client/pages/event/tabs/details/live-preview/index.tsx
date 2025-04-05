@@ -10,6 +10,7 @@ import { CardContent, Card } from '@mui/material';
 import { CiShare1 } from "react-icons/ci";
 import { LuClock5 } from "react-icons/lu";
 import type { Location } from '@quillbooking/client';
+import user from "../../../../../../components/icons/user.png";
 
 interface LivePreviewProps {
     name: string;
@@ -33,7 +34,9 @@ const LivePreview: React.FC<LivePreviewProps> = ({ name, hosts, duration, locati
                     <Flex className='justify-between items-start'>
                         <Flex vertical gap={4}>
                             {/* static */}
-                            <div>User Image</div>
+                            <div>
+                                <img src={user} alt='user.png' className='size-16 rounded-full'/>
+                            </div>
                             <div className='text-[#1A1A1A99] text-[16px]'>host name</div>
                             <div className='text-[#1A1A1A] text-[24px]'>{name}</div>
                         </Flex>

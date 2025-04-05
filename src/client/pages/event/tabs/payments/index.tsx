@@ -32,6 +32,8 @@ import ConfigAPI from '@quillbooking/config';
 import { useEventContext } from '../../state/context';
 import './style.scss';
 import { FaPlus } from 'react-icons/fa';
+import paypal from '../../../../../../assets/icons/paypal/paypal.png';
+import stripe from '../../../../../../assets/icons/stripe/stripe.png';
 
 const { Title } = Typography;
 
@@ -330,14 +332,14 @@ const EventPaymentsSettings: React.FC = () => {
                                             <Flex gap={20}>
                                                 <Checkbox checked={selectedMethod.includes("paypal")}
                                                     onChange={() => toggleSelectionMethod("paypal")}
-                                                    className={`custom-check border px-2 rounded-lg ${selectedMethod.includes("paypal") ? "border-color-primary bg-color-secondary" : ""}`}>
-                                                    <img src='https://s3-alpha-sig.figma.com/img/be57/8bfb/f693ea566997f299b885e14c3eae5e7f?Expires=1743984000&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=XRlLSKdWVVlDzwIMu8GEL9mPQKwzxJG5iqMEwnxerPVH4RxWjuDV1m65VgshGoXPzy0hrOuOxTUdIJJIebvxs5VFUc0i~8y85EiG7bXv6TOM8f1~GkWcfcVEIKxtSU2~TbmpJD2IsgAdTfzUkEUAVAXhn7~5TlWG8q908Ba-ynuAmSZ8rxhXpkHrdgxoWSRcnAgL4rkVJPJNUtZn~-5ND8LIRRcQRvLkQ6pp42ZcLz~Dph30uo5lQF9THu7ZWRGkNWGylVzVySgTXNWr7dSa5ktY13~DhoTpHMsbxq7ZateTvNddBgbks6jp-aX2I4ed6gUYQcK~MYKYyhAI8ARoKQ__'
-                                                        alt='paypal' className='paypal-img' />
+                                                    className={`custom-check border px-4 py-[10px] rounded-lg ${selectedMethod.includes("paypal") ? "border-color-primary bg-color-secondary" : ""}`}>
+                                                    <img src={paypal}
+                                                        alt='paypal' className='paypal-img ' />
                                                 </Checkbox>
                                                 <Checkbox checked={selectedMethod.includes("stripe")}
                                                     onChange={() => toggleSelectionMethod("stripe")}
-                                                    className={`custom-check border px-2 rounded-lg ${selectedMethod.includes("stripe") ? "border-color-primary bg-color-secondary" : ""}`}>
-                                                    <img src='https://s3-alpha-sig.figma.com/img/0121/eceb/05999d11b6559b6f534bcc94dc16284b?Expires=1743984000&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=IeyjIhivzLcapFkZB4sz3XBq8hAPI-Q3b8xupzYKTvbcXe0CSgj2ZHHGq6~u4GE1WXnOUqs749ZMMctcjJlwhNZCqlZch7fCVoMBQpsWAirsfaFOFv-w4lOl6v9aDyaMMxv8rl3y1zLK5IBvA8fi8QevFDfU6CTFaIw3DS-ihoBLsiByE~NNvOxzb6birVqDxHtA9NL0tRFUwPiLK~1qPd2uHkuaWSbrz5~Ij1uby18caysuyP5hIHQ5i3EwvpqCx3baaFJIm7HMIrm3yOxqYRfBNvPh36jxXg-QMDvLgExQ0vjQmCfKDpkGp8gPA5EBCJ8K6YADCjnaigNgdrx2Eg__'
+                                                    className={`custom-check border px-4 py-[10px] rounded-lg ${selectedMethod.includes("stripe") ? "border-color-primary bg-color-secondary" : ""}`}>
+                                                    <img src={stripe}
                                                         alt='stripe' className='stripe-img' />
                                                 </Checkbox>
                                             </Flex>
@@ -471,7 +473,7 @@ const EventPaymentsSettings: React.FC = () => {
                                                                                 },
                                                                             ]}
                                                                         >
-                                                                            <div className="text-[#09090B] text-[16px]">
+                                                                            <div className="text-[#09090B] text-[16px] pb-2">
                                                                                 {__("Booking Payment Items", "quillbooking")}
                                                                                 <span className='text-red-500'>*</span>
                                                                             </div>
@@ -501,7 +503,7 @@ const EventPaymentsSettings: React.FC = () => {
                                                                                 },
                                                                             ]}
                                                                         >
-                                                                            <div className="text-[#09090B] text-[16px]">
+                                                                            <div className="text-[#09090B] text-[16px] pb-2">
                                                                                 {__("Price", "quillbooking")}
                                                                                 <span className='text-red-500'>*</span>
                                                                             </div>

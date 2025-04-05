@@ -7,14 +7,14 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Switch, Select, Input, InputNumber, Radio, Skeleton, Typography, Divider } from 'antd';
+import { Card, Flex, Button, Switch, Select, Input, InputNumber, Radio, Skeleton, Typography, Divider, Checkbox } from 'antd';
 
 /**
  * Internal dependencies
  */
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
-import { AdvancedSettingsIcon, FieldWrapper, Header } from '@quillbooking/components';
+import { AdvancedSettingsIcon, EditIcon, FieldWrapper, Header, UrlIcon } from '@quillbooking/components';
 import { BiEditAlt } from "react-icons/bi";
 
 const { Title } = Typography;
@@ -57,6 +57,11 @@ const EventAdvancedSettings: React.FC = () => {
     const [showSlugField, setShowSlugField] = useState(false);
     const [settings, setSettings] = useState<AdvancedSettings | null>(null);
     const setBreadcrumbs = useBreadcrumbs();
+    const [passingFields, setPassingFields] = useState<boolean>(false);
+
+    const handleCheckboxChange = () => {
+        setPassingFields(!passingFields); // Toggle passingFields state
+    };
 
     const fetchSettings = () => {
         if (!event) return;
@@ -133,13 +138,13 @@ const EventAdvancedSettings: React.FC = () => {
                             <span className='text-red-500'>*</span>
                         </div>
                         {/* static */}
-                        <Select
+                        <Input
                             placeholder={__("{event name} between {host name} and {{guest.first_name}}", "quillbooking")}
                             className="h-[48px] rounded-lg"
-                            getPopupContainer={(trigger) => trigger.parentElement}
-                            options={[
-                                { value: 'booking-title', label: 'Booking Title' },
-                            ]}
+                            suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                                <UrlIcon />
+                            </span>}
+                            style={{ padding: "0 0 0 10px" }}
                         />
                     </Flex>
                     <Flex vertical className='mt-4'>
@@ -158,17 +163,7 @@ const EventAdvancedSettings: React.FC = () => {
                 </Card>
             </Card>
             <Card>
-                <Flex gap={10} className='items-center border-b pb-4'>
-                    <div className='bg-[#EDEDED] text-[50px] rounded-lg p-2'>
-                        <AdvancedSettingsIcon />
-                    </div>
-                    <Header header={__('Advanced Settings', 'quillbooking')}
-                        subHeader={__(
-                            'Customize the question asked on the booking page',
-                            'quillbooking'
-                        )} />
-                </Flex>
-                <Flex vertical gap={20} className='mt-4'>
+                <Flex vertical gap={20}>
                     <Card className='rounded-lg'>
                         <FieldWrapper
                             label={<span className="text-[#09090B] text-[20px]">
@@ -187,13 +182,47 @@ const EventAdvancedSettings: React.FC = () => {
                         {settings.redirect_after_submit && (
                             <>
                                 <Divider />
-                                <FieldWrapper label={__('Redirect URL', 'quillbooking')}>
+                                <FieldWrapper label={<span className="text-[#09090B] font-semibold">
+                                    {__('Redirect URL', 'quillbooking')}
+                                </span>}>
                                     <Input
                                         value={settings.redirect_url}
                                         onChange={(e) => handleChange('redirect_url', e.target.value)}
                                         size='large'
-                                        placeholder={__('https://example.com', 'quillbooking')}
+                                        placeholder={__('https://example.com/redirect-to-my-success-page', 'quillbooking')}
                                         className='rounded-lg h-[48px]'
+                                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                                            <UrlIcon />
+                                        </span>}
+                                        style={{ padding: "0 0 0 10px", marginBottom: "20px" }}
+                                    />
+                                </FieldWrapper>
+                                <FieldWrapper label={<span className="text-[#09090B] font-semibold">
+                                    {__('Redirect Query String', 'quillbooking')}
+                                </span>}
+                                    description={<span className='text-[#71717A] text-[14px] italic'>
+                                        {__('Sample: email={{guest.email}}&phone={{booking.phone}}', 'quillbooking')}
+                                    </span>}
+                                >
+                                    <Checkbox
+                                        className="w-full transition-all duration-300 custom-check pb-2"
+                                        checked={passingFields}
+                                        onChange={handleCheckboxChange}
+                                    >
+                                        <div className="text-[#3F4254] text-[16px] font-semibold">
+                                            {__("Pass field data via query string", "quillbooking")}
+                                        </div>
+                                    </Checkbox>
+                                    <Input
+                                        value={settings.redirect_url}
+                                        onChange={(e) => handleChange('redirect_url', e.target.value)}
+                                        size='large'
+                                        placeholder={__('Redirect query string', 'quillbooking')}
+                                        className='rounded-lg h-[48px]'
+                                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                                            <UrlIcon />
+                                        </span>}
+                                        style={{ padding: "0 0 0 10px" }}
                                     />
                                 </FieldWrapper>
                             </>
@@ -218,43 +247,65 @@ const EventAdvancedSettings: React.FC = () => {
                             <>
                                 <Divider />
                                 <Flex gap={10} vertical>
-                                    <FieldWrapper label={<span className="text-[#09090B] text-[16px] font-[500]">
-                                        {__('Cannot Cancel Time', 'quillbooking')}
-                                    </span>}>
+                                    <FieldWrapper>
                                         <Radio.Group
                                             value={settings.cannot_cancel_time}
                                             onChange={(e) => handleChange('cannot_cancel_time', e.target.value)}
+                                            className='mb-4'
                                         >
-                                            <Radio value="event_start" className='custom-radio text-[#09090B]'>{__('Always', 'quillbooking')}</Radio>
-                                            <Flex gap={10} align="center">
-                                                <Radio value="less_than" className='custom-radio text-[#09090B]'>
-                                                    {__('When meeting starts in less than', 'quillbooking')}
-                                                </Radio>
-                                                <InputNumber
-                                                    value={settings.cannot_cancel_time_value}
-                                                    onChange={(value) => handleChange('cannot_cancel_time_value', value)}
-                                                    size='large'
-                                                    className='rounded-lg h-[48px]'
-                                                />
-                                                <Select
-                                                    value={settings.cannot_cancel_time_unit}
-                                                    options={unitOptions}
-                                                    onChange={(value) => handleChange('cannot_cancel_time_unit', value)}
-                                                    size='large'
-                                                    getPopupContainer={(trigger) => trigger.parentElement}
-                                                    className='rounded-lg h-[48px]'
-                                                />
-                                            </Flex>
+                                            <Radio
+                                                value="event_start"
+                                                className={`custom-radio text-[#09090B] p-4 mr-4 rounded-lg border ${settings.cannot_cancel_time === 'event_start' ? 'border border-color-primary bg-color-secondary' : ''}`}
+                                            >
+                                                {__('Always', 'quillbooking')}
+                                            </Radio>
+                                            <Radio
+                                                value="less_than"
+                                                className={`custom-radio text-[#09090B] p-4 rounded-lg border ${settings.cannot_cancel_time === 'less_than' ? 'border border-color-primary bg-color-secondary' : ''}`}
+                                            >
+                                                {__('When meeting starts in less than', 'quillbooking')}
+                                            </Radio>
                                         </Radio.Group>
                                     </FieldWrapper>
+                                    {settings.cannot_cancel_time === 'less_than' && (
+                                        <FieldWrapper label={<span className="text-[#09090B] text-[16px] font-[500]">
+                                            {__('Add Time', 'quillbooking')}
+                                        </span>}>
+                                        <Flex gap={15} className='w-full mb-4'>
+                                            <InputNumber
+                                                value={settings.cannot_cancel_time_value}
+                                                onChange={(value) => handleChange('cannot_cancel_time_value', value)}
+                                                size='large'
+                                                className='rounded-lg h-[48px] w-full'
+                                            />
+                                            <Select
+                                                value={settings.cannot_cancel_time_unit}
+                                                options={unitOptions}
+                                                onChange={(value) => handleChange('cannot_cancel_time_unit', value)}
+                                                size='large'
+                                                getPopupContainer={(trigger) => trigger.parentElement}
+                                                className='rounded-lg h-[48px] w-full'
+                                            />
+                                            </Flex>
+                                        </FieldWrapper>
+                                    )}
                                     <FieldWrapper label={<span className="text-[#09090B] text-[16px] font-[500]">
                                         {__('Permission Denied Message', 'quillbooking')}
-                                    </span>}>
+                                    </span>}
+                                        description={<span className='text-[#71717A] text-[14px] italic'>
+                                            {__('User will see this if they attempt to cancel without permission.', 'quillbooking')}
+                                        </span>}
+                                    >
                                         <Input
                                             value={settings.permission_denied_message}
                                             onChange={(e) => handleChange('permission_denied_message', e.target.value)}
                                             size='large'
                                             className='rounded-lg h-[48px]'
+                                            placeholder='Sorry! you can not cancel this'
+                                            suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                                                <UrlIcon />
+                                            </span>}
+                                            style={{ padding: "0 0 0 10px" }}
                                         />
                                     </FieldWrapper>
                                 </Flex>
@@ -270,26 +321,28 @@ const EventAdvancedSettings: React.FC = () => {
                                 {__('Update the slug to customize your event landing page URL', 'quillbooking')}
                             </span>}
                             type="horizontal">
-                            <BiEditAlt className='border border-[#EDEBEB] text-[36px] p-2 rounded-md cursor-pointer' onClick={() => setShowSlugField(true)} />
+                            <div className='border border-[#EDEBEB] rounded-md cursor-pointer h-fit p-2' onClick={() => setShowSlugField(true)}>
+                                <EditIcon />
+                            </div>
                         </FieldWrapper>
 
                         {showSlugField && (
                             <div className='pt-4'>
-                            <FieldWrapper label={<span className="text-[#09090B] text-[14px] font-semibold">
-                                {__('Slug', 'quillbooking')}
-                            </span>}
-                                description={<span className='text-[#71717A] text-[14px]'>
-                                    {__('Slug must be unique to avoid any conflicts with other events', 'quillbooking')}
+                                <FieldWrapper label={<span className="text-[#09090B] text-[14px] font-semibold">
+                                    {__('Slug', 'quillbooking')}
                                 </span>}
+                                    description={<span className='text-[#71717A] text-[14px]'>
+                                        {__('Slug must be unique to avoid any conflicts with other events', 'quillbooking')}
+                                    </span>}
                                 >
-                                <Input
-                                    value={settings.event_slug || event?.slug}
-                                    onChange={(e) => handleChange('event_slug', e.target.value)}
-                                    size='large'
-                                    placeholder={__('event-slug', 'quillbooking')}
-                                    className='rounded-lg h-[48px]'
-                                />
-                            </FieldWrapper>
+                                    <Input
+                                        value={settings.event_slug || event?.slug}
+                                        onChange={(e) => handleChange('event_slug', e.target.value)}
+                                        size='large'
+                                        placeholder={__('event-slug', 'quillbooking')}
+                                        className='rounded-lg h-[48px]'
+                                    />
+                                </FieldWrapper>
                             </div>
                         )}
                     </Card>

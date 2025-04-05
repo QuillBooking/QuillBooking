@@ -70,3 +70,4 @@ export {default as CalendarTickIcon} from "./calendar-tick-icon";
 export {default as CalendarDeleteIcon} from "./calendar-delete-icon";
 export {default as CalendarDisableIcon} from "./calendar-disable-icon";
 export {default as AdvancedSettingsIcon} from "./advanced-settings-icon";
+export {default as UrlIcon} from "./url-icon";

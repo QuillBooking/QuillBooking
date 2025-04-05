@@ -21,6 +21,7 @@ import { useState } from 'react';
 import CalendarActions from '../calendar-actions';
 import CloneEventModal from '../clone-event-modal';
 import ShareModal from '../share-modal';
+import CreateEvent from '../../create-event';
 
 /**
  * Calendar Events Component.
@@ -238,7 +239,8 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                                 </Flex>
                             )}
                         >
-                            <Button className='text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]'>
+                            <Button
+                                className='text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]'>
                                 <CalendarAddIcon />
                                 <span className='pt-[8.5px] text-center text-color-primary self-center'>{__('Create Event', 'quillbooking')}</span>
                             </Button>
@@ -247,7 +249,34 @@ const CalendarEvents: React.FC<{ calendar: Calendar; typesLabels: Record<string,
                 </div>
             ) : (
                 <div className="quillbooking-calendar-no-events">
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={__('No events found', 'quillbooking')} />
+                    {calendar.type == "team" && (<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={__('No events found', 'quillbooking')} />)}
+                    {calendar.type == "host" && (
+                        <Popover
+                            trigger={['click']}
+                            content={(
+                                <Flex vertical gap={10}>
+                                    <>
+                                        {map(hostEventsTypes, (label, type) => (
+                                            <Button
+                                                type="text"
+                                                key={type}
+                                                onClick={() => {
+                                                    navigate(`calendars/${calendar.id}/create-event/${type}`);
+                                                }}
+                                            >
+                                                {label}
+                                            </Button>
+                                        ))}
+                                    </>
+                                </Flex>
+                            )}
+                        >
+                            <Button className='text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]'>
+                                <CalendarAddIcon />
+                                <span className='pt-[8.5px] text-center text-color-primary self-center'>{__('Create Event', 'quillbooking')}</span>
+                            </Button>
+                        </Popover>
+                    )}
                 </div>
             )}
             {/* {cloneCalendar && (

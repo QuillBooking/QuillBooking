@@ -152,7 +152,6 @@ const AvailabilityTab: React.FC = () => {
 					}
 				/> */}
 					{/* Custom or Existing Availability Section */}
-					<EventLimits/>
 					<AvailabilitySection
 						isCustomAvailability={isCustomAvailability}
 						availability={availability}
@@ -183,7 +182,7 @@ const AvailabilityTab: React.FC = () => {
 						}
 					/>
 					
-
+					<EventLimits/>
 					{/* Date Overrides Section */}
 					{/* <OverrideSection
 						dateOverrides={dateOverrides}

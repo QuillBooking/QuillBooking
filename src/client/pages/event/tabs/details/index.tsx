@@ -20,6 +20,7 @@ import EventInfo from './event-info';
 import LivePreview from './live-preview';
 import Duration from './duration';
 import EventPaymentsSettings from '../payments';
+import user from "../../../../../components/icons/user.png"
 
 /**
  * Event General Settings Component.

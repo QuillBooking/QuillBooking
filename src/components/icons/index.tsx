@@ -67,3 +67,6 @@ export { default as IntegrationsIcon } from "./integrations-icon";
 export {default as PaymentIcon} from "./payment-icon";
 export {default as EventLocIcon} from "./event-location-icon";
 export {default as CalendarTickIcon} from "./calendar-tick-icon";
+export {default as CalendarDeleteIcon} from "./calendar-delete-icon";
+export {default as CalendarDisableIcon} from "./calendar-disable-icon";
+export {default as AdvancedSettingsIcon} from "./advanced-settings-icon";

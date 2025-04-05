@@ -22,6 +22,7 @@ import Locations from '../event/tabs/details/locations';
 /**
  * Create Event Component.
  */
+
 const CreateEvent: React.FC = () => {
     const { id, type } = useParams<{ id: string; type: 'one-to-one' | 'group' | 'round-robin' }>();
     if (!id || !type) {
@@ -40,7 +41,17 @@ const CreateEvent: React.FC = () => {
         duration: 30,
         color: '',
         visibility: 'public',
-        location: [],
+        location: [{
+            "type": "person_address",
+            "fields": {
+                "location": "Asyut",
+                "display_on_booking": "qwesda"
+            }
+        },
+        {
+            "type": "attendee_phone",
+            "fields": {}
+        }],
         additional_settings: {
             max_invitees: 1,
             show_remaining: true,
@@ -125,6 +136,7 @@ const CreateEvent: React.FC = () => {
     };
 
     return (
+
         <Flex vertical className="quillbooking-create-event">
             <Flex>
                 <Typography.Title className='quillbooking-tab-title' level={4}>
@@ -232,7 +244,7 @@ const CreateEvent: React.FC = () => {
                             </Flex>
                         </Card>
                     )}
-                    <FieldWrapper
+                    {/* <FieldWrapper
                         label={__('Locations', 'quillbooking')}
                         description={__('Select locations for the event', 'quillbooking')}
                         style={{ flex: 1 }}
@@ -243,7 +255,7 @@ const CreateEvent: React.FC = () => {
                         >
                             <Locations locations={event.location || []} onChange={(locations) => handleChange('location', locations)} />
                         </Form.Item>
-                    </FieldWrapper>
+                    </FieldWrapper> */}
                     <Form.Item>
                         <Button type="primary" htmlType="submit" loading={loading}>
                             {__('Create', 'quillbooking')}

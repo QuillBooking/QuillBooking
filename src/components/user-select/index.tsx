@@ -119,8 +119,9 @@ const UserSelect: React.FC<UserSelectProps> = ({ value, onChange, multiple = fal
                 loadOptions={debouncedLoadOptions}
                 onChange={handleChange}
                 value={getValue()}
-                placeholder={placeholder || __('Select a user...', 'quillbooking')}
+                placeholder={placeholder || __('Search host and select one', 'quillbooking')}
                 isOptionDisabled={(option) => option.disabled}
+                className='rounded-lg h-[48px]'
             />
         </div>
     );

@@ -8,7 +8,7 @@ import type { Calendar } from '@quillbooking/client';
 interface CalendarActionsProps {
     calendar: Calendar; // Ensure this matches your actual Calendar type
     onEdit: (id: number) => void;
-    onDisable: (id: number) => void;
+    onDisable: (eventIds: number[]) => void;
     isDisabled: boolean;
     onClone: (calendar: Calendar) => void;
     onDelete: (id: number) => void;
@@ -30,7 +30,8 @@ const CalendarActions: React.FC<CalendarActionsProps> = ({
     };
 
     const handleDisable = () => {
-        onDisable(calendar.id);
+        const eventsId = calendar.events.map((event) => event.id);
+        onDisable(eventsId);
         setIsModalDisableOpen(false);
     };
 

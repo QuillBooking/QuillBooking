@@ -41,55 +41,52 @@ export const convertTimezone = (
 };
 
 export const groupBookingsByDate = (bookings: Booking[]) => {
-	return bookings.reduce<Record<string, Booking[]>>(
-		(groups, booking) => {
-			const currentTimezone = getCurrentTimezone();
-			// Convert booking.start_time into a Date object in the current timezone.
-			const { date, time: startTime } = convertTimezone(
-				booking.start_time,
-				currentTimezone
-			);
-			const { time: endTime } = convertTimezone(
-				booking.end_time,
-				currentTimezone
-			);
+	return bookings.reduce<Record<string, Booking[]>>((groups, booking) => {
+		const currentTimezone = getCurrentTimezone();
+		// Convert booking.start_time into a Date object in the current timezone.
+		const { date, time: startTime } = convertTimezone(
+			booking.start_time,
+			currentTimezone
+		);
+		const { time: endTime } = convertTimezone(
+			booking.end_time,
+			currentTimezone
+		);
 
-			// Format startTime and endTime to 12-hour format with AM/PM
-			const formattedStartTime = format(
-				new Date(`1970-01-01T${startTime}:00`),
-				'hh:mm a'
-			);
-			const formattedEndTime = format(
-				new Date(`1970-01-01T${endTime}:00`),
-				'hh:mm a'
-			);
+		// Format startTime and endTime to 12-hour format with AM/PM
+		const formattedStartTime = format(
+			new Date(`1970-01-01T${startTime}:00`),
+			'hh:mm a'
+		);
+		const formattedEndTime = format(
+			new Date(`1970-01-01T${endTime}:00`),
+			'hh:mm a'
+		);
 
-			const bookingWithTimeSpan = {
-				...booking,
-				time_span: `${formattedStartTime.toLowerCase()} - ${formattedEndTime.toLowerCase()}`,
-			};
+		const bookingWithTimeSpan = {
+			...booking,
+			time_span: `${formattedStartTime.toLowerCase()} - ${formattedEndTime.toLowerCase()}`,
+		};
 
-			// Determine the inner key:
-			// If the booking date is today or tomorrow, use "today-" or "tomorrow-" prefix.
-			// Otherwise, use the three-letter day abbreviation and the day number (e.g., "tue-20").
-			let dayKey: string;
-			if (isToday(date)) {
-				dayKey = `today-${format(date, 'd')}`;
-			} else if (isTomorrow(date)) {
-				dayKey = `tomorrow-${format(date, 'd')}`;
-			} else {
-				dayKey = `${format(date, 'eee').toLowerCase()}-${format(date, 'd')}`;
-			}
+		// Determine the inner key:
+		// If the booking date is today or tomorrow, use "today-" or "tomorrow-" prefix.
+		// Otherwise, use the three-letter day abbreviation and the day number (e.g., "tue-20").
+		let dayKey: string;
+		if (isToday(date)) {
+			dayKey = `today-${format(date, 'd')}`;
+		} else if (isTomorrow(date)) {
+			dayKey = `tomorrow-${format(date, 'd')}`;
+		} else {
+			dayKey = `${format(date, 'eee').toLowerCase()}-${format(date, 'd')}`;
+		}
 
-			if (!groups[dayKey]) {
-				groups[dayKey] = [];
-			}
+		if (!groups[dayKey]) {
+			groups[dayKey] = [];
+		}
 
-			groups[dayKey].push(bookingWithTimeSpan);
-			return groups;
-		},
-		{}
-	);
+		groups[dayKey].push(bookingWithTimeSpan);
+		return groups;
+	}, {});
 };
 
 export const fetchAjax = async (url: string, options: RequestInit = {}) => {
@@ -113,27 +110,4 @@ export const getFields = (formData: Record<string, any>) => {
 	});
 
 	return groupedFields;
-};
-
-type MetaItem = {
-	meta_key: string;
-	meta_value: string;
-};
-
-export const getMetaValue = (
-	metaArray: MetaItem[],
-	key: string,
-	defaultValue = null
-) => {
-	const metaItem = metaArray.find((item) => item.meta_key === key);
-	if (metaItem) {
-		try {
-			// Attempt to parse meta_value if it's JSON-formatted
-			return JSON.parse(metaItem.meta_value);
-		} catch (error) {
-			// If parsing fails, return the raw value
-			return metaItem.meta_value;
-		}
-	}
-	return defaultValue;
 };

@@ -25,6 +25,7 @@ use QuillBooking\Booking_Service;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Models\Guest_Model;
 use QuillBooking\Capabilities;
+use QuillBooking\Utils;
 
 /**
  * Booking Controller class
@@ -362,37 +363,41 @@ class REST_Booking_Controller extends REST_Controller {
 	 */
 	public function create_item( $request ) {
 		try {
-			$event_id    = $request->get_param( 'event_id' );
-			$start_date  = $request->get_param( 'start_date' );
-			$duration    = $request->get_param( 'slot_time' );
-			$timezone    = $request->get_param( 'timezone' );
-			$name        = $request->get_param( 'name' );
-			$email       = $request->get_param( 'email' );
-			$status      = $request->get_param( 'status' );
-			$location    = $request->get_param( 'location' );
-			$message     = $request->get_param( 'message' );
-			$current_url = $request->get_param( 'current_url' );
-			$fields      = $request->get_param( 'fields' );
+			$event_id            = $request->get_param( 'event_id' );
+			$start_date          = $request->get_param( 'start_date' );
+			$duration            = $request->get_param( 'slot_time' );
+			$timezone            = $request->get_param( 'timezone' );
+			$name                = $request->get_param( 'name' );
+			$email               = $request->get_param( 'email' );
+			$status              = $request->get_param( 'status' );
+			$location            = $request->get_param( 'location' );
+			$message             = $request->get_param( 'message' );
+			$current_url         = $request->get_param( 'current_url' );
+			$fields              = $request->get_param( 'fields' );
+			$ignore_availability = $request->get_param( 'ignore_availability' );
 
 			// will be updated later
 			$location = 'zoom';
 
-			$event      = Booking_Validator::validate_event( $event_id );
-			$start_date = Booking_Validator::validate_start_date( $start_date, $timezone );
-			$duration   = Booking_Validator::validate_duration( $duration, $event->duration );
+			$event    = Booking_Validator::validate_event( $event_id );
+			$duration = Booking_Validator::validate_duration( $duration, $event->duration );
 
-			$available_slots = $event->get_booking_available_slots( $start_date, $duration, $timezone );
-			if ( ! $available_slots ) {
-				throw new \Exception( __( 'Sorry, This booking is not available', 'quillbooking' ) );
+			if ( ! $ignore_availability ) {
+				$start_date      = Booking_Validator::validate_start_date( $start_date, $timezone );
+				$available_slots = $event->get_booking_available_slots( $start_date, $duration, $timezone );
+				if ( ! $available_slots ) {
+					throw new \Exception( __( 'Sorry, This booking is not available', 'quillbooking' ) );
+				}
+			} else {
+				$start_date = Utils::create_date_time( $start_date, $timezone );
 			}
 
-			$invitee = array(
+			$invitee          = array(
 				array(
 					'name'  => $name,
 					'email' => $email,
 				),
 			);
-
 			$booking_service  = new Booking_Service();
 			$validate_invitee = $booking_service->validate_invitee( $event, $invitee );
 			$calendar_id      = $event->calendar_id;
@@ -455,7 +460,8 @@ class REST_Booking_Controller extends REST_Controller {
 				return new WP_Error( 'rest_booking_error', __( 'Booking not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			$booking->load( 'guest', 'event', 'calendar.user', 'logs', 'meta' );
+			$booking->load( 'guest', 'event', 'calendar.user', 'logs' );
+			$booking->fields = $booking->get_meta( 'fields' );
 
 			return new WP_REST_Response( $booking, 200 );
 		} catch ( Exception $e ) {
@@ -526,12 +532,7 @@ class REST_Booking_Controller extends REST_Controller {
 					'type' => 'user',
 					'id'   => get_current_user_id(),
 				);
-				$booking->meta()->create(
-					array(
-						'meta_key'   => 'cancellation_reason',
-						'meta_value' => json_encode( $cancellation_reason ),
-					)
-				);
+				$booking->update_meta( 'cancellation_reason', $cancellation_reason );
 			}
 
 			$booking->update( $booking_data );

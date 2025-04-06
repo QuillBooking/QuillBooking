@@ -5,7 +5,6 @@ import { __ } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 
 import { Booking } from 'client/types';
-import { getMetaValue } from '@quillbooking/utils';
 import CardHeader from '../card-header';
 import { QuestionIcon, QuestionOutlineIcon } from '@quillbooking/components';
 
@@ -22,8 +21,7 @@ const BookingQuestion: React.FC<BookingQuestionProps> = ({ booking }) => {
 	const [fields, setFields] = useState<FieldItem[]>([]);
 
 	useEffect(() => {
-		if (booking && booking.meta)
-			setFields(getMetaValue(booking.meta, 'fields'));
+		if (booking && booking.fields) setFields(booking.fields);
 	}, [booking]);
 	return (
 		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">

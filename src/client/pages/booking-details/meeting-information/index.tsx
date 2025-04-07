@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies
  */
 import type { Booking } from '@quillbooking/client';
-import CardHeader from '../card-header';
+import { CardHeader } from '@quillbooking/components';
 import {
 	AllCalendarIcon,
 	CalendarInformationIcon,

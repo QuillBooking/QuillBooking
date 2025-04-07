@@ -7,9 +7,8 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies
  */
 import type { Booking } from '@quillbooking/client';
-import CardHeader from '../card-header';
+import { CardHeader } from '@quillbooking/components';
 import { LatestCalendarIcon } from '@quillbooking/components';
-import { Button } from 'antd';
 
 /*
  * Main Booking List Component (Details Page)

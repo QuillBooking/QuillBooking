@@ -14,7 +14,7 @@ import {
 	TeamOutlinedIcon,
 	TimezoneIcon,
 } from '@quillbooking/components';
-import CardHeader from '../card-header';
+import { CardHeader } from '@quillbooking/components';
 import InfoItem from '../info-items';
 
 /*

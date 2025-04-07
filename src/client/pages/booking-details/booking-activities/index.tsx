@@ -13,7 +13,7 @@ import { Typography } from 'antd';
  */
 import type { Booking } from '@quillbooking/client';
 import { convertTimezone, getCurrentTimezone } from '@quillbooking/utils';
-import CardHeader from '../card-header';
+import { CardHeader } from '@quillbooking/components';
 import { CompassIcon, FailIcon, SuccesIcon } from '@quillbooking/components';
 
 /*

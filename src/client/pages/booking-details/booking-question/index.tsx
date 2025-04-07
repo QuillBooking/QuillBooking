@@ -5,7 +5,7 @@ import { __ } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 
 import { Booking } from 'client/types';
-import CardHeader from '../card-header';
+import { CardHeader } from '@quillbooking/components';
 import { QuestionIcon, QuestionOutlineIcon } from '@quillbooking/components';
 
 interface BookingQuestionProps {

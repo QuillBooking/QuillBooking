@@ -5,6 +5,7 @@ interface CardHeaderProps {
 	description: string;
 	icon: React.ReactNode;
 	inviteeNumber?: number;
+	border?: boolean;
 }
 
 const CardHeader: React.FC<CardHeaderProps> = ({
@@ -12,9 +13,12 @@ const CardHeader: React.FC<CardHeaderProps> = ({
 	description,
 	icon,
 	inviteeNumber,
+	border = true,
 }) => {
 	return (
-		<div className="flex items-center gap-4 p-0 text-color-primary-text border-b pb-5">
+		<div
+			className={`flex items-center gap-4 p-0 text-color-primary-text ${border ? 'border-b' : ''} pb-5`}
+		>
 			<span className="bg-[#EDEDED] p-2 rounded">{icon}</span>
 
 			<div>

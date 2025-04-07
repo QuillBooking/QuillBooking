@@ -692,6 +692,7 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			$event->save();
+			$event->setSystemFields();
 
 			return new WP_REST_Response( $event, 200 );
 		} catch ( Exception $e ) {
@@ -891,7 +892,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			$meta = $event->{$key};
 
-			if ( ! $meta ) {
+			if ( ! isset( $event->{$key} ) ) {
 				return new WP_Error( 'rest_event_error', __( 'Meta not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 

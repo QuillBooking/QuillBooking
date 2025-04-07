@@ -46,6 +46,11 @@ class Custom extends Location {
 				'type'     => 'text',
 				'required' => true,
 			),
+			'description'        => array(
+				'label'    => __( 'Description', 'quillbooking' ),
+				'type'     => 'textarea',
+				'required' => true,
+			),
 			'display_on_booking' => array(
 				'label'    => __( 'Display on Booking', 'quillbooking' ),
 				'desc'     => __( 'Display on booking page', 'quillbooking' ),

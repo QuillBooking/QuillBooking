@@ -19,6 +19,7 @@ use QuillBooking\Managers\Locations_Manager;
 use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Managers\Fields_Manager;
 use QuillBooking\Availabilities;
+use QuillBooking\Managers\Integrations_Manager;
 
 /**
  * Calendar Events Model class
@@ -117,6 +118,8 @@ class Event_Model extends Model {
 		'dynamic_duration',
 		'location',
 		'additional_settings',
+		'booking_count',
+		'connected_integrations',
 	);
 
 	/**
@@ -429,6 +432,56 @@ class Event_Model extends Model {
 	 */
 	public function setDynamicDurationAttribute( $value ) {
 		$this->update_meta( 'dynamic_duration', $value );
+	}
+
+	/**
+	 * Get booking count
+	 *
+	 * @return int
+	 */
+	public function getBookingCountAttribute() {
+		return $this->bookings()
+			->where( 'status', '!=', 'cancelled' )
+			->count();
+	}
+
+	/**
+	 * Get Connected Integrations
+	 *
+	 * @return array
+	 */
+	public function getConnectedIntegrationsAttribute() {
+		$connected_integrations = array();
+		$integrations           = Integrations_Manager::instance()->get_integrations();
+
+		$calendar_ids = array( $this->calendar_id );
+		if ( in_array( $this->type, array( 'round-robin', 'collective' ) ) ) {
+			$team_members = $this->calendar->getTeamMembers();
+			$calendar_ids = $team_members;
+		}
+
+		foreach ( $integrations as $integration_class ) {
+			/** @var \QuillBooking\Abstracts\Integration $integration */
+			$integration   = new $integration_class();
+			$all_connected = true;
+
+			foreach ( $calendar_ids as $calendar_id ) {
+				$integration->set_host( $calendar_id );
+				$accounts = $integration->accounts->get_accounts();
+
+				if ( empty( $accounts ) ) {
+					$all_connected = false;
+					break;
+				}
+			}
+
+			$connected_integrations[ $integration->slug ] = array(
+				'name'      => $integration->name,
+				'connected' => $all_connected,
+			);
+		}
+
+		return $connected_integrations;
 	}
 
 	/**
@@ -939,7 +992,6 @@ class Event_Model extends Model {
 
 			if ( 0 === $availabile_slots ) {
 				$current_slot_start->modify( "+{$duration} minutes" );
-				error_log( 'No available slots' . $current_slot_start->format( 'Y-m-d H:i:s' ) );
 				continue;
 			}
 

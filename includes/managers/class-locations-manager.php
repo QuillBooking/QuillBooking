@@ -35,9 +35,10 @@ class Locations_Manager extends Manager {
 			Location::class,
 			'slug',
 			array(
-				'title'          => 'title',
-				'is_integration' => 'is_integration',
-				'fields'         => 'get_admin_fields',
+				'title'           => 'title',
+				'is_integration'  => 'is_integration',
+				'fields'          => 'get_admin_fields',
+				'frontend_fields' => 'get_fields',
 			)
 		);
 	}

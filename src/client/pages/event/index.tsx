@@ -19,7 +19,7 @@ import { useApi, useNotice, useBreadcrumbs, useNavigate } from '@quillbooking/ho
 import { useParams } from '@quillbooking/navigation';
 import { Provider } from './state/context';
 import Calendar from '../calendar';
-import { EventDetails, Availability, Limits, Fields, Notifications, AdvancedSettings, Payments } from './tabs';
+import { EventDetails, Availability, Limits, Fields, Notifications, AdvancedSettings, Payments, WebhookFeeds } from './tabs';
 
 const Event: React.FC = () => {
     const { id: calendarId, eventId: id,  tab } = useParams<{ id: string; eventId: string; tab: string }>();
@@ -110,6 +110,12 @@ const Event: React.FC = () => {
             key: 'payments',
             label: __('Payments', 'quillbooking'),
             children: <Payments />,
+            icon: <ClockCircleOutlined />
+        },
+        {
+            key: 'webhook-feeds',
+            label: __('Webhook Feeds', 'quillbooking'),
+            children: <WebhookFeeds />,
             icon: <ClockCircleOutlined />
         }
     ];

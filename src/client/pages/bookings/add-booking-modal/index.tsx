@@ -32,6 +32,8 @@ import {
 import { Calendar, Event, EventAvailability } from 'client/types';
 import { useApi } from '@quillbooking/hooks';
 import { CurrentTimeInTimezone } from '@quillbooking/components';
+import ConfigAPI from '@quillbooking/config';
+import { find, map } from 'lodash';
 
 interface AddBookingModalProps {
 	open: boolean;
@@ -60,7 +62,8 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		useState<EventAvailability>();
 	const [timeOptions, setTimeOptions] = useState<string[]>([]);
 	const [showAllTimes, setShowAllTimes] = useState(false);
-
+	const locationTypes = ConfigAPI.getLocations();
+	
 	const { callApi } = useApi();
 
 	// Reset form when closing modal
@@ -304,7 +307,60 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 				>
 					<Input />
 				</Form.Item>
+				{selectedEvent && selectedEvent.location.length > 1 && (
+					<Form.Item
+						name="location"
+						label={__('Location', 'quillbooking')}
+						rules={[{ required: true }]}
+					>
+						<Select
+							placeholder={__('Select Location', 'quillbooking')}
+							options={
+								selectedEvent.location.map((location) => ({
+									label: locationTypes[location.type].title,
+									value: location.type,
+								})) || []
+							}
+						/>
+					</Form.Item>
+				)}
+				<Form.Item shouldUpdate>
+					{({ getFieldValue }) => {
+						const locationType = getFieldValue('location');
+						const location = find(locationTypes, (_, key) => {
+							return key === locationType;
+						});
 
+						if (!location) return null;
+
+						// Return an array of Form.Items
+						return (
+							<>
+								{map(location.frontend_fields, (field, key) => (
+									<Form.Item
+										key={key}
+										name={['fields', key]}
+										label={field.label}
+										rules={[{ required: field.required }]}
+									>
+										{field.type === 'text' && (
+											<Input placeholder={field.desc} />
+										)}
+										{field.type === 'checkbox' && (
+											<Checkbox>{field.desc}</Checkbox>
+										)}
+										{field.type === 'url' && (
+											<Input
+												type="url"
+												placeholder={field.desc}
+											/>
+										)}
+									</Form.Item>
+								))}
+							</>
+						);
+					}}
+				</Form.Item>
 				{/* hidden input, appear depedning on the event info */}
 			</Form>
 		</Modal>

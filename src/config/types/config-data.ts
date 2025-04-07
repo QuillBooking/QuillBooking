@@ -64,6 +64,9 @@ export type Location = {
 	fields: {
 		[key: string]: LocationField;
 	};
+	frontend_fields: {
+		[key: string]: LocationField;
+	};
 };
 
 export type LocationField = {

@@ -46,7 +46,6 @@ import CreateEvent from '../create-event';
  */
 const Calendars: React.FC = () => {
 	const { callApi, loading } = useApi();
-	const { callApi: deleteApi } = useApi();
 	const [calendars, setCalendars] = useState<Calendar[] | null>(null);
 	const [search, setSearch] = useState<string>('');
 	const [filters, setFilters] = useState<{ [key: string]: string }>({
@@ -54,7 +53,8 @@ const Calendars: React.FC = () => {
 	});
 	const [type, setType] = useState<string | null>(null);
 	const [cloneCalendar, setCloneCalendar] = useState<Calendar | null>(null);
-	const { errorNotice } = useNotice();
+	const [update, setUpdate] = useState(false);
+	const { errorNotice, successNotice } = useNotice();
 	const copyToClipboard = useCopyToClipboard();
 	const navigate = useNavigate();
 	const siteUrl = ConfigAPI.getSiteUrl();
@@ -84,7 +84,7 @@ const Calendars: React.FC = () => {
 	};
 
 	const deleteCalendar = async (calendar: Calendar) => {
-		await deleteApi({
+		await callApi({
 			path: `calendars/${calendar.id}`,
 			method: 'DELETE',
 			onSuccess: () => {
@@ -102,37 +102,14 @@ const Calendars: React.FC = () => {
 
 	useEffect(() => {
 		fetchCalendars();
-	}, [search, filters]);
+	}, [search, filters, update]);
 
 	const handleSaved = () => {
 		fetchCalendars();
 	};
 
-	const onDeleteEvent = (id: number, calendarId: number) => {
-		if (!calendars) return;
-		const updatedCalendars = calendars.map((calendar) => {
-			if (calendar.id === calendarId) {
-				calendar.events = filter(
-					calendar.events,
-					(event) => event.id !== id
-				);
-			}
-			return calendar;
-		});
-
-		setCalendars(updatedCalendars);
-	};
-
-	const onDuplicateEvent = (event, calendarId) => {
-		if (!calendars) return;
-		const updatedCalendars = calendars.map((calendar) => {
-			if (calendar.id === calendarId) {
-				calendar.events.push(event);
-			}
-			return calendar;
-		});
-
-		setCalendars(updatedCalendars);
+	const updateEvents = () => {
+		setUpdate((prev) => !prev);
 	};
 
 	// const hostEventsTypes = {
@@ -146,11 +123,27 @@ const Calendars: React.FC = () => {
 
 	const [disabledCalendars, setDisabledCalendars] = useState({});
 
-	const handleDisableCalendar = (calendarId) => {
-		setDisabledCalendars((prev) => ({
-			...prev,
-			[calendarId]: !prev[calendarId], // Toggle disable state
-		}));
+	const handleDisableEvent = (eventIds: number[]) => {
+		callApi({
+			path: `events/disable`,
+			method: 'PUT',
+			data: {
+				ids: eventIds,
+			},
+			onSuccess: (eventIds: number[]) => {
+				successNotice(
+					__('Events disabled successfully', 'quillbooking')
+				);
+				
+				// setDisabledCalendars((prev) => ({
+				// 	...prev,
+				// 	[calendarId]: !prev[calendarId], // Toggle disable state
+				// }));
+			},
+			onError: (error) => {
+				errorNotice(error.message);
+			},
+		});
 	};
 
 	const [showCreateEventModal, setShowCreateEventModal] = useState(false);
@@ -280,8 +273,7 @@ const Calendars: React.FC = () => {
 											key={calendar.id}
 											calendar={calendar}
 											typesLabels={typesLabels}
-											onDeleted={onDeleteEvent}
-											onDuplicated={onDuplicateEvent}
+											updateCalendarEvents={updateEvents}
 										/>
 									))}
 							</Flex>
@@ -322,12 +314,8 @@ const Calendars: React.FC = () => {
 																		`calendars/${id}/general`
 																	)
 																}
-																onDisable={(
-																	id
-																) =>
-																	handleDisableCalendar(
-																		id
-																	)
+																onDisable={
+																	handleDisableEvent
 																}
 																isDisabled={
 																	isDisabled
@@ -359,7 +347,7 @@ const Calendars: React.FC = () => {
 															//     </Button>
 															//     <Button
 															//         type="text"
-															//         onClick={() => handleDisableCalendar(teamCalendar.id)}
+															//         onClick={() => handleDisableEvent(teamCalendar.id)}
 															//         icon={<DisableIcon />}
 															//     >
 															//         {isDisabled ? __('Enable', 'quillbooking') : __('Disable', 'quillbooking')}
@@ -462,9 +450,8 @@ const Calendars: React.FC = () => {
 													key={teamCalendar.id}
 													calendar={teamCalendar}
 													typesLabels={typesLabels}
-													onDeleted={onDeleteEvent}
-													onDuplicated={
-														onDuplicateEvent
+													updateCalendarEvents={
+														updateEvents
 													}
 												/>
 											</Flex>

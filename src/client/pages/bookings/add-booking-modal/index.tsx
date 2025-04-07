@@ -65,6 +65,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	const [fields, setFields] = useState<{
 		[key: string]: string;
 	}>();
+	const [ignoreAvailability, setIgnoreAvailability] = useState(false);
 
 	const { callApi } = useApi();
 	const { errorNotice, successNotice } = useNotice();
@@ -87,19 +88,30 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			path: `events/${value}`,
 			method: 'GET',
 			onSuccess: (event: Event) => {
-				console.log(event);
 				setSelectedEvent(event);
 				form.setFieldsValue({
 					duration: event.duration,
-					location: event.location[0].type,
+					location: event.location[0]?.type || '',
 				});
 				form.resetFields(['selectDate', 'selectTime']);
 				setTimeOptions([]);
 				fetchAvailability(event.id);
 				getEventFields(event);
 			},
-			onError: () => {
-				errorNotice('error fetching events');
+			onError: (error) => {
+				const errorMessage =
+					error?.message ||
+					__('Error fetching event details', 'quillbooking');
+				errorNotice(errorMessage);
+				setSelectedEvent(null);
+				form.resetFields([
+					'selectDate',
+					'selectTime',
+					'duration',
+					'location',
+				]);
+				setTimeOptions([]);
+				setFields(undefined);
 			},
 		});
 	};
@@ -191,6 +203,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					name,
 					email,
 					status,
+					ignore_availability: ignoreAvailability,
 				},
 				onSuccess: () => {
 					successNotice('Booking added successfully');
@@ -446,6 +459,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 						disabled={!selectedEvent}
 						onChange={(e) => {
 							setShowAllTimes(e.target.checked);
+							setIgnoreAvailability(e.target.checked);
 							form.resetFields(['selectDate', 'selectTime']);
 							setTimeOptions([]);
 							if (form.getFieldValue('selectDate')) {

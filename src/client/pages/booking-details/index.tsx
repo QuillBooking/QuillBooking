@@ -22,10 +22,7 @@ import BookingList from './booking-list';
 import MeetingInformation from './meeting-information';
 import InviteeInformation from './invitee-information';
 import MeetingActivities from './booking-activities';
-import {
-	CancelIcon,
-	UpcompingCalendarIcon,
-} from '@quillbooking/components';
+import { CancelIcon, UpcompingCalendarIcon } from '@quillbooking/components';
 import { BookingActions } from '@quillbooking/components';
 import BookingQuestion from './booking-question';
 
@@ -43,7 +40,9 @@ const BookingDetails: React.FC = () => {
 	const [bookings, setBookings] = useState<Record<string, Booking[]>>({});
 	const [refresh, setRefresh] = useState(false);
 	const [selectedDate, setSelectedDate] = useState<number>(0);
-	const [bookingId, setBookingId] = useState<string | number>(bookingIdParam || '');
+	const [bookingId, setBookingId] = useState<string | number>(
+		bookingIdParam || ''
+	);
 
 	const { callApi } = useApi();
 	const { errorNotice } = useNotice();
@@ -57,6 +56,7 @@ const BookingDetails: React.FC = () => {
 			path: `bookings/${bookingId}`,
 			method: 'GET',
 			onSuccess: (response) => {
+				console.log('Booking details:', response);
 				setBooking(response);
 			},
 			onError: (error) => {
@@ -83,7 +83,6 @@ const BookingDetails: React.FC = () => {
 			method: 'GET',
 			onSuccess: (res) => {
 				const bookings = groupBookingsByDate(res.bookings.data);
-				console.log('upcoming', bookings);
 				setBookings(bookings);
 			},
 			onError: () => {
@@ -105,7 +104,7 @@ const BookingDetails: React.FC = () => {
 			days[selectedDate].year
 		);
 	}, [selectedDate, refresh]);
-	
+
 	// Format date/time information only once.
 	const formattedDate = booking?.start_time
 		? new Date(booking.start_time).toLocaleDateString('en-GB', {

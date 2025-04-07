@@ -69,12 +69,7 @@ class Booking_Service {
 			$booking->save();
 
 			if ( ! empty( $fields ) ) {
-				$booking->meta()->create(
-					array(
-						'meta_key'   => 'fields',
-						'meta_value' => json_encode( $fields ),
-					)
-				);
+				$booking->update_meta( 'fields', $fields );
 			}
 
 			$guest->booking_id = $booking->id;

@@ -2,6 +2,7 @@
  * External dependencies
  */
 import { Flex, Input, Select } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 
 /**
  * Internal dependencies
@@ -49,14 +50,12 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 }) => {
 	return (
 		<Flex gap={10}>
-			<Search
-				className="search-filter"
-				placeholder="input search text"
-				allowClear
-				enterButton="Search"
-				size="middle"
-				onSearch={(val) => handleSearch(val)}
-				style={{ width: 250 }}
+			<Input
+				size="small"
+				placeholder={__('Search Events', 'quillbooking')}
+				prefix={<SearchOutlined />}
+				onChange={(e) => handleSearch(e.target.value)}
+				className='w-56 py-2 px-4 h-7'
 			/>
 
 			{author === 'own' && (
@@ -81,8 +80,8 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 				style={{ width: 150 }}
 				onChange={(val) => setAuthor(val)}
 				options={[
-					{ value: 'own', label: 'My Meetings' },
-					{ value: 'all', label: 'All Meetings' },
+					{ value: 'own', label: 'Meetings: Admin' },
+					{ value: 'all', label: 'Meetings: All' },
 				]}
 			/>
 		</Flex>

@@ -31,6 +31,8 @@ import { useLocation } from 'react-router-dom';
 import { NavBar } from '@quillbooking/components';
 import { Controller } from './controller';
 import './style.scss';
+import LogoIcon from '../../components/icons/logo';
+import SearchIcon from '../../components/icons/search-icon';
 
 const AntProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	return (
@@ -133,12 +135,23 @@ export const Layout = (props) => {
 	return (
 		<SlotFillProvider>
 			<AntProvider>
-				<div className="quillbooking-layout">
-					<NavBar />
-					<Notices />
-					<Breadcrumbs />
-					<div className="quillbooking-layout__main">
-						<Controller {...props} />
+				<div className='flex justify-between items-center border-b px-8 py-4'>
+					<LogoIcon/>
+					<div className='flex items-center gap-[12px]'>
+						<SearchIcon/>
+						<span className='border-l-[1.6px] border-l-[#D6D6D6] pl-[12px]'>hi</span>
+					</div>
+				</div>
+				<div className="quillbooking-layout w-full">
+					<div className='quillbooking-layout-navbar'>
+						<NavBar />
+					</div>
+					<div className='w-full'>
+						<Notices />
+						{/* <Breadcrumbs /> */}
+						<div className="quillbooking-layout__main">
+							<Controller {...props} />
+						</div>
 					</div>
 				</div>
 			</AntProvider>

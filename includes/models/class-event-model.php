@@ -780,7 +780,7 @@ class Event_Model extends Model {
 	 * @param int    $duration   Duration of each slot in minutes.
 	 * @return array List of available slots.
 	 */
-	public function get_available_slots( $start_date, $timezone, $duration ) {
+	public function get_available_slots( $start_date, $timezone, $duration, $calendar_id ) {
 		$this->validate_availability();
 		$this->apply_frequency_limits( $start_date );
 		$this->apply_duration_limits( $start_date );
@@ -788,7 +788,7 @@ class Event_Model extends Model {
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
 		$end_date   = $this->calculate_end_date( $start_date, $timezone );
 
-		$slots = $this->generate_daily_slots( $start_date, $end_date, $timezone, $duration );
+		$slots = $this->generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id );
 
 		return apply_filters( 'quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone );
 	}
@@ -917,7 +917,7 @@ class Event_Model extends Model {
 	 * @param int    $duration   Slot duration in minutes.
 	 * @return array Generated slots.
 	 */
-	private function generate_daily_slots( $start_date, $end_date, $timezone, $duration ) {
+	private function generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id ) {
 		$slots = array();
 
 		for ( $current_date = $start_date; $current_date <= $end_date; $current_date = strtotime( '+1 day', $current_date ) ) {
@@ -931,7 +931,7 @@ class Event_Model extends Model {
 					$day_start->setTimezone( new \DateTimeZone( $timezone ) );
 					$day_end->setTimezone( new \DateTimeZone( $timezone ) );
 
-					$slots = $this->generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots );
+					$slots = $this->generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id );
 				}
 			}
 		}
@@ -950,7 +950,7 @@ class Event_Model extends Model {
 	 * @param array     $slots Existing slots to append new slots.
 	 * @return array Updated slots with new time block slots.
 	 */
-	private function generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots ) {
+	private function generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id ) {
 		// Get current time in user timezone
 		$current_time = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
 
@@ -988,7 +988,7 @@ class Event_Model extends Model {
 			}
 
 			// Check availability of the slot
-			$availabile_slots = $this->check_available_slots( $slot_start, $slot_end );
+			$availabile_slots = $this->check_available_slots( $slot_start, $slot_end, $calendar_id );
 
 			if ( 0 === $availabile_slots ) {
 				$current_slot_start->modify( "+{$duration} minutes" );
@@ -1084,7 +1084,7 @@ class Event_Model extends Model {
 	 *
 	 * @return int
 	 */
-	public function check_available_slots( $day_start, $day_end ) {
+	public function check_available_slots( $day_start, $day_end, $calendar_id ) {
 		$day_start = clone $day_start;
 		$day_end   = clone $day_end;
 
@@ -1109,17 +1109,17 @@ class Event_Model extends Model {
 				$event_spots = 'one-to-one' === $this->type ? 1 : Arr::get( $this->group_settings, 'max_invites', 2 );
 				break;
 			case 'round-robin':
-				$team_members = $this->calendar->getTeamMembers();
-				$slots_query->whereIn( 'calendar_id', $team_members )
-					->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
-					->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
-				$event_spots = count( $team_members );
-				break;
 			case 'collective':
-				$team_members = $this->calendar->getTeamMembers();
-				$slots_query->whereIn( 'calendar_id', $team_members )
-					->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
-					->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
+					$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
+
+					$slots_query->whereIn( 'calendar_id', $team_members )
+							->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
+							->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
+
+					// For round-robin, set the number of event spots.
+				if ( 'round-robin' === $this->type ) {
+							$event_spots = count( $team_members );
+				}
 				break;
 		}
 
@@ -1136,11 +1136,11 @@ class Event_Model extends Model {
 	 *
 	 * @return int
 	 */
-	public function get_booking_available_slots( $start_time, $duration ) {
+	public function get_booking_available_slots( $start_time, $duration, $calendar_id ) {
 		$end_time = clone $start_time;
 		$end_time->modify( "+{$duration} minutes" );
 
-		return $this->is_slot_available( $start_time, $end_time );
+		return $this->is_slot_available( $start_time, $end_time, $calendar_id );
 	}
 
 	/**
@@ -1151,7 +1151,7 @@ class Event_Model extends Model {
 	 *
 	 * @return bool
 	 */
-	public function is_slot_available( $start_time, $end_time ) {
+	public function is_slot_available( $start_time, $end_time, $calendar_id ) {
 		$availability = $this->availability;
 		$weekly_hours = $availability['weekly_hours'] ?? array();
 		$day_of_week  = strtolower( date( 'l', $start_time->getTimestamp() ) ); // Get the day of the week (e.g., Monday, Tuesday)
@@ -1162,7 +1162,7 @@ class Event_Model extends Model {
 				$day_end   = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
 
 				if ( $start_time >= $day_start && $end_time <= $day_end ) {
-					$slots = $this->check_available_slots( $start_time, $end_time );
+					$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
 					return $slots;
 				}
 			}

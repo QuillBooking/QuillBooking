@@ -36,6 +36,7 @@ export type Calendar = {
 		duration: number;
 		type: EventTypes;
 		slug: string;
+		location: Location[]; 
 	}[];
 	created_at: string;
 	updated_at: string;
@@ -65,6 +66,7 @@ export type Event = {
 	updated_at: string;
 	calendar: Calendar;
 	additional_settings: AdditionalSettings;
+	hosts?: Host[];
 };
 
 export type AdditionalSettings = {
@@ -215,6 +217,15 @@ export type Guest = {
 	user_id: number;
 }
 
+export type BookingLog = {
+	booking_id: number;
+	created_at: string;
+	id: number;
+	message: string;
+	type: string;
+	updated_at: string;
+};
+
 export interface BookingResponse {
 	id: number;
 	hash_id: string;
@@ -225,7 +236,7 @@ export interface BookingResponse {
 	end_time: string;
 	slot_time: number;
 	source: string;
-	status: 'scheduled' | 'cancelled' | 'completed';
+	status: 'scheduled' | 'cancelled' | 'completed' | 'pending';
 	cancelled_by: string | null;
 	event_url: string;
 	created_at: string;
@@ -234,12 +245,14 @@ export interface BookingResponse {
 	fields: any | null;
 	location: string;
 	event: Event;
+	meta: EventMetaData[];
 }
 
 export interface Booking extends BookingResponse {
 	time_span: string;
 	guest?:  Guest | Guest[];
 	calendar?: Calendar;
+	logs?: BookingLog[];
 
 }
 
@@ -248,4 +261,9 @@ export type User = {
 	display_name: string;
 	user_login: string;
 	user_email: string;
+}
+
+export type Host = {
+	id: number;
+	name: string;
 }

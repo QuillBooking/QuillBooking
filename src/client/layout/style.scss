@@ -1,9 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 #screen-meta-links {
 	display: none !important;
 }
 
 .quillbooking-layout {
 	font-size: 13px;
+	display: flex;
+	min-height: 100vh;
+	width: 100%;
 }
 
 #wpwrap {
@@ -22,6 +29,7 @@ div#wpcontent {
 .quillbooking-layout__main {
 	display: flex;
 	box-sizing: border-box;
+	width: 100%;
 	.quillbooking-page-component-wrapper {
 		width: 100%;
 		position: relative;
@@ -59,6 +67,7 @@ div#wpcontent {
 html {
 	box-sizing: border-box;
 	-webkit-font-smoothing: antialiased;
+	height: 100%;
 }
 
 img {
@@ -68,6 +77,7 @@ img {
 body {
 	font-family: "Inter", sans-serif;
 	color: #9b9ca7;
+	height: 100%;
 }
 
 input{
@@ -90,4 +100,8 @@ input{
 .quillbooking-tab-title{
 	margin: 0;
 	margin-bottom: 20px;
+}
+
+#wpbody-content{
+	padding-bottom: 0px;
 }

@@ -23,6 +23,7 @@ use QuillBooking\Capabilities;
 use QuillBooking\Availabilities;
 use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Models\Calendar_Model;
+use QuillBooking\Models\Team_Model;
 
 /**
  * Event Controller class
@@ -545,6 +546,26 @@ class REST_Event_Controller extends REST_Controller {
 
 			if ( ! $event ) {
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			$calendarIds = $event->calendar->getTeamMembers();
+
+			if ( $calendarIds ) {
+				if ( ! is_array( $calendarIds ) ) {
+						$calendarIds = array( $calendarIds );
+				}
+
+					$calendars = array();
+				foreach ( $calendarIds as $calendarId ) {
+						$calendar = Calendar_Model::find( $calendarId );
+					if ( $calendar ) {
+							$calendars[] = array(
+								'id'   => $calendar->id,
+								'name' => $calendar->name,
+							);
+					}
+				}
+					$event->hosts = $calendars;
 			}
 
 			return new WP_REST_Response( $event, 200 );

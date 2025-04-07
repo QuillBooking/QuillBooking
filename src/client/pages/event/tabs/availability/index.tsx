@@ -23,7 +23,6 @@ import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import { RangeSection, AvailabilitySection } from './sections';
-import { OverrideModal, OverrideSection } from '@quillbooking/components';
 import EventLimits from '../limits';
 
 const AvailabilityTab: React.FC = () => {
@@ -122,111 +121,156 @@ const AvailabilityTab: React.FC = () => {
 	};
 
 	if (loading || !availability || !dateOverrides || !range) {
-		return <Card title={__('Availability', 'quillbooking')} loading />;
+		return <Card loading />;
 	}
 
 	return (
-			<div className='grid grid-cols-2 gap-5 px-9'>
-				{/* Availability Range Section */}
-				{/* <RangeSection
-					range={range}
-					onRangeTypeChange={(type) => {
-						setRange({
-							type,
-							days: type === 'days' ? 90 : undefined,
-							start_date:
-								type === 'date_range'
-									? dayjs().format('YYYY-MM-DD')
-									: undefined,
-							end_date:
-								type === 'date_range'
-									? dayjs()
-										.add(90, 'days')
-										.format('YYYY-MM-DD')
-									: undefined,
-						});
-					}}
-					onDaysChange={(days) => setRange({ ...range, days })}
-					onDateRangeChange={(start_date, end_date) =>
-						setRange({ ...range, start_date, end_date })
+		<div className='grid grid-cols-2 gap-5 px-9'>
+			{/* Availability Range Section */}
+			{/* <RangeSection
+				range={range}
+				onRangeTypeChange={(type) => {
+					setRange({
+						type,
+						days: type === 'days' ? 90 : undefined,
+						start_date:
+							type === 'date_range'
+								? dayjs().format('YYYY-MM-DD')
+								: undefined,
+						end_date:
+							type === 'date_range'
+								? dayjs()
+									.add(90, 'days')
+									.format('YYYY-MM-DD')
+								: undefined,
+					});
+				}}
+				onDaysChange={(days) => setRange({ ...range, days })}
+				onDateRangeChange={(start_date, end_date) =>
+					setRange({ ...range, start_date, end_date })
+				}
+			/> */}
+			{/* Custom or Existing Availability Section */}
+			<AvailabilitySection
+				isCustomAvailability={isCustomAvailability}
+				availability={availability}
+				storedAvailabilities={storedAvailabilities}
+				onAvailabilityChange={(id) => {
+					const selected = storedAvailabilities.find(
+						(a) => a.id === id
+					);
+					if (selected) {
+						setAvailability(selected);
+						setDateOverrides(selected.override);
+						setIsCustomAvailability(false);
 					}
-				/> */}
-					{/* Custom or Existing Availability Section */}
-					<AvailabilitySection
-						isCustomAvailability={isCustomAvailability}
-						availability={availability}
-						storedAvailabilities={storedAvailabilities}
-						onAvailabilityChange={(id) => {
-							const selected = storedAvailabilities.find(
-								(a) => a.id === id
-							);
-							if (selected) {
-								setAvailability(selected);
-								setDateOverrides(selected.override);
-								setIsCustomAvailability(false);
-							}
-						}}
-						onCustomAvailabilityChange={(day, field, value) => {
-							const updatedAvailability = { ...availability };
-							if (field === 'off') {
-								updatedAvailability.weekly_hours[day].off =
-									value;
-							} else {
-								updatedAvailability.weekly_hours[day].times =
-									value;
-							}
-							setAvailability(updatedAvailability);
-						}}
-						onToggleCustomAvailability={() =>
-							setIsCustomAvailability(!isCustomAvailability)
-						}
-					/>
-					
-					<EventLimits/>
-					{/* Date Overrides Section */}
-					{/* <OverrideSection
-						dateOverrides={dateOverrides}
-						onAddOverride={openOverrideModal}
-						onRemoveOverride={(date) => {
-							const updatedOverrides = { ...dateOverrides };
-							delete updatedOverrides[date];
-							setDateOverrides(updatedOverrides);
-						}}
-					/> */}
+				}}
+				onCustomAvailabilityChange={(day, field, value) => {
+					const updatedAvailability = { ...availability };
+					if (field === 'off') {
+						updatedAvailability.weekly_hours[day].off =
+							value;
+					} else {
+						updatedAvailability.weekly_hours[day].times =
+							value;
+					}
+					setAvailability(updatedAvailability);
+				}}
+				onToggleCustomAvailability={() =>
+					setIsCustomAvailability(!isCustomAvailability)
+				}
+				range={range}
+				onRangeTypeChange={(type) => {
+					setRange({
+						type,
+						days: type === 'days' ? 90 : undefined,
+						start_date:
+							type === 'date_range'
+								? dayjs().format('YYYY-MM-DD')
+								: undefined,
+						end_date:
+							type === 'date_range'
+								? dayjs()
+									.add(90, 'days')
+									.format('YYYY-MM-DD')
+								: undefined,
+					});
+				}}
+				onDaysChange={(days) => setRange({ ...range, days })}
+				onDateRangeChange={(start_date, end_date) =>
+					setRange({ ...range, start_date, end_date })
+				}
+				dateOverrides={dateOverrides}
+				onRemoveOverride={(date) => {
+					const updatedOverrides = { ...dateOverrides };
+					delete updatedOverrides[date];
+					setDateOverrides(updatedOverrides);
+				}}
+				selectedDate={selectedDate}
+				overrideTimes={overrideTimes}
+				isUnavailable={isUnavailable}
+				onDateChange={(date) => setSelectedDate(date)}
+				onAddTimeSlot={() =>
+					setOverrideTimes([
+						...overrideTimes,
+						{ start: '09:00', end: '17:00' },
+					])
+				}
+				onRemoveTimeSlot={(index) => {
+					const updatedTimes = [...overrideTimes];
+					updatedTimes.splice(index, 1);
+					setOverrideTimes(updatedTimes);
+				}}
+				onUpdateTimeSlot={(index, field, value) => {
+					const updatedTimes = [...overrideTimes];
+					updatedTimes[index][field] = value;
+					setOverrideTimes(updatedTimes);
+				}}
+				onToggleUnavailable={() => setIsUnavailable(!isUnavailable)}
+			/>
 
-				{/* Save Button */}
-				{/* <Button type="primary" onClick={handleSave}>
+			<EventLimits />
+			{/* Date Overrides Section */}
+			{/* <OverrideSection
+				dateOverrides={dateOverrides}
+				onAddOverride={openOverrideModal}
+				onRemoveOverride={(date) => {
+					const updatedOverrides = { ...dateOverrides };
+					delete updatedOverrides[date];
+					setDateOverrides(updatedOverrides);
+				}}
+			/> */}
+
+			{/* Save Button */}
+			{/* <Button type="primary" onClick={handleSave}>
 					{__('Save Changes', 'quillbooking')}
 				</Button> */}
 
-				{/* Date Override Modal */}
-				{/* <OverrideModal
-					isVisible={isOverrideModalVisible}
-					onClose={closeOverrideModal}
-					onApply={applyOverride}
-					selectedDate={selectedDate}
-					overrideTimes={overrideTimes}
-					isUnavailable={isUnavailable}
-					onDateChange={(date) => setSelectedDate(date)}
-					onAddTimeSlot={() =>
-						setOverrideTimes([
-							...overrideTimes,
-							{ start: '09:00', end: '17:00' },
-						])
-					}
-					onRemoveTimeSlot={(index) => {
-						const updatedTimes = [...overrideTimes];
-						updatedTimes.splice(index, 1);
-						setOverrideTimes(updatedTimes);
-					}}
-					onUpdateTimeSlot={(index, field, value) => {
-						const updatedTimes = [...overrideTimes];
-						updatedTimes[index][field] = value;
-						setOverrideTimes(updatedTimes);
-					}}
-					onToggleUnavailable={() => setIsUnavailable(!isUnavailable)}
-				/> */}
-			</div>
+			{/* Date Override Modal */}
+			{/* <OverrideModal
+				selectedDate={selectedDate}
+				overrideTimes={overrideTimes}
+				isUnavailable={isUnavailable}
+				onDateChange={(date) => setSelectedDate(date)}
+				onAddTimeSlot={() =>
+					setOverrideTimes([
+						...overrideTimes,
+						{ start: '09:00', end: '17:00' },
+					])
+				}
+				onRemoveTimeSlot={(index) => {
+					const updatedTimes = [...overrideTimes];
+					updatedTimes.splice(index, 1);
+					setOverrideTimes(updatedTimes);
+				}}
+				onUpdateTimeSlot={(index, field, value) => {
+					const updatedTimes = [...overrideTimes];
+					updatedTimes[index][field] = value;
+					setOverrideTimes(updatedTimes);
+				}}
+				onToggleUnavailable={() => setIsUnavailable(!isUnavailable)}
+			/> */}
+		</div>
 	);
 };
 

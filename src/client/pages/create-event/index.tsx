@@ -24,10 +24,10 @@ import Locations from '../event/tabs/details/locations';
  */
 
 const CreateEvent: React.FC = () => {
-    const { id, type } = useParams<{ id: string; type: 'one-to-one' | 'group' | 'round-robin' }>();
-    if (!id || !type) {
-        return null;
-    }
+    // const { id, type } = useParams<{ id: string; type: 'one-to-one' | 'group' | 'round-robin' }>();
+    // if (!id || !type) {
+    //     return null;
+    // }
     const { callApi, loading } = useApi();
     const { successNotice, errorNotice } = useNotice();
     const setBreadcrumbs = useBreadcrumbs();
@@ -35,7 +35,7 @@ const CreateEvent: React.FC = () => {
     const [event, setEvent] = useState<Partial<Event>>({
         name: '',
         description: '',
-        type: type,
+        type: '',
         calendar_id: parseInt(id),
         status: 'active',
         duration: 30,
@@ -136,7 +136,6 @@ const CreateEvent: React.FC = () => {
     };
 
     return (
-
         <Flex vertical className="quillbooking-create-event">
             <Flex>
                 <Typography.Title className='quillbooking-tab-title' level={4}>

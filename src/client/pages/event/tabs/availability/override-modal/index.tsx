@@ -13,13 +13,11 @@ import dayjs from 'dayjs';
  * Internal dependencies
  */
 import type { TimeSlot } from '@quillbooking/client';
+import { LimitsAddIcon } from 'components/icons';
 
 const { Text } = Typography;
 
 interface OverrideModalProps {
-    isVisible: boolean;
-    onClose: () => void;
-    onApply: () => void;
     selectedDate: string | null;
     overrideTimes: TimeSlot[];
     isUnavailable: boolean;
@@ -31,9 +29,6 @@ interface OverrideModalProps {
 }
 
 const OverrideModal: React.FC<OverrideModalProps> = ({
-    isVisible,
-    onClose,
-    onApply,
     selectedDate,
     overrideTimes,
     isUnavailable,
@@ -44,14 +39,59 @@ const OverrideModal: React.FC<OverrideModalProps> = ({
     onToggleUnavailable,
 }) => {
     return (
-        <Modal
+        <Flex vertical gap={20}>
+            <Flex vertical gap={10}>
+                <Text strong>{__('Select a Date', 'quillbooking')}</Text>
+                <DatePicker
+                    value={selectedDate ? dayjs(selectedDate) : null}
+                    onChange={(value) => onDateChange(value?.format('YYYY-MM-DD') || null)}
+                    style={{ width: '100%' }}
+                />
+            </Flex>
+
+            <Flex vertical gap={10}>
+                <Text strong>{__('What hours are you available?', 'quillbooking')}</Text>
+                {overrideTimes.map((time, index) => (
+                    <Flex key={index} align="center" gap={10}>
+                        <TimePicker
+                            value={dayjs(time.start, 'HH:mm')}
+                            onChange={(value) => onUpdateTimeSlot(index, 'start', value?.format('HH:mm') || '09:00')}
+                            format="HH:mm"
+                        />
+                        <Text>-</Text>
+                        <TimePicker
+                            value={dayjs(time.end, 'HH:mm')}
+                            onChange={(value) => onUpdateTimeSlot(index, 'end', value?.format('HH:mm') || '17:00')}
+                            format="HH:mm"
+                        />
+                        <Button onClick={onAddTimeSlot} className='border-none shadow-none p-0'>
+                            <LimitsAddIcon />
+                        </Button>
+                        <Button danger onClick={() => onRemoveTimeSlot(index)}>
+                            {__('Remove', 'quillbooking')}
+                        </Button>
+                    </Flex>
+                ))}
+            </Flex>
+
+            <Flex align="center" gap={10}>
+                <Checkbox checked={isUnavailable} onChange={onToggleUnavailable} />
+                <Text>{__('Mark as Unavailable', 'quillbooking')}</Text>
+            </Flex>
+        </Flex>
+    );
+};
+
+export default OverrideModal;
+{/*<Modal
             title={__('Add Date Override', 'quillbooking')}
             open={isVisible}
             onCancel={onClose}
             onOk={onApply}
             okText={__('Apply', 'quillbooking')}
             cancelText={__('Cancel', 'quillbooking')}
-        >
+            getContainer={false}
+            >
             <Flex vertical gap={20}>
                 <Flex vertical gap={10}>
                     <Text strong>{__('Select a Date', 'quillbooking')}</Text>
@@ -92,8 +132,4 @@ const OverrideModal: React.FC<OverrideModalProps> = ({
                     <Text>{__('Mark as Unavailable', 'quillbooking')}</Text>
                 </Flex>
             </Flex>
-        </Modal>
-    );
-};
-
-export default OverrideModal;
+        </Modal>*/}

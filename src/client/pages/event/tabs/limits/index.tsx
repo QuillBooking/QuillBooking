@@ -13,12 +13,13 @@ import { Card, Flex, Button, Switch, Select, InputNumber, Skeleton, Typography }
  * Internal dependencies
  */
 import type { EventLimits as EventLimitsType, LimitUnit } from '@quillbooking/client';
-import { FieldWrapper, TimezoneSelect, Header } from '@quillbooking/components';
+import { FieldWrapper, TimezoneSelect, Header, LimitsTrashIcon, LimitsAddIcon } from '@quillbooking/components';
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
 import { getCurrentTimeInTimezone } from '@quillbooking/utils';
 import { useEventContext } from '../../state/context';
 import { LuClock5 } from "react-icons/lu";
 import { Box, Slider } from '@mui/material';
+import { RiDeleteBinLine } from 'react-icons/ri';
 
 const { Title } = Typography;
 
@@ -123,8 +124,8 @@ const EventLimits: React.FC = () => {
     }
 
     const marks = [
-        { value: 0, label: "0 Minutes" },
-        { value: 120, label: "120 Minutes" },
+        { value: 0, label: <span className='absolute left-0'>{__("0 Minutes", "quillbooking")}</span> },
+        { value: 120, label: <span className='absolute right-0'>{__("120 Minutes", "quillbooking")}</span> },
     ];
 
     return (
@@ -142,16 +143,52 @@ const EventLimits: React.FC = () => {
                     {__("Before Event", "quillbooking")}
                     <span className='text-red-500'>*</span>
                 </div>
-                <Card className='rounded-lg'>
+                <Card className='rounded-lg py-2'>
                     <Slider
                         value={settings.general.buffer_before}
                         onChange={(_, newValue) => handleChange("general", "buffer_before", newValue)}
                         step={5}
-                        //marks={marks}
                         min={0}
                         max={120}
                         valueLabelDisplay="on"
-                    //sx={{'& .MuiSlider-markLabel':"94%"}}
+                        valueLabelFormat={(value) => (value === 0 || value === 120 ? '' : `${value} Minutes`)}
+                        marks={marks}
+                        sx={{
+                            '& .MuiSlider-track': {
+                                backgroundColor: 'transparent',
+                                border: "none",
+
+                            },
+                            '& .MuiSlider-rail': {
+                                backgroundColor: '#DEE1E6',
+                                height: "10px",
+                            },
+                            '& .MuiSlider-thumb': {
+                                backgroundColor: '#953AE4',
+                                '&:hover, &.Mui-focusVisible, &.Mui-active': {
+                                    boxShadow: '0 0 0 5px rgba(149, 58, 228, 0.3)',
+                                    border: '3px solid white',
+                                }
+                            },
+                            '& .MuiSlider-mark': {
+                                backgroundColor: "transparent",
+                            },
+                            '& .MuiSlider-markLabel': {
+                                color: 'black',
+                                fontSize: '16px',
+                            },
+                            '& .MuiSlider-valueLabel': {
+                                backgroundColor: 'transparent',
+                                position: "absolute",
+                                top: "0",
+                                left: "-38px",
+                                outline: "none",
+                                appearance: "none",
+                                color: 'black',
+                                fontSize: '16px',
+                                transform: 'translateY(-10px)',
+                            },
+                        }}
                     />
                 </Card>
             </Flex>
@@ -160,16 +197,52 @@ const EventLimits: React.FC = () => {
                     {__("After Event", "quillbooking")}
                     <span className='text-red-500'>*</span>
                 </div>
-                <Card className='rounded-lg'>
+                <Card className='rounded-lg py-2'>
                     <Slider
                         value={settings.general.buffer_after}
                         onChange={(_, newValue) => handleChange("general", "buffer_after", newValue)}
                         step={5}
-                        //marks={marks}
                         min={0}
                         max={120}
                         valueLabelDisplay="on"
-                    //sx={{'& .MuiSlider-markLabel':"94%"}}
+                        valueLabelFormat={(value) => (value === 0 || value === 120 ? '' : `${value} Minutes`)}
+                        marks={marks}
+                        sx={{
+                            '& .MuiSlider-track': {
+                                backgroundColor: 'transparent',
+                                border: "none",
+
+                            },
+                            '& .MuiSlider-rail': {
+                                backgroundColor: '#DEE1E6',
+                                height: "10px",
+                            },
+                            '& .MuiSlider-thumb': {
+                                backgroundColor: '#953AE4',
+                                '&:hover, &.Mui-focusVisible, &.Mui-active': {
+                                    boxShadow: '0 0 0 5px rgba(149, 58, 228, 0.3)',
+                                    border: '3px solid white',
+                                }
+                            },
+                            '& .MuiSlider-mark': {
+                                backgroundColor: "transparent",
+                            },
+                            '& .MuiSlider-markLabel': {
+                                color: 'black',
+                                fontSize: '16px',
+                            },
+                            '& .MuiSlider-valueLabel': {
+                                backgroundColor: 'transparent',
+                                position: "absolute",
+                                top: "-17px",
+                                left: "-38px",
+                                outline: "none",
+                                appearance: "none",
+                                color: 'black',
+                                fontSize: '16px',
+                                transform: 'translateY(-10px)',
+                            },
+                        }}
                     />
                 </Card>
             </Flex>
@@ -207,9 +280,131 @@ const EventLimits: React.FC = () => {
                 />
             </Flex>
             <Card className='mt-4'>
-                <Flex className='items-center justify-between px-[40px]'>
+                <Flex vertical gap={20} className='px-[20px]'>
+                    <FieldWrapper
+                        label={<span className="text-[#09090B] text-[20px] font-semibold">
+                            {__('Limit Booking Frequency', 'quillbooking')}
+                        </span>}
+                        description={<span className="text-[#71717A] text-[14px]">
+                            {__('Limit how many times this event can be booked.', 'quillbooking')}
+                        </span>}
+                        type='horizontal'
+                    >
+                        <Switch
+                            checked={settings.frequency.enable}
+                            onChange={(checked) => handleChange('frequency', 'enable', checked)}
+                            className={settings.frequency.enable ? "bg-color-primary" : "bg-gray-400"}
+                        />
+                    </FieldWrapper>
+
+                    {settings.frequency.enable && (
+                        <div className='border-t pt-4'>
+                            {settings.frequency.limits.map((limit, index) => (
+                                <Flex align="center" gap={10} className='w-full mb-4'>
+                                    <InputNumber
+                                        value={limit.limit}
+                                        min={1}
+                                        onChange={(value) => {
+                                            const updatedLimits = [...settings.frequency.limits];
+                                            updatedLimits[index].limit = value ?? 5;
+                                            handleChange('frequency', 'limits', updatedLimits);
+                                        }}
+                                        className='w-3/5 rounded-lg h-[48px]'
+                                        suffix={<span className='text-[#9BA7B7] border-l pl-5'>{__("Bookings", "quillbooking")}</span>}
+                                    />
+                                    <Select
+                                        value={limit.unit}
+                                        options={unitOptions}
+                                        getPopupContainer={(trigger) => trigger.parentElement}
+                                        onChange={(value) => {
+                                            const updatedLimits = [...settings.frequency.limits];
+                                            updatedLimits[index].unit = value as LimitUnit;
+                                            handleChange('frequency', 'limits', updatedLimits);
+                                        }}
+                                        className='w-2/5 rounded-lg h-[48px]'
+                                    />
+                                    <Button onClick={() => addLimit('frequency')} className='border-none shadow-none p-0'>
+                                        <LimitsAddIcon />
+                                    </Button>
+                                    <Button
+                                        danger
+                                        size="small"
+                                        onClick={() => removeLimit('frequency', index)}
+                                        className='border-none shadow-none p-0'
+                                    >
+                                        <LimitsTrashIcon />
+                                    </Button>
+                                </Flex>
+                            ))}
+                        </div>
+                    )}
+                </Flex>
+            </Card>
+            <Card className='mt-4'>
+                <Flex vertical gap={20} className='px-[20px]'>
+                    <FieldWrapper
+                        label={<span className="text-[#09090B] text-[20px] font-semibold">
+                            {__('Limit Total Booking Duration', 'quillbooking')}
+                        </span>}
+                        description={<span className="text-[#71717A] text-[14px]">
+                            {__('Limit total amount of time that this event can be booked.', 'quillbooking')}
+                        </span>}
+                        type='horizontal'
+                    >
+                        <Switch
+                            checked={settings.duration.enable}
+                            onChange={(checked) => handleChange('duration', 'enable', checked)}
+                            className={settings.duration.enable ? "bg-color-primary" : "bg-gray-400"}
+                        />
+                    </FieldWrapper>
+
+                    {settings.duration.enable && (
+                        <div className='border-t pt-4'>
+                            {settings.duration.limits.map((limit, index) => (
+                                <Flex align="center" gap={10} className='w-full mb-4'>
+                                    <InputNumber
+                                        value={limit.limit}
+                                        min={1}
+                                        onChange={(value) => {
+                                            const updatedLimits = [...settings.duration.limits];
+                                            updatedLimits[index].limit = value ?? 120;
+                                            handleChange('duration', 'limits', updatedLimits);
+                                        }}
+                                        className='w-3/5 rounded-lg h-[48px] pt-2'
+                                    />
+                                    <Select
+                                        value={limit.unit}
+                                        options={unitOptions}
+                                        getPopupContainer={(trigger) => trigger.parentElement}
+                                        onChange={(value) => {
+                                            const updatedLimits = [...settings.duration.limits];
+                                            updatedLimits[index].unit = value as LimitUnit;
+                                            handleChange('duration', 'limits', updatedLimits);
+                                        }}
+                                        className='w-2/5 rounded-lg h-[48px]'
+                                    />
+                                    <Button onClick={() => addLimit('duration')} className='border-none shadow-none p-0'>
+                                        <LimitsAddIcon />
+                                    </Button>
+                                    <Button
+                                        danger
+                                        size="small"
+                                        onClick={() => removeLimit('duration', index)}
+                                        className='border-none shadow-none p-0'
+                                    >
+                                        <LimitsTrashIcon />
+                                    </Button>
+                                </Flex>
+
+                            ))}
+                        </div>
+                    )}
+                </Flex>
+            </Card>
+            <Card className='mt-4'>
+                <Flex className='items-center justify-between px-[20px]'>
                     <Flex vertical gap={1}>
-                        <div className="text-[#09090B] text-[20px]">
+                        <div className="text-[#09090B] text-[20px] font-semibold">
                             {__("Lock time zone on booking page", "quillbooking")}
                         </div>
                         <div className='text-[#71717A] text-[14px]'>
@@ -223,25 +418,23 @@ const EventLimits: React.FC = () => {
                     />
                 </Flex>
             </Card>
-            {settings.timezone_lock.enable && (
-                <Card className='mt-4'>
-                    <Flex vertical gap={10} className='px-[40px]'>
-                        <div className="text-[#09090B] text-[16px]">
-                            {__("Select Time Zone", "quillbooking")}
-                            <span className='text-red-500'>*</span>
-                        </div>
-                        <TimezoneSelect
-                            value={settings.timezone_lock.timezone}
-                            onChange={(value) => handleChange('timezone_lock', 'timezone', value)}
-                            getPopupContainer={(trigger) => trigger.parentElement}
-                            className='h-[48px] w-full rounded-lg'
-                        />
-                        <Typography.Text className='text-[#71717A] text-[18px]'>
-                            {sprintf(__('Current time in %s is %s', 'quillbooking'), settings.timezone_lock.timezone, getCurrentTimeInTimezone(settings.timezone_lock.timezone))}
-                        </Typography.Text>
-                    </Flex>
-                </Card>
-            )}
+            <Card className='mt-4'>
+                <Flex vertical gap={10} className='px-[20px]'>
+                    <div className="text-[#09090B] text-[16px]">
+                        {__("Select Time Zone", "quillbooking")}
+                        <span className='text-red-500'>*</span>
+                    </div>
+                    <TimezoneSelect
+                        value={settings.timezone_lock.timezone}
+                        onChange={(value) => handleChange('timezone_lock', 'timezone', value)}
+                        getPopupContainer={(trigger) => trigger.parentElement}
+                        className='h-[48px] w-full rounded-lg'
+                    />
+                    <Typography.Text className='text-[#71717A] text-[18px]'>
+                        {sprintf(__('Current time in %s is %s', 'quillbooking'), settings.timezone_lock.timezone, getCurrentTimeInTimezone(settings.timezone_lock.timezone))}
+                    </Typography.Text>
+                </Flex>
+            </Card>
             {/* <Flex vertical gap={20} className="quillbooking-limits-tab">
                 <Card>
                     <Flex gap={20} vertical>

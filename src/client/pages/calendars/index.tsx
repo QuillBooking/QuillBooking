@@ -39,6 +39,7 @@ import {
 import { IoFilterOutline } from 'react-icons/io5';
 import { SlOptions } from 'react-icons/sl';
 import CalendarActions from './calendar-actions';
+import CreateEvent from '../create-event';
 
 /**
  * Main Calendars Component.
@@ -151,6 +152,8 @@ const Calendars: React.FC = () => {
 			[calendarId]: !prev[calendarId], // Toggle disable state
 		}));
 	};
+
+	const [showCreateEventModal, setShowCreateEventModal] = useState(false);
 
 	return (
 		<div className="quillbooking-calendars">
@@ -389,7 +392,7 @@ const Calendars: React.FC = () => {
 												</div>
 											}
 										>
-											<Flex vertical gap={20}>
+											{/* <Flex vertical gap={20}>
 												{filters.type == 'team' && (
 													<Popover
 														trigger={['click']}
@@ -434,7 +437,27 @@ const Calendars: React.FC = () => {
 															</span>
 														</Button>
 													</Popover>
+												)} */}
+											<Flex vertical gap={20}>
+												{filters.type === 'team' && (
+
+													<Button
+														className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] flex items-center justify-center h-[56px] w-[310px] text-[16px]"
+														onClick={() => setShowCreateEventModal(true)}
+													>
+														<PlusOutlined className="text-color-primary" />
+														<span className="pt-[8.5px]">
+															{__('Create New Event', 'quillbooking')}
+														</span>
+													</Button>
 												)}
+
+												<CreateEvent
+													visible={showCreateEventModal}
+													onClose={() => setShowCreateEventModal(false)}
+													calendarId={teamCalendar.id}
+													eventType={filters.type}
+												/>
 												<CalendarEvents
 													key={teamCalendar.id}
 													calendar={teamCalendar}
@@ -451,7 +474,8 @@ const Calendars: React.FC = () => {
 						</Flex>
 					)}
 				</div>
-			)}
+			)
+			}
 			{/* {loading || !calendars ? <Skeleton active /> : (
                 <Flex gap={20} vertical>
                     {calendars.map((calendar) => (
@@ -552,25 +576,29 @@ const Calendars: React.FC = () => {
                     ))}
                 </Flex>
             )} */}
-			{type && (
-				<AddCalendarModal
-					open={!!type}
-					type={type}
-					onClose={() => setType(null)}
-					excludedUsers={map(calendars, 'user_id')}
-					onSaved={handleSaved}
-				/>
-			)}
-			{cloneCalendar && (
-				<CloneEventModal
-					open={!!cloneCalendar}
-					calendar={cloneCalendar}
-					onClose={() => setCloneCalendar(null)}
-					excludedEvents={map(cloneCalendar.events, 'id')}
-					onSaved={handleSaved}
-				/>
-			)}
-		</div>
+			{
+				type && (
+					<AddCalendarModal
+						open={!!type}
+						type={type}
+						onClose={() => setType(null)}
+						excludedUsers={map(calendars, 'user_id')}
+						onSaved={handleSaved}
+					/>
+				)
+			}
+			{
+				cloneCalendar && (
+					<CloneEventModal
+						open={!!cloneCalendar}
+						calendar={cloneCalendar}
+						onClose={() => setCloneCalendar(null)}
+						excludedEvents={map(cloneCalendar.events, 'id')}
+						onSaved={handleSaved}
+					/>
+				)
+			}
+		</div >
 	);
 };
 

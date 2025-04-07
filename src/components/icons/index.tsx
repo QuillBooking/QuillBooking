@@ -71,3 +71,5 @@ export {default as CalendarDeleteIcon} from "./calendar-delete-icon";
 export {default as CalendarDisableIcon} from "./calendar-disable-icon";
 export {default as AdvancedSettingsIcon} from "./advanced-settings-icon";
 export {default as UrlIcon} from "./url-icon";
+export {default as LimitsTrashIcon} from "./limits-trash-icon";
+export {default as LimitsAddIcon} from "./limits-add-icon";

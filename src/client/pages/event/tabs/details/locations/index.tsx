@@ -79,7 +79,6 @@ const Locations: React.FC<{
             form.resetFields();
         } catch (error) {
             console.error("Validation failed:", error);
-            console.log("Error fields:", error.errorFields);
         }
     };
 
@@ -127,27 +126,20 @@ const Locations: React.FC<{
     };
 
     return (
-        <Card className='rounded-lg'>
-            <Flex vertical gap={20}>
-                <Flex gap={10} className='items-center border-b pb-4'>
-                    <div className="bg-[#EDEDED] rounded-lg p-2">
-                        <EventLocIcon />
-                    </div>
-                    <Header header={__('Event Location', 'quillbooking')}
-                        subHeader={__(
-                            'Select Where you will Meet Guests.',
-                            'quillbooking'
-                        )} />
-                </Flex>
-                <Flex className='justify-between'>
-                    <div className="text-[#09090B] text-[16px]">
-                        {__("How Will You Meet", "quillbooking")}
-                        <span className='text-red-500'>*</span>
-                    </div>
-                    <div className="text-[#848484] italic">
-                        {__("You Can Select More Than One", "quillbooking")}
-                    </div>
-                </Flex>
+        //<Card className='rounded-lg'>
+        // <Flex vertical gap={20}>
+        //     <Flex gap={10} className='items-center border-b pb-4'>
+        //         <div className="bg-[#EDEDED] rounded-lg p-2">
+        //             <EventLocIcon />
+        //         </div>
+        //         <Header header={__('Event Location', 'quillbooking')}
+        //             subHeader={__(
+        //                 'Select Where you will Meet Guests.',
+        //                 'quillbooking'
+        //             )} />
+        //     </Flex>
+        <>
+            <Flex vertical gap={15}>
                 <Flex vertical gap={10} className='justify-start items-start'>
                     <div className="text-[#09090B] text-[16px]">
                         {__("Conferencing", "quillbooking")}
@@ -347,6 +339,8 @@ const Locations: React.FC<{
                         </Flex>
                     </Checkbox>
                 </Flex>
+            </Flex>
+            <Flex vertical gap={15}>
                 <Flex vertical gap={10} className='justify-start items-start'>
                     <div className="text-[#09090B] text-[16px]">
                         {__("Phone & Online Meeting", "quillbooking")}
@@ -602,74 +596,76 @@ const Locations: React.FC<{
                         {__('Add Custom Location', 'quillbooking')}
                     </Button>
                 </Flex>
+            </Flex>
 
-                {/* Modal for Location Fields */}
-                <Modal
-                    title={
-                        <div>
-                            <h2 className='text-[#09090B] text-[30px] font-[700]'>
-                                {sprintf(__(' %s ', 'quillbooking'), get(locationTypes, `${newLocationType}.title`, ''))}
-                            </h2>
-                            <span className='text-[#979797] font-[400] text-[14px]'>Add the following data.</span>
-                        </div>
-                    }
-                    open={isModalVisible}
-                    getContainer={false}
-                    footer={null}
-                    //onOk={handleModalOk}
-                    onCancel={handleModalCancel}
-                >
-                    <Form form={form} layout="vertical">
-                        {newLocationType &&
-                            map(
-                                get(locationTypes, `${newLocationType}.fields`, {}),
-                                (field: LocationField, fieldKey) => (
-                                    <Form.Item
-                                        key={fieldKey}
-                                        name={fieldKey}
-                                        {...(field.type === "checkbox" && { valuePropName: "checked" })}
-                                        rules={[
-                                            {
-                                                required: field.required,
-                                                message: sprintf(__('Please enter %s', 'quillbooking'), field.label),
-                                            },
-                                        ]}
-                                    >
-                                        {field.type === 'checkbox' ? (
-                                            <Checkbox className='custom-check text-[#3F4254] font-semibold'>{field.label}</Checkbox>
-                                        ) : (
-                                            <>
-                                                <div className="text-[#09090B] text-[16px] mb-2">
-                                                    {field.label}
-                                                    <span className='text-red-500'>*</span>
-                                                    {field.label === "Person Phone" && (
-                                                        <span className="text-[#afb9c4] text-sm ml-2">(with country code)</span>
-                                                    )}
-                                                </div>
-                                                <Input
-                                                    type={field.type}
-                                                    onChange={(e) => form.setFieldsValue({ [fieldKey]: e.target.value })}
-                                                    placeholder={sprintf(__('%s', 'quillbooking'), field.label)}
-                                                    className='rounded-lg h-[48px]'
-                                                />
-                                            </>
-                                        )}
-                                    </Form.Item>
-                                )
-                            )}
-                        <Form.Item>
-                            <Button
-                                htmlType="submit"
-                                className="w-full bg-color-primary text-white font-semibold rounded-lg py-2 transition-all"
-                                onClick={handleModalOk}
-                            >
-                                Submit
-                            </Button>
-                        </Form.Item>
-                    </Form>
-                </Modal>
-            </Flex >
-        </Card >
+            {/* Modal for Location Fields */}
+            <Modal
+                title={
+                    <div>
+                        <h2 className='text-[#09090B] text-[30px] font-[700]'>
+                            {sprintf(__(' %s ', 'quillbooking'), get(locationTypes, `${newLocationType}.title`, ''))}
+                        </h2>
+                        <span className='text-[#979797] font-[400] text-[14px]'>Add the following data.</span>
+                    </div>
+                }
+                open={isModalVisible}
+                getContainer={false}
+                footer={null}
+                //onOk={handleModalOk}
+                onCancel={handleModalCancel}
+            >
+                <Form form={form} layout="vertical">
+                    {newLocationType &&
+                        map(
+                            get(locationTypes, `${newLocationType}.fields`, {}),
+                            (field: LocationField, fieldKey) => (
+                                <Form.Item
+                                    key={fieldKey}
+                                    name={fieldKey}
+                                    {...(field.type === "checkbox" && { valuePropName: "checked" })}
+                                    rules={[
+                                        {
+                                            required: field.required,
+                                            message: sprintf(__('Please enter %s', 'quillbooking'), field.label),
+                                        },
+                                    ]}
+                                >
+                                    {field.type === 'checkbox' ? (
+                                        <Checkbox className='custom-check text-[#3F4254] font-semibold'>{field.label}</Checkbox>
+                                    ) : (
+                                        <>
+                                            <div className="text-[#09090B] text-[16px] mb-2">
+                                                {field.label}
+                                                <span className='text-red-500'>*</span>
+                                                {field.label === "Person Phone" && (
+                                                    <span className="text-[#afb9c4] text-sm ml-2">(with country code)</span>
+                                                )}
+                                            </div>
+                                            <Input
+                                                type={field.type}
+                                                onChange={(e) => form.setFieldsValue({ [fieldKey]: e.target.value })}
+                                                placeholder={sprintf(__('%s', 'quillbooking'), field.label)}
+                                                className='rounded-lg h-[48px]'
+                                            />
+                                        </>
+                                    )}
+                                </Form.Item>
+                            )
+                        )}
+                    <Form.Item>
+                        <Button
+                            htmlType="submit"
+                            className="w-full bg-color-primary text-white font-semibold rounded-lg py-2 transition-all"
+                            onClick={handleModalOk}
+                        >
+                            Submit
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </Modal>
+        </>
+        //</Flex >
+        //</Card >
     );
 };
 

@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card } from 'antd';
+import { Card, Flex, Switch, Typography } from 'antd';
 import { map } from 'lodash';
 
 /**
@@ -17,12 +17,18 @@ import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import NotificationCard from './notification-card';
 import { NotificationType } from '@quillbooking/client';
+import { EditNotificationIcon, EmailNotificationIcon, Header } from '@quillbooking/components';
+import { BsInfoCircleFill } from "react-icons/bs";
+import { IoClose } from "react-icons/io5";
+
 
 const NotificationsTab: React.FC<{ notificationType: 'email' | 'sms' }> = ({ notificationType }) => {
     const { state: event } = useEventContext();
     const { callApi, loading } = useApi();
     const { errorNotice } = useNotice();
     const [notificationSettings, setNotificationSettings] = useState<Record<string, NotificationType> | null>(null);
+    const [editingKey, setEditingKey] = useState<string | null>(null);
+    const [isNoticeVisible, setNoticeVisible] = useState(true);
 
     useEffect(() => {
         fetchNotificationSettings();
@@ -44,23 +50,112 @@ const NotificationsTab: React.FC<{ notificationType: 'email' | 'sms' }> = ({ not
         });
     };
 
+    const handleSwitchChange = (checked, key) => {
+        setNotificationSettings(prev => {
+            if (!prev) return prev;
+
+            return {
+                ...prev,
+                [key]: {
+                    ...prev[key],
+                    default: checked,
+                }
+            };
+        });
+    };
+
     if (loading || !notificationSettings) {
         return <Card title={__('Notifications', 'quillbooking')} loading />;
     }
 
     return (
-        <Card title={__('Notifications', 'quillbooking')}>
-            {map(notificationSettings, (_notification, key) => (
-                <NotificationCard
+        <div className='grid grid-cols-2 gap-5 px-9'>
+            <Card>
+                <Flex gap={10} className='items-center border-b pb-4 mb-4'>
+                    <div className='bg-[#EDEDED] rounded-lg p-2' >
+                        <EmailNotificationIcon />
+                    </div>
+                    <Header header={__('Email Notification', 'quillbooking')}
+                        subHeader={__(
+                            'Customize the email notifications sent to attendees and organizers',
+                            'quillbooking'
+                        )} />
+                </Flex>
+                {isNoticeVisible && (
+                    <Flex className='justify-between items-start border py-3 px-5 mb-4 bg-[#FBFBFB] border-[#E0E0E0]'>
+                        <Flex vertical>
+                            <Flex className='items-baseline gap-2'>
+                                <BsInfoCircleFill className='text-[#727C88] text-[14px]' />
+                                <span className='text-[#727C88] text-[16px] font-semibold'>{__("Notice", "quillbooking")}</span>
+                            </Flex>
+                            <span className='text-[#999999]'>{__("You can Choose the settings for each one and change its internal settings.", "quillbooking")}</span>
+                        </Flex>
+                        <IoClose
+                            onClick={() => setNoticeVisible(false)}
+                            className='text-[#727C88] text-[18px] cursor-pointer pt-1'
+                        />
+                    </Flex>)}
+                {map(notificationSettings, (_notification, key) => (
+                    <div key={key} onClick={() => setEditingKey(editingKey === key ? null : key)}>
+                        <Card style={{ marginBottom: 16, cursor: 'pointer' }}
+                            className={editingKey === key ? 'border border-color-primary bg-color-secondary' : 'border'}>
+                            <Flex justify="space-between">
+                                <Flex vertical>
+                                    <Flex gap={15}>
+                                        <Typography.Title level={5} className='text-[#09090B] text-[20px] font-[500] m-0'>{_notification.label}</Typography.Title>
+                                        {_notification.default && (
+                                            <span className='bg-color-primary text-white rounded-lg text-[11px] pt-[3px] px-2 h-[22px] mt-[7px]'>{__("ENABLED", "quillbooking")}</span>
+                                        )}
+                                    </Flex>
+                                    <span className='text-[#625C68] text-[14px]'>{__("This SMS will be sent to the attendee if phone number is provided during booking.", "quillbooking")}</span>
+                                </Flex>
+                            </Flex>
+                        </Card>
+                    </div>
+                ))}
+            </Card>
+            <Card>
+                <Flex className='justify-between items-center border-b pb-4 mb-4'>
+                    <Flex gap={10} className='items-center'>
+                        <div className='bg-[#EDEDED] rounded-lg p-2' >
+                            <EditNotificationIcon />
+                        </div>
+                        <Header header={__('Edit', 'quillbooking')}
+                            subHeader={__(
+                                'Booking Confirmation Email to Attendee',
+                                'quillbooking'
+                            )} />
+
+                    </Flex>
+                    {editingKey && (
+                        <Switch
+                            checked={notificationSettings[editingKey]?.default}
+                            loading={loading}
+                            onChange={(checked) => handleSwitchChange(checked, editingKey)}
+                            className={notificationSettings[editingKey]?.default ? "bg-color-primary" : "bg-gray-400"}
+                        />
+                    )}
+                </Flex>
+                {editingKey && notificationSettings[editingKey] && (
+                    <NotificationCard
+                        key={editingKey}  // Use the editingKey as the unique identifier
+                        notifications={notificationSettings}
+                        notificationKey={editingKey}  // Pass the correct notificationKey
+                        notificationType={notificationType}
+                        eventId={event?.id || 0}
+                        setNotifications={setNotificationSettings}
+                    />
+                )}
+                {/* <NotificationCard
                     key={key}
                     notifications={notificationSettings}
                     notificationKey={key}
                     notificationType={notificationType}
                     eventId={event?.id || 0}
                     setNotifications={setNotificationSettings}
-                />
-            ))}
-        </Card>
+                /> */}
+            </Card>
+        </div>
     );
 };
 

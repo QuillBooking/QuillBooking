@@ -1,0 +1,28 @@
+/* If you're using plain CSS or SCSS */
+.custom-steps .ant-steps-item-title {
+    font-weight: 500;
+    color: #333333;
+  }
+  
+  .custom-steps .ant-steps-item-icon {
+    background-color:'#F1E0FF';
+    color: #c497ec;
+  }
+  
+  .custom-steps .ant-steps-item-process .ant-steps-item-icon {
+    background-color: #9254de;
+    border-color: #9254de;
+  }
+  
+  .custom-steps .ant-steps-item-finish .ant-steps-item-icon {
+    background-color: #9254de;
+    border-color: #9254de;
+
+  }
+
+  .custom-steps .ant-steps-item-tail {
+    background-color: #9254de; 
+    height: 2px; 
+    top: 50%; 
+}
+  

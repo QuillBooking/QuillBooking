@@ -18,7 +18,7 @@ import type { Event as EventType } from '@quillbooking/client';
 import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice, useBreadcrumbs, useNavigate } from '@quillbooking/hooks';
 import { useParams } from '@quillbooking/navigation';
-import { AvailabilityIcon, CalendarsIcon, EmailNotiIcon, IntegrationsIcon, QuestionIcon, SettingsIcon, ShareIcon, SmsNotiIcon, TrashRedIcon, WebhookIcon } from "@quillbooking/components";
+import { AvailabilityIcon, CalendarsIcon, EmailNotiIcon, IntegrationsIcon, PaymentSettingsIcon, QuestionIcon, SettingsIcon, ShareIcon, SmsNotiIcon, TrashRedIcon, WebhookIcon } from "@quillbooking/components";
 import { Provider } from './state/context';
 import Calendar from '../calendar';
 import { EventDetails, Availability, Limits, Fields, Notifications, AdvancedSettings, Payments } from './tabs';
@@ -155,6 +155,12 @@ const Event: React.FC = () => {
             label: __('Advanced Settings', 'quillbooking'),
             children: <AdvancedSettings />,
             icon: <SettingsIcon />
+        },
+        {
+            key: 'payment-settings',
+            label: __('Payment Settings', 'quillbooking'),
+            children: <Payments />,
+            icon: <PaymentSettingsIcon />
         },
         {
             key: 'webhooks-feeds',

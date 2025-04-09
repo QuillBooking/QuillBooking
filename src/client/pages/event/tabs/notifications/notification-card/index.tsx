@@ -15,6 +15,7 @@ import { Card, Switch, Button, Modal, Input, Form, InputNumber, Typography, Radi
 import { NotificationType } from '@quillbooking/client';
 import { useNotice, useApi } from '@quillbooking/hooks';
 import EmailEditor from './editor';
+import { UrlIcon } from '@quillbooking/components';
 
 const { TextArea } = Input;
 
@@ -76,15 +77,23 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
     };
 
     const renderModalContent = () => (
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" className='w-full'>
             {notificationType === 'email' && (
                 <Form.Item name={['template', 'subject']}
                     label={<span className="text-[#09090B] text-[16px] font-semibold">
                         {__('Subject', 'quillbooking')}
+                        <span className='text-red-500'>*</span>
                     </span>}
-                    rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}
+                //rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}
+                className='w-full'
                 >
-                    <Input className='h-[48px] rounded-lg' />
+                    <Input
+                        placeholder='New Booking: {{guest.full_name}} @ {{booking.start_date_time_for_host}}'
+                        className='h-[48px] rounded-lg'
+                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                            <UrlIcon />
+                        </span>}
+                        style={{ padding: "0 0 0 10px" }} />
                 </Form.Item>
             )}
             {notificationType === 'sms' && (
@@ -95,9 +104,16 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                     </Radio.Group>
                 </Form.Item>
             )}
-            <Form.Item name={['template', 'message']} label={__('Message', 'quillbooking')} rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}>
+            <Form.Item name={['template', 'message']}
+                label={<span className="text-[#09090B] text-[16px] font-semibold">
+                    {__('Email Body', 'quillbooking')}
+                    <span className='text-red-500'>*</span>
+                </span>}
+            //rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
+            className='w-full'
+            >
                 {notificationType === 'email' ? (
-                    <EmailEditor value={notification.template.message}
+                    <EmailEditor message={notification.template.message}
                         onChange={(content) => {
                             console.log(content);  // Log the updated value
                             form.setFieldsValue({ template: { message: content } });

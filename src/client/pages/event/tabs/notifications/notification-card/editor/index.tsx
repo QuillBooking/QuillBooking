@@ -80,6 +80,7 @@ const EmailEditor = ({ message, onChange }: { message: string; onChange: (conten
 
     return (
         <textarea
+        title='editor'
             className='wp-editor-area'
             id={editorId}
             value={message}

@@ -442,9 +442,10 @@ const Calendars: React.FC = () => {
 
 												<CreateEvent
 													visible={showCreateEventModal}
+													setVisible={setShowCreateEventModal}
 													onClose={() => setShowCreateEventModal(false)}
 													calendarId={teamCalendar.id}
-													eventType={filters.type}
+													calendarType={filters.type}
 												/>
 												<CalendarEvents
 													key={teamCalendar.id}

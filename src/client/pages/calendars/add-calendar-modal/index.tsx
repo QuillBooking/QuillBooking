@@ -15,6 +15,7 @@ import { Flex, Button, Input, Modal } from 'antd';
 import type { Calendar } from '@quillbooking/client';
 import { UserSelect, HostSelect, TimezoneSelect, FieldWrapper, Header, ShareEventIcon } from '@quillbooking/components';
 import { useApi, useNotice } from '@quillbooking/hooks';
+import { getCurrentTimezone } from '@quillbooking/utils';
 
 interface AddCalendarModalProps {
     open: boolean;
@@ -32,6 +33,7 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
     const [formData, setFormData] = useState<Partial<Calendar & { members: number[] }>>({
         type,
         members: [],
+        timezone: getCurrentTimezone(),
     });
 
     const updateFormData = (key: keyof typeof formData, value: any) => {
@@ -161,6 +163,15 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
                         <div className="text-[#848484]">
                             {__("Select the members you want to assign to this team", "quillbooking")}
                         </div>
+                        {/* <FieldWrapper
+                            label={__('Timezone', 'quillbooking')}
+                            description={__('Select the timezone for the calendar.', 'quillbooking')}
+                        >
+                            <TimezoneSelect
+                                value={formData.timezone || null}
+                                onChange={(value) => updateFormData('timezone', value)}
+                            />
+                        </FieldWrapper> */}
                     </>
                 )}
                 {/* <FieldWrapper
@@ -172,15 +183,7 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
                         onChange={(e) => updateFormData('name', e.target.value)}
                     />
                 </FieldWrapper>
-                <FieldWrapper
-                    label={__('Timezone', 'quillbooking')}
-                    description={__('Select the timezone for the calendar.', 'quillbooking')}
-                >
-                    <TimezoneSelect
-                        value={formData.timezone || null}
-                        onChange={(value) => updateFormData('timezone', value)}
-                    />
-                </FieldWrapper> */}
+                 */}
             </Flex>
         </Modal>
     );

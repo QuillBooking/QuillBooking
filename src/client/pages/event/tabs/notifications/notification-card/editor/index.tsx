@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from '@wordpress/element';
 
-const EmailEditor = ({ value, onChange }: { value: string; onChange: (content: string) => void }) => {
+const EmailEditor = ({ message, onChange }: { message: string; onChange: (content: string) => void }) => {
     const [restoreTextMode, setRestoreTextMode] = useState<boolean>(false);
     // Random ID to avoid conflicts
     const editorId = `email-editor-${Math.floor(Math.random() * 100000)}`;
@@ -80,11 +80,12 @@ const EmailEditor = ({ value, onChange }: { value: string; onChange: (content: s
 
     return (
         <textarea
+        title='editor'
             className='wp-editor-area'
             id={editorId}
-            value={value}
-            onChange={({ target: { value } }) => {
-                onChange(value);
+            value={message}
+            onChange={({ target: { message } }) => {
+                onChange(message);
             }}
         />
     );

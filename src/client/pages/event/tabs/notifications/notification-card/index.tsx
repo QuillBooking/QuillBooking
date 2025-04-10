@@ -15,6 +15,7 @@ import { Card, Switch, Button, Modal, Input, Form, InputNumber, Typography, Radi
 import { NotificationType } from '@quillbooking/client';
 import { useNotice, useApi } from '@quillbooking/hooks';
 import EmailEditor from './editor';
+import { UrlIcon } from '@quillbooking/components';
 
 const { TextArea } = Input;
 
@@ -32,6 +33,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
     const { successNotice, errorNotice } = useNotice();
     const notification = notifications[notificationKey];
     const { callApi, loading } = useApi();
+
+    console.log(notification)
 
     const handleSave = () => {
         form.validateFields().then((values) => {
@@ -74,10 +77,23 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
     };
 
     const renderModalContent = () => (
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" className='w-full'>
             {notificationType === 'email' && (
-                <Form.Item name={['template', 'subject']} label={__('Subject', 'quillbooking')} rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}>
-                    <Input />
+                <Form.Item name={['template', 'subject']}
+                    label={<span className="text-[#09090B] text-[16px] font-semibold">
+                        {__('Subject', 'quillbooking')}
+                        <span className='text-red-500'>*</span>
+                    </span>}
+                //rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}
+                className='w-full'
+                >
+                    <Input
+                        placeholder='New Booking: {{guest.full_name}} @ {{booking.start_date_time_for_host}}'
+                        className='h-[48px] rounded-lg'
+                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                            <UrlIcon />
+                        </span>}
+                        style={{ padding: "0 0 0 10px" }} />
                 </Form.Item>
             )}
             {notificationType === 'sms' && (
@@ -88,9 +104,20 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                     </Radio.Group>
                 </Form.Item>
             )}
-            <Form.Item name={['template', 'message']} label={__('Message', 'quillbooking')} rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}>
+            <Form.Item name={['template', 'message']}
+                label={<span className="text-[#09090B] text-[16px] font-semibold">
+                    {__('Email Body', 'quillbooking')}
+                    <span className='text-red-500'>*</span>
+                </span>}
+            //rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
+            className='w-full'
+            >
                 {notificationType === 'email' ? (
-                    <EmailEditor value={notification.template.message} onChange={(content) => form.setFieldsValue({ template: { message: content } })} />
+                    <EmailEditor message={notification.template.message}
+                        onChange={(content) => {
+                            console.log(content);  // Log the updated value
+                            form.setFieldsValue({ template: { message: content } });
+                        }} />
                 ) : (
                     <TextArea
                         autoSize={{ minRows: 4 }}
@@ -151,25 +178,33 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
 
     return (
         <Card style={{ marginBottom: 16 }}>
-            <Flex justify="space-between">
-                <Typography.Title style={{ margin: 0 }} level={5}>{notification.label}</Typography.Title>
-                <Flex gap={10} align="center">
-                    <Button onClick={handleEdit}>{__('Edit', 'quillbooking')}</Button>
+            {/* <Flex justify="space-between">
+                <Flex vertical>
+                    <Flex gap={15}>
+                        <Typography.Title level={5} className='text-[#09090B] text-[20px] font-[500] m-0'>{notification.label}</Typography.Title>
+                        {notification.default && (
+                            <span className='bg-color-primary text-white rounded-lg text-[11px] pt-[3px] px-2 h-[22px] mt-[7px]'>{__("ENABLED", "quillbooking")}</span>
+                        )}
+                    </Flex>
+                    <span className='text-[#625C68] text-[14px]'>{__("This SMS will be sent to the attendee if phone number is provided during booking.", "quillbooking")}</span>
+                </Flex> */}
+            <Flex gap={10} align="center">
+                {/* <Button onClick={handleEdit}>{__('Edit', 'quillbooking')}</Button>
                     <Switch
                         checked={notification.default}
                         loading={loading}
                         onChange={handleSwitchChange}
-                    />
-                    <Modal
+                    /> */}
+                {/* <Modal
                         title={notification.label}
                         open={editingKey === notificationKey}
                         onCancel={() => setEditingKey(null)}
                         footer={null}
+                        getContainer={false}
                         width={800}
-                    >
-                        {renderModalContent()}
-                    </Modal>
-                </Flex>
+                    >  */}
+                {renderModalContent()}
+                {/* </Modal> */}
             </Flex>
         </Card>
     );

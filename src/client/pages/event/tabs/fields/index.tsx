@@ -1,276 +1,298 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect } from '@wordpress/element';
+import {
+	useState,
+	useEffect,
+	forwardRef,
+	useImperativeHandle,
+} from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
  * External dependencies
  */
-import { Card, Button, Typography, List, Skeleton, Flex, Popconfirm } from 'antd';
-import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { Card, Skeleton } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import slugify from 'slugify';
-import { get } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
-import FieldModal from './field-modal';
 import './style.scss';
+import { CardHeader, QuestionOutlineIcon } from '@quillbooking/components';
+import {
+	EventFieldsTabHandle,
+	EventFieldsTabProps,
+	Fields,
+	FieldType,
+} from 'client/types';
+import Question from './question';
 
-const { Title } = Typography;
+const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
+	(props, ref) => {
+		const { state: event } = useEventContext();
+		const { callApi, loading } = useApi();
+		const { callApi: saveApi } = useApi();
+		const { successNotice, errorNotice } = useNotice();
+		const [fields, setFields] = useState<Fields | null>(null);
+		const [editingFieldKey, setEditingFieldKey] = useState<string | null>(
+			null
+		);
 
-export type FieldType = {
-    label: string;
-    type: string;
-    required: boolean;
-    group: string;
-    event_location: string;
-    placeholder: string;
-    order: number;
-    settings?: {
-        options?: string[];
-        min?: string;
-        max?: string;
-        format?: string;
-        maxFileSize?: number;
-        maxFileCount?: number;
-        allowedFiles?: string[];
-    };
-};
+		useImperativeHandle(ref, () => ({
+			saveSettings: async () => {
+				if (fields) {
+					saveFields(fields);
+				}
+			},
+		}));
 
-type FieldsGroup = {
-    [key: string]: FieldType;
-};
+		useEffect(() => {
+			if (event) {
+				fetchFields();
+			}
+		}, [event]);
 
-type Fields = {
-    system: FieldsGroup;
-    location: FieldsGroup;
-    custom: FieldsGroup;
-};
+		const fetchFields = () => {
+			if (!event) return;
+			callApi({
+				path: `events/${event.id}/meta/fields`,
+				method: 'GET',
+				onSuccess(response: Fields) {
+					setFields(response);
+				},
+				onError(error) {
+					errorNotice(error.message);
+				},
+			});
+		};
 
-const EventFieldsTab: React.FC = () => {
-    const { state: event } = useEventContext();
-    const { callApi, loading } = useApi();
-    const { callApi: saveApi, loading: saveLoading } = useApi();
-    const { callApi: deleteApi} = useApi();
-    const { successNotice, errorNotice } = useNotice();
-    const [fields, setFields] = useState<Fields | null>(null);
-    const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
-    const [isAddFieldModalVisible, setIsAddFieldModalVisible] = useState(false);
+		const handleSave = (values: any) => {
+			if (!fields || !editingFieldKey) return;
+			const updatedFields = { ...fields };
+			const group = updatedFields.system[editingFieldKey]
+				? 'system'
+				: updatedFields.location[editingFieldKey]
+					? 'location'
+					: updatedFields.other?.[editingFieldKey]
+						? 'other'
+						: 'custom';
+			const updatedField = {
+				...(updatedFields[group]?.[editingFieldKey] ?? {}),
+				...values,
+			};
+			(updatedFields[group] ??= {})[editingFieldKey] = updatedField;
+			console.log(updatedFields);
+			setFields(updatedFields);
+			props.setDisabled(false);
 
-    useEffect(() => {
-        if (event) {
-            fetchFields();
-        }
-    }, [event]);
+		};
 
-    const fetchFields = () => {
-        if (!event) return;
-        callApi({
-            path: `events/${event.id}/meta/fields`,
-            method: 'GET',
-            onSuccess(response: Fields) {
-                setFields(response);
-            },
-            onError(error) {
-                errorNotice(error.message);
-            },
-        });
-    };
+		const saveFields = (fields: Fields) => {
+			if (!event) return;
+			saveApi({
+				path: `events/${event.id}`,
+				method: 'POST',
+				data: {
+					fields,
+				},
+				onSuccess() {
+					successNotice(
+						__('Fields saved successfully', 'quillbooking')
+					);
+					setEditingFieldKey(null);
+				},
+				onError(error) {
+					errorNotice(error.message);
+				},
+			});
+		};
 
-    const handleSave = (values: any) => {
-        if (!fields || !editingFieldKey) return;
-        const updatedFields = { ...fields };
-        const group = updatedFields.system[editingFieldKey] ? 'system' : updatedFields.location[editingFieldKey] ? 'location' : 'custom';
-        const updatedField = { ...updatedFields[group][editingFieldKey], ...values };
-        updatedFields[group][editingFieldKey] = updatedField;
-        setFields(updatedFields);
-        saveFields(updatedFields);
-    };
+		const addField = () => {
+			if (!fields) return;
+			const order =
+				Object.keys(fields?.system || {}).length +
+				Object.keys(fields?.location || {}).length +
+				Object.keys(fields?.custom || {}).length +
+				1;
+			const defaultLabel = __('New Question', 'quillbooking') + order;
+			const newFieldKey = slugify(defaultLabel, { lower: true });
+			const newField: FieldType = {
+				label: defaultLabel,
+				type: 'text', // default type
+				required: false,
+				group: 'custom',
+				event_location: 'all',
+				placeholder: '',
+				order: order,
+				settings: {},
+			};
+			const updatedFields = {
+				...fields,
+				custom: { ...fields.custom, [newFieldKey]: newField },
+			};
+			setFields(updatedFields);
+			props.setDisabled(false);
 
-    const saveFields = (fields: Fields) => {
-        if (!event) return;
-        saveApi({
-            path: `events/${event.id}`,
-            method: 'POST',
-            data: {
-                fields,
-            },
-            onSuccess() {
-                successNotice(__('Fields saved successfully', 'quillbooking'));
-                setEditingFieldKey(null);
-            },
-            onError(error) {
-                errorNotice(error.message);
-            },
-        });
-    };
+		};
 
-    const addField = () => {
-        setIsAddFieldModalVisible(true);
-    };
+		const removeField = async (
+			fieldKey: string,
+			group: 'system' | 'location' | 'custom' | 'other'
+		) => {
+			if (!event || !fields) return;
 
-    const handleAddFieldSave = (values: any) => {
-        if (!fields) return;
-        const newFieldKey = slugify(values.label, { lower: true });
-        const newField: FieldType = {
-            label: values.label,
-            type: values.type,
-            required: values.required || false,
-            group: 'custom',
-            event_location: 'all',
-            placeholder: values.placeholder || '',
-            order: Object.keys(fields?.system || {}).length + Object.keys(fields?.location || {}).length + Object.keys(fields?.custom || {}).length + 1,
-            settings: values.settings || {},
-        };
-        const updatedFields = { ...fields, custom: { ...fields?.custom, [newFieldKey]: newField } };
-        setFields(updatedFields);
-        saveFields(updatedFields);
-        setIsAddFieldModalVisible(false);
-    };
+			const updatedFields = { ...fields };
+			delete (updatedFields[group] ?? {})[fieldKey];
+			setFields(updatedFields);
+			props.setDisabled(false);
 
-    const removeField = async (fieldKey: string, group: 'system' | 'location' | 'custom') => {
-        if (!event || !fields) return;
-        
-        const updatedFields = { ...fields };
-        delete updatedFields[group][fieldKey];
-        
-        await deleteApi({
-            path: `events/${event.id}`,
-            method: 'POST',
-            data: {
-                fields: updatedFields,
-            },
-            onSuccess() {
-                setFields(updatedFields);
-                successNotice(__('Field deleted successfully', 'quillbooking'));
-            },
-            onError(error) {
-                errorNotice(error.message);
-            },
-        });
-    };
+		};
 
-    const moveField = (fieldKey: string, direction: 'up' | 'down') => {
-        setFields((prevFields) => {
-            if (!prevFields) {
-                return { system: {}, location: {}, custom: {} };
-            }
-            const allFields = { ...prevFields.system, ...prevFields.location, ...prevFields.custom };
-            const sortedFields = Object.keys(allFields).sort((a, b) => allFields[a].order - allFields[b].order);
-            const index = sortedFields.indexOf(fieldKey);
-            if (index === -1) return prevFields;
+		const moveField = (fieldKey: string, direction: 'up' | 'down') => {
+			props.setDisabled(false);
+			setFields((prevFields) => {
+				if (!prevFields) {
+					return { system: {}, location: {}, custom: {} };
+				}
+				const allFields = {
+					...prevFields.system,
+					...prevFields.location,
+					...prevFields.custom,
+				};
+				const sortedFields = Object.keys(allFields).sort(
+					(a, b) => allFields[a].order - allFields[b].order
+				);
+				const index = sortedFields.indexOf(fieldKey);
+				if (index === -1) return prevFields;
 
-            const newIndex = direction === 'up' ? index - 1 : index + 1;
-            if (newIndex < 0 || newIndex >= sortedFields.length) return prevFields;
+				const newIndex = direction === 'up' ? index - 1 : index + 1;
+				if (newIndex < 0 || newIndex >= sortedFields.length)
+					return prevFields;
 
-            const temp = sortedFields[index];
-            sortedFields[index] = sortedFields[newIndex];
-            sortedFields[newIndex] = temp;
+				const temp = sortedFields[index];
+				sortedFields[index] = sortedFields[newIndex];
+				sortedFields[newIndex] = temp;
 
-            const reorderedFields = sortedFields.reduce((acc, key, idx) => {
-                const group = prevFields.system[key] ? 'system' : prevFields.location[key] ? 'location' : 'custom';
-                acc[group][key] = { ...prevFields[group][key], order: idx + 1 };
-                return acc;
-            }, { system: {}, location: {}, custom: {} } as Fields);
+				const reorderedFields = sortedFields.reduce(
+					(acc, key, idx) => {
+						const group = prevFields.system[key]
+							? 'system'
+							: prevFields.location[key]
+								? 'location'
+								: 'custom';
+						acc[group][key] = {
+							...prevFields[group][key],
+							order: idx + 1,
+						};
+						return acc;
+					},
+					{ system: {}, location: {}, custom: {} } as Fields
+				);
 
-            return reorderedFields;
-        });
-    };
+				return reorderedFields;
+			});
+		};
 
-    if (loading || !fields) {
-        return <Skeleton active />;
-    }
+		if (loading || !fields) {
+			return <Skeleton active />;
+		}
 
-    const allFields = fields ? { ...fields.system, ...fields.location, ...fields.custom } : {};
-    const sortedFields = Object.keys(allFields).sort((a, b) => allFields[a].order - allFields[b].order);
+		const allFields = fields
+			? { ...fields.system, ...fields.location, ...fields.custom }
+			: {};
+		const sortedFields = Object.keys(allFields).sort(
+			(a, b) => allFields[a].order - allFields[b].order
+		);
 
-    return (
-        <div className="event-fields-tab">
-            <Title level={4}>{__('Event Fields', 'quillbooking')}</Title>
-            <Card>
-                <List
-                    bordered
-                    dataSource={sortedFields}
-                    renderItem={(fieldKey) => (
-                        <List.Item
-                            style={{
-                                color: allFields[fieldKey].group === 'system' ? '#888' : 'inherit',
-                            }}
-                        >
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <Typography.Title level={5} style={{ margin: 0 }}>
-                                    {allFields[fieldKey].label}
-                                </Typography.Title>
-                                <div className='quillbooking-field-bagde'>
-                                    {allFields[fieldKey].group}
-                                </div>
-                            </div>
-                            <Flex gap={5} className="field-actions" align='center'>
-                                <div>
-                                    <Button
-                                        icon={<ArrowUpOutlined />}
-                                        onClick={() => moveField(fieldKey, 'up')}
-                                        disabled={sortedFields.indexOf(fieldKey) === 0}
-                                    />
-                                    <Button
-                                        icon={<ArrowDownOutlined />}
-                                        onClick={() => moveField(fieldKey, 'down')}
-                                        disabled={sortedFields.indexOf(fieldKey) === sortedFields.length - 1}
-                                    />
-                                </div>
-                                <Button onClick={() => {
-                                    setEditingFieldKey(fieldKey);
-                                }}>
-                                    {__('Edit', 'quillbooking')}
-                                </Button>
-                                {allFields[fieldKey].group === 'custom' && (
-                                    <Popconfirm
-                                        title={__('Are you sure to delete this field?', 'quillbooking')}
-                                        onConfirm={() => removeField(fieldKey, allFields[fieldKey].group as 'system' | 'location' | 'custom')}
-                                        okText={__('Yes', 'quillbooking')}
-                                        cancelText={__('No', 'quillbooking')}
-                                    >
-                                        <Button danger>{__('Delete', 'quillbooking')}</Button>
-                                    </Popconfirm>
-                                )}
-                            </Flex>
-                        </List.Item>
-                    )}
-                />
-                <Flex justify='space-between' style={{ marginTop: 16 }}>
-                    <Button type="dashed" onClick={addField}>
-                        {__('Add Field', 'quillbooking')}
-                    </Button>
-                    <Button type="primary" onClick={() => saveFields(fields)} loading={saveLoading}>
-                        {__('Save', 'quillbooking')}
-                    </Button>
-                </Flex>
-            </Card>
-            <FieldModal
-                visible={isAddFieldModalVisible}
-                onCancel={() => setIsAddFieldModalVisible(false)}
-                onSave={handleAddFieldSave}
-                isEdit={false}
-                loading={saveLoading}
-            />
-            {editingFieldKey && (
-                <FieldModal
-                    visible={!!editingFieldKey}
-                    onCancel={() => {
-                        setEditingFieldKey(null);
-                    }}
-                    onSave={handleSave}
-                    field={get(allFields, editingFieldKey)}
-                    isEdit={true}
-                    loading={saveLoading}
-                />
-            )}
-        </div>
-    );
-};
+		const otherFields = { ...fields.other };
 
+		return (
+			<Card>
+				<CardHeader
+					title={__('Question Settings', 'quillbooking')}
+					description={__(
+						'Customize the queston asked on the booking page.',
+						'quillbooking'
+					)}
+					icon={<QuestionOutlineIcon width={24} height={24} />}
+					border={false}
+				/>
+
+				<Card>
+					<div>
+						<h3 className="text-xl font-semibold text-color-primary-text">
+							{__('Booking Questions', 'quillbooking')}
+						</h3>
+						<p className="text-base font-normal text-[#71717A]">
+							{__(
+								'To lock the timezone on booking page, useful for in-person events',
+								'quillbooking'
+							)}
+						</p>
+					</div>
+
+					{sortedFields.length > 0 && (
+						<>
+							{sortedFields.map((fieldKey, index) => (
+								<Question
+									allFields={allFields}
+									fieldKey={fieldKey}
+									handleSave={handleSave}
+									index={index}
+									moveField={moveField}
+									removeField={removeField}
+									setEditingFieldKey={setEditingFieldKey}
+									sortedFields={sortedFields}
+								/>
+							))}
+						</>
+					)}
+
+					<div
+						className="w-full text-center border border-color-primary text-color-primary rounded-lg py-4 border-dashed bg-color-secondary font-bold cursor-pointer hover:bg-color-primary hover:text-white transition-all duration-200 ease-in-out mt-2"
+						onClick={addField}
+					>
+						<div className="flex items-center justify-center gap-2">
+							<PlusOutlined />
+							{__('Add New Question', 'quillbooking')}
+						</div>
+					</div>
+				</Card>
+
+				<Card className="mt-4">
+					<div>
+						<h3 className="text-xl font-semibold text-color-primary-text">
+							{__('Other Questions', 'quillbooking')}
+						</h3>
+						<p className="text-base font-normal text-[#71717A]">
+							{__(
+								'Customize Booking Cancel and Reschedule Fields',
+								'quillbooking'
+							)}
+						</p>
+					</div>
+
+					<>
+						{Object.keys(otherFields).map((fieldKey, index) => (
+							<Question
+								allFields={otherFields}
+								fieldKey={fieldKey}
+								handleSave={handleSave}
+								index={index}
+								moveField={moveField}
+								removeField={removeField}
+								setEditingFieldKey={setEditingFieldKey}
+								sortedFields={Object.keys(otherFields)}
+							/>
+						))}
+					</>
+				</Card>
+			</Card>
+		);
+	}
+);
 export default EventFieldsTab;

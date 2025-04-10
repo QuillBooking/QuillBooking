@@ -67,6 +67,7 @@ export type Event = {
 	calendar: Calendar;
 	additional_settings: AdditionalSettings;
 	hosts?: Host[];
+	fields?: EventMetaData[];
 };
 
 export type AdditionalSettings = {
@@ -273,3 +274,44 @@ export type IconProps = {
 	height?: number;
 	rectFill?: boolean;
 };
+
+export interface EventFieldsTabHandle {
+	saveSettings: () => Promise<void>;
+}
+
+export interface EventFieldsTabProps {
+	disabled: boolean;
+	setDisabled: (disabled: boolean) => void;
+}
+
+
+export type FieldType = {
+	label: string;
+	type: string;
+	required: boolean;
+	group: string;
+	event_location: string;
+	placeholder: string;
+	order: number;
+	settings?: {
+		options?: string[];
+		min?: string;
+		max?: string;
+		format?: string;
+		maxFileSize?: number;
+		maxFileCount?: number;
+		allowedFiles?: string[];
+	};
+};
+
+export type Fields = {
+	system: FieldsGroup;
+	location: FieldsGroup;
+	custom: FieldsGroup;
+	other?: FieldsGroup;
+};
+
+export type FieldsGroup = {
+	[key: string]: FieldType;
+};
+

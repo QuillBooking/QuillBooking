@@ -23,7 +23,6 @@ use QuillBooking\Capabilities;
 use QuillBooking\Availabilities;
 use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Models\Calendar_Model;
-use QuillBooking\Models\Team_Model;
 
 /**
  * Event Controller class
@@ -204,6 +203,19 @@ class REST_Event_Controller extends REST_Controller {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_meta' ),
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				),
+			)
+		);
+
+		// disable events
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/disable',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'disable_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
 		);
@@ -546,6 +558,10 @@ class REST_Event_Controller extends REST_Controller {
 
 			if ( ! $event ) {
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			if ( $event->status == 'disabled' ) {
+				return new WP_Error( 'rest_event_error', __( 'Event is disabled', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
 			$calendarIds = $event->calendar->getTeamMembers();
@@ -918,6 +934,38 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			return new WP_REST_Response( $meta, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+
+	/**
+	 * Disable item
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function disable_item( $request ) {
+		try {
+			$ids = $request->get_param( 'ids' );
+			if ( ! $ids ) {
+				return new WP_Error( 'rest_event_error', __( 'No events to disable', 'quillbooking' ), array( 'status' => 400 ) );
+			}
+			foreach ( $ids as $id ) {
+				$event = Event_Model::find( $id );
+
+				if ( ! $event ) {
+					return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
+				}
+
+				$event->status = 'disabled';
+				$event->save();
+
+			}
+			return new WP_REST_Response( $ids );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}

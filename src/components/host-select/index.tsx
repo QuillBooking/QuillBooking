@@ -116,8 +116,9 @@ const HostSelect: React.FC<HostSelectProps> = ({ value, onChange, multiple = fal
                 loadOptions={debouncedLoadOptions}
                 onChange={handleChange}
                 value={getValue()}
-                placeholder={placeholder || __('Select a host...', 'quillbooking')}
+                placeholder={placeholder || __('Select Team Members and select one or more', 'quillbooking')}
                 isOptionDisabled={(option) => option.disabled}
+                className='h-[48px] rounded-lg'
             />
         </div>
     );

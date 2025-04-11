@@ -4,15 +4,18 @@
 import { __ } from '@wordpress/i18n';
 
 /**
- * External dependencies
- */
-import { Card, Space, Typography } from 'antd';
-
-/**
  * Internal dependencies
  */
 import type { Booking } from '@quillbooking/client';
-import BookingActions from '../booking-actions';
+import {
+	AttendeeIcon,
+	ClockIcon,
+	EmailIcon,
+	TeamOutlinedIcon,
+	TimezoneIcon,
+} from '@quillbooking/components';
+import { CardHeader } from '@quillbooking/components';
+import InfoItem from '../info-items';
 
 /*
  * Main Invitee Information Component
@@ -22,69 +25,54 @@ interface BookingDetailsProps {
 	handleStatusUpdated?: () => void;
 }
 
-const { Title, Text } = Typography;
-
-const InviteeInformation: React.FC<BookingDetailsProps> = ({ booking, handleStatusUpdated }) => {
+const InviteeInformation: React.FC<BookingDetailsProps> = ({
+	booking,
+	handleStatusUpdated,
+}) => {
 	return (
-		<Card
-			title={
-				<Text strong>
-					{__('meeting between', 'quillbooking')}{' '}
-					{booking.calendar?.user?.display_name}{' '}
-					{__('and', 'quillbooking')}{' '}
-					{Array.isArray(booking.guest)
-						? booking.guest.map((g) => g.name).join(', ')
-						: booking.guest?.name}{' '}
-					@ {booking.start_time} - {booking.status}
-					<BookingActions booking={booking} onStatusUpdated={handleStatusUpdated} />
-				</Text>
-			}
-			style={{ flex: 3 }}
-		>
-			<Title level={4}>
-				{__('Invitees Information', 'quillbooking')}
-			</Title>
-
-			<Space
-				direction="vertical"
-				size="middle"
-				style={{ display: 'flex' }}
-			>
-				<Space>
-					<Title level={5}>
-						{__('Invitee Name', 'quillbooking')}
-					</Title>
-					<Text>
-						{Array.isArray(booking.guest)
+		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
+			<CardHeader
+				title={__('Invitees Information', 'quillbooking')}
+				description={__(
+					'All Data about Invitees Information',
+					'quillbooking'
+				)}
+				icon={<TeamOutlinedIcon width={24} height={24} />}
+			/>
+			<div className="flex flex-col gap-4">
+				<InfoItem
+					icon={<AttendeeIcon width={24} height={24} />}
+					title={__('Invitee Name', 'quillbooking')}
+					content={
+						Array.isArray(booking.guest)
 							? booking.guest.map((g) => g.name).join(', ')
-							: booking.guest?.name}
-					</Text>
-				</Space>
+							: booking.guest?.name
+					}
+				/>
 
-				<Space>
-					<Title level={5}>
-						{__('Invitee Email', 'quillbooking')}
-					</Title>
-					<Text>
-						{Array.isArray(booking.guest)
+				<InfoItem
+					icon={<EmailIcon width={24} height={24} />}
+					title={__('Invitee Email', 'quillbooking')}
+					content={
+						Array.isArray(booking.guest)
 							? booking.guest.map((g) => g.email).join(', ')
-							: booking.guest?.email}
-					</Text>
-				</Space>
+							: booking.guest?.email
+					}
+				/>
 
-				<Space>
-					<Title level={5}>
-						{__('Invitee Timezone', 'quillbooking')}
-					</Title>
-					<Text>{booking.timezone}</Text>
-				</Space>
+				<InfoItem
+					icon={<TimezoneIcon width={24} height={24} />}
+					title={__('Invitee Timezone', 'quillbooking')}
+					content={booking.timezone}
+				/>
 
-				<Space>
-					<Title level={5}>{__('Booked At', 'quillbooking')}</Title>
-					<Text>{booking.created_at}</Text>
-				</Space>
-			</Space>
-		</Card>
+				<InfoItem
+					icon={<ClockIcon width={24} height={24} />}
+					title={__('Booked At', 'quillbooking')}
+					content={booking.created_at}
+				/>
+			</div>
+		</div>
 	);
 };
 

@@ -31,19 +31,22 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({ field }) => {
 		case 'text':
 			return (
 				<Form.Item {...commonProps}>
-					<Input placeholder={field.placeholder} />
+					<Input size="large" placeholder={field.placeholder} />
 				</Form.Item>
 			);
 		case 'textarea':
 			return (
 				<Form.Item {...commonProps}>
-					<Input.TextArea placeholder={field.placeholder} />
+					<Input.TextArea
+						size="large"
+						placeholder={field.placeholder}
+					/>
 				</Form.Item>
 			);
 		case 'radio':
 			return (
 				<Form.Item {...commonProps}>
-					<Radio.Group>
+					<Radio.Group size="large">
 						{field.settings.options.map((option: string) => (
 							<Radio key={option} value={option}>
 								{option}
@@ -87,6 +90,7 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({ field }) => {
 											]}
 										>
 											<Input
+												size="large"
 												placeholder={__(
 													'Guest Email',
 													'quillbooking'
@@ -122,7 +126,7 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({ field }) => {
 		case 'select':
 			return (
 				<Form.Item {...commonProps}>
-					<Select placeholder={field.placeholder}>
+					<Select placeholder={field.placeholder} size="large">
 						{field.settings.options.map((option: string) => (
 							<Option key={option} value={option}>
 								{option}

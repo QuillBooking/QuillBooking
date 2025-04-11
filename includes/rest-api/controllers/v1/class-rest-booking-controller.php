@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Rest_Booking_Controller
  *
@@ -24,11 +25,13 @@ use QuillBooking\Booking_Service;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Models\Guest_Model;
 use QuillBooking\Capabilities;
+use QuillBooking\Utils;
 
 /**
  * Booking Controller class
  */
 class REST_Booking_Controller extends REST_Controller {
+
 
 	/**
 	 * REST Base
@@ -114,89 +117,89 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return array
 	 */
 	public function get_item_schema() {
-		return array(
-			'$schema'    => 'http://json-schema.org/draft-04/schema#',
-			'title'      => 'booking',
-			'type'       => 'object',
-			'properties' => array(
-				'id'           => array(
-					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-					'readonly'    => true,
-				),
-				'hash_id'      => array(
-					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'readonly'    => true,
-				),
-				'event_id'     => array(
-					'description' => __( 'Event ID.', 'quillbooking' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-					'required'    => true,
-					'arg_options' => array(
-						'sanitize_callback' => 'absint',
-					),
-				),
-				'guest_id'     => array(
-					'description' => __( 'Guest ID.', 'quillbooking' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'start_date'   => array(
-					'description' => __( 'Start date.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'required'    => true,
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-				'slot_time'    => array(
-					'description' => __( 'Slot time.', 'quillbooking' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-					'required'    => true,
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-				'source'       => array(
-					'description' => __( 'Source.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'status'       => array(
-					'description' => __( 'Status.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'cancelled_by' => array(
-					'description' => __( 'Cancelled by.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'event_url'    => array(
-					'description' => __( 'Event URL.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'created_at'   => array(
-					'description' => __( 'Creation time.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'readonly'    => true,
-				),
-				'updated_at'   => array(
-					'description' => __( 'Update time.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'readonly'    => true,
-				),
-			),
-		);
+		 return array(
+			 '$schema'    => 'http://json-schema.org/draft-04/schema#',
+			 'title'      => 'booking',
+			 'type'       => 'object',
+			 'properties' => array(
+				 'id'           => array(
+					 'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
+					 'type'        => 'integer',
+					 'context'     => array( 'view', 'edit' ),
+					 'readonly'    => true,
+				 ),
+				 'hash_id'      => array(
+					 'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'readonly'    => true,
+				 ),
+				 'event_id'     => array(
+					 'description' => __( 'Event ID.', 'quillbooking' ),
+					 'type'        => 'integer',
+					 'context'     => array( 'view', 'edit' ),
+					 'required'    => true,
+					 'arg_options' => array(
+						 'sanitize_callback' => 'absint',
+					 ),
+				 ),
+				 'guest_id'     => array(
+					 'description' => __( 'Guest ID.', 'quillbooking' ),
+					 'type'        => 'integer',
+					 'context'     => array( 'view', 'edit' ),
+				 ),
+				 'start_date'   => array(
+					 'description' => __( 'Start date.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'required'    => true,
+					 'arg_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+				 ),
+				 'slot_time'    => array(
+					 'description' => __( 'Slot time.', 'quillbooking' ),
+					 'type'        => 'integer',
+					 'context'     => array( 'view', 'edit' ),
+					 'required'    => true,
+					 'arg_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+				 ),
+				 'source'       => array(
+					 'description' => __( 'Source.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+				 ),
+				 'status'       => array(
+					 'description' => __( 'Status.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+				 ),
+				 'cancelled_by' => array(
+					 'description' => __( 'Cancelled by.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+				 ),
+				 'event_url'    => array(
+					 'description' => __( 'Event URL.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+				 ),
+				 'created_at'   => array(
+					 'description' => __( 'Creation time.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'readonly'    => true,
+				 ),
+				 'updated_at'   => array(
+					 'description' => __( 'Update time.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'readonly'    => true,
+				 ),
+			 ),
+		 );
 	}
 
 	/**
@@ -219,6 +222,9 @@ class REST_Booking_Controller extends REST_Controller {
 			$event      = Arr::get( $filter, 'event' ) ? Arr::get( $filter, 'event' ) : 'all';
 			$event_type = Arr::get( $filter, 'event_type' ) ? Arr::get( $filter, 'event_type' ) : 'all';
 			$search     = Arr::get( $filter, 'search' ) ? Arr::get( $filter, 'search' ) : '';
+			$year       = Arr::get( $filter, 'year', date( 'Y' ) );
+			$month      = Arr::get( $filter, 'month', date( 'm' ) );
+			$day        = Arr::get( $filter, 'day' );
 
 			if ( 'own' === $user ) {
 				$user = get_current_user_id();
@@ -229,6 +235,18 @@ class REST_Booking_Controller extends REST_Controller {
 			}
 
 			$query = Booking_Model::query();
+
+			// Build the start and end date range
+			if ( ! empty( $day ) ) {
+				$startDate = "$year-$month-$day 00:00:00"; // Specific day at midnight
+				$endDate   = "$year-$month-$day 23:59:59"; // Specific day at 23:59:59
+			} else {
+				$startDate = "$year-$month-01 00:00:00"; // First day of the month at midnight
+				$endDate   = date( 'Y-m-t 23:59:59', strtotime( $startDate ) ); // Last day of the month at 23:59:59
+			}
+
+			$query->whereBetween( 'start_time', array( $startDate, $endDate ) )
+				->orderBy( 'start_time' );
 
 			if ( 'all' !== $user ) {
 				$query->whereHas(
@@ -246,6 +264,7 @@ class REST_Booking_Controller extends REST_Controller {
 			// Clone the query here to get the count of pending bookings
 			$pending_count   = ( clone $query )->where( 'status', 'pending' )->count();
 			$cancelled_count = ( clone $query )->where( 'status', 'cancelled' )->count();
+			$no_show_count   = ( clone $query )->where( 'status', 'no_show' )->count();
 
 			// Filter by period
 			if ( 'all' !== $period ) {
@@ -267,6 +286,10 @@ class REST_Booking_Controller extends REST_Controller {
 
 				if ( 'cancelled' === $period ) {
 					$query->where( 'status', 'cancelled' );
+				}
+
+				if ( 'no-show' === $period ) {
+					$query->where( 'status', 'no-show' );
 				}
 			} else {
 				$query->orderBy( 'start_time' );
@@ -307,10 +330,10 @@ class REST_Booking_Controller extends REST_Controller {
 					'bookings'        => $bookings,
 					'pending_count'   => $pending_count,
 					'cancelled_count' => $cancelled_count,
+					'noshow_count'    => $no_show_count,
 				),
 				200
 			);
-
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
@@ -340,37 +363,41 @@ class REST_Booking_Controller extends REST_Controller {
 	 */
 	public function create_item( $request ) {
 		try {
-			$event_id    = $request->get_param( 'event_id' );
-			$start_date  = $request->get_param( 'start_date' );
-			$duration    = $request->get_param( 'slot_time' );
-			$timezone    = $request->get_param( 'timezone' );
-			$name        = $request->get_param( 'name' );
-			$email       = $request->get_param( 'email' );
-			$status      = $request->get_param( 'status' );
-			$location    = $request->get_param( 'location' );
-			$message     = $request->get_param( 'message' );
-			$current_url = $request->get_param( 'current_url' );
-			$fields      = $request->get_param( 'fields' );
+			$event_id            = $request->get_param( 'event_id' );
+			$start_date          = $request->get_param( 'start_date' );
+			$duration            = $request->get_param( 'slot_time' );
+			$timezone            = $request->get_param( 'timezone' );
+			$name                = $request->get_param( 'name' );
+			$email               = $request->get_param( 'email' );
+			$status              = $request->get_param( 'status' );
+			$location            = $request->get_param( 'location' );
+			$message             = $request->get_param( 'message' );
+			$current_url         = $request->get_param( 'current_url' );
+			$fields              = $request->get_param( 'fields' );
+			$ignore_availability = $request->get_param( 'ignore_availability' );
 
 			// will be updated later
 			$location = 'zoom';
 
-			$event      = Booking_Validator::validate_event( $event_id );
-			$start_date = Booking_Validator::validate_start_date( $start_date, $timezone );
-			$duration   = Booking_Validator::validate_duration( $duration, $event->duration );
+			$event    = Booking_Validator::validate_event( $event_id );
+			$duration = Booking_Validator::validate_duration( $duration, $event->duration );
 
-			$available_slots = $event->get_booking_available_slots( $start_date, $duration, $timezone );
-			if ( ! $available_slots ) {
-				throw new \Exception( __( 'Sorry, This booking is not available', 'quillbooking' ) );
+			if ( ! $ignore_availability ) {
+				$start_date      = Booking_Validator::validate_start_date( $start_date, $timezone );
+				$available_slots = $event->get_booking_available_slots( $start_date, $duration, $timezone );
+				if ( ! $available_slots ) {
+					throw new \Exception( __( 'Sorry, This booking is not available', 'quillbooking' ) );
+				}
+			} else {
+				$start_date = Utils::create_date_time( $start_date, $timezone );
 			}
 
-			$invitee = array(
+			$invitee          = array(
 				array(
 					'name'  => $name,
 					'email' => $email,
 				),
 			);
-
 			$booking_service  = new Booking_Service();
 			$validate_invitee = $booking_service->validate_invitee( $event, $invitee );
 			$calendar_id      = $event->calendar_id;
@@ -433,7 +460,8 @@ class REST_Booking_Controller extends REST_Controller {
 				return new WP_Error( 'rest_booking_error', __( 'Booking not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			$booking->load( 'guest', 'event', 'calendar.user', 'logs', 'meta' );
+			$booking->load( 'guest', 'event', 'calendar.user', 'logs' );
+			$booking->fields = $booking->get_meta( 'fields' );
 
 			return new WP_REST_Response( $booking, 200 );
 		} catch ( Exception $e ) {
@@ -466,10 +494,11 @@ class REST_Booking_Controller extends REST_Controller {
 	 */
 	public function update_item( $request ) {
 		try {
-			$id         = $request->get_param( 'id' );
-			$status     = $request->get_param( 'status' );
-			$start_time = $request->get_param( 'start_time' );
-			$end_time   = $request->get_param( 'end_time' );
+			$id                  = $request->get_param( 'id' );
+			$status              = $request->get_param( 'status' );
+			$cancellation_reason = $request->get_param( 'cancellation_reason' );
+			$start_time          = $request->get_param( 'start_time' );
+			$end_time            = $request->get_param( 'end_time' );
 
 			$booking = Booking_Model::find( $id );
 
@@ -503,6 +532,7 @@ class REST_Booking_Controller extends REST_Controller {
 					'type' => 'user',
 					'id'   => get_current_user_id(),
 				);
+				$booking->update_meta( 'cancellation_reason', $cancellation_reason );
 			}
 
 			$booking->update( $booking_data );

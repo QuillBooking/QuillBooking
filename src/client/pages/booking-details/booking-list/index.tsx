@@ -4,76 +4,94 @@
 import { __ } from '@wordpress/i18n';
 
 /**
- * External dependencies
- */
-import { Card, Typography } from 'antd';
-
-/**
  * Internal dependencies
  */
-import { NavLink as Link } from '@quillbooking/navigation';
 import type { Booking } from '@quillbooking/client';
+import { CardHeader } from '@quillbooking/components';
+import { LatestCalendarIcon } from '@quillbooking/components';
 
 /*
  * Main Booking List Component (Details Page)
  */
-const { Title, Text } = Typography;
-
 interface BookingListProps {
-	bookings: Record<string, Booking[]>;
-	period: string;
+	bookings: Booking[];
+	days: {
+		weekday: string;
+		dayOfMonth: string;
+		month: number;
+		year: number;
+	}[];
+	selectedDate: number;
+	setSelectedDate: (date: number) => void;
+	setBookingId: (id: string | number) => void;
 }
-const BookingList: React.FC<BookingListProps> = ({ bookings, period }) => {
+const BookingList: React.FC<BookingListProps> = ({
+	bookings,
+	days,
+	setSelectedDate,
+	selectedDate,
+	setBookingId,
+}) => {
 	return (
-		<Card style={{ flex: 1, minHeight: 250, padding: '1rem' }}>
-			{Object.keys(bookings).length === 0 && (
-				<Title level={5} type="secondary">
-					{__('No bookings found based on your filter')}
-				</Title>
-			)}
-
-			{Object.entries(bookings).map(([dateLabel, groupBookings]) => (
-				<div key={dateLabel} style={{ marginBottom: '1rem' }}>
-					<Title level={5} style={{ marginBottom: '0.5rem' }}>
-						{dateLabel}
-					</Title>
-
-					{groupBookings.map((booking) => (
-						<div
-							key={booking.id}
-							style={{
-								border: '1px solid #d9d9d9',
-								borderRadius: '4px',
-								padding: '8px',
-								marginBottom: '8px',
-							}}
+		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
+			<CardHeader
+				title={__('Upcoming Booking', 'quillbooking')}
+				description={__(
+					'Timeline about all Booking Activities',
+					'quillbooking'
+				)}
+				icon={<LatestCalendarIcon width={24} height={24} />}
+			/>
+			<div className="flex justify-between items-center">
+				{days.map((day, index) => (
+					<div
+						className={`flex flex-col text-center cursor-pointer ${index == selectedDate ? 'bg-color-primary rounded-full px-3 py-4 text-white' : ''}`}
+						key={day.dayOfMonth}
+						onClick={() => setSelectedDate(index)}
+					>
+						<p>{day.weekday}</p>
+						<p
+							className={`font-semibold text-[#3F4254] text-base ${index == selectedDate ? 'text-white' : ''}`}
 						>
-							<Link
-								to={`bookings/${booking.id}?period=${period}`}
+							{day.dayOfMonth}
+						</p>
+					</div>
+				))}
+			</div>
+
+			<div>
+				{bookings.length > 0 &&
+					bookings.map((booking) => (
+						<div className="flex justify-between items-center my-4">
+							<div className="flex gap-2 font-semibold">
+								<div className="border-2 'border-[#A5E0B5]' rounded-3xl"></div>
+								<div>
+									<p>{booking.time_span}</p>
+									<p className="text-[#3F4254]">
+										{booking.event.name}
+									</p>
+									<p>
+										{__('Hosted by')}{' '}
+										<span className="text-color-primary">
+											{
+												booking.calendar?.user
+													?.display_name
+											}{' '}
+										</span>
+									</p>
+								</div>
+							</div>
+
+							<div
+								className="px-4 py-2 bg-[#F1F1F2] rounded-md text-[#5E6278] cursor-pointer"
+								onClick={() => setBookingId(booking.id)}
 							>
-								<Text
-									strong
-									style={{
-										display: 'block',
-										marginBottom: '4px',
-									}}
-								>
-									{booking.time_span}
-								</Text>
-								<Text
-									style={{
-										display: 'block',
-										marginBottom: '4px',
-									}}
-								>
-									{booking.event.name}
-								</Text>
-							</Link>
+								{__('View', 'quillbooking')}
+							</div>
 						</div>
 					))}
-				</div>
-			))}
-		</Card>
+			</div>
+		</div>
 	);
 };
 

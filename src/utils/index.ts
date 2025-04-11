@@ -48,7 +48,6 @@ export const groupBookingsByDate = (bookings: Booking[]) => {
 			booking.start_time,
 			currentTimezone
 		);
-
 		const { time: endTime } = convertTimezone(
 			booking.end_time,
 			currentTimezone
@@ -69,20 +68,23 @@ export const groupBookingsByDate = (bookings: Booking[]) => {
 			time_span: `${formattedStartTime.toLowerCase()} - ${formattedEndTime.toLowerCase()}`,
 		};
 
-		let groupKey: string;
-
+		// Determine the inner key:
+		// If the booking date is today or tomorrow, use "today-" or "tomorrow-" prefix.
+		// Otherwise, use the three-letter day abbreviation and the day number (e.g., "tue-20").
+		let dayKey: string;
 		if (isToday(date)) {
-			groupKey = 'Today';
+			dayKey = `today-${format(date, 'd')}`;
 		} else if (isTomorrow(date)) {
-			groupKey = 'Tomorrow';
+			dayKey = `tomorrow-${format(date, 'd')}`;
 		} else {
-			groupKey = format(date, 'MMM dd, yyyy');
+			dayKey = `${format(date, 'eee').toLowerCase()}-${format(date, 'd')}`;
 		}
 
-		// Initialize the group if it doesn't exist
-		groups[groupKey] = groups[groupKey] || [];
+		if (!groups[dayKey]) {
+			groups[dayKey] = [];
+		}
 
-		groups[groupKey].push(bookingWithTimeSpan);
+		groups[dayKey].push(bookingWithTimeSpan);
 		return groups;
 	}, {});
 };
@@ -109,23 +111,3 @@ export const getFields = (formData: Record<string, any>) => {
 
 	return groupedFields;
 };
-
-
-type MetaItem = {
-	meta_key: string;
-	meta_value: string;
-};
-
-export const getMetaValue = (metaArray: MetaItem[], key: string, defaultValue = null) => {
-	const metaItem = metaArray.find(item => item.meta_key === key);
-	if (metaItem) {
-		try {
-			// Attempt to parse meta_value if it's JSON-formatted
-			return JSON.parse(metaItem.meta_value);
-		} catch (error) {
-			// If parsing fails, return the raw value
-			return metaItem.meta_value;
-		}
-	}
-	return defaultValue;
-}

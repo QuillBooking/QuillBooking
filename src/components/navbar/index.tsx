@@ -13,14 +13,13 @@ import { useState } from '@wordpress/element';
  * External dependencies
  */
 import type { MenuProps } from 'antd';
-import { Button, Menu } from 'antd';
+import { Menu } from 'antd';
 
 /**
  * Internal dependencies
  */
 import './style.scss';
-import UpgradeIcon from '../../components/icons/upgrade-icon';
-import ToggleIcon from '../../components/icons/toggle-icon';
+import {UpgradeIcon, ToggleIcon} from "@quillbooking/components";
 
 const NavBar: React.FC = () => {
 	const navigate = useNavigate();
@@ -59,9 +58,9 @@ const NavBar: React.FC = () => {
 					{
 						key: "toggle-button",
 						label:(
-							<a href='/'>
+							<span onClick={() => navigate(-1)} className='cursor-pointer'>
 								<ToggleIcon/>
-							</a>
+							</span>
 						),
 						style: { width:"32px", height: "32px", paddingLeft:"5px", paddingRight:"5px", border:"1px solid #F1F1F2", position:"absolute", right:"-20px", backgroundColor:"white" },
 						className: "navbar-toggle-button"

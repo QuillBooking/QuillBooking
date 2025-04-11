@@ -1,0 +1,248 @@
+import React, { useState } from 'react';
+import { __ } from '@wordpress/i18n';
+import { Button, Flex, Modal } from 'antd';
+import {
+	EditIcon,
+	DisableIcon,
+	CloneIcon,
+	TrashIcon,
+	CalendarDeleteIcon,
+	CalendarDisableIcon,
+} from '@quillbooking/components';
+import type { Event } from '@quillbooking/client';
+import { useApi, useNavigate, useNotice } from '@quillbooking/hooks';
+
+// Define the props type
+interface EventActionsProps {
+	event: Partial<Event>; // Ensure this matches your actual event type
+	calendarId: number;
+	isDisabled: boolean;
+	updateCalendarEvents: () => void;
+	setDisabledEvents: React.Dispatch<
+		React.SetStateAction<Record<string, boolean>>
+	>;
+}
+
+const EventActions: React.FC<EventActionsProps> = ({
+	event,
+	calendarId,
+	isDisabled,
+	updateCalendarEvents,
+	setDisabledEvents,
+}) => {
+	const [isModalDeleteOpen, setIsModalDeleteOpen] = useState(false);
+	const [isModalDisableOpen, setIsModalDisableOpen] = useState(false);
+
+	const { callApi } = useApi();
+	const { successNotice, errorNotice } = useNotice();
+	const navigate = useNavigate();
+
+	const showDisableModal = () => {
+		setIsModalDisableOpen(true);
+	};
+
+	const handleDisable = () => {
+		callApi({
+			path: `events/disable`,
+			method: 'PUT',
+			data: {
+				ids: event.id ? [event.id] : [],
+			},
+			onSuccess: () => {
+				successNotice(
+					__('Event disabled successfully', 'quillbooking')
+				);
+				setDisabledEvents((prev) => ({
+					...prev,
+					[event.id ?? '']: !prev[event.id ?? ''],
+				}));
+			},
+			onError: (error) => {
+				errorNotice(error.message);
+			},
+		});
+
+		setIsModalDisableOpen(false);
+	};
+
+	const handleDisableCancel = () => {
+		setIsModalDisableOpen(false);
+	};
+
+	const showDeleteModal = () => {
+		setIsModalDeleteOpen(true);
+	};
+
+	const handleDelete = () => {
+		callApi({
+			path: `events/${event.id}`,
+			method: 'DELETE',
+			onSuccess: () => {
+				updateCalendarEvents();
+				successNotice(__('Event deleted successfully', 'quillbooking'));
+			},
+			onError: (error) => {
+				errorNotice(error.message);
+			},
+		});
+		setIsModalDeleteOpen(false);
+	};
+
+	const handleDeleteCancel = () => {
+		setIsModalDeleteOpen(false);
+	};
+
+  const handleClone = () => {
+    callApi({
+			path: `events/duplicate`,
+			method: 'POST',
+      data: { id: event.id },
+			onSuccess: () => {
+				updateCalendarEvents();
+				successNotice(
+					__('Event duplicated successfully', 'quillbooking')
+				);
+			},
+			onError: (error) => {
+				errorNotice(error.message);
+			},
+		});
+  }
+
+	return (
+		<Flex vertical gap={10} className="items-start text-color-primary-text">
+			<Button
+				type="text"
+				icon={<EditIcon />}
+				onClick={() =>
+					navigate(`calendars/${calendarId}/events/${event.id}`)
+				}
+			>
+				{__('Edit', 'quillbooking')}
+			</Button>
+
+			<Button
+				type="text"
+				onClick={showDisableModal}
+				icon={<DisableIcon />}
+			>
+				{isDisabled
+					? __('Enable', 'quillbooking')
+					: __('Disable', 'quillbooking')}
+			</Button>
+
+			<Button type="text" icon={<CloneIcon />} onClick={() => handleClone()}>
+                {__('Clone Events', 'quillbooking')}
+            </Button>
+			<Button type="text" icon={<TrashIcon />} onClick={showDeleteModal}>
+				{__('Delete', 'quillbooking')}
+			</Button>
+			<Modal
+				open={isModalDeleteOpen}
+				onOk={handleDelete}
+				onCancel={handleDeleteCancel}
+				okText={__('Yes', 'quillbooking')}
+				cancelText={__('No', 'quillbooking')}
+				footer={[
+					<Flex
+						className="w-full mt-5 items-center justify-center"
+						gap={10}
+					>
+						<Button
+							key="cancel"
+							onClick={handleDeleteCancel}
+							className="border rounded-lg py-6 text-[#71717A] font-semibold w-full"
+						>
+							{__('Back', 'quillbooking')}
+						</Button>
+						<Button
+							key="save"
+							type="primary"
+							onClick={handleDelete}
+							className="bg-[#EF4444] rounded-lg py-6 font-semibold w-full"
+						>
+							{__('Yes, Delete', 'quillbooking')}
+						</Button>
+					</Flex>,
+				]}
+			>
+				<Flex
+					vertical
+					justify="center"
+					align="center"
+					className="rounded-lg"
+				>
+					<div className="bg-[#EF44441F] p-4 rounded-lg">
+						<CalendarDeleteIcon />
+					</div>
+					<p className="text-[#09090B] text-[20px] font-[700] mt-5">
+						{__(
+							'Do you really you want to delete this event?',
+							'quillbooking'
+						)}
+					</p>
+					<span className="text-[#71717A]">
+						{__(
+							'by deleting this event you will not be able to restore it again!',
+							'quillbooking'
+						)}
+					</span>
+				</Flex>
+			</Modal>
+			<Modal
+				open={isModalDisableOpen}
+				onOk={handleDisable}
+				onCancel={handleDisableCancel}
+				okText={__('Yes', 'quillbooking')}
+				cancelText={__('No', 'quillbooking')}
+				footer={[
+					<Flex
+						className="w-full mt-5 items-center justify-center"
+						gap={10}
+					>
+						<Button
+							key="cancel"
+							onClick={handleDisableCancel}
+							className="border rounded-lg py-6 text-[#71717A] font-semibold w-full"
+						>
+							{__('Back', 'quillbooking')}
+						</Button>
+						<Button
+							key="save"
+							type="primary"
+							onClick={handleDisable}
+							className="bg-[#EF4444] rounded-lg py-6 font-semibold w-full"
+						>
+							{__('Yes, Disable', 'quillbooking')}
+						</Button>
+					</Flex>,
+				]}
+			>
+				<Flex
+					vertical
+					justify="center"
+					align="center"
+					className="rounded-lg"
+				>
+					<div className="bg-[#EF44441F] p-4 rounded-lg">
+						<CalendarDisableIcon />
+					</div>
+					<p className="text-[#09090B] text-[20px] font-[700] mt-5">
+						{__(
+							'Do you really you want to disable this event?',
+							'quillbooking'
+						)}
+					</p>
+					<span className="text-[#71717A] text-center">
+						{__(
+							'by Disable this event you will not be able to Share or edit event untiled you Enable it again!',
+							'quillbooking'
+						)}
+					</span>
+				</Flex>
+			</Modal>
+		</Flex>
+	);
+};
+
+export default EventActions;

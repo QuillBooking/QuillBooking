@@ -123,6 +123,7 @@ const ProductSelect: React.FC<ProductSelectProps> = ({ value, onChange, multiple
                 value={getValue()}
                 placeholder={placeholder || __('Select a product...', 'quillbooking')}
                 isOptionDisabled={(option) => option.disabled}
+                className='rounded-lg w-full h-[48px]'
             />
         </div>
     );

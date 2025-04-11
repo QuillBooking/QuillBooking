@@ -1,14 +1,20 @@
+/*
+ * WordPress dependencies
+ */
+import { __ } from '@wordpress/i18n';
+
 /**
  * External dependencies
  */
-import { __ } from '@wordpress/i18n';
-import { Button, Col, List, Row, Space, Tag, Typography } from 'antd';
+import { Flex, Timeline } from 'antd';
 
 /**
  * Internal dependencies
  */
 import { Booking } from 'client/types';
-import { NavLink as Link } from '@quillbooking/navigation';
+import { CompletedCalendarIcon } from '@quillbooking/components';
+import CardDetails from '../card-details';
+import { BookingActions } from '@quillbooking/components';
 
 /**
  * Main Bookings List Component.
@@ -16,127 +22,89 @@ import { NavLink as Link } from '@quillbooking/navigation';
 interface BookingListProps {
 	bookings: Record<string, Booking[]>;
 	period: string;
+	onStatusUpdated: () => void;
 }
 
-const { Title, Text } = Typography;
-
-const BookingList: React.FC<BookingListProps> = ({ bookings, period }) => {
+const BookingList: React.FC<BookingListProps> = ({
+	bookings,
+	period,
+	onStatusUpdated,
+}) => {
 	return (
 		<>
-			{period === 'latest' && (
-				<Title level={4}>
-					{__('Sorted by booked at date time', 'quillbooking')}
-				</Title>
-			)}
+			{Object.entries(bookings).map(([dateLabel, bookings]) => {
+				const [day, number] = dateLabel.split('-');
+				return (
+					<div
+						className="flex gap-8 border-solid border border-[#DEE1E6] bottom-2 p-7 my-3 rounded-xl"
+						key={dateLabel}
+					>
+						<div className="flex flex-col justify-center items-center bg-color-primary text-white rounded-2xl p-2 w-24 h-24">
+							<span className="text-base">
+								{day.charAt(0).toUpperCase() + day.slice(1)}
+							</span>
+							<span className="text-4xl font-bold">{number}</span>
+						</div>
 
-			{Object.entries(bookings).map(([dateLabel, groupBookings]) => (
-				<div key={dateLabel} style={{ marginBottom: 24 }}>
-					{period !== 'latest' && (
-						<Title level={5} style={{ marginBottom: 16 }}>
-							{dateLabel}
-						</Title>
-					)}
-
-					<List
-						dataSource={groupBookings}
-						renderItem={(booking) => (
-							<Link
-								to={`bookings/${booking.id}/${period}`}
-							>
-								<List.Item
-									key={booking.id}
-									style={{ padding: '12px 0' }}
-								>
-									<Row
-										align="middle"
-										style={{ width: '100%' }}
-										gutter={16}
-									>
-										<Col
-											flex="none"
-											style={{ minWidth: 120 }}
-										>
-											<Text>{booking.time_span}</Text>
-										</Col>
-
-										<Col flex="auto">
-											<div
-												style={{
-													fontWeight: 'bold',
-													marginBottom: 4,
-												}}
+						<div className="w-full">
+							{bookings.length > 1 && (
+								<Timeline
+									items={bookings.map((booking) => ({
+										dot: (
+											<CompletedCalendarIcon
+												width={24}
+												height={25}
+											/>
+										),
+										color: '#953AE4',
+										children: (
+											<Flex
+												justify="space-between"
+												align="center"
+												key={booking.id}
+												className="border-b border-dashed border-[#DEE1E6] pb-8"
 											>
-												{renderBookingDescription(
-													booking
-												)}
-											</div>
-											<Space wrap>
-												<Tag
-													color={getColorByStatus(
-														booking.status
-													)}
-												>
-													{booking.status}
-												</Tag>
-											</Space>
-										</Col>
+												<CardDetails
+													booking={booking}
+													period={period}
+												/>
+												<BookingActions
+													booking={booking}
+													type="popover"
+													onStatusUpdated={
+														onStatusUpdated
+													}
+												/>
+											</Flex>
+										),
+									}))}
+								/>
+							)}
 
-										<Col flex="none">
-											<Button type="primary">
-												{__(
-													'View Details',
-													'quillbooking'
-												)}
-											</Button>
-										</Col>
-									</Row>
-								</List.Item>
-							</Link>
-						)}
-					/>
-				</div>
-			))}
+							{bookings.length === 1 &&
+								bookings.map((booking: Booking) => (
+									<Flex
+										justify="space-between"
+										align="center"
+										key={booking.id}
+									>
+										<CardDetails
+											booking={booking}
+											period={period}
+										/>
+										<BookingActions
+											type="popover"
+											booking={booking}
+											onStatusUpdated={onStatusUpdated}
+										/>
+									</Flex>
+								))}
+						</div>
+					</div>
+				);
+			})}
 		</>
 	);
 };
 
 export default BookingList;
-
-/**
- * Helper to map status -> tag color
- */
-function getColorByStatus(status: string) {
-	switch (status.toLowerCase()) {
-		case 'completed':
-			return 'blue';
-		case 'cancelled':
-			return 'red';
-		case 'pending':
-			return 'geekblue';
-		case 'scheduled':
-			return 'green';
-		default:
-			return 'default';
-	}
-}
-
-const renderBookingDescription = (booking: Booking) => {
-	if (booking.event.type === 'group') {
-		const guestCount = Array.isArray(booking.guest)
-			? booking.guest.length
-			: 1;
-		return (
-			<span>
-				{guestCount} {__('guests with', 'quillbooking')}{' '}
-				{__('as group booking type', 'quillbooking')}
-			</span>
-		);
-	}
-	return (
-		<span>
-			{booking.event.name} {__('meeting between', 'quillbooking')}{' '}
-			{Array.isArray(booking.guest) ? '' : booking.guest?.name}{' '}
-			{__('and', 'quillbooking')} {booking.calendar?.user?.display_name}
-		</span>
-	);
-};

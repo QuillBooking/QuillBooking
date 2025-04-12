@@ -57,7 +57,7 @@ const WebhookFeedModal: React.FC<WebhookFeedModalProps> = ({ visible, onCancel, 
     return (
         <Modal
             title={webhookFeed ? __('Edit Webhook Feed', 'quillbooking') : __('Add Webhook Feed', 'quillbooking')}
-            visible={visible}
+            open={visible}
             onCancel={() => {
                 form.resetFields();
                 onCancel();

@@ -5,7 +5,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@mui/material": "^6.4.8",
+    "@mui/material": "^6.4.11",
     "@wordpress/api-fetch": "^7.14.0",
     "@wordpress/components": "^29.0.0",
     "@wordpress/core-data": "^7.14.0",
@@ -38,7 +38,9 @@
     "dev-client": "wp-scripts start src/client/index.tsx --output-path=build/client",
     "build-client": "wp-scripts build src/client/index.tsx --output-path=build/client",
     "dev-config": "wp-scripts start src/config/index.ts --output-path=build/config",
-    "build-config": "wp-scripts build src/config/index.ts --output-path=build/config"
+    "build-config": "wp-scripts build src/config/index.ts --output-path=build/config",
+    "dev-renderer": "wp-scripts start src/renderer/index.tsx --output-path=build/renderer",
+    "build-renderer": "wp-scripts build src/renderer/index.tsx --output-path=build/renderer"
   },
   "eslintConfig": {
     "extends": [

@@ -31,6 +31,8 @@ import Help from '../pages/help';
 import Logout from '../pages/logout';
 import { AvailabilityIcon, BookingIcon, CalendarsIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon } from '@quillbooking/components';
 import Navmenu from './navmenu';
+import GeneralSettings from '../pages/global-settings';
+import ProtectedRoute from './protected-route';
 
 
 export const Controller = ({ page }) => {
@@ -44,7 +46,7 @@ export const Controller = ({ page }) => {
 			layoutScroll
 			className="quillbooking-page-component-wrapper"
 		>
-			<page.component />
+			<ProtectedRoute page={page} />
 		</motion.div>
 	);
 };
@@ -63,6 +65,10 @@ registerAdminPage('calendars', {
 	label: (
 		<Navmenu icon={<CalendarsIcon />} title={__('Calendars', 'quillbooking')} />
 	),
+	capabilities: [
+		'quillbooking_manage_own_calendars',
+		'quillbooking_read_all_calendars',
+	],
 });
 
 registerAdminPage('calendar', {
@@ -70,6 +76,10 @@ registerAdminPage('calendar', {
 	component: () => <Calendar />,
 	label: __('Calendar', 'quillbooking'),
 	hidden: true,
+	capabilities: [
+		'quillbooking_manage_own_calendars',
+		'quillbooking_manage_all_calendars'
+	],
 });
 
 registerAdminPage('bookings', {
@@ -78,6 +88,10 @@ registerAdminPage('bookings', {
 	label: (
 		<Navmenu icon={<BookingIcon />} title={__('Bookings', 'quillbooking')} />
 	),
+	capabilities: [
+		'quillbooking_read_own_bookings',
+		'quillbooking_read_all_bookings',
+	],
 })
 
 registerAdminPage('event', {
@@ -85,6 +99,10 @@ registerAdminPage('event', {
 	component: () => <Event />,
 	label: __('Event', 'quillbooking'),
 	hidden: true,
+	capabilities: [
+		'quillbooking_manage_own_calendars',
+		'quillbooking_manage_all_calendars'
+	],
 });
 
 registerAdminPage('availability', {
@@ -93,11 +111,15 @@ registerAdminPage('availability', {
 	label: (
 		<Navmenu icon={<AvailabilityIcon />} title={__('Availability', 'quillbooking')} />
 	),
+	capabilities: [
+		'quillbooking_read_own_availability',
+		'quillbooking_read_all_availability'
+	],
 });
 
 registerAdminPage('settings', {
-	path: 'settings',
-	component: () => <Settings />,
+	path: 'settings/:tab?',
+	component: () => <GeneralSettings />,
 	label: (
 		<Navmenu icon={<SettingsIcon />} title={__('Settings', 'quillbooking')} />
 	),

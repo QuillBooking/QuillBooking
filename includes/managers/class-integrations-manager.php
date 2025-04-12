@@ -45,6 +45,7 @@ final class Integrations_Manager extends Manager {
 				'fields'       => 'get_fields',
 				'has_accounts' => 'has_accounts',
 				'is_global'    => 'is_global',
+				'auth_fields'  => 'get_auth_fields',
 			)
 		);
 	}

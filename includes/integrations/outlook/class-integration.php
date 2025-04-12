@@ -614,4 +614,28 @@ class Integration extends Abstract_Integration {
 
 		return $this->api;
 	}
+
+	/**
+	 * Auth fields
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_auth_fields() {
+		return array(
+			'client_id'     => array(
+				'label'       => __( 'Client ID', 'quillbooking' ),
+				'type'        => 'text',
+				'placeholder' => __( 'Enter your Google Client ID', 'quillbooking' ),
+				'required'    => true,
+			),
+			'client_secret' => array(
+				'label'       => __( 'Client Secret', 'quillbooking' ),
+				'type'        => 'text',
+				'placeholder' => __( 'Enter your Google Client Secret', 'quillbooking' ),
+				'required'    => true,
+			),
+		);
+	}
 }

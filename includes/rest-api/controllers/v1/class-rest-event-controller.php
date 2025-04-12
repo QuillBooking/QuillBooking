@@ -400,7 +400,7 @@ class REST_Event_Controller extends REST_Controller {
 	 * @return boolean
 	 */
 	public function get_items_permissions_check( $request ) {
-		return current_user_can( 'quillbooking_read_own_calendars' ) || current_user_can( 'quillbooking_read_all_calendars' );
+		return current_user_can( 'quillbooking_manage_own_calendars' ) || current_user_can( 'quillbooking_read_all_calendars' );
 	}
 
 	/**
@@ -686,6 +686,7 @@ class REST_Event_Controller extends REST_Controller {
 			$payments_settings   = $request->get_param( 'payments_settings' );
 			$webhook_feeds       = $request->get_param( 'webhook_feeds' );
 			$fields              = $request->get_param( 'fields' );
+			$slug                = $request->get_param( 'slug' );
 
 			$event = Event_Model::find( $id );
 
@@ -714,6 +715,15 @@ class REST_Event_Controller extends REST_Controller {
 				'webhook_feeds'       => $webhook_feeds,
 				'dynamic_duration'    => $dynamic_duration,
 			);
+
+			if ( ! empty( $slug ) ) {
+				$exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
+				if ( $exists ) {
+					return new WP_Error( 'rest_event_error', __( 'Event slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
+				}
+
+				$updated['slug'] = $slug;
+			}
 
 			if ( $user_id ) {
 				$updated['user_id'] = $user_id;

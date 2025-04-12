@@ -17,3 +17,6 @@ QuillBooking\Event_Locations\Attendee_Phone::instance();
 QuillBooking\Event_Locations\Person_Phone::instance();
 QuillBooking\Event_Locations\Custom::instance();
 QuillBooking\Event_Locations\Online::instance();
+QuillBooking\Event_Locations\Google_Meet::instance();
+QuillBooking\Event_Locations\Zoom::instance();
+QuillBooking\Event_Locations\MS_Teams::instance();

@@ -11,6 +11,7 @@ export {
 } from 'react-router-dom';
 export { NavLink, setForceReload } from './nav-link';
 export { getHistory } from './history';
+export * from './types';
 
 export const getToLink = (routeTemplate: string) => {
 	const pathname = document.location.pathname;

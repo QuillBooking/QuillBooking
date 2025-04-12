@@ -27,7 +27,7 @@ class Capabilities {
 	 *
 	 * @return array The core capabilities
 	 */
-	private static function get_core_capabilities() {
+	public static function get_core_capabilities() {
 		$capabilities = array(
 			// Calendar Capabilities
 			'calendars'    => array(
@@ -63,6 +63,26 @@ class Capabilities {
 		);
 
 		return $capabilities;
+	}
+
+	/**
+	 * Get current user capabilities.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public static function get_current_user_capabilities() {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return array();
+		}
+
+		$user                      = new \WP_User( $user_id );
+		$capabilities              = $user->get_role_caps();
+		$quillbooking_capabilities = Capabilities::get_all_capabilities();
+
+		return array_intersect_key( $capabilities, array_flip( $quillbooking_capabilities ) );
 	}
 
 	/**
@@ -122,6 +142,8 @@ class Capabilities {
 		if ( ! isset( $wp_roles ) ) {
 			$wp_roles = new WP_Roles(); // @codingStandardsIgnoreLine
 		}
+
+		$wp_roles->add_cap( 'administrator', 'manage_quillbooking' );
 
 		$capabilities = self::get_core_capabilities();
 

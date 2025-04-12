@@ -49,7 +49,7 @@ class Admin {
 		add_menu_page(
 			__( 'QuillBooking', 'quillbooking' ),
 			__( 'QuillBooking', 'quillbooking' ),
-			'manage_options',
+			'manage_quillbooking',
 			'quillbooking',
 			array( Admin_Loader::class, 'page_wrapper' ),
 			'data:image/svg+xml;base64,' . base64_encode(
@@ -100,7 +100,7 @@ class Admin {
 			'quillbooking',
 			__( 'Home', 'quillbooking' ),
 			__( 'Home', 'quillbooking' ),
-			'manage_options',
+			'manage_quillbooking',
 			'quillbooking',
 			array( Admin_Loader::class, 'page_wrapper' )
 		);
@@ -110,7 +110,7 @@ class Admin {
 			'quillbooking',
 			__( 'Calendars', 'quillbooking' ),
 			__( 'Calendars', 'quillbooking' ),
-			'manage_options',
+			'manage_quillbooking',
 			'quillbooking&path=calendars',
 			array( Admin_Loader::class, 'page_wrapper' )
 		);

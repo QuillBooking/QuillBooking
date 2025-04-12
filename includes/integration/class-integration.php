@@ -343,4 +343,15 @@ abstract class Integration {
 	public function get_fields() {
 		return array();
 	}
+
+	/**
+	 * Auth fields
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_auth_fields() {
+		return array();
+	}
 }

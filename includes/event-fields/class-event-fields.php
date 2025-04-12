@@ -715,6 +715,7 @@ class Event_Fields {
 	 */
 	public function get_default_advanced_settings() {
 		return array(
+			'event_title'                  => '',
 			'submit_button_text'           => __( 'Submit Booking', 'quillbooking' ),
 			'redirect_after_submit'        => false,
 			'redirect_url'                 => '',

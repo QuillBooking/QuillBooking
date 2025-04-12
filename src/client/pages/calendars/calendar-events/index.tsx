@@ -262,7 +262,7 @@ const CalendarEvents: React.FC<{
 												onClose={() =>
 													setModalShareId(null)
 												}
-												url={`${siteUrl}?quillbooking_event=${event.slug}`}
+												url={`${siteUrl}?quillbooking_calendar=${calendar.slug}&event=${event.slug}`}
 											/>
 										)}
 									</Flex>

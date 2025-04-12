@@ -20,17 +20,29 @@ use QuillBooking\Capabilities;
 class Team_Model extends User_Model {
 
 	/**
+	 * Appends
+	 *
+	 * @var array
+	 */
+	protected $appends = array(
+		'is_admin',
+		'capabilities',
+	);
+
+	/**
 	 * Get members
 	 *
 	 * @return \Illuminate\Database\Eloquent\Builder
 	 */
 	public static function get_members() {
-		return self::whereHas(
+		$members = self::whereHas(
 			'meta',
 			function( $query ) {
 				$query->where( 'meta_key', 'quillbooking_team_member' )->where( 'meta_value', 'yes' )->orWhere( 'meta_key', 'wp_capabilities' )->where( 'meta_value', 'like', '%administrator%' );
 			}
 		);
+
+		return $members;
 	}
 
 	/**
@@ -38,7 +50,7 @@ class Team_Model extends User_Model {
 	 *
 	 * @return bool
 	 */
-	public function is_admin() {
+	public function getIsAdminAttribute() {
 		return $this->meta()->where( 'meta_key', 'wp_capabilities' )
 			->where( 'meta_value', 'like', '%administrator%' )
 			->exists();
@@ -60,7 +72,7 @@ class Team_Model extends User_Model {
 	 *
 	 * @return array Filtered list of user capabilities
 	 */
-	public function get_quillbooking_capabilities() {
+	public function getCapabilitiesAttribute() {
 		$user_id                   = $this->ID;
 		$user                      = new \WP_User( $user_id );
 		$capabilities              = $user->get_role_caps();
@@ -78,13 +90,6 @@ class Team_Model extends User_Model {
 	 */
 	public static function boot() {
 		parent::boot();
-
-		static::retrieved(
-			function( $user ) {
-				$user->is_admin     = $user->is_admin();
-				$user->capabilities = $user->get_quillbooking_capabilities();
-			}
-		);
 	}
 
 }

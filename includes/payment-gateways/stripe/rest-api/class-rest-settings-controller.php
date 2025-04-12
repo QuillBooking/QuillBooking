@@ -67,19 +67,19 @@ class REST_Settings_Controller extends Abstract_REST_Settings_Controller {
 				'mode'                    => array(
 					'type'     => 'string',
 					'required' => true,
-					'enum'     => array( 'live', 'test' ),
+					'enum'     => array( 'live', 'sandbox' ),
 				),
-				'test_publishable_key'    => array(
+				'sandbox_publishable_key' => array(
 					'type' => 'string',
 				),
-				'test_secret_key'         => array(
+				'sandbox_secret_key'      => array(
 					'type' => 'string',
 				),
-				'test_webhook_id'         => array(
+				'sandbox_webhook_id'      => array(
 					'type'    => 'string',
 					'context' => array(),
 				),
-				'test_webhook_secret'     => array(
+				'sandbox_webhook_secret'  => array(
 					'type'    => 'string',
 					'context' => array(),
 				),
@@ -96,12 +96,6 @@ class REST_Settings_Controller extends Abstract_REST_Settings_Controller {
 				'live_webhook_secret'     => array(
 					'type'    => 'string',
 					'context' => array(),
-				),
-				'customer_elements_label' => array(
-					'type' => 'string',
-				),
-				'customer_checkout_label' => array(
-					'type' => 'string',
 				),
 			),
 		);
@@ -149,9 +143,7 @@ class REST_Settings_Controller extends Abstract_REST_Settings_Controller {
 		if ( ( $current_settings[ $publishable_key_name ] ?? null ) === $publishable_key && ( $current_settings[ $secret_key_name ] ?? null ) === $secret_key ) {
 			$this->payment_gateway->update_settings(
 				array(
-					'mode'                    => $mode,
-					'customer_elements_label' => $settings['customer_elements_label'] ?? '',
-					'customer_checkout_label' => $settings['customer_checkout_label'] ?? '',
+					'mode' => $mode,
 				)
 			);
 			return new WP_REST_Response(
@@ -177,8 +169,6 @@ class REST_Settings_Controller extends Abstract_REST_Settings_Controller {
 				"{$mode}_secret_key"      => $secret_key,
 				"{$mode}_webhook_id"      => $webhook->id,
 				"{$mode}_webhook_secret"  => $webhook->secret,
-				'customer_elements_label' => $settings['customer_elements_label'] ?? '',
-				'customer_checkout_label' => $settings['customer_checkout_label'] ?? '',
 			)
 		);
 

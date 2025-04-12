@@ -3,6 +3,9 @@ import type {
     ConfigData,
     Integrations,
     Locations,
+    Capabilities,
+    PaymentGateways,
+    CurrentUser,
 } from './types/config-data';
 import type { Availability } from '@quillbooking/client';
 
@@ -19,6 +22,16 @@ const configData: ConfigData = {
     integrations: {},
     locations: {},
     availabilities: [],
+    capabilities: {},
+    paymentGateways: {},
+    fieldsTypes: {},
+    currentUser: {
+        id: 0,
+        email: '',
+        display_name: '',
+        is_admin: false,
+        capabilities: {},
+    } as CurrentUser,
 };
 
 /**
@@ -275,6 +288,69 @@ export const setAvailabilities = (data: ConfigData) => (value: Availability[]) =
     data.availabilities = value;
 };
 
+/**
+ * Get capabilities
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * 
+ * @returns Capabilities
+ */
+export const getCapabilities = (data: ConfigData): Capabilities => {
+    return data.capabilities;
+};
+
+/**
+ * Set capabilities
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * @param value the value to set
+ */
+export const setCapabilities = (data: ConfigData) => (value: Capabilities) => {
+    data.capabilities = value;
+};
+
+/**
+ * Get payment gateways
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * 
+ * @returns PaymentGateways
+ */
+export const getPaymentGateways = (data: ConfigData): PaymentGateways => {
+    return data.paymentGateways;
+};
+
+/**
+ * Set payment gateways
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * @param value the value to set
+ */
+export const setPaymentGateways = (data: ConfigData) => (value: PaymentGateways) => {
+    data.paymentGateways = value;
+};
+
+/**
+ * Get current user
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * 
+ * @returns CurrentUser
+ */
+export const getCurrentUser = (data: ConfigData): CurrentUser => {
+    return data.currentUser;
+};
+
+/**
+ * Set current user
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * @param value the value to set
+ */
+export const setCurrentUser = (data: ConfigData) => (value: CurrentUser) => {
+    data.currentUser = value;
+};
+
 export interface ConfigApi {
     <T>(key: string): T;
     getBlogName: () => string;
@@ -301,6 +377,12 @@ export interface ConfigApi {
     setLocations: (value: Locations) => void;
     getAvailabilities: () => Availability[];
     setAvailabilities: (value: Availability[]) => void;
+    getCapabilities: () => Capabilities;
+    setCapabilities: (value: Capabilities) => void;
+    getPaymentGateways: () => PaymentGateways;
+    setPaymentGateways: (value: PaymentGateways) => void;
+    getCurrentUser: () => CurrentUser;
+    setCurrentUser: (value: CurrentUser) => void;
 }
 
 const createConfig = (data: ConfigData): ConfigApi => {
@@ -329,6 +411,12 @@ const createConfig = (data: ConfigData): ConfigApi => {
     configApi.setLocations = setLocations(data);
     configApi.getAvailabilities = () => getAvailabilities(data);
     configApi.setAvailabilities = setAvailabilities(data);
+    configApi.getCapabilities = () => getCapabilities(data);
+    configApi.setCapabilities = setCapabilities(data);
+    configApi.getPaymentGateways = () => getPaymentGateways(data);
+    configApi.setPaymentGateways = setPaymentGateways(data);
+    configApi.getCurrentUser = () => getCurrentUser(data);
+    configApi.setCurrentUser = setCurrentUser(data);
 
     return configApi;
 };

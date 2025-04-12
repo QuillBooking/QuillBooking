@@ -11,10 +11,6 @@
 namespace QuillBooking\Booking;
 
 use QuillBooking\Booking\Booking_Validator;
-use QuillBooking\Models\Booking_Model;
-use QuillBooking\Models\Event_Model;
-use QuillBooking\Models\Guest_Model;
-use Illuminate\Support\Arr;
 use QuillBooking\Booking_Service;
 
 class Booking_Ajax {

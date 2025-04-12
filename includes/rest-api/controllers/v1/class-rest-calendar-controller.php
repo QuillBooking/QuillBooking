@@ -355,7 +355,7 @@ class REST_Calendar_Controller extends REST_Controller {
 	 * @return bool
 	 */
 	public function get_items_permissions_check( $request ) {
-		return current_user_can( 'quillbooking_read_own_calendars' ) || current_user_can( 'quillbooking_read_all_calendars' );
+		return current_user_can( 'quillbooking_manage_own_calendars' ) || current_user_can( 'quillbooking_read_all_calendars' );
 	}
 
 	/**
@@ -531,6 +531,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			$integrations   = $request->get_param( 'integrations' );
 			$avatar         = $request->get_param( 'avatar' );
 			$featured_image = $request->get_param( 'featured_image' );
+			$slug           = $request->get_param( 'slug' );
 
 			$calendar = Calendar_Model::find( $id );
 
@@ -556,6 +557,16 @@ class REST_Calendar_Controller extends REST_Controller {
 				'name'        => $name,
 				'description' => $description,
 			);
+
+			if ( ! empty( $slug ) ) {
+				$exists = Calendar_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
+				if ( $exists ) {
+					return new WP_Error( 'rest_calendar_error', __( 'Calendar slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
+				}
+
+				$updated['slug'] = $slug;
+			}
+
 			$updated = array_filter( $updated );
 
 			$calendar->update( $updated );

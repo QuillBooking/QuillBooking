@@ -11,9 +11,45 @@ export type ConfigData = Record<string, unknown> & {
 	isWoocommerceActive: boolean;
 	timezones: Record<string, string>;
 	integrations: Integrations;
+	paymentGateways: PaymentGateways;
 	locations: Locations;
 	availabilities: Availability[];
 	fieldsTypes: FieldsTypes;
+	capabilities: Capabilities;
+	currentUser: CurrentUser;
+};
+
+export type CurrentUser = {
+	id: number;
+	email: string;
+	display_name: string;
+	is_admin: boolean;
+	capabilities: UserCapabilities;
+};
+
+export type UserCapabilities = {
+	[key: string]: boolean;
+};
+
+export type PaymentGateways = {
+	[key: string]: PaymentGateway;
+};
+
+export type PaymentGateway = {
+	name: string;
+	description: string;
+	settings: {
+		mode: 'saandbox' | 'live';
+		[key: string]: unknown;
+	};
+	fields: Fields;
+};
+
+export type Capabilities = Record<string, CapabilityGroup>;
+
+export type CapabilityGroup = {
+	title: string;
+	capabilities: Record<string, string>;
 };
 
 export type FieldsTypes = {
@@ -37,6 +73,7 @@ export type Integration = {
 	is_calendar: boolean;
 	auth_type: 'oauth' | 'basic';
 	fields: Fields;
+	auth_fields: Fields;
 	settings: Record<string, unknown>;
 	is_global: boolean;
 	has_accounts: boolean;
@@ -49,7 +86,7 @@ export type Fields = {
 export type Field = {
 	label: string;
 	description: string;
-	type: 'text' | 'password';
+	type: 'text' | 'password' | 'swtich' | 'checkbox';
 	required: boolean;
 	placeholder?: string;
 };

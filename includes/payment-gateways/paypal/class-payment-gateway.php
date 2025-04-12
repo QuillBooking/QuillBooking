@@ -82,11 +82,9 @@ class Payment_Gateway extends Abstract_Payment_Gateway {
 		}
 
 		$mode_settings = array(
-			'mode'                    => $mode,
-			'disable_verification'    => Arr::get( $settings, 'disable_verification', false ),
-			'customer_checkout_label' => Arr::get( $settings, 'customer_checkout_label', '' ),
+			'mode' => $mode,
 		);
-		$keys          = array( 'email' );
+		$keys          = array( 'email', 'disable_verification' );
 		foreach ( $keys as $key ) {
 			if ( empty( Arr::get( $settings, "{$mode}_$key", '' ) ) ) {
 				return false;
@@ -120,10 +118,12 @@ class Payment_Gateway extends Abstract_Payment_Gateway {
 	 * @return bool
 	 */
 	public function validate( $settings ) {
-		$mode                 = Arr::get( $settings, 'mode', null );
-		$sandbox_email        = Arr::get( $settings, 'sandbox_email', '' );
-		$live_email           = Arr::get( $settings, 'live_email', '' );
-		$disable_verification = Arr::get( $settings, 'disable_verification', false );
+		$mode                         = Arr::get( $settings, 'mode', null );
+		$sandbox_email                = Arr::get( $settings, 'sandbox_email', '' );
+		$live_email                   = Arr::get( $settings, 'live_email', '' );
+		$sandbox_disable_verification = Arr::get( $settings, 'sandbox_disable_verification', false );
+		$live_disable_verification    = Arr::get( $settings, 'live_disable_verification', false );
+		$disable_verification         = $mode === 'sandbox' ? $sandbox_disable_verification : $live_disable_verification;
 
 		if ( ! in_array( $mode, array( 'sandbox', 'live' ), true ) ) {
 			return new \WP_Error( 'invalid_mode', __( 'Invalid mode.', 'quillbooking' ) );
@@ -153,5 +153,29 @@ class Payment_Gateway extends Abstract_Payment_Gateway {
 	 */
 	public function is_configured() { // phpcs:ignore
 		return (bool) $this->get_mode_settings();
+	}
+
+	/**
+	 * Get fields
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_fields() {
+		return array(
+			'email'                => array(
+				'type'        => 'email',
+				'label'       => __( 'Email', 'quillbooking' ),
+				'description' => __( 'The email address for the PayPal account.', 'quillbooking' ),
+				'required'    => true,
+			),
+			'disable_verification' => array(
+				'type'        => 'checkbox',
+				'label'       => __( 'Disable Verification', 'quillbooking' ),
+				'description' => __( 'Disable verification for the PayPal account.', 'quillbooking' ),
+				'required'    => false,
+			),
+		);
 	}
 }

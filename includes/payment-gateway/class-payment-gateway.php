@@ -10,6 +10,7 @@
 namespace QuillBooking\Payment_Gateway;
 
 use Illuminate\Support\Arr;
+use QuillBooking\Managers\Payment_Gateways_Manager;
 
 /**
  * Payment Gateway class.
@@ -83,7 +84,9 @@ abstract class Payment_Gateway {
 	 */
 	public static function instance() {
 		if ( ! isset( self::$instances[ static::class ] ) ) {
-			self::$instances[ static::class ] = new static();
+			$instance = new static();
+			$instance->register();
+			self::$instances[ static::class ] = $instance;
 		}
 		return self::$instances[ static::class ];
 	}
@@ -110,6 +113,21 @@ abstract class Payment_Gateway {
 		}
 
 		$this->option_name = 'quillbooking_' . $this->slug . '_settings';
+	}
+
+	/**
+	 * Register
+	 *
+	 * @return bool
+	 */
+	private function register() {
+		try {
+			Payment_Gateways_Manager::instance()->register_payment_gateway( $this );
+		} catch ( \Exception $e ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -188,4 +206,13 @@ abstract class Payment_Gateway {
 	 * @return boolean
 	 */
 	abstract public function is_configured();
+
+	/**
+	 * Get fields
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	abstract public function get_fields();
 }

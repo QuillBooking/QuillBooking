@@ -2,6 +2,8 @@
 namespace QuillBooking\Booking;
 
 use QuillBooking\Booking\Booking_Validator;
+use QuillBooking\Models\Calendar_Model;
+use QuillBooking\Models\Event_Model;
 use Illuminate\Support\Arr;
 
 class Booking_Actions {
@@ -11,16 +13,114 @@ class Booking_Actions {
 	 */
 	public function __construct() {
 		add_action( 'wp_loaded', array( $this, 'init' ) );
+
+		// Enqueue scripts and styles
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+	}
+
+		/**
+		 * Enqueue Scripts.
+		 *
+		 * @since 1.0.0
+		 */
+	public function enqueue_scripts() {
+		$asset_file   = QUILLBOOKING_PLUGIN_DIR . 'build/renderer/index.asset.php';
+		$asset        = file_exists( $asset_file ) ? require $asset_file : null;
+		$dependencies = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
+		$version      = isset( $asset['version'] ) ? $asset['version'] : QUILLBOOKING_VERSION;
+
+		wp_register_script(
+			'quillbooking-renderer',
+			QUILLBOOKING_PLUGIN_URL . 'build/renderer/index.js',
+			$dependencies,
+			$version,
+			true
+		);
+
+		// Localize script
+		wp_localize_script(
+			'quillbooking-renderer',
+			'quillbooking_config',
+			apply_filters(
+				'quillbooking_config',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'quillbooking' ),
+					'url'      => home_url(),
+					'lang'     => get_locale(),
+				)
+			)
+		);
+
+		// Register styles.
+		wp_register_style(
+			'quillbooking-renderer',
+			QUILLBOOKING_PLUGIN_URL . 'build/renderer/style.css',
+			array(),
+			$version
+		);
+
+		// RTL styles.
+		wp_style_add_data( 'quillbooking-renderer', 'rtl', 'replace' );
 	}
 
 	/**
 	 * Initialize
 	 */
 	public function init() {
+		$this->render_booking_page();
 		$this->process_booking_action( 'reject', 'rejected', __( 'Booking rejected', 'quillbooking' ), __( 'Booking rejected by Organizer', 'quillbooking' ) );
 		$this->process_booking_action( 'confirm', 'scheduled', __( 'Booking confirmed', 'quillbooking' ), __( 'Booking confirmed by Organizer', 'quillbooking' ) );
 		$this->process_booking_action( 'reschedule', 'rescheduled', __( 'Booking rescheduled', 'quillbooking' ), __( 'Booking rescheduled by Attendee', 'quillbooking' ) );
 		$this->process_booking_action( 'cancel', 'cancelled', __( 'Booking cancelled', 'quillbooking' ), __( 'Booking cancelled by Attendee', 'quillbooking' ) );
+	}
+
+	/**
+	 * Render booking page
+	 *
+	 * @return void
+	 */
+	public function render_booking_page() {
+		$calendar = Arr::get( $_GET, 'quillbooking_calendar', null );
+		if ( ! $calendar ) {
+			return;
+		}
+
+		$calendar = Calendar_Model::where( 'slug', $calendar )->first();
+		if ( ! $calendar ) {
+			return;
+		}
+
+		$event_slug = Arr::get( $_GET, 'event', null );
+		$event      = Event_Model::where( 'slug', $event_slug )
+			->where( 'calendar_id', $calendar->id )
+			->first();
+		if ( ! $event && $event_slug ) {
+			return;
+		}
+
+		// Enqueue scripts and styles
+		wp_enqueue_script( 'quillbooking-renderer' );
+		wp_enqueue_style( 'quillbooking-renderer' );
+
+		add_filter(
+			'quillbooking_config',
+			function( $config ) use ( $calendar, $event ) {
+				$config['calendar'] = $calendar->toArray();
+				if ( $event ) {
+					$config['event'] = $event->toArray();
+				}
+				return $config;
+			}
+		);
+
+		echo $this->get_head();
+		?>
+		<div id="quillbooking-booking-page">
+		</div>
+		<?php
+		echo $this->get_footer();
+		exit;
 	}
 
 	/**

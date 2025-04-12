@@ -24,10 +24,10 @@ import Locations from '../event/tabs/details/locations';
  */
 
 const CreateEvent: React.FC = () => {
-    // const { id, type } = useParams<{ id: string; type: 'one-to-one' | 'group' | 'round-robin' }>();
-    // if (!id || !type) {
-    //     return null;
-    // }
+    const { id, type } = useParams<{ id: string; type: 'one-to-one' | 'group' | 'round-robin' }>();
+    if (!id || !type) {
+        return null;
+    }
     const { callApi, loading } = useApi();
     const { successNotice, errorNotice } = useNotice();
     const setBreadcrumbs = useBreadcrumbs();

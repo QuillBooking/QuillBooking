@@ -71,14 +71,12 @@ class Payment_Gateway extends Abstract_Payment_Gateway {
 	public function get_mode_settings( $mode = null ) {
 		$settings = $this->get_settings();
 		$mode     = $mode ?? $settings['mode'] ?? null;
-		if ( ! in_array( $mode, array( 'test', 'live' ), true ) ) {
+		if ( ! in_array( $mode, array( 'sandbox', 'live' ), true ) ) {
 			return false;
 		}
 
 		$result = array(
-			'mode'                    => $mode,
-			'customer_elements_label' => $settings['customer_elements_label'],
-			'customer_checkout_label' => $settings['customer_checkout_label'],
+			'mode' => $mode,
 		);
 		$keys   = array( 'publishable_key', 'secret_key', 'webhook_id', 'webhook_secret' );
 		foreach ( $keys as $key ) {
@@ -112,5 +110,29 @@ class Payment_Gateway extends Abstract_Payment_Gateway {
 	 */
 	public function is_currency_supported( $currency ) { // phpcs:ignore
 		return true;
+	}
+
+	/**
+	 * Get fields
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_fields() {
+		return array(
+			'publishable_key' => array(
+				'type'        => 'text',
+				'label'       => __( 'Publishable Key', 'quillbooking' ),
+				'description' => __( 'The publishable key for the Stripe account.', 'quillbooking' ),
+				'required'    => true,
+			),
+			'secret_key'      => array(
+				'type'        => 'text',
+				'label'       => __( 'Secret Key', 'quillbooking' ),
+				'description' => __( 'The secret key for the Stripe account.', 'quillbooking' ),
+				'required'    => true,
+			),
+		);
 	}
 }

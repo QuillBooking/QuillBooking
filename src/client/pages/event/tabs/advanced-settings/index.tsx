@@ -41,7 +41,6 @@ interface AdvancedSettings {
     cannot_reschedule_time_value: number;
     cannot_reschedule_time_unit: UnitOptions;
     reschedule_denied_message: string;
-    event_slug: string;
 }
 
 const unitOptions = [
@@ -52,6 +51,7 @@ const unitOptions = [
 
 const EventAdvancedSettings: React.FC = () => {
     const { state: event } = useEventContext();
+    const [slug, setSlug] = useState<string>(event?.slug || '');
     const { callApi, loading } = useApi();
     const { successNotice, errorNotice } = useNotice();
     const [showSlugField, setShowSlugField] = useState(false);
@@ -104,6 +104,7 @@ const EventAdvancedSettings: React.FC = () => {
             method: 'POST',
             data: {
                 advanced_settings: settings,
+                slug: slug,
             },
             onSuccess() {
                 successNotice(__('Settings saved successfully', 'quillbooking'));
@@ -336,8 +337,8 @@ const EventAdvancedSettings: React.FC = () => {
                                     </span>}
                                 >
                                     <Input
-                                        value={settings.event_slug || event?.slug}
-                                        onChange={(e) => handleChange('event_slug', e.target.value)}
+                                        value={slug}
+                                        onChange={(e) => setSlug( e.target.value)}
                                         size='large'
                                         placeholder={__('event-slug', 'quillbooking')}
                                         className='rounded-lg h-[48px]'

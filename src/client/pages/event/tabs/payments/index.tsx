@@ -390,16 +390,25 @@ const Payments: React.FC = () => {
                                     {type === 'native' && (
                                         <>
                                             {allowAttendeesToSelectDuration && (
-                                                <Form.Item
-                                                    name="enable_items_based_on_duration"
-                                                    valuePropName="checked"
-                                                    label={__(
-                                                        'Enable Items Based on Duration',
-                                                        'quillbooking'
-                                                    )}
-                                                >
-                                                    <Switch />
-                                                </Form.Item>
+                                                <Flex className="justify-between items-center w-full">
+                                                    <Flex vertical gap={1}>
+                                                        <div className="text-[#09090B] font-bold">
+                                                            {__('Enable Multiple Payment', 'quillbooking')}
+                                                        </div>
+                                                        <div className="text-[#71717A] font-[500]">
+                                                            {__(
+                                                                'Enable Multiple Payment options based on duration.',
+                                                                'quillbooking'
+                                                            )}
+                                                        </div>
+                                                    </Flex>
+                                                    <Form.Item
+                                                        name="enable_items_based_on_duration"
+                                                        valuePropName="checked"
+                                                    >
+                                                        <Switch className="custom-switch" />
+                                                    </Form.Item>
+                                                </Flex>
                                             )}
                                             {enableItemsBasedOnDuration &&
                                                 allowAttendeesToSelectDuration ? (
@@ -472,6 +481,7 @@ const Payments: React.FC = () => {
                                                                                         ),
                                                                                 },
                                                                             ]}
+                                                                            className='w-full'
                                                                         >
                                                                             <div className="text-[#09090B] text-[16px] pb-2">
                                                                                 {__("Booking Payment Items", "quillbooking")}
@@ -482,7 +492,7 @@ const Payments: React.FC = () => {
                                                                                     'Item Name',
                                                                                     'quillbooking'
                                                                                 )}
-                                                                                className='h-[48px] rounded-lg w-[315px]'
+                                                                                className='h-[48px] rounded-lg w-full'
                                                                             />
                                                                         </Form.Item>
                                                                         <Form.Item
@@ -502,6 +512,7 @@ const Payments: React.FC = () => {
                                                                                         ),
                                                                                 },
                                                                             ]}
+                                                                            className='w-full'
                                                                         >
                                                                             <div className="text-[#09090B] text-[16px] pb-2">
                                                                                 {__("Price", "quillbooking")}
@@ -513,7 +524,7 @@ const Payments: React.FC = () => {
                                                                                     'quillbooking'
                                                                                 )}
                                                                                 suffix={<span className='border-l pl-2'>$</span>}
-                                                                                className='h-[48px] rounded-lg w-[315px]'
+                                                                                className='h-[48px] rounded-lg w-full'
                                                                             />
                                                                         </Form.Item>
                                                                         {/* <Button
@@ -556,7 +567,7 @@ const Payments: React.FC = () => {
                                 </>
                             );
                         }}
-                    </Form.Item>
+                    </Form.Item >
                 </Flex>
             </Form>
         </Card >

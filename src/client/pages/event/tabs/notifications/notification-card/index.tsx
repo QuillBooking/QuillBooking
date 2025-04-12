@@ -15,7 +15,9 @@ import { Card, Switch, Button, Modal, Input, Form, InputNumber, Typography, Radi
 import { NotificationType } from '@quillbooking/client';
 import { useNotice, useApi } from '@quillbooking/hooks';
 import EmailEditor from './editor';
-import { UrlIcon } from '@quillbooking/components';
+import { LimitsAddIcon, LimitsTrashIcon, UrlIcon } from '@quillbooking/components';
+import { ReactMultiEmail, isEmail } from 'react-multi-email';
+import 'react-multi-email/dist/style.css';
 
 const { TextArea } = Input;
 
@@ -31,6 +33,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [form] = Form.useForm();
     const { successNotice, errorNotice } = useNotice();
+    const [emails, setEmails] = useState<string[]>([]);
+    const [focused, setFocused] = useState(false);
     const notification = notifications[notificationKey];
     const { callApi, loading } = useApi();
 
@@ -77,15 +81,18 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
     };
 
     const renderModalContent = () => (
-        <Form form={form} layout="vertical" className='w-full'>
+        <Form form={form} layout="vertical" className='w-full'
+            initialValues={{
+                times: [{ value: 15, unit: 'minutes' }],
+            }}>
             {notificationType === 'email' && (
                 <Form.Item name={['template', 'subject']}
                     label={<span className="text-[#09090B] text-[16px] font-semibold">
                         {__('Subject', 'quillbooking')}
                         <span className='text-red-500'>*</span>
                     </span>}
-                //rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}
-                className='w-full'
+                    //rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}
+                    className='w-full'
                 >
                     <Input
                         placeholder='New Booking: {{guest.full_name}} @ {{booking.start_date_time_for_host}}'
@@ -96,83 +103,147 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                         style={{ padding: "0 0 0 10px" }} />
                 </Form.Item>
             )}
-            {notificationType === 'sms' && (
-                <Form.Item name={['template', 'type']} label={__('Type', 'quillbooking')} rules={[{ required: true, message: __('Type is required', 'quillbooking') }]}>
-                    <Radio.Group>
-                        <Radio value="sms">{__('SMS', 'quillbooking')}</Radio>
-                        <Radio value="whatsapp">{__('WhatsApp', 'quillbooking')}</Radio>
-                    </Radio.Group>
-                </Form.Item>
-            )}
             <Form.Item name={['template', 'message']}
-                label={<span className="text-[#09090B] text-[16px] font-semibold">
-                    {__('Email Body', 'quillbooking')}
-                    <span className='text-red-500'>*</span>
-                </span>}
-            //rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
-            className='w-full'
+                //rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
+                className='w-full mb-5'
             >
                 {notificationType === 'email' ? (
-                    <EmailEditor message={notification.template.message}
-                        onChange={(content) => {
-                            console.log(content);  // Log the updated value
-                            form.setFieldsValue({ template: { message: content } });
-                        }} />
+                    <>
+                        <span className="text-[#09090B] text-[16px] font-semibold">
+                            {__('Email Body', 'quillbooking')}
+                            <span className='text-red-500'>*</span>
+                        </span>
+                        <EmailEditor message={notification.template.message}
+                            onChange={(content) => {
+                                console.log(content);  // Log the updated value
+                                form.setFieldsValue({ template: { message: content } });
+                            }} />
+                    </>
                 ) : (
-                    <TextArea
-                        autoSize={{ minRows: 4 }}
-                        value={notification.template.message}
-                        onChange={(e) => form.setFieldsValue({ template: { message: e.target.value } })}
-                    />
+                    <>
+                        <span className="text-[#09090B] text-[16px] font-semibold">
+                            {__('SMS Body', 'quillbooking')}
+                        </span>
+                        <TextArea
+                            autoSize={{ minRows: 4 }}
+                            value={notification.template.message}
+                            onChange={(e) => form.setFieldsValue({ template: { message: e.target.value } })}
+                            className='mt-2 rounded-lg'
+                        />
+                    </>
+                )}
+            </Form.Item>
+            <Form.Item
+                //rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
+                className='w-full mb-5'
+            >
+                {notificationType === 'email' ? (
+                    <>
+                        <span className="text-[#09090B] text-[16px] font-semibold">
+                            {__('Additional Recipients', 'quillbooking')}
+                            <span className='text-red-500'>*</span>
+                        </span>
+                        <ReactMultiEmail
+                            placeholder={__('Enter email addresses separated by commas', 'quillbooking')}
+                            emails={emails}
+                            onChange={(_emails: string[]) => {
+                                setEmails(_emails);
+                            }}
+                            autoFocus={true}
+                            onFocus={() => setFocused(true)}
+                            onBlur={() => setFocused(false)}
+                            delimiter={','}
+                            getLabel={(email, index, removeEmail) => {
+                                return (
+                                    <div data-tag key={index}>
+                                        <div data-tag-item>{email}</div>
+                                        <span data-tag-handle onClick={() => removeEmail(index)}>
+                                            ×
+                                        </span>
+                                    </div>
+                                );
+                            }}
+                            className='min-h-[48px] rounded-lg'
+                        />
+                        <span className='text-[#818181]'>{__("Provided email address will set as CC to this email notification.", "quillbooking")}</span>
+                    </>
+                ) : (
+                    <Form.Item name={['template', 'type']}
+                        label={<span className="text-[#09090B] text-[16px] font-semibold">
+                            {__('Sender', 'quillbooking')}
+                            <span className='text-red-500'>*</span>
+                        </span>}
+                        //rules={[{ required: true, message: __('Type is required', 'quillbooking') }]}
+                        >
+                        <Radio.Group className='text-[#3F4254] font-semibold'>
+                            <Radio value="sms" className='custom-radio'>{__('SMS', 'quillbooking')}</Radio>
+                            <Radio value="whatsapp" className='custom-radio'>{__('WhatsApp', 'quillbooking')}</Radio>
+                        </Radio.Group>
+                    </Form.Item>
                 )}
             </Form.Item>
             {notification.times && (
-                <Form.List name="times">
-                    {(fields, { add, remove }) => (
-                        <Flex vertical gap={10}>
-                            {fields.map(({ key, name, ...restField }) => (
-                                <Flex key={key} align="start" gap={10}>
-                                    <Form.Item
-                                        {...restField}
-                                        name={[name, 'value']}
-                                        rules={[{ required: true, message: __('Value is required', 'quillbooking') }]}
-                                        style={{ marginBottom: 0 }}
-                                    >
-                                        <InputNumber />
-                                    </Form.Item>
-                                    <Form.Item
-                                        {...restField}
-                                        name={[name, 'unit']}
-                                        rules={[{ required: true, message: __('Unit is required', 'quillbooking') }]}
-                                        style={{ marginBottom: 0 }}
-                                    >
-                                        <Select
-                                            options={[
-                                                { value: 'minutes', label: <span>{__('Minutes Before', 'quillbooking')}</span> },
-                                                { value: 'hours', label: <span>{__('Hours Before', 'quillbooking')}</span> },
-                                                { value: 'days', label: <span>{__('Days Before', 'quillbooking')}</span> },
-                                            ]}
-                                        />
-                                    </Form.Item>
-                                    <Button onClick={() => remove(name)} danger>
-                                        {__('Remove', 'quillbooking')}
-                                    </Button>
-                                </Flex>
-                            ))}
-                            <Form.Item>
-                                <Button type="dashed" onClick={() => add({ value: 15, unit: 'minutes' })} block>
-                                    {__('Add Time', 'quillbooking')}
-                                </Button>
-                            </Form.Item>
-                        </Flex>
-                    )}
-                </Form.List>
+                <>
+                    <span className="text-[#09090B] text-[16px] font-semibold">
+                        {__('Timing', 'quillbooking')}
+                        <span className='text-red-500'>*</span>
+                    </span>
+                    <Form.List name="times" >
+                        {(fields, { add, remove }) => (
+                            <Flex vertical gap={10} className='mt-3'>
+                                {fields.map(({ key, name, ...restField }, index) => (
+                                    <Flex key={key} align="center" gap={10}>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'value']}
+                                            rules={[{ required: true, message: __('Value is required', 'quillbooking') }]}
+                                            style={{ marginBottom: 0 }}
+                                        >
+                                            <InputNumber className='h-[48px] rounded-lg pt-2 w-16' />
+                                        </Form.Item>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'unit']}
+                                            rules={[{ required: true, message: __('Unit is required', 'quillbooking') }]}
+                                            style={{ marginBottom: 0 }}
+                                        >
+                                            <Select
+                                                className='h-[48px] rounded-lg w-44'
+                                                getPopupContainer={(trigger) => trigger.parentElement}
+                                                options={[
+                                                    { value: 'minutes', label: <span>{__('Minutes Before', 'quillbooking')}</span> },
+                                                    { value: 'hours', label: <span>{__('Hours Before', 'quillbooking')}</span> },
+                                                    { value: 'days', label: <span>{__('Days Before', 'quillbooking')}</span> },
+                                                ]}
+                                            />
+                                        </Form.Item>
+
+                                        {/* Only show Remove button if it's NOT the first item */}
+                                        {index > 0 && (
+                                            <Button onClick={() => remove(name)} danger className='border-none shadow-none p-0'>
+                                                <LimitsTrashIcon />
+                                            </Button>
+                                        )}
+
+                                        {/* Only show Add button beside the first item */}
+                                        {index === 0 && (
+                                            <Button onClick={() => add({ value: 15, unit: 'minutes' })} className='border-none shadow-none p-0'>
+                                                <LimitsAddIcon />
+                                            </Button>
+                                        )}
+                                    </Flex>
+                                ))}
+                            </Flex>
+                        )}
+                    </Form.List>
+
+                </>
             )}
-            <Form.Item>
+            {/* <Form.Item>
                 <Button type="primary" onClick={handleSave} loading={loading}>
                     {__('Save', 'quillbooking')}
                 </Button>
-            </Form.Item>
+            </Form.Item> */}
         </Form>
     );
 

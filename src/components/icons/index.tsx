@@ -80,3 +80,4 @@ export {default as CollectiveIcon} from "./collective-icon";
 export {default as PaymentSettingsIcon} from "./payment-settings-icon";
 export {default as EditNotificationIcon} from "./edit-notification-icon";
 export {default as EmailNotificationIcon} from "./notification-e-icon";
+export {default as SmsNotificationIcon} from "./notification-s-icon";

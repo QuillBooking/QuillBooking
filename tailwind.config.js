@@ -11,8 +11,10 @@ module.exports = {
         'color-primary-text': '#292D32',
         'color-lime-green': '#B7F005' 
       },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
     },
   },
   plugins: [],
 }
-

@@ -53,7 +53,7 @@ interface PaymentsSettings {
     };
 }
 
-const EventPaymentsSettings: React.FC = () => {
+const Payments: React.FC = () => {
     const { state: event } = useEventContext();
     const { callApi, loading } = useApi();
     const { successNotice, errorNotice } = useNotice();
@@ -218,7 +218,7 @@ const EventPaymentsSettings: React.FC = () => {
     const isWooCommerceEnabled = ConfigAPI.isWoocommerceActive();
 
     return (
-        <Card className="rounded-lg">
+        <Card className="rounded-lg mx-9">
             <Flex gap={10} className="items-center border-b pb-4">
                 <div className="bg-[#EDEDED] rounded-lg p-2">
                     <PaymentIcon />
@@ -281,7 +281,7 @@ const EventPaymentsSettings: React.FC = () => {
                                                 )}
                                             </div>
                                             <Radio.Group
-                                                className="flex"
+                                                className="flex w-full"
                                                 value={selectedValue}
                                                 onChange={(e) =>
                                                     setSelectedValue(
@@ -291,7 +291,7 @@ const EventPaymentsSettings: React.FC = () => {
                                             >
                                                 <Radio
                                                     value="native"
-                                                    className={`custom-radio border rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
+                                                    className={`custom-radio border w-1/2 rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
                                                           ${selectedValue === 'native'
                                                             ? 'bg-color-secondary border-color-primary'
                                                             : 'border'
@@ -307,7 +307,7 @@ const EventPaymentsSettings: React.FC = () => {
                                                     disabled={
                                                         !isWooCommerceEnabled
                                                     }
-                                                    className={`custom-radio border rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
+                                                    className={`custom-radio border w-1/2 rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
                                                         ${selectedValue === 'woocommerce'
                                                             ? 'bg-color-secondary border-color-primary'
                                                             : 'border'
@@ -390,16 +390,25 @@ const EventPaymentsSettings: React.FC = () => {
                                     {type === 'native' && (
                                         <>
                                             {allowAttendeesToSelectDuration && (
-                                                <Form.Item
-                                                    name="enable_items_based_on_duration"
-                                                    valuePropName="checked"
-                                                    label={__(
-                                                        'Enable Items Based on Duration',
-                                                        'quillbooking'
-                                                    )}
-                                                >
-                                                    <Switch />
-                                                </Form.Item>
+                                                <Flex className="justify-between items-center w-full">
+                                                    <Flex vertical gap={1}>
+                                                        <div className="text-[#09090B] font-bold">
+                                                            {__('Enable Multiple Payment', 'quillbooking')}
+                                                        </div>
+                                                        <div className="text-[#71717A] font-[500]">
+                                                            {__(
+                                                                'Enable Multiple Payment options based on duration.',
+                                                                'quillbooking'
+                                                            )}
+                                                        </div>
+                                                    </Flex>
+                                                    <Form.Item
+                                                        name="enable_items_based_on_duration"
+                                                        valuePropName="checked"
+                                                    >
+                                                        <Switch className="custom-switch" />
+                                                    </Form.Item>
+                                                </Flex>
                                             )}
                                             {enableItemsBasedOnDuration &&
                                                 allowAttendeesToSelectDuration ? (
@@ -472,6 +481,7 @@ const EventPaymentsSettings: React.FC = () => {
                                                                                         ),
                                                                                 },
                                                                             ]}
+                                                                            className='w-full'
                                                                         >
                                                                             <div className="text-[#09090B] text-[16px] pb-2">
                                                                                 {__("Booking Payment Items", "quillbooking")}
@@ -482,7 +492,7 @@ const EventPaymentsSettings: React.FC = () => {
                                                                                     'Item Name',
                                                                                     'quillbooking'
                                                                                 )}
-                                                                                className='h-[48px] rounded-lg w-[315px]'
+                                                                                className='h-[48px] rounded-lg w-full'
                                                                             />
                                                                         </Form.Item>
                                                                         <Form.Item
@@ -502,6 +512,7 @@ const EventPaymentsSettings: React.FC = () => {
                                                                                         ),
                                                                                 },
                                                                             ]}
+                                                                            className='w-full'
                                                                         >
                                                                             <div className="text-[#09090B] text-[16px] pb-2">
                                                                                 {__("Price", "quillbooking")}
@@ -513,7 +524,7 @@ const EventPaymentsSettings: React.FC = () => {
                                                                                     'quillbooking'
                                                                                 )}
                                                                                 suffix={<span className='border-l pl-2'>$</span>}
-                                                                                className='h-[48px] rounded-lg w-[315px]'
+                                                                                className='h-[48px] rounded-lg w-full'
                                                                             />
                                                                         </Form.Item>
                                                                         {/* <Button
@@ -556,11 +567,11 @@ const EventPaymentsSettings: React.FC = () => {
                                 </>
                             );
                         }}
-                    </Form.Item>
+                    </Form.Item >
                 </Flex>
             </Form>
         </Card >
     );
 };
 
-export default EventPaymentsSettings;
+export default Payments;

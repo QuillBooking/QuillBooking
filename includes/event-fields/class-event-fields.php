@@ -62,6 +62,36 @@ class Event_Fields {
 	}
 
 	/**
+	 * Get other fields
+	 *
+	 * @return array
+	 */
+	public function get_other_fields() {
+		$other_fields = array(
+			'cancellation_reason' => array(
+				'label'          => __( 'Reason for cancellation', 'quillbooking' ),
+				'type'           => 'textarea',
+				'required'       => true,
+				'group'          => 'other',
+				'event_location' => 'all',
+				'placeholder'    => __( 'Why are you cancelling?', 'quillbooking' ),
+				'order'          => 1,
+			),
+			'rescheduling_reason' => array(
+				'label'          => __( 'Reason for reschedule', 'quillbooking' ),
+				'type'           => 'textarea',
+				'required'       => true,
+				'group'          => 'other',
+				'event_location' => 'all',
+				'placeholder'    => __( 'Let others know why you need to reschedule', 'quillbooking' ),
+				'order'          => 2,
+			),
+		);
+
+		return $other_fields;
+	}
+
+	/**
 	 * Get default additional settings values
 	 *
 	 * @since 1.0.0

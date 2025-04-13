@@ -12,6 +12,7 @@
 
 namespace QuillBooking\REST_API\Controllers\V1;
 
+use DateTime;
 use WP_Error;
 use Exception;
 use WP_REST_Request;
@@ -33,6 +34,7 @@ use QuillBooking\Utils;
 class REST_Booking_Controller extends REST_Controller {
 
 
+
 	/**
 	 * REST Base
 	 *
@@ -41,6 +43,15 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @var string
 	 */
 	protected $rest_base = 'bookings';
+
+	/**
+	 * Booking status constants
+	 */
+	protected $STATUS_PENDING   = 'pending';
+	protected $STATUS_COMPLETED = 'completed';
+	protected $STATUS_CANCELLED = 'cancelled';
+	protected $STATUS_NO_SHOW   = 'no-show';
+
 
 	/**
 	 * Register the routes for the controller.
@@ -212,115 +223,57 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function get_items( $request ) {
+
+		// Parse and sanitize pagination parameters
+		$page     = max( 1, absint( $request->get_param( 'page' ) ?? 1 ) );
+		$per_page = min( 100, max( 1, absint( $request->get_param( 'per_page' ) ?? 10 ) ) );
+		$keyword  = sanitize_text_field( $request->get_param( 'keyword' ) ?? '' );
+
+		// Parse filters
+		$filter     = $request->get_param( 'filter' ) ?? array();
+		$user       = sanitize_text_field( Arr::get( $filter, 'user', 'own' ) );
+		$period     = sanitize_text_field( Arr::get( $filter, 'period', 'all' ) );
+		$event      = sanitize_text_field( Arr::get( $filter, 'event', 'all' ) );
+		$event_type = sanitize_text_field( Arr::get( $filter, 'event_type', 'all' ) );
+		$search     = sanitize_text_field( Arr::get( $filter, 'search', '' ) );
+
+		// Validate date parameters
+		$year  = $this->validate_year( Arr::get( $filter, 'year', current_time( 'Y' ) ) );
+		$month = $this->validate_month( Arr::get( $filter, 'month', current_time( 'm' ) ) );
+		$day   = $this->validate_day( Arr::get( $filter, 'day' ) );
+
+		if ( 'own' === $user ) {
+			$user = get_current_user_id();
+		}
+
+		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
+			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
+		}
+
 		try {
-			$page       = $request->get_param( 'page' ) ? $request->get_param( 'page' ) : 1;
-			$per_page   = $request->get_param( 'per_page' ) ? $request->get_param( 'per_page' ) : 10;
-			$keyword    = $request->get_param( 'keyword' ) ? $request->get_param( 'keyword' ) : '';
-			$filter     = $request->get_param( 'filter' ) ? $request->get_param( 'filter' ) : array();
-			$user       = Arr::get( $filter, 'user' ) ? Arr::get( $filter, 'user' ) : 'own';
-			$period     = Arr::get( $filter, 'period' ) ? Arr::get( $filter, 'period' ) : 'all';
-			$event      = Arr::get( $filter, 'event' ) ? Arr::get( $filter, 'event' ) : 'all';
-			$event_type = Arr::get( $filter, 'event_type' ) ? Arr::get( $filter, 'event_type' ) : 'all';
-			$search     = Arr::get( $filter, 'search' ) ? Arr::get( $filter, 'search' ) : '';
-			$year       = Arr::get( $filter, 'year', date( 'Y' ) );
-			$month      = Arr::get( $filter, 'month', date( 'm' ) );
-			$day        = Arr::get( $filter, 'day' );
-
-			if ( 'own' === $user ) {
-				$user = get_current_user_id();
-			}
-
-			if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
-				return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
-			}
 
 			$query = Booking_Model::query();
 
-			// Build the start and end date range
-			if ( ! empty( $day ) ) {
-				$startDate = "$year-$month-$day 00:00:00"; // Specific day at midnight
-				$endDate   = "$year-$month-$day 23:59:59"; // Specific day at 23:59:59
-			} else {
-				$startDate = "$year-$month-01 00:00:00"; // First day of the month at midnight
-				$endDate   = date( 'Y-m-t 23:59:59', strtotime( $startDate ) ); // Last day of the month at 23:59:59
-			}
-
-			$query->whereBetween( 'start_time', array( $startDate, $endDate ) )
-				->orderBy( 'start_time' );
+			$this->apply_date_range_filter( $query, $year, $month, $day );
 
 			if ( 'all' !== $user ) {
-				$query->whereHas(
-					'event',
-					function ( $query ) use ( $user ) {
-						$query->where( 'user_id', $user );
-					}
-				);
+				$this->apply_user_filter( $query, $user );
 			}
 
 			if ( ! empty( $keyword ) ) {
 				$query->where( 'name', 'LIKE', '%' . $keyword . '%' );
 			}
 
-			// Clone the query here to get the count of pending bookings
-			$pending_count   = ( clone $query )->where( 'status', 'pending' )->count();
-			$cancelled_count = ( clone $query )->where( 'status', 'cancelled' )->count();
-			$no_show_count   = ( clone $query )->where( 'status', 'no_show' )->count();
+			$status_counts = $this->get_status_counts( $query );
 
-			// Filter by period
-			if ( 'all' !== $period ) {
-				if ( 'latest' === $period ) {
-					$query->orderBy( 'created_at', 'desc' );
-				}
-
-				if ( 'upcoming' === $period ) {
-					$query->where( 'start_time', '>', date( 'Y-m-d H:i:s' ) )->orderBy( 'start_time' );
-				}
-
-				if ( 'pending' === $period ) {
-					$query->where( 'status', 'pending' );
-				}
-
-				if ( 'completed' === $period ) {
-					$query->where( 'status', 'completed' );
-				}
-
-				if ( 'cancelled' === $period ) {
-					$query->where( 'status', 'cancelled' );
-				}
-
-				if ( 'no-show' === $period ) {
-					$query->where( 'status', 'no-show' );
-				}
-			} else {
-				$query->orderBy( 'start_time' );
-			}
+			$this->apply_period_filter( $query, $period );
 
 			if ( 'all' !== $user ) {
-				// Filter by event type
-				if ( 'all' !== $event_type ) {
-					$query->whereHas(
-						'event',
-						function ( $query ) use ( $event_type ) {
-							$query->where( 'type', $event_type );
-						}
-					);
-				}
-
-				// Filter by event
-				if ( 'all' !== $event ) {
-					$query->where( 'event_id', $event );
-				}
+				$this->apply_event_filters( $query, $event, $event_type );
 			}
 
-			// search by event name or email
 			if ( ! empty( $search ) ) {
-				$query->whereHas(
-					'guest',
-					function ( $query ) use ( $search ) {
-						$query->where( 'name', 'LIKE', '%' . $search . '%' )
-							->orWhere( 'email', 'LIKE', '%' . $search . '%' );
-					}
-				);
+				$this->apply_search_filter( $query, $search );
 			}
 
 			$bookings = $query->with( 'event', 'event.calendar', 'guest', 'calendar.user' )->paginate( $per_page, array( '*' ), 'page', $page );
@@ -328,9 +281,9 @@ class REST_Booking_Controller extends REST_Controller {
 			return new WP_REST_Response(
 				array(
 					'bookings'        => $bookings,
-					'pending_count'   => $pending_count,
-					'cancelled_count' => $cancelled_count,
-					'noshow_count'    => $no_show_count,
+					'pending_count'   => $status_counts[ $this->STATUS_PENDING ] ?? 0,
+					'cancelled_count' => $status_counts[ $this->STATUS_CANCELLED ] ?? 0,
+					'noshow_count'    => $status_counts[ $this->STATUS_NO_SHOW ] ?? 0,
 				),
 				200
 			);
@@ -595,5 +548,179 @@ class REST_Booking_Controller extends REST_Controller {
 	public function delete_item_permissions_check( $request ) {
 		$id = $request->get_param( 'id' );
 		return Capabilities::can_manage_booking( $id );
+	}
+
+
+	/**
+	 * Apply date range filter to booking query
+	 *
+	 * @param mixed       $query The Booking query object
+	 * @param string      $year Year to filter by
+	 * @param string      $month Month to filter by
+	 * @param string|null $day Optional day to filter by
+	 * @return void
+	 */
+	protected function apply_date_range_filter( $query, $year, $month, $day ) {
+		if ( ! empty( $day ) ) {
+				// Specific day
+				$start_date = new DateTime( "$year-$month-$day 00:00:00" );
+				$end_date   = new DateTime( "$year-$month-$day 23:59:59" );
+		} else {
+				// Full month
+				$start_date = new DateTime( "$year-$month-01 00:00:00" );
+				$end_date   = clone $start_date;
+				$end_date->modify( 'last day of this month' )->setTime( 23, 59, 59 );
+		}
+
+			$query->whereBetween(
+				'start_time',
+				array(
+					$start_date->format( 'Y-m-d H:i:s' ),
+					$end_date->format( 'Y-m-d H:i:s' ),
+				)
+			);
+	}
+
+	/**
+	 * Apply user filter to booking query
+	 *
+	 * @param mixed $query The Booking query object
+	 * @param int   $user_id User ID to filter by
+	 * @return void
+	 */
+	protected function apply_user_filter( $query, $user_id ) {
+			$query->whereHas(
+				'event',
+				function( $query ) use ( $user_id ) {
+					$query->where( 'user_id', $user_id );
+				}
+			);
+	}
+
+	/**
+	 * Get counts of bookings by status
+	 *
+	 * @param mixed $query The Booking query object to clone
+	 * @return array Associative array with status counts
+	 */
+	protected function get_status_counts( $query ) {
+			// Use a single query with subqueries for better performance
+			$counts                            = array();
+			$counts[ $this->STATUS_PENDING ]   = ( clone $query )->where( 'status', $this->STATUS_PENDING )->count();
+			$counts[ $this->STATUS_CANCELLED ] = ( clone $query )->where( 'status', $this->STATUS_CANCELLED )->count();
+			$counts[ $this->STATUS_NO_SHOW ]   = ( clone $query )->where( 'status', $this->STATUS_NO_SHOW )->count();
+
+			return $counts;
+	}
+
+	/**
+	 * Apply period filter to booking query
+	 *
+	 * @param mixed  $query The Booking query object
+	 * @param string $period Period to filter by
+	 * @return void
+	 */
+	protected function apply_period_filter( $query, $period ) {
+		switch ( $period ) {
+			case 'latest':
+					$query->orderBy( 'created_at', 'desc' );
+				break;
+
+			case 'upcoming':
+					$query->where( 'start_time', '>', current_time( 'mysql' ) )
+								->orderBy( 'start_time' );
+				break;
+
+			case $this->STATUS_PENDING:
+			case $this->STATUS_COMPLETED:
+			case $this->STATUS_CANCELLED:
+			case $this->STATUS_NO_SHOW:
+				$query->where( 'status', $period );
+				break;
+
+			default: // 'all'
+					$query->orderBy( 'start_time' );
+				break;
+		}
+	}
+
+	/**
+	 * Apply event filters to booking query
+	 *
+	 * @param mixed  $query The Booking query object
+	 * @param string $event Event ID to filter by
+	 * @param string $event_type Event type to filter by
+	 * @return void
+	 */
+	protected function apply_event_filters( $query, $event, $event_type ) {
+			// Filter by event type
+		if ( 'all' !== $event_type ) {
+				$query->whereHas(
+					'event',
+					function( $query ) use ( $event_type ) {
+						$query->where( 'type', $event_type );
+					}
+				);
+		}
+
+			// Filter by specific event
+		if ( 'all' !== $event ) {
+				$query->where( 'event_id', absint( $event ) );
+		}
+	}
+
+	/**
+	 * Apply search filter to booking query
+	 *
+	 * @param mixed  $query The Booking query object
+	 * @param string $search Search term to filter by
+	 * @return void
+	 */
+	protected function apply_search_filter( $query, $search ) {
+			$query->whereHas(
+				'guest',
+				function( $query ) use ( $search ) {
+					$sanitized_search = '%' . $search . '%';
+					$query->where( 'name', 'LIKE', $sanitized_search )
+								->orWhere( 'email', 'LIKE', $sanitized_search );
+				}
+			);
+	}
+
+	/**
+	 * Validate year parameter
+	 *
+	 * @param string $year Year to validate
+	 * @return string Validated year
+	 */
+	protected function validate_year( $year ) {
+		$year = absint( $year );
+		return  $year >= 2000 ? $year : date( 'Y' );
+	}
+
+	/**
+	 * Validate month parameter
+	 *
+	 * @param string $month Month to validate
+	 * @return string Validated month (01-12)
+	 */
+	protected function validate_month( $month ) {
+			$month = absint( $month );
+			return ( $month >= 1 && $month <= 12 ) ? sprintf( '%02d', $month ) : current_time( 'm' );
+	}
+
+	/**
+	 * Validate day parameter
+	 *
+	 * @param string|null $day Day to validate
+	 * @return string|null Validated day (01-31) or null
+	 */
+	protected function validate_day( $day ) {
+		if ( empty( $day ) ) {
+				return null;
+		}
+
+			$day = absint( $day );
+			return ( $day >= 1 && $day <= 31 ) ? sprintf( '%02d', $day ) : null;
 	}
 }

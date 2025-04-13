@@ -564,11 +564,12 @@ class Event_Model extends Model {
 		}
 
 		$system_fields   = Event_Fields::instance()->get_system_fields();
+		$other_fields    = Event_Fields::instance()->get_other_fields();
 		$location_fields = $this->processLocationFields( $event_location );
-
-		$fields = array(
+		$fields          = array(
 			'system'   => $system_fields,
 			'location' => $location_fields,
+			'other'    => $other_fields,
 		);
 
 		$this->update_meta( 'fields', $fields );

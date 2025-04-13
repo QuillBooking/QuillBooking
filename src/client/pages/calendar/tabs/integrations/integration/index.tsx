@@ -243,7 +243,7 @@ const IntegrationDetailsPage: React.FC<Props> = ({ integration, calendarId, slug
                                                     dataSource={account.calendars}
                                                     renderItem={(calendar) => (
                                                         <Checkbox
-                                                            checked={account.config.calendars.includes(calendar.id)}
+                                                            checked={!isEmpty(account.config) ? account.config.calendars.includes(calendar.id) : false}
                                                             onChange={(e) =>
                                                                 handleCalendarSelection(account.id, calendar.id, e.target.checked)
                                                             }

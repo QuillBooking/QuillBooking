@@ -1,7 +1,12 @@
-import { BiUndo, BiRedo } from "react-icons/bi";
-import { RiPrinterLine } from "react-icons/ri";
-import { LuPaintRoller } from "react-icons/lu";
-
+import { LuBold, LuItalic, } from "react-icons/lu";
+import { RxUnderline } from "react-icons/rx";
+import { RiStrikethrough } from "react-icons/ri";
+import { IoLinkOutline } from "react-icons/io5";
+import { HiOutlineCodeBracketSquare } from "react-icons/hi2";
+import { LiaImageSolid } from "react-icons/lia";
+import { FaListUl, FaListOl } from "react-icons/fa6";
+import { MdOutlineChecklist, MdFormatLineSpacing } from "react-icons/md";
+import { FiAlignCenter, FiAlignJustify, FiAlignLeft, FiAlignRight } from "react-icons/fi";
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -22,6 +27,7 @@ import {
 import {
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
+  INSERT_CHECK_LIST_COMMAND,
   REMOVE_LIST_COMMAND,
   $isListNode,
   ListNode,
@@ -32,6 +38,12 @@ import {
   HeadingTagType,
 } from '@lexical/rich-text';
 import { $createLinkNode, $isLinkNode } from '@lexical/link';
+import { Button, Flex, Select, Modal, Upload } from "antd";
+import { PlusOutlined } from '@ant-design/icons';
+import "../style.scss";
+
+// Define custom command for image insertion
+export const INSERT_IMAGE_COMMAND = 'INSERT_IMAGE_COMMAND';
 
 export const ToolbarPlugin = () => {
   const [editor] = useLexicalComposerContext();
@@ -40,57 +52,112 @@ export const ToolbarPlugin = () => {
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
-  const [fontSize, setFontSize] = useState('16');
   const [fontFamily, setFontFamily] = useState('Arial');
-  const [fontColor, setFontColor] = useState('#0066FF');
-  const [zoomLevel, setZoomLevel] = useState('100%');
   const [paragraphFormat, setParagraphFormat] = useState('paragraph');
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // Register image insertion command
+  useEffect(() => {
+    if (!activeEditor) {
+      return;
+    }
+
+    return activeEditor.registerCommand(
+      INSERT_IMAGE_COMMAND,
+      (payload) => {
+        const { src, altText } = payload;
+        // Here you would implement the actual insertion of image
+        // This is a placeholder - you need to implement image node creation
+        activeEditor.update(() => {
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            // In a real implementation, you would create an image node
+            // For example: const imageNode = $createImageNode({ src, altText });
+            // selection.insertNodes([imageNode]);
+            
+            // For now, let's just insert a placeholder text
+            const textNode = $createTextNode(`[Image: ${altText || 'Uploaded image'}]`);
+            selection.insertNodes([textNode]);
+            
+            // You would need to implement a proper $createImageNode that extends 
+            // a DecoratorNode from Lexical
+          }
+        });
+        return true;
+      },
+      0
+    );
+  }, [activeEditor]);
 
   // Update format states based on selection
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
+      // Existing formatting states
       setIsBold(selection.hasFormat('bold'));
       setIsItalic(selection.hasFormat('italic'));
       setIsUnderline(selection.hasFormat('underline'));
       setIsStrikethrough(selection.hasFormat('strikethrough'));
+
+      // Block format states
+      const anchorNode = selection.anchor.getNode();
+      const element = anchorNode.getKey() === 'root'
+        ? anchorNode
+        : anchorNode.getTopLevelElementOrThrow();
+
+      const elementKey = element.getKey();
+      const elementDOM = activeEditor.getElementByKey(elementKey);
+
+      // Check element type and update block format state
+      if (elementDOM) {
+        if (elementDOM.tagName === 'P') {
+          setParagraphFormat('paragraph');
+        } else if (elementDOM.tagName === 'H1') {
+          setParagraphFormat('heading-1');
+        } else if (elementDOM.tagName === 'H2') {
+          setParagraphFormat('heading-2');
+        } else if (elementDOM.tagName === 'H3') {
+          setParagraphFormat('heading-3');
+        } else if (elementDOM.tagName === 'BLOCKQUOTE') {
+          setParagraphFormat('quote');
+        }
+
+        // Get current font family
+        const fontFamilyValue = window.getComputedStyle(elementDOM).fontFamily;
+        // Clean up the font family string (removing quotes, etc.)
+        let cleanFontFamily = fontFamilyValue.replace(/["']/g, '').split(',')[0].trim();
+
+        // Set the detected font family if it's in our list of options
+        if (['Arial', 'Times New Roman', 'Courier New', 'Georgia'].includes(cleanFontFamily)) {
+          setFontFamily(cleanFontFamily);
+        }
+      }
     }
   }, [activeEditor]);
-
+  
   useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
+    return activeEditor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         updateToolbar();
       });
     });
-  }, [editor, updateToolbar]);
-
-  const onFontSizeChange = useCallback(
-    (newSize) => {
-      const size = parseInt(newSize);
-      setFontSize(String(size));
-      activeEditor.update(() => {
-        const selection = $getSelection();
-        if ($isRangeSelection(selection)) {
-          $patchStyleText(selection, {
-            'font-size': `${size}px`,
-          });
-        }
-      });
-    },
-    [activeEditor]
-  );
+  }, [activeEditor, updateToolbar]);
 
   const onFontFamilyChange = useCallback(
-    (e) => {
-      const font = e.target.value;
-      setFontFamily(font);
+    (value) => {
+      setFontFamily(value);
       activeEditor.update(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
+          // Apply font family style
           $patchStyleText(selection, {
-            'font-family': font,
+            'font-family': value,
           });
+
+          selection.formatText();
         }
       });
     },
@@ -98,19 +165,21 @@ export const ToolbarPlugin = () => {
   );
 
   const handleFormatChange = useCallback(
-    (e) => {
-      const format = e.target.value;
-      setParagraphFormat(format);
-      
+    (value) => {
+      setParagraphFormat(value);
+
       activeEditor.update(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
-          if (format === 'paragraph') {
+          if (value === 'paragraph') {
             $wrapNodes(selection, () => $createParagraphNode());
-          } else if (format.startsWith('heading')) {
-            const headingLevel = parseInt(format.split('-')[1]);
-            $wrapNodes(selection, () => $createHeadingNode(headingLevel));
-          } else if (format === 'quote') {
+          } else if (value.startsWith('heading')) {
+            const headingLevel = parseInt(value.split('-')[1]);
+            // Make sure headingLevel is a valid value (1-6)
+            if (headingLevel >= 1 && headingLevel <= 6) {
+              $wrapNodes(selection, () => $createHeadingNode(`h${headingLevel}`));
+            }
+          } else if (value === 'quote') {
             $wrapNodes(selection, () => $createQuoteNode());
           }
         }
@@ -119,571 +188,325 @@ export const ToolbarPlugin = () => {
     [activeEditor]
   );
 
+  // Image upload from PC
+  const handleImageUpload = useCallback(() => {
+    setImageModalVisible(true);
+  }, []);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      // Create a preview URL
+      const objectUrl = URL.createObjectURL(file);
+      setImageUrl(objectUrl);
+    }
+  };
+
+  const handleImageInsert = () => {
+    if (imageFile) {
+      // In a real application, you would typically upload this file to a server
+      // and then use the returned URL. For this example, we'll use the object URL.
+      activeEditor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+        src: imageUrl,
+        altText: imageFile.name,
+      });
+    } else if (imageUrl) {
+      // If user entered a URL manually
+      activeEditor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+        src: imageUrl,
+        altText: 'Image',
+      });
+    }
+    
+    // Close modal and reset state
+    setImageModalVisible(false);
+    setImageUrl('');
+    setImageFile(null);
+  };
+
   const insertLink = useCallback(() => {
     const url = prompt('Enter URL');
     if (url) {
+      activeEditor.focus();
       activeEditor.update(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
-          const linkNode = $createLinkNode(url, {
-            rel: 'noopener noreferrer',
-            target: '_blank',
-          });
-          selection.insertNodes([linkNode]);
+          if (selection.isCollapsed()) {
+            // If nothing is selected, create a link with the URL as text
+            const linkText = $createTextNode(url);
+            const linkNode = $createLinkNode(url, {
+              rel: 'noopener noreferrer',
+              target: '_blank',
+            });
+
+            // Add the text inside the link node
+            linkNode.append(linkText);
+
+            // Insert the link with its text
+            selection.insertNodes([linkNode]);
+          } else {
+            // If text is selected, wrap it in a link
+            $wrapNodes(selection, () =>
+              $createLinkNode(url, {
+                rel: 'noopener noreferrer',
+                target: '_blank',
+              })
+            );
+          }
         }
       });
     }
   }, [activeEditor]);
 
-  const clearFormatting = useCallback(() => {
+  const applyLineSpacing = useCallback((spacing) => {
     activeEditor.update(() => {
       const selection = $getSelection();
       if ($isRangeSelection(selection)) {
-        selection.getNodes().forEach((node) => {
-          if (node.hasFormat('bold')) node.toggleFormat('bold');
-          if (node.hasFormat('italic')) node.toggleFormat('italic');
-          if (node.hasFormat('underline')) node.toggleFormat('underline');
-          if (node.hasFormat('strikethrough')) node.toggleFormat('strikethrough');
-          // Clear other formats as needed
-        });
         $patchStyleText(selection, {
-          'font-size': null,
-          'font-family': null,
-          'color': null,
-          'background-color': null,
+          'line-height': spacing,
         });
       }
     });
   }, [activeEditor]);
 
-  const contentRef = useRef(null);
-  
-  // Calculate zoom scale as decimal (100% -> 1, 200% -> 2)
-  const getZoomScale = () => {
-    return parseInt(zoomLevel.replace('%', '')) / 100;
-  };
-  
-  // Handle zoom level change
-  const handleZoomChange = (e) => {
-    setZoomLevel(e.target.value);
+  // Ant Design Upload component props
+  const uploadProps = {
+    beforeUpload: (file) => {
+      setImageFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setImageUrl(objectUrl);
+      return false; // Prevent default upload behavior
+    },
+    fileList: imageFile ? [imageFile] : [],
   };
 
   return (
-    <div className="toolbar" style={{
-      display: 'flex',
-      padding: '20px',
-      backgroundColor: '#fff',
-      borderBottom: '1px solid #e0e0e0',
-      alignItems: 'center',
-      justifyContent:"center",
-      gap: '10px',
-      flexWrap: 'wrap',
-      color:"#1A1A1AB2",
-    }}>
-      {/* Undo/Redo */}
-      <div style={{ display: 'flex', gap: '4px' }}>
-        <button
-          onClick={() => activeEditor.dispatchCommand(UNDO_COMMAND)}
-          title="Undo"
-          style={{
-            cursor: 'pointer'
-          }}
-        >
-          <BiUndo className="text-[25px]"/>
-        </button>
-        <button
-          onClick={() => activeEditor.dispatchCommand(REDO_COMMAND)}
-          title="Redo"
-          style={{
-            cursor: 'pointer'
-          }}
-        >
-          <BiRedo className="text-[25px]"/>
-        </button>
-      </div>
+    <>
+      <div className="toolbar" style={{
+        display: 'flex',
+        padding: '20px',
+        backgroundColor: '#fff',
+        borderBottom: '1px solid #e0e0e0',
+        alignItems: 'center',
+        justifyContent: "center",
+        gap: '15px',
+        flexWrap: 'wrap',
+        color: "#52525B",
+      }}>
+        {/* Paragraph format & Font family */}
+        <Flex gap={10} className="border-r pr-5">
+          <Select
+            options={[
+              { value: 'paragraph', label: 'Paragraph Text' },
+              { value: 'heading-1', label: 'Heading 1' },
+              { value: 'heading-2', label: 'Heading 2' },
+              { value: 'heading-3', label: 'Heading 3' },
+              { value: 'quote', label: 'Quote' },
+            ]}
+            getPopupContainer={(trigger) => trigger.parentElement}
+            value={paragraphFormat}
+            onChange={handleFormatChange}
+            className='rounded-md border-none outline-none px-2 bg-[#F4F4F5] cursor-pointer custom-ant-select w-fit'
+          />
 
-      {/* Print/Spell Check */}
-      <div style={{ display: 'flex', gap: '4px' }}>
-        <button 
-          title="Print"
-          style={{
-            cursor: 'pointer'
-          }}
-        >
-          <RiPrinterLine className="text-[25px]"/>
-        </button>
-        <button 
-          title="Paint"
-          style={{
-            paddingLeft:"5px",
-            cursor: 'pointer'
-          }}
-        >
-         <LuPaintRoller className="text-[25px]"/>
-        </button>
-      </div>
+          <Select
+            options={[
+              { value: 'Arial', label: 'Arial' },
+              { value: 'Times New Roman', label: 'Times New Roman' },
+              { value: 'Courier New', label: 'Courier New' },
+              { value: 'Georgia', label: 'Georgia' },
+            ]}
+            getPopupContainer={(trigger) => trigger.parentElement}
+            value={fontFamily}
+            onChange={onFontFamilyChange}
+            className='rounded-md border-none outline-none px-2 bg-[#F4F4F5] cursor-pointer custom-ant-select w-fit'
+          />
+        </Flex>
 
-      {/* Zoom dropdown */}
-      <div>
-        <select 
-          value={zoomLevel}
-          onChange={handleZoomChange}
-          style={{
-            border: 'none',
-            outline: 'none',
-            padding: '4px 5px',
-            width:"65px",
-            cursor: 'pointer'
-          }}
-        >
-          <option>100%</option>
-          <option>125%</option>
-          <option>150%</option>
-          <option>175%</option>
-          <option>200%</option>
-        </select>
-      </div>
+        {/* Text formatting */}
+        <Flex gap={10} className="border-r pr-5">
+          <Button
+            onClick={() => activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')}
+            title="Bold"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <LuBold className="text-[20px] text-[#52525B]" />
+          </Button>
+          <Button
+            onClick={() => activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')}
+            title="Italic"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <LuItalic className="text-[20px] text-[#52525B]" />
+          </Button>
+          <Button
+            onClick={() => activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')}
+            title="Underline"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <RxUnderline className="text-[20px] text-[#52525B]" />
+          </Button>
+          <Button
+            onClick={() => {
+              activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
+              // Force updateToolbar after formatting is applied
+              setTimeout(() => {
+                activeEditor.getEditorState().read(() => {
+                  updateToolbar();
+                });
+              }, 0);
+            }}
+            title="Strikethrough"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <RiStrikethrough className="text-[20px] text-[#52525B]" />
+          </Button>
+        </Flex>
 
-      {/* Paragraph format & Font family */}
-      <div style={{ display: 'flex', gap: '4px' }}>
-        <select 
-          value={paragraphFormat}
-          onChange={handleFormatChange}
-          style={{
-            border: 'none',
-            outline:"none",
-            padding: '4px 8px',
-            backgroundColor: '#F4F4F5',
-            width:"125px",
-            cursor: 'pointer'
-          }}
-        >
-          <option value="paragraph">Paragraph text</option>
-          <option value="heading-1">Heading 1</option>
-          <option value="heading-2">Heading 2</option>
-          <option value="heading-3">Heading 3</option>
-          <option value="quote">Quote</option>
-        </select>
-        
-        <select 
-          value={fontFamily}
-          onChange={onFontFamilyChange}
-          style={{
-            border: 'none',
-            outline:"none",
-            padding: '4px 8px',
-            backgroundColor: '#F4F4F5',
-            width: '60px',
-            cursor: 'pointer'
-          }}
-        >
-          <option value="Arial">Arial</option>
-          <option value="Times New Roman">Times New Roman</option>
-          <option value="Courier New">Courier New</option>
-          <option value="Georgia">Georgia</option>
-        </select>
-      </div>
+        {/* Link and Image */}
+        <Flex gap={10} className="border-r pr-5">
+          <Button
+            onClick={insertLink}
+            title="Insert Link"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <IoLinkOutline className="text-[20px] text-[#52525B]" />
+          </Button>
+          <Button
+            onClick={handleImageUpload}
+            title="Insert Image"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <LiaImageSolid className="text-[20px] text-[#52525B]" />
+          </Button>
+        </Flex>
 
-      {/* Font Size Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '2px', border:"solid #E1E1E2 1px",backgroundColor:"#FCFCFC", borderRadius:"20px" }}>
-        <button 
+        {/* Add Shortcodes Button - Positioned to the right */}
+        <Button
           onClick={() => {
-            if (parseInt(fontSize) > 8) {
-              onFontSizeChange(parseInt(fontSize) - 1);
-            }
+            // Implementation for adding shortcodes
+            alert('Add shortcodes functionality would go here');
           }}
-          title="Decrease Font Size"
-          style={{
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
+          className="bg-[#E3DFF1] border rounded-lg border-[#333333] cursor-pointer flex items-center"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-        <span style={{ 
-          width: '28px', 
-          textAlign: 'center', 
-          fontSize: '14px',
-          userSelect: 'none'
-        }}>
-          {fontSize}
-        </span>
-        <button 
-          onClick={() => onFontSizeChange(parseInt(fontSize) + 1)}
-          title="Increase Font Size"
-          style={{
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
+          <HiOutlineCodeBracketSquare className="text-[20px] text-[#52525B]" />
+          <span className="text-[#52525B]">Add Shortcodes</span>
+        </Button>
+
+        {/* Lists */}
+        <Flex gap={10}>
+          <Button
+            onClick={() => activeEditor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)}
+            title="Bullet List"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <FaListUl className="text-[20px] text-[#52525B]" />
+          </Button>
+
+          <Button
+            onClick={() => activeEditor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)}
+            title="Numbered List"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <FaListOl className="text-[20px] text-[#52525B]" />
+          </Button>
+
+          <Button
+            onClick={() => activeEditor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined)}
+            title="Checklist"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <MdOutlineChecklist className="text-[20px] text-[#52525B]" />
+          </Button>
+        </Flex>
+
+        {/* Alignment */}
+        <Flex gap={10}>
+          <Button
+            onClick={() => activeEditor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')}
+            title="Align Left"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <FiAlignLeft className="text-[20px] text-[#52525B]" />
+          </Button>
+          <Button
+            onClick={() => activeEditor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')}
+            title="Align Center"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <FiAlignCenter className="text-[20px] text-[#52525B]" />
+          </Button>
+          <Button
+            onClick={() => activeEditor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')}
+            title="Align Right"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <FiAlignRight className="text-[20px] text-[#52525B]" />
+          </Button>
+          <Button
+            onClick={() => activeEditor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')}
+            title="Justify"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <FiAlignJustify className="text-[20px] text-[#52525B]" />
+          </Button>
+          <Button
+            onClick={() => applyLineSpacing('2')}
+            title="Line Spacing"
+            className="border-none shadow-none cursor-pointer p-0"
+          >
+            <MdFormatLineSpacing className="text-[20px] text-[#52525B]" />
+          </Button>
+        </Flex>
       </div>
 
-      {/* Separator */}
-      <div style={{ width: '1px', height: '24px', backgroundColor: '#e0e0e0' }}></div>
-
-      {/* Text formatting */}
-      <div style={{ display: 'flex', gap: '4px' }}>
-        <button 
-          onClick={() => activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')}
-          title="Bold"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px 8px',
-            background: isBold ? '#eee' : 'none',
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-        >
-          B
-        </button>
-        <button 
-          onClick={() => activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')}
-          title="Italic"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px 8px',
-            background: isItalic ? '#eee' : 'none',
-            fontStyle: 'italic',
-            cursor: 'pointer'
-          }}
-        >
-          I
-        </button>
-        <button 
-          onClick={() => activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')}
-          title="Underline"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px 8px',
-            background: isUnderline ? '#eee' : 'none',
-            textDecoration: 'underline',
-            cursor: 'pointer'
-          }}
-        >
-          U
-        </button>
-        <button 
-          onClick={() => activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')}
-          title="Strikethrough"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px 8px',
-            background: isStrikethrough ? '#eee' : 'none',
-            textDecoration: 'line-through',
-            cursor: 'pointer'
-          }}
-        >
-          S
-        </button>
-        <button 
-          title="Text Color"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px 8px',
-            background: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          <div style={{ 
-            width: '16px', 
-            height: '16px', 
-            backgroundColor: fontColor, 
-            borderRadius: '2px' 
-          }}></div>
-        </button>
-      </div>
-
-      {/* Link and Image */}
-      <div style={{ display: 'flex', gap: '4px' }}>
-        <button 
-          onClick={insertLink}
-          title="Insert Link"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-          </svg>
-        </button>
-        <button 
-          title="Insert Image"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </button>
-      </div>
-
-      {/* Separator */}
-      <div style={{ width: '1px', height: '24px', backgroundColor: '#e0e0e0' }}></div>
-
-      {/* Lists */}
-      <div style={{ display: 'flex', gap: '4px' }}>
-        <button 
-          onClick={() => activeEditor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND)}
-          title="Bullet List"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="8" y1="6" x2="21" y2="6"></line>
-            <line x1="8" y1="12" x2="21" y2="12"></line>
-            <line x1="8" y1="18" x2="21" y2="18"></line>
-            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-          </svg>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-        
-        <button 
-          onClick={() => activeEditor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND)}
-          title="Numbered List"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="10" y1="6" x2="21" y2="6"></line>
-            <line x1="10" y1="12" x2="21" y2="12"></line>
-            <line x1="10" y1="18" x2="21" y2="18"></line>
-            <path d="M4 6h1v4"></path>
-            <path d="M4 10h2"></path>
-            <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path>
-          </svg>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-        
-        <button 
-          title="Checklist"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 11l3 3L22 4"></path>
-            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-          </svg>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-      </div>
-
-      {/* Alignment */}
-      <div style={{ display: 'flex', gap: '4px' }}>
-        <button 
-          onClick={() => activeEditor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')}
-          title="Align Left"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="17" y1="10" x2="3" y2="10"></line>
-            <line x1="21" y1="6" x2="3" y2="6"></line>
-            <line x1="21" y1="14" x2="3" y2="14"></line>
-            <line x1="17" y1="18" x2="3" y2="18"></line>
-          </svg>
-        </button>
-        <button 
-          onClick={() => activeEditor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')}
-          title="Align Center"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="10" x2="6" y2="10"></line>
-            <line x1="21" y1="6" x2="3" y2="6"></line>
-            <line x1="21" y1="14" x2="3" y2="14"></line>
-            <line x1="18" y1="18" x2="6" y2="18"></line>
-          </svg>
-        </button>
-        <button 
-          onClick={() => activeEditor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')}
-          title="Align Right"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="21" y1="10" x2="7" y2="10"></line>
-            <line x1="21" y1="6" x2="3" y2="6"></line>
-            <line x1="21" y1="14" x2="3" y2="14"></line>
-            <line x1="21" y1="18" x2="7" y2="18"></line>
-          </svg>
-        </button>
-        <button 
-          onClick={() => activeEditor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')}
-          title="Justify"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="21" y1="10" x2="3" y2="10"></line>
-            <line x1="21" y1="6" x2="3" y2="6"></line>
-            <line x1="21" y1="14" x2="3" y2="14"></line>
-            <line x1="21" y1="18" x2="3" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-      {/* Indentation */}
-      <div style={{ display: 'flex', gap: '4px' }}>
-        <button 
-          title="Increase Indent"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="3" y1="8" x2="21" y2="8"></line>
-            <line x1="3" y1="16" x2="21" y2="16"></line>
-            <line x1="13" y1="12" x2="21" y2="12"></line>
-            <polyline points="8 12 4 8 8 4"></polyline>
-          </svg>
-        </button>
-        <button 
-          title="Decrease Indent"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="3" y1="8" x2="21" y2="8"></line>
-            <line x1="3" y1="16" x2="21" y2="16"></line>
-            <line x1="13" y1="12" x2="21" y2="12"></line>
-            <polyline points="4 12 8 8 4 4"></polyline>
-          </svg>
-        </button>
-        <button 
-          onClick={clearFormatting}
-          title="Clear Formatting"
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            padding: '4px',
-            background: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M17 14l-5-5-5 5"></path>
-            <path d="M12 9v9"></path>
-            <path d="M5 4h14"></path>
-          </svg>
-        </button>
-      </div>
-
-      {/* Add Shortcodes Button - Positioned to the right */}
-      <button
-        onClick={() => {
-          // Implementation for adding shortcodes
-          alert('Add shortcodes functionality would go here');
+      {/* Image Upload Modal */}
+      <Modal
+        title="Insert Image"
+        open={imageModalVisible}
+        onOk={handleImageInsert}
+        onCancel={() => {
+          setImageModalVisible(false);
+          setImageUrl('');
+          setImageFile(null);
         }}
-        style={{
-          border: '1px solid #e0e0e0',
-          borderRadius: '4px',
-          padding: '4px 12px',
-          background: '#f5f5f5',
-          marginLeft: 'auto',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          cursor: 'pointer'
-        }}
+        getContainer={false}
       >
-        <span style={{ 
-          border: '1px solid #e0e0e0', 
-          borderRadius: '4px', 
-          padding: '2px 4px',
-          color: '#666',
-          fontFamily: 'monospace'
-        }}>
-          {'</>'}
-        </span>
-        <span>Add Shortcodes</span>
-      </button>
-    </div>
+        <div style={{ marginBottom: 16 }}>
+          <p>Upload an image from your computer:</p>
+          <Upload
+            {...uploadProps}
+            listType="picture-card"
+            maxCount={1}
+          >
+            <div>
+              <PlusOutlined />
+              <div style={{ marginTop: 8 }}>Upload</div>
+            </div>
+          </Upload>
+          
+          <p style={{ marginTop: 16 }}>Or enter an image URL:</p>
+          <input
+            type="text"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="https://example.com/image.jpg"
+            style={{ width: '100%', padding: '8px' }}
+          />
+          
+          {imageUrl && !imageFile && (
+            <div style={{ marginTop: 8 }}>
+              <img 
+                src={imageUrl} 
+                alt="Preview" 
+                style={{ maxWidth: '100%', maxHeight: 200 }} 
+                onError={() => console.log('Error loading image preview')}
+              />
+            </div>
+          )}
+        </div>
+      </Modal>
+    </>
   );
 };

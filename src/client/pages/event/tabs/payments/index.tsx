@@ -34,6 +34,8 @@ import './style.scss';
 import { FaPlus } from 'react-icons/fa';
 import paypal from '../../../../../../assets/icons/paypal/paypal.png';
 import stripe from '../../../../../../assets/icons/stripe/stripe.png';
+import { PiClockClockwiseFill } from "react-icons/pi";
+
 
 const { Title } = Typography;
 
@@ -155,66 +157,6 @@ const Payments: React.FC = () => {
         return <Skeleton active />;
     }
 
-    const columns = [
-        {
-            title: __('Duration', 'quillbooking'),
-            dataIndex: 'duration',
-            key: 'duration',
-            render: (text: number) =>
-                sprintf(__('%s minutes', 'quillbooking'), text),
-        },
-        {
-            title: __('Item Name', 'quillbooking'),
-            dataIndex: 'item',
-            key: 'item',
-            render: (
-                text: string,
-                item: PaymentItem & { duration: string }
-            ) => (
-                <Form.Item
-                    name={['multi_duration_items', item.duration, 'item']}
-                    initialValue={text}
-                    rules={[
-                        {
-                            required: true,
-                            message: __(
-                                'Please enter item name',
-                                'quillbooking'
-                            ),
-                        },
-                    ]}
-                >
-                    <Input placeholder={__('Item Name', 'quillbooking')} />
-                </Form.Item>
-            ),
-        },
-        {
-            title: __('Price', 'quillbooking'),
-            dataIndex: 'price',
-            key: 'price',
-            render: (
-                text: number,
-                item: PaymentItem & { duration: string }
-            ) => (
-                <Form.Item
-                    name={['multi_duration_items', item.duration, 'price']}
-                    initialValue={text}
-                    rules={[
-                        {
-                            required: true,
-                            message: __(
-                                'Please enter item price',
-                                'quillbooking'
-                            ),
-                        },
-                    ]}
-                >
-                    <InputNumber placeholder={__('Price', 'quillbooking')} />
-                </Form.Item>
-            ),
-        },
-    ];
-
     const isWooCommerceEnabled = ConfigAPI.isWoocommerceActive();
 
     return (
@@ -237,29 +179,80 @@ const Payments: React.FC = () => {
                     gap={25}
                     className="quillbooking-payments-tab mt-4"
                 >
-                    <Flex className="justify-between items-center">
-                        <Flex vertical gap={1}>
-                            <div className="text-[#09090B] font-bold">
-                                {__('Enable Payment', 'quillbooking')}
-                            </div>
-                            <div className="text-[#71717A] font-[500]">
-                                {__(
-                                    'Enable this event as Paid and collect payment on booking',
-                                    'quillbooking'
-                                )}
-                            </div>
-                        </Flex>
-                        <Form.Item
-                            name="enable_payment"
-                            valuePropName="checked"
-                        >
-                            <Switch className="custom-switch" />
-                        </Form.Item>
-                    </Flex>
                     <Form.Item shouldUpdate style={{ marginBottom: 0 }}>
                         {({ getFieldValue }) => {
-                            const enablePayment =
-                                getFieldValue('enable_payment');
+                            const enablePayment = getFieldValue('enable_payment');
+                            const allowAttendeesToSelectDuration = get(
+                                event,
+                                'additional_settings.allow_attendees_to_select_duration'
+                            );
+
+                            if (!enablePayment) {
+                                // Only show Enable Payment full width if switch is off
+                                return (
+                                    <Flex gap={10} className="w-full">
+                                        <Flex className="justify-between items-center w-full">
+                                            <Flex vertical gap={1}>
+                                                <div className="text-[#09090B] font-bold">
+                                                    {__('Enable Payment', 'quillbooking')}
+                                                </div>
+                                                <div className="text-[#71717A] font-[500]">
+                                                    {__('Enable this event as Paid and collect payment on booking', 'quillbooking')}
+                                                </div>
+                                            </Flex>
+                                            <Form.Item name="enable_payment" valuePropName="checked">
+                                                <Switch className="custom-switch" />
+                                            </Form.Item>
+                                        </Flex>
+                                    </Flex>
+                                );
+                            }
+
+                            // enable_payment is ON
+                            return (
+                                <Flex gap={20} className="w-full">
+                                    <Flex className={`justify-between items-center ${allowAttendeesToSelectDuration ? 'w-1/2' : 'w-full'}`}>
+                                        <Flex vertical gap={1}>
+                                            <div className="text-[#09090B] font-bold">
+                                                {__('Enable Payment', 'quillbooking')}
+                                            </div>
+                                            <div className="text-[#71717A] font-[500]">
+                                                {__('Enable this event as Paid and collect payment on booking', 'quillbooking')}
+                                            </div>
+                                        </Flex>
+                                        <Form.Item name="enable_payment" valuePropName="checked">
+                                            <Switch className="custom-switch" />
+                                        </Form.Item>
+                                    </Flex>
+
+                                    {allowAttendeesToSelectDuration && (
+                                        <Flex className="justify-between items-center w-1/2">
+                                            <Flex vertical gap={1}>
+                                                <div className="text-[#09090B] font-bold">
+                                                    {__('Enable Multiple Payment', 'quillbooking')}
+                                                </div>
+                                                <div className="text-[#71717A] font-[500]">
+                                                    {__('Enable Multiple Payment options based on duration.', 'quillbooking')}
+                                                </div>
+                                            </Flex>
+                                            <Form.Item
+                                                name="enable_items_based_on_duration"
+                                                valuePropName="checked"
+                                            >
+                                                <Switch className="custom-switch" />
+                                            </Form.Item>
+                                        </Flex>
+                                    )}
+                                </Flex>
+                            );
+                        }}
+                    </Form.Item>
+
+
+                    {/* Main form content */}
+                    <Form.Item shouldUpdate style={{ marginBottom: 0 }}>
+                        {({ getFieldValue }) => {
+                            const enablePayment = getFieldValue('enable_payment');
                             const type = getFieldValue('type');
                             const allowAttendeesToSelectDuration = get(
                                 event,
@@ -292,7 +285,7 @@ const Payments: React.FC = () => {
                                                 <Radio
                                                     value="native"
                                                     className={`custom-radio border w-1/2 rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                                          ${selectedValue === 'native'
+                                                  ${selectedValue === 'native'
                                                             ? 'bg-color-secondary border-color-primary'
                                                             : 'border'
                                                         }`}
@@ -308,7 +301,7 @@ const Payments: React.FC = () => {
                                                         !isWooCommerceEnabled
                                                     }
                                                     className={`custom-radio border w-1/2 rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                                        ${selectedValue === 'woocommerce'
+                                                ${selectedValue === 'woocommerce'
                                                             ? 'bg-color-secondary border-color-primary'
                                                             : 'border'
                                                         }`}
@@ -321,7 +314,7 @@ const Payments: React.FC = () => {
                                             </Radio.Group>
                                         </Flex>
                                     </Form.Item>
-                                    <Form.Item className=''>
+                                    <Form.Item className='mt-5'>
                                         <Flex vertical gap={2}>
                                             <div className="text-[#09090B] font-semibold text-[16px]">
                                                 {__(
@@ -329,7 +322,7 @@ const Payments: React.FC = () => {
                                                     'quillbooking'
                                                 )}
                                             </div>
-                                            <Flex gap={20}>
+                                            <Flex gap={20} className='mb-5'>
                                                 <Checkbox checked={selectedMethod.includes("paypal")}
                                                     onChange={() => toggleSelectionMethod("paypal")}
                                                     className={`custom-check border px-4 py-[10px] rounded-lg ${selectedMethod.includes("paypal") ? "border-color-primary bg-color-secondary" : ""}`}>
@@ -389,62 +382,77 @@ const Payments: React.FC = () => {
                                     }
                                     {type === 'native' && (
                                         <>
-                                            {allowAttendeesToSelectDuration && (
-                                                <Flex className="justify-between items-center w-full">
-                                                    <Flex vertical gap={1}>
-                                                        <div className="text-[#09090B] font-bold">
-                                                            {__('Enable Multiple Payment', 'quillbooking')}
-                                                        </div>
-                                                        <div className="text-[#71717A] font-[500]">
-                                                            {__(
-                                                                'Enable Multiple Payment options based on duration.',
-                                                                'quillbooking'
-                                                            )}
-                                                        </div>
-                                                    </Flex>
-                                                    <Form.Item
-                                                        name="enable_items_based_on_duration"
-                                                        valuePropName="checked"
-                                                    >
-                                                        <Switch className="custom-switch" />
-                                                    </Form.Item>
-                                                </Flex>
-                                            )}
                                             {enableItemsBasedOnDuration &&
                                                 allowAttendeesToSelectDuration ? (
-                                                <>
-                                                    <Table
-                                                        columns={columns}
-                                                        dataSource={map(
-                                                            get(
-                                                                event,
-                                                                'additional_settings.selectable_durations'
-                                                            ),
-                                                            (duration) => ({
-                                                                duration:
-                                                                    duration.toString(),
-                                                                item: get(
-                                                                    settings,
-                                                                    [
-                                                                        'multi_duration_items',
-                                                                        duration,
-                                                                        'item',
-                                                                    ]
-                                                                ),
-                                                                price: get(
-                                                                    settings,
-                                                                    [
-                                                                        'multi_duration_items',
-                                                                        duration,
-                                                                        'price',
-                                                                    ]
-                                                                ),
-                                                            })
+                                                <Flex vertical gap={20}>
+                                                    <Header
+                                                        header={__('Booking Payment Items', 'quillbooking')}
+                                                        subHeader={__(
+                                                            'Manage your Payment Items per Durations for events.',
+                                                            'quillbooking'
                                                         )}
-                                                        pagination={false}
-                                                        bordered
                                                     />
-                                                </>
+                                                    {map(get(event, 'additional_settings.selectable_durations', []), (duration: number | string) => {
+                                                        const durationStr = duration.toString();
+
+                                                        const itemValue = get(settings, ['multi_duration_items', durationStr, 'item']);
+                                                        const priceValue = get(settings, ['multi_duration_items', durationStr, 'price']);
+
+                                                        return (
+                                                            <Card
+                                                                key={durationStr}
+                                                                className="w-full"
+                                                            >
+                                                                <Flex vertical>
+                                                                    <div className="font-semibold text-[#7E8299] mb-5 flex items-center px-3 py-1 bg-[#F1F1F2] rounded-lg w-[140px]">
+                                                                      <PiClockClockwiseFill className='text-[18px] mr-1'/>  {sprintf(__('%s minutes', 'quillbooking'), duration)}
+                                                                    </div>
+                                                                    <Flex gap={10}>
+                                                                        <Form.Item
+                                                                            name={['multi_duration_items', durationStr, 'item']}
+                                                                            initialValue={itemValue}
+                                                                            rules={[
+                                                                                {
+                                                                                    required: true,
+                                                                                    message: __('Please enter item name', 'quillbooking'),
+                                                                                },
+                                                                            ]}
+                                                                            className='w-full'
+                                                                        >
+                                                                            <div className="text-[#09090B] text-[16px] pb-1">
+                                                                                {__("Booking Payment Items", "quillbooking")}
+                                                                                <span className='text-red-500'>*</span>
+                                                                            </div>
+                                                                            <Input placeholder={__('Booking Fee', 'quillbooking')} className='h-[48px] rounded-lg w-full' />
+                                                                        </Form.Item>
+
+                                                                        <Form.Item
+                                                                            name={['multi_duration_items', durationStr, 'price']}
+                                                                            initialValue={priceValue}
+                                                                            rules={[
+                                                                                {
+                                                                                    required: true,
+                                                                                    message: __('Please enter item price', 'quillbooking'),
+                                                                                },
+                                                                            ]}
+                                                                            className='w-full'
+                                                                        >
+                                                                            <div className="text-[#09090B] text-[16px] pb-1">
+                                                                                {__("Price", "quillbooking")}
+                                                                                <span className='text-red-500'>*</span>
+                                                                            </div>
+                                                                            <InputNumber
+                                                                                placeholder={__('Price', 'quillbooking')}
+                                                                                suffix={<span className='border-l pl-2'>$</span>}
+                                                                                className='h-[48px] rounded-lg w-full'
+                                                                            />
+                                                                        </Form.Item>
+                                                                    </Flex>
+                                                                </Flex>
+                                                            </Card>
+                                                        );
+                                                    })}
+                                                </Flex>
                                             ) : (
                                                 <Form.List name="items">
                                                     {(
@@ -527,19 +535,6 @@ const Payments: React.FC = () => {
                                                                                 className='h-[48px] rounded-lg w-full'
                                                                             />
                                                                         </Form.Item>
-                                                                        {/* <Button
-                                                                            danger
-                                                                            onClick={() =>
-                                                                                remove(
-                                                                                    name
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            {__(
-                                                                                'Remove',
-                                                                                'quillbooking'
-                                                                            )}
-                                                                        </Button> */}
                                                                     </Flex>
                                                                 )
                                                             )}
@@ -570,7 +565,7 @@ const Payments: React.FC = () => {
                     </Form.Item >
                 </Flex>
             </Form>
-        </Card >
+        </Card>
     );
 };
 

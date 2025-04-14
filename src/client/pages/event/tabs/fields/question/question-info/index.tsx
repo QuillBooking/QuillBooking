@@ -44,6 +44,10 @@ const QuestionInfo: React.FC<QuestionInfoProps> = ({
 							label: __('Textarea', 'quillbooking'),
 						},
 						{
+							value: 'phone',
+							label: __('phone', 'quillbooking'),
+						},
+						{
 							value: 'checkbox',
 							label: __('Checkbox', 'quillbooking'),
 						},

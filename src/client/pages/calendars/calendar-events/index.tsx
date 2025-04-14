@@ -107,31 +107,7 @@ const CalendarEvents: React.FC<{
 													}
 
 												/>
-												// <Flex vertical gap={10}>
-												//     <Button type="text" icon={<CopyOutlined />}>{__('Clone', 'quillbooking')}</Button>
-												//     <Button
-												//         type="text"
-												//         icon={<CloneIcon />}
-												//         loading={loading}
-												//         onClick={() => handleDuplicate(event)}
-												//     >
-												//         {__('Copy Link', 'quillbooking')}
-												//     </Button>
-												//     <Popconfirm
-												//         title={__('Are you sure to delete this event?', 'quillbooking')}
-												//         onConfirm={() => handleDelete(event.id)}
-												//         okText={__('Yes', 'quillbooking')}
-												//         cancelText={__('No', 'quillbooking')}
-												//     >
-												//         <Button
-												//             type="text"
-												//             icon={<DeleteOutlined />
 
-												//             }>
-												//             {__('Delete', 'quillbooking')}
-												//         </Button>
-												//     </Popconfirm>
-												// </Flex>
 											}
 										>
 											<Button
@@ -280,48 +256,19 @@ const CalendarEvents: React.FC<{
 							>
 								<CalendarAddIcon />
 								<span className="pt-[8.5px] text-center text-color-primary self-center">
-								{__('Create Event', 'quillbooking')}
+									{__('Create Event', 'quillbooking')}
 								</span>
 							</Button>
 
 
 							<CreateEvent
 								visible={showCreateEventModal}
-								setVisible = {setShowCreateEventModal}
+								setVisible={setShowCreateEventModal}
 								onClose={() => setShowCreateEventModal(false)}
 								calendarId={calendar.id}
 								calendarType={calendar.type}
 							/>
 						</>
-						// <Popover
-						// 	trigger={['click']}
-						// 	content={
-						// 		<Flex vertical gap={10}>
-						// 			<>
-						// 				{map(hostEventsTypes, (label, type) => (
-						// 					<Button
-						// 						type="text"
-						// 						key={type}
-						// 						onClick={() => {
-						// 							navigate(
-						// 								`calendars/${calendar.id}/create-event/${type}`
-						// 							);
-						// 						}}
-						// 					>
-						// 						{label}
-						// 					</Button>
-						// 				))}
-						// 			</>
-						// 		</Flex>
-						// 	}
-						// >
-						// 	<Button className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]">
-						// 		<CalendarAddIcon />
-						// 		<span className="pt-[8.5px] text-center text-color-primary self-center">
-						// 			{__('Create Event', 'quillbooking')}
-						// 		</span>
-						// 	</Button>
-						// </Popover>
 					)}
 				</div>
 			) : (
@@ -333,35 +280,27 @@ const CalendarEvents: React.FC<{
 						/>
 					)}
 					{calendar.type == 'host' && (
-						<Popover
-							trigger={['click']}
-							content={
-								<Flex vertical gap={10}>
-									<>
-										{map(hostEventsTypes, (label, type) => (
-											<Button
-												type="text"
-												key={type}
-												onClick={() => {
-													navigate(
-														`calendars/${calendar.id}/create-event/${type}`
-													);
-												}}
-											>
-												{label}
-											</Button>
-										))}
-									</>
-								</Flex>
-							}
-						>
-							<Button className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]">
+
+						<>
+							<Button
+								className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]"
+								onClick={() => setShowCreateEventModal(true)}
+							>
 								<CalendarAddIcon />
 								<span className="pt-[8.5px] text-center text-color-primary self-center">
 									{__('Create Event', 'quillbooking')}
 								</span>
 							</Button>
-						</Popover>
+
+
+							<CreateEvent
+								visible={showCreateEventModal}
+								setVisible={setShowCreateEventModal}
+								onClose={() => setShowCreateEventModal(false)}
+								calendarId={calendar.id}
+								calendarType={calendar.type}
+							/>
+						</>
 					)}
 				</div>
 			)}

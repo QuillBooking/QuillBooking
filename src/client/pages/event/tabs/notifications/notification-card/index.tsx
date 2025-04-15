@@ -92,7 +92,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                         <span className='text-red-500'>*</span>
                     </span>}
                     //rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}
-                    className='w-full'
+                    className='w-full mb-6'
                 >
                     <Input
                         placeholder='New Booking: {{guest.full_name}} @ {{booking.start_date_time_for_host}}'
@@ -113,11 +113,13 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                             {__('Email Body', 'quillbooking')}
                             <span className='text-red-500'>*</span>
                         </span>
+                        <div className='mt-2'>
                         <EmailEditor message={notification.template.message}
                             onChange={(content) => {
                                 console.log(content);  // Log the updated value
                                 form.setFieldsValue({ template: { message: content } });
                             }} />
+                            </div>
                     </>
                 ) : (
                     <>

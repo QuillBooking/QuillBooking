@@ -32,6 +32,7 @@ import {
 	CalendarsIcon,
 	EmailNotiIcon,
 	IntegrationsIcon,
+	PaymentSettingsIcon,
 	QuestionIcon,
 	SettingsIcon,
 	ShareIcon,
@@ -236,6 +237,12 @@ const Event: React.FC = () => {
 			label: __('Advanced Settings', 'quillbooking'),
 			children: <AdvancedSettings />,
 			icon: <SettingsIcon />,
+		},
+		{
+			key: 'payment-settings',
+			label: __('Payments Settings', 'quillbooking'),
+			children: <Payments />,
+			icon: <PaymentSettingsIcon />,
 		},
 		{
 			key: 'webhooks-feeds',

@@ -31,6 +31,7 @@ interface AddCalendarModalProps {
 const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type, excludedUsers, onSaved }) => {
     const { callApi, loading } = useApi();
     const [formData, setFormData] = useState<Partial<Calendar & { members: number[] }>>({
+        name: "test",
         type,
         members: [],
         timezone: getCurrentTimezone(),

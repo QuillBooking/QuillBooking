@@ -293,6 +293,7 @@ export type FieldType = {
 	event_location: string;
 	placeholder: string;
 	order: number;
+	hidden?: boolean;
 	settings?: {
 		options?: string[];
 		min?: string;

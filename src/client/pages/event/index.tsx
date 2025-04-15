@@ -113,23 +113,28 @@ const Event: React.FC = () => {
 	};
 
 	useEffect(() => {
-		const handleTabClose = (event) => {
-			if(saveDisabled) {
+		fetchEvent();
+	}, []);
+
+	useEffect(() => {
+		const handleTabClose = (event: BeforeUnloadEvent) => {
+			if (saveDisabled) {
 				return;
 			}
-			event.preventDefault();
-			if (discardChanges()) {
-				return;
+			// If discardChanges returns false (meaning changes are unsaved),
+			// then we want to prompt the user before reloading/closing.
+			if (!discardChanges()) {
+				event.preventDefault();
+				// Setting returnValue triggers the browser's confirmation dialog.
+				event.returnValue = '';
 			}
 		};
-
 		window.addEventListener('beforeunload', handleTabClose);
-		fetchEvent();
 
 		return () => {
 			window.removeEventListener('beforeunload', handleTabClose);
 		};
-	}, []);
+	}, [saveDisabled]);
 
 	const handleDeleteEvent = () => {
 		if (!event?.id) return;
@@ -372,11 +377,10 @@ const Event: React.FC = () => {
 								onClick={handleSave}
 								loading={loading}
 								disabled={saveDisabled}
-								className={`rounded-lg font-[500] text-white ${
-									saveDisabled
+								className={`rounded-lg font-[500] text-white ${saveDisabled
 										? 'bg-gray-400 cursor-not-allowed'
 										: 'bg-color-primary '
-								}`}
+									}`}
 							>
 								{__('Save Changes', 'quillbooking')}
 							</Button>

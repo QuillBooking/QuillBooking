@@ -8,7 +8,6 @@ import { __ } from '@wordpress/i18n';
  */
 import {
 	Checkbox,
-	DatePicker,
 	Form,
 	Input,
 	InputNumber,
@@ -24,37 +23,37 @@ import { BiPlus } from 'react-icons/bi';
 import { TrashIcon } from '../../../../../../../components';
 import CommonNumberInput from './common-number-input';
 import CommonDatepicker from './common-datepicker';
+import EmailEditor from '../../../notifications/notification-card/editor';
 
 interface QuestionInputsProps {
 	fieldKey: string;
 	allFields: FieldsGroup;
-	setEdtingField: (fieldKey: string) => void;
-	// handleSave: (updatedField: Fields) => void;
-	handleChange: (values: any) => void;
+	setEditingFieldKey: (fieldKey: string) => void;
+	onUpdate: (updatedField: any) => void;
 	type: string;
 }
 const QuestionInputs: React.FC<QuestionInputsProps> = ({
 	allFields,
 	fieldKey,
 	type,
-	handleChange,
-	setEdtingField
+	onUpdate,
+	setEditingFieldKey
 }) => {
 	const [form] = Form.useForm();
 
 	const onChange = () => {
 		form.validateFields().then((values) => {
-			setEdtingField(fieldKey);
-			handleChange({ ...allFields[fieldKey], ...values });
+			console.log('values', values);
+			setEditingFieldKey(fieldKey);
+			onUpdate({ ...allFields[fieldKey], ...values });
 		});
 	};
-
 	return (
 		<Form
 			form={form}
 			layout="vertical"
 			initialValues={allFields[fieldKey]}
-			onChange={onChange}
+			onValuesChange={onChange}
 		>
 			<div className='flex gap-4'>
 				<Form.Item
@@ -68,7 +67,8 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 					]}
 				>
 					<CommonInput
-						label={__('Label*', 'quillbooking')}
+						required={true}
+						label={__('Label', 'quillbooking')}
 						placeholder={__('Enter field label', 'quillbooking')}
 					/>
 				</Form.Item>
@@ -109,16 +109,16 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 						</Form.Item>
 					)}
 
-					{type === 'phone' && (<Form.Item name={['settings', 'sms']}>
+					{type === 'phone' && (<Form.Item name={['settings', 'sms']} valuePropName="checked">
 						<Checkbox className="custom-checkbox">
 							{__('Use this number for sending sms notification', 'quillbooking')}
 						</Checkbox>
 					</Form.Item>)}
 
-					{(type === 'select' ||
+					{((type === 'select' ||
 						type === 'multiple_select' ||
 						type === 'radio' ||
-						type === 'checkbox_group') && (
+						type === 'checkbox_group') && fieldKey !== 'location-select') && (
 							<Form.List
 								name={['settings', 'options']}
 								initialValue={
@@ -144,15 +144,6 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 															className='flex-1'
 															{...restField}
 															name={name}
-															rules={[
-																{
-																	required: true,
-																	message: __(
-																		'Option is required',
-																		'quillbooking'
-																	),
-																},
-															]}
 															style={{
 																marginBottom: 0,
 															}}
@@ -352,15 +343,6 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 								<Form.Item
 									className='flex-1'
 									name={['settings', 'maxFileCount']}
-									rules={[
-										{
-											required: true,
-											message: __(
-												'Max file count is required',
-												'quillbooking'
-											),
-										},
-									]}
 								>
 									<CommonNumberInput label={__('Max File Count', 'quillbooking')} placeholder={__(
 										'Enter maximum file count',
@@ -400,6 +382,8 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 							name={['settings', 'termsText']}
 							label={__('Terms and Conditions', 'quillbooking')}
 						>
+							{/* update the message  */}
+							<EmailEditor message={''} onChange={onChange} />
 						</Form.Item>
 					)}
 				</>

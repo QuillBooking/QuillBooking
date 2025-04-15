@@ -21,6 +21,7 @@ use QuillBooking\Fields\Radio_Field;
 use QuillBooking\Fields\Textarea_Field;
 use QuillBooking\Fields\Select_Field;
 use QuillBooking\Abstracts\Manager;
+use QuillBooking\Fields\Phone_Field;
 use QuillBooking\Traits\Singleton;
 
 /**
@@ -54,6 +55,7 @@ class Fields_Manager extends Manager {
 			Radio_Field::class,
 			Textarea_Field::class,
 			Select_Field::class,
+			Phone_Field::class,
 		);
 
 		foreach ( $fields as $field ) {

@@ -7,28 +7,28 @@ import { __ } from '@wordpress/i18n';
  * External dependencies
  */
 import { Select } from 'antd';
-import { Fields, FieldsGroup } from 'client/types';
+import { FieldsGroup } from 'client/types';
+import TagComponent from './tag';
 
 interface QuestionInfoProps {
 	fieldKey: string;
 	index: number;
 	allFields: FieldsGroup;
-	handleSave: (updatedField: Fields) => void;
-	setEdtingField: (fieldKey: string) => void;
+	onUpdate: (updatedField: any) => void;
+	setEditingFieldKey: (fieldKey: string) => void;
 	setType: (type: string) => void;
 }
 const QuestionInfo: React.FC<QuestionInfoProps> = ({
 	fieldKey,
 	index,
 	allFields,
-	handleSave,
-	setEdtingField,
+	onUpdate,
+	setEditingFieldKey,
 	setType,
 }) => {
 	return (
 		<div className="flex items-center gap-8">
 			<p className="font-medium text-xl">
-				{/* {allFields[fieldKey].label} */}
 				{__('Question', 'quillbooking')} {`(${index + 1})`}
 			</p>
 
@@ -102,9 +102,9 @@ const QuestionInfo: React.FC<QuestionInfoProps> = ({
 							...allFields[fieldKey],
 							type: value,
 						};
-						setEdtingField(fieldKey);
+						setEditingFieldKey(fieldKey);
 						setType(value);
-						// handleSave(updatedField);
+						onUpdate(updatedField);
 					}}
 					getPopupContainer={(trigger) =>
 						document.getElementById(`card-${fieldKey}`) || trigger
@@ -119,20 +119,16 @@ const QuestionInfo: React.FC<QuestionInfoProps> = ({
 			</div>
 
 			<div className="flex gap-2">
-				{allFields[fieldKey].group == 'system' ? (
-					<div className="font-bold text-xs py-1 px-4 bg-[#EEE7F4] rounded-[40px] text-color-primary uppercase">
-						{__('System', 'quillbooking')}
-					</div>
-				) : (
-					''
+				{allFields[fieldKey].group == 'system' && (
+					<TagComponent label={__('system', 'quillbooking')} />
 				)}
 
-				{allFields[fieldKey].required ? (
-					<div className="fon#D8D7D7t-bold text-xs py-1 px-4 bg-[#EEE7F4] rounded-[40px] text-color-primary uppercase">
-						{__('rquired', 'quillbooking')}
-					</div>
-				) : (
-					''
+				{allFields[fieldKey].group == 'custom' && (
+					<TagComponent label={__('custom', 'quillbooking')} />
+				)}
+
+				{allFields[fieldKey].required && (
+					<TagComponent label={__('required', 'quillbooking')} />
 				)}
 			</div>
 		</div>

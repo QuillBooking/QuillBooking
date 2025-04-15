@@ -42,6 +42,7 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 			null
 		);
 
+
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {
 				if (fields) {
@@ -70,7 +71,7 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 			});
 		};
 
-		const handleSave = (values: any) => {
+		const handleUpdate = (values: any) => {
 			if (!fields || !editingFieldKey) return;
 			const updatedFields = { ...fields };
 			const group = updatedFields.system[editingFieldKey]
@@ -84,11 +85,10 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 				...(updatedFields[group]?.[editingFieldKey] ?? {}),
 				...values,
 			};
+
 			(updatedFields[group] ??= {})[editingFieldKey] = updatedField;
-			console.log(updatedFields);
 			setFields(updatedFields);
 			props.setDisabled(false);
-
 		};
 
 		const saveFields = (fields: Fields) => {
@@ -104,6 +104,7 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 						__('Fields saved successfully', 'quillbooking')
 					);
 					setEditingFieldKey(null);
+					props.setDisabled(true);
 				},
 				onError(error) {
 					errorNotice(error.message);
@@ -118,7 +119,7 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 				Object.keys(fields?.location || {}).length +
 				Object.keys(fields?.custom || {}).length +
 				1;
-			const defaultLabel = __('New Question', 'quillbooking') + order;
+			const defaultLabel = __('New Question', 'quillbooking') + ' ' + order;
 			const newFieldKey = slugify(defaultLabel, { lower: true });
 			const newField: FieldType = {
 				label: defaultLabel,
@@ -149,7 +150,6 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 			delete (updatedFields[group] ?? {})[fieldKey];
 			setFields(updatedFields);
 			props.setDisabled(false);
-
 		};
 
 		const moveField = (fieldKey: string, direction: 'up' | 'down') => {
@@ -192,6 +192,7 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 					},
 					{ system: {}, location: {}, custom: {} } as Fields
 				);
+				reorderedFields.other = prevFields.other || {};
 
 				return reorderedFields;
 			});
@@ -241,7 +242,7 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 								<Question
 									allFields={allFields}
 									fieldKey={fieldKey}
-									handleSave={handleSave}
+									onUpdate={handleUpdate}
 									index={index}
 									moveField={moveField}
 									removeField={removeField}
@@ -281,7 +282,7 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 							<Question
 								allFields={otherFields}
 								fieldKey={fieldKey}
-								handleSave={handleSave}
+								onUpdate={handleUpdate}
 								index={index}
 								moveField={moveField}
 								removeField={removeField}

@@ -739,7 +739,6 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			$event->save();
-			$event->setSystemFields();
 
 			return new WP_REST_Response( $event, 200 );
 		} catch ( Exception $e ) {

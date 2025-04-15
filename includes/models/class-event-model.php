@@ -606,8 +606,10 @@ class Event_Model extends Model {
 			foreach ( $group_fields as $field_key => $field ) {
 				$field_type = Fields_Manager::instance()->get_item( $field['type'] );
 				$field_type = new $field_type();
-				if ( $field_type->has_options && ! isset( $field['settings']['options'] ) ) {
-					throw new \Exception( sprintf( __( 'Options are required for %s field', 'quillbooking' ), $field['label'] ) );
+				if ( ! $group === 'location-select' ) {
+					if ( $field_type->has_options && ! isset( $field['settings']['options'] ) ) {
+						throw new \Exception( sprintf( __( 'Options are required for %s field', 'quillbooking' ), $field['label'] ) );
+					}
 				}
 
 				$fields[ $group ][ $field_key ] = $field;

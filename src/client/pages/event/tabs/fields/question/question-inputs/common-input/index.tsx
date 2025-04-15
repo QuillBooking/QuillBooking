@@ -14,6 +14,7 @@ const CommonInput: React.FC<CommonInputProps> = ({
   placeholder,
   size = 'small',
   prefix,
+  required = false,
   ...rest
 }) => {
   return (
@@ -23,7 +24,9 @@ const CommonInput: React.FC<CommonInputProps> = ({
       prefix={
         prefix || (
           <span className="text-[#9BA7B7] font-normal text-sm px-1">
-            {label}
+            {label}  {required && (
+              <span className="text-[#EF4444]">*</span>
+            )}
           </span>
         )
       }

@@ -13,18 +13,16 @@
         "phpcompatibility/php-compatibility": "^9.3",
         "wp-coding-standards/wpcs": "^2.2",
         "sirbrillig/phpcs-variable-analysis": "^2.8",
-        "phpunit/phpunit": "^6.5",
-        "spatie/phpunit-watcher": "^1.23",
-        "yoast/phpunit-polyfills": "^1.0"
+        "phpunit/phpunit": "^9.6",
+        "yoast/phpunit-polyfills": "^1.0",
+        "spatie/phpunit-watcher": "^1.24"
     },
     "require": {
+        "php": ">=7.4",
         "composer/installers": "~1.0"
     },
     "config": {
         "process-timeout": 0,
-        "platform": {
-            "php": "7.4"
-        },
         "allow-plugins": {
             "composer/installers": true,
             "dealerdirect/phpcodesniffer-composer-installer": true
@@ -39,7 +37,6 @@
         ],
         "format": "phpcbf --standard=phpcs.xml.dist --report-summary --report-source",
         "lint": "phpcs --standard=phpcs.xml.dist",
-        "test": "phpunit",
-        "test:watch": "phpunit-watcher watch < /dev/tty"
+        "test": "phpunit"
     }
 }

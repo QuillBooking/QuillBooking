@@ -1,0 +1,65 @@
+name: WordPress Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  # Allow manual trigger of the workflow
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: WP ${{ matrix.wordpress }} on PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [7.4, 8.0, 8.1, 8.2]
+        wordpress: [latest, "6.4", "6.3", "6.2", "6.1", "6.0", "5.9"]
+        exclude:
+          # WordPress 5.9 doesn't fully support PHP 8.1 and 8.2
+          - php: 8.1
+            wordpress: "5.9"
+          - php: 8.2
+            wordpress: "5.9"
+          # PHP 8.2 compatibility is only fully supported in WP 6.2+
+          - php: 8.2
+            wordpress: "6.0"
+          - php: 8.2
+            wordpress: "6.1"
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, intl, gd, exif, iconv, imagick
+          coverage: none
+          tools: composer
+        
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v2
+        with:
+          composer-options: "--no-progress --no-ansi --no-interaction"
+
+      - name: Set up WordPress test environment
+        run: |
+          bash bin/install-wp-tests.sh wordpress_test root password localhost ${{ matrix.wordpress }}
+
+      - name: Run PHPUnit tests
+        run: |
+          composer test 

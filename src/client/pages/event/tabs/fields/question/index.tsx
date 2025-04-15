@@ -20,8 +20,7 @@ interface QuestionProps {
 	fieldKey: string;
 	index: number;
 	allFields: FieldsGroup;
-	onUpdate: (updatedField: any) => void;
-	setEditingFieldKey: (key: string) => void;
+	onUpdate: (updatedField: any, editingFieldKey: string) => void;
 	moveField: (fieldKey: string, direction: 'up' | 'down') => void;
 	removeField: (
 		fieldKey: string,
@@ -37,7 +36,6 @@ const Question: React.FC<QuestionProps> = ({
 	moveField,
 	removeField,
 	sortedFields,
-	setEditingFieldKey,
 }) => {
 	const [type, setType] = useState(allFields[fieldKey].type);
 
@@ -53,7 +51,6 @@ const Question: React.FC<QuestionProps> = ({
 					fieldKey={fieldKey}
 					index={index}
 					onUpdate={onUpdate}
-					setEditingFieldKey={setEditingFieldKey}
 					setType={setType}
 				/>
 			}
@@ -63,7 +60,6 @@ const Question: React.FC<QuestionProps> = ({
 					onUpdate={onUpdate}
 					fieldKey={fieldKey}
 					moveField={moveField}
-					setEditingFieldKey={setEditingFieldKey}
 					removeField={removeField}
 					sortedFields={sortedFields}
 				/>
@@ -73,7 +69,6 @@ const Question: React.FC<QuestionProps> = ({
 				allFields={allFields}
 				fieldKey={fieldKey}
 				onUpdate={onUpdate}
-				setEditingFieldKey={setEditingFieldKey}
 				type={type}
 			/>
 		</Card>

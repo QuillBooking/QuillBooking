@@ -38,10 +38,6 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 		const { callApi: saveApi } = useApi();
 		const { successNotice, errorNotice } = useNotice();
 		const [fields, setFields] = useState<Fields | null>(null);
-		const [editingFieldKey, setEditingFieldKey] = useState<string | null>(
-			null
-		);
-
 
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {
@@ -71,7 +67,7 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 			});
 		};
 
-		const handleUpdate = (values: any) => {
+		const handleUpdate = (values: any, editingFieldKey: string) => {
 			if (!fields || !editingFieldKey) return;
 			const updatedFields = { ...fields };
 			const group = updatedFields.system[editingFieldKey]
@@ -103,7 +99,6 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 					successNotice(
 						__('Fields saved successfully', 'quillbooking')
 					);
-					setEditingFieldKey(null);
 					props.setDisabled(true);
 				},
 				onError(error) {
@@ -246,7 +241,6 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 									index={index}
 									moveField={moveField}
 									removeField={removeField}
-									setEditingFieldKey={setEditingFieldKey}
 									sortedFields={sortedFields}
 								/>
 							))}
@@ -286,7 +280,6 @@ const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
 								index={index}
 								moveField={moveField}
 								removeField={removeField}
-								setEditingFieldKey={setEditingFieldKey}
 								sortedFields={Object.keys(otherFields)}
 							/>
 						))}

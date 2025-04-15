@@ -19,9 +19,8 @@ interface QuestionActionsProps {
 	fieldKey: string;
 	sortedFields: string[];
 	allFields: FieldsGroup;
-	onUpdate: (updatedField: any) => void;
+	onUpdate: (updatedField: any, editingFieldKey: string) => void;
 	moveField: (fieldKey: string, direction: 'up' | 'down') => void;
-	setEditingFieldKey: (fieldKey: string) => void;
 	removeField: (
 		fieldKey: string,
 		group: 'system' | 'location' | 'custom' | 'other'
@@ -34,7 +33,6 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
 	allFields,
 	onUpdate,
 	moveField,
-	setEditingFieldKey,
 	removeField,
 }) => {
 	return (
@@ -50,8 +48,7 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
 									...allFields[fieldKey],
 									hidden: checked,
 								};
-								setEditingFieldKey(fieldKey);
-								onUpdate(updatedField);
+								onUpdate(updatedField, fieldKey);
 							}
 						}
 						className={

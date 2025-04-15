@@ -28,8 +28,7 @@ import EmailEditor from '../../../notifications/notification-card/editor';
 interface QuestionInputsProps {
 	fieldKey: string;
 	allFields: FieldsGroup;
-	setEditingFieldKey: (fieldKey: string) => void;
-	onUpdate: (updatedField: any) => void;
+	onUpdate: (updatedField: any, editingFieldKey: string) => void;
 	type: string;
 }
 const QuestionInputs: React.FC<QuestionInputsProps> = ({
@@ -37,15 +36,13 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 	fieldKey,
 	type,
 	onUpdate,
-	setEditingFieldKey
 }) => {
 	const [form] = Form.useForm();
 
 	const onChange = () => {
 		form.validateFields().then((values) => {
 			console.log('values', values);
-			setEditingFieldKey(fieldKey);
-			onUpdate({ ...allFields[fieldKey], ...values });
+			onUpdate({ ...allFields[fieldKey], ...values }, fieldKey);
 		});
 	};
 	return (

@@ -14,8 +14,7 @@ interface QuestionInfoProps {
 	fieldKey: string;
 	index: number;
 	allFields: FieldsGroup;
-	onUpdate: (updatedField: any) => void;
-	setEditingFieldKey: (fieldKey: string) => void;
+	onUpdate: (updatedField: any, editingFieldKey: string) => void;
 	setType: (type: string) => void;
 }
 const QuestionInfo: React.FC<QuestionInfoProps> = ({
@@ -23,7 +22,6 @@ const QuestionInfo: React.FC<QuestionInfoProps> = ({
 	index,
 	allFields,
 	onUpdate,
-	setEditingFieldKey,
 	setType,
 }) => {
 	return (
@@ -102,9 +100,8 @@ const QuestionInfo: React.FC<QuestionInfoProps> = ({
 							...allFields[fieldKey],
 							type: value,
 						};
-						setEditingFieldKey(fieldKey);
 						setType(value);
-						onUpdate(updatedField);
+						onUpdate(updatedField, fieldKey);
 					}}
 					getPopupContainer={(trigger) =>
 						document.getElementById(`card-${fieldKey}`) || trigger

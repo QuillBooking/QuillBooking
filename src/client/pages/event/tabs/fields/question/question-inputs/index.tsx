@@ -56,12 +56,6 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 				<Form.Item
 					className='flex-1'
 					name="label"
-					rules={[
-						{
-							required: true,
-							message: __('Label is required', 'quillbooking'),
-						},
-					]}
 				>
 					<CommonInput
 						required={true}
@@ -388,8 +382,7 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 
 			{(allFields[fieldKey].group === 'system' &&
 				(fieldKey === 'name' ||
-					fieldKey === 'email' ||
-					fieldKey === 'address') || type === 'hidden') ? null : (
+					fieldKey === 'email') || allFields[fieldKey].group === 'system' || type === 'hidden') ? null : (
 				<Form.Item name="required" valuePropName="checked">
 					<Checkbox className="custom-checkbox">
 						{__('Required Question', 'quillbooking')}

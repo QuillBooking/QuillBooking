@@ -602,21 +602,35 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function updateFields( $fields ) {
+		$current_fields = $this->fields ?? array();
+
 		foreach ( $fields as $group => $group_fields ) {
 			foreach ( $group_fields as $field_key => $field ) {
-				$field_type = Fields_Manager::instance()->get_item( $field['type'] );
-				$field_type = new $field_type();
-				if ( ! $group === 'location-select' ) {
+				if ( in_array( $group, array( 'system', 'location' ), true ) ) {
+					// Keep existing fields and update only label, helper_text, and placeholder
+					if ( isset( $current_fields[ $group ][ $field_key ] ) ) {
+						$current_fields[ $group ][ $field_key ] = array_merge(
+							$current_fields[ $group ][ $field_key ],
+							array_intersect_key(
+								$field,
+								array_flip( array( 'label', 'helper_text', 'placeholder', 'hidden' ) )
+							)
+						);
+					}
+				} else {
+					$field_type = Fields_Manager::instance()->get_item( $field['type'] );
+					$field_type = new $field_type();
+
 					if ( $field_type->has_options && ! isset( $field['settings']['options'] ) ) {
 						throw new \Exception( sprintf( __( 'Options are required for %s field', 'quillbooking' ), $field['label'] ) );
 					}
-				}
 
-				$fields[ $group ][ $field_key ] = $field;
+					$current_fields[ $group ][ $field_key ] = $field;
+				}
 			}
 		}
 
-		$this->update_meta( 'fields', $fields );
+		$this->update_meta( 'fields', $current_fields );
 	}
 
 	/**

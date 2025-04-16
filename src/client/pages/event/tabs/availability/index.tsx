@@ -120,7 +120,7 @@ const AvailabilityTab: React.FC = () => {
 		closeOverrideModal();
 	};
 
-	if (loading || !availability || !dateOverrides || !range) {
+	if (loading || !availability || !range) {
 		return <Card loading />;
 	}
 
@@ -183,16 +183,18 @@ const AvailabilityTab: React.FC = () => {
 				onRangeTypeChange={(type) => {
 					setRange({
 						type,
-						days: type === 'days' ? 90 : undefined,
+						days: type === 'days' ? (range.days ? range.days : 60) : undefined,
 						start_date:
 							type === 'date_range'
-								? dayjs().format('YYYY-MM-DD')
+								?
+								(range.start_date ? range.start_date : dayjs().format('YYYY-MM-DD'))
 								: undefined,
 						end_date:
 							type === 'date_range'
-								? dayjs()
+								?
+								(range.end_date ? range.end_date : dayjs()
 									.add(90, 'days')
-									.format('YYYY-MM-DD')
+									.format('YYYY-MM-DD'))
 								: undefined,
 					});
 				}}

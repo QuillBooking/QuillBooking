@@ -20,7 +20,7 @@ import { useState } from '@wordpress/element';
 const { Text } = Typography;
 
 interface OverridesSectionProps {
-    dateOverrides: DateOverrides;
+    dateOverrides: DateOverrides | null;
     onRemoveOverride: (date: string) => void;
     selectedDate: string | null;
     overrideTimes: TimeSlot[];

@@ -452,6 +452,12 @@ class REST_Event_Controller extends REST_Controller {
 
 			$event_data = array_filter( $event_data );
 			$event      = Event_Model::create( $event_data );
+			$event->setEventRangeAttribute(
+				array(
+					'type' => 'days',
+					'days' => 60,
+				)
+			);
 			if ( ! $event->id ) {
 				return new WP_Error( 'rest_event_error', __( 'Event not created', 'quillbooking' ), array( 'status' => 500 ) );
 			}
@@ -568,20 +574,30 @@ class REST_Event_Controller extends REST_Controller {
 
 			if ( $calendarIds ) {
 				if ( ! is_array( $calendarIds ) ) {
-						$calendarIds = array( $calendarIds );
+					$calendarIds = array( $calendarIds );
 				}
 
-					$calendars = array();
+				$calendars = array();
 				foreach ( $calendarIds as $calendarId ) {
-						$calendar = Calendar_Model::find( $calendarId );
+					$calendar = Calendar_Model::find( $calendarId );
 					if ( $calendar ) {
-							$calendars[] = array(
-								'id'   => $calendar->id,
-								'name' => $calendar->name,
-							);
+						$calendars[] = array(
+							'id'   => $calendar->id,
+							'name' => $calendar->name,
+						);
 					}
 				}
-					$event->hosts = $calendars;
+				$event->hosts = $calendars;
+			} else {
+				$calendar = $event->calendar;
+				if ( $calendar ) {
+					$event->hosts = array(
+						array(
+							'id'   => $calendar->id,
+							'name' => $calendar->name,
+						),
+					);
+				}
 			}
 
 			return new WP_REST_Response( $event, 200 );
@@ -609,7 +625,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			$data = array(
 				'availability' => $event->availability,
-				'range'        => $event->event_range,
+				'range'        => $event->getEventRangeAttribute(),
 			);
 
 			return new WP_REST_Response( $data, 200 );

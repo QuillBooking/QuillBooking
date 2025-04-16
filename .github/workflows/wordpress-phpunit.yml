@@ -59,10 +59,8 @@ jobs:
         run: |
           composer remove --dev spatie/phpunit-watcher --no-update --no-interaction
 
-      - name: Install Composer dependencies
-        uses: ramsey/composer-install@v2
-        with:
-          composer-options: "--no-progress --no-ansi --no-interaction"
+      - name: Update Composer dependencies
+        run: composer update --no-progress --no-ansi --no-interaction
 
       - name: Set up WordPress test environment
         run: |

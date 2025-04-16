@@ -34,7 +34,7 @@
 		"baseUrl": "src",
 		"skipLibCheck": true,
 		"strictNullChecks": true,
-		"types": [],
+		"types": ["jest", "@testing-library/jest-dom"],
 		"paths": {
 			"@quillbooking/navigation": ["navigation"],
 			"@quillbooking/config": ["config"],

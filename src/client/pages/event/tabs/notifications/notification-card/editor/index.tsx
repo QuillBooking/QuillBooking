@@ -111,6 +111,8 @@ import { ListItemNode, ListNode } from '@lexical/list';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { $generateNodesFromDOM, $generateHtmlFromNodes } from '@lexical/html';
 import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin';
+import { MentionNode } from './mention-node';
+import { ImageNode,$createImageNode } from './img-node';
 
 import "./style.scss";
 
@@ -230,8 +232,13 @@ function HtmlSerializerPlugin({ onChange }) {
       // Using a timeout to avoid excessive serialization during typing
       const timeoutId = setTimeout(() => {
         editorState.read(async () => {
-          const htmlString = $generateHtmlFromNodes(editor);
-          onChange(htmlString);
+          try {
+            const htmlString = $generateHtmlFromNodes(editor);
+            onChange(htmlString);
+          } catch (error) {
+            console.error('Error serializing HTML:', error);
+            // Don't trigger onChange with invalid content
+          }
         });
       }, 250);
 
@@ -287,6 +294,8 @@ export default function EmailEditor({ message, onChange }) {
       TableCellNode,
       TableRowNode,
       LinkNode,
+      MentionNode,
+      ImageNode,
     ],
   };
 

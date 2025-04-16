@@ -22,7 +22,7 @@ if (appRoot) {
         <ConfigProvider
             theme={{
                 token: {
-                    colorPrimary: '#6d78d8',
+                    colorPrimary: '#953AE4',
                 },
                 components: {
                     Button: {

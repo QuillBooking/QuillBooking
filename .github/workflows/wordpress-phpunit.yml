@@ -43,6 +43,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install SVN
+        run: sudo apt-get update && sudo apt-get install -y subversion
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -50,6 +53,9 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, intl, gd, exif, iconv, imagick
           coverage: none
           tools: composer
+        
+      - name: Update Composer dependencies
+        run: composer update --no-progress --no-ansi --no-interaction
         
       - name: Install Composer dependencies
         uses: ramsey/composer-install@v2

@@ -15,9 +15,10 @@ import { Card, Switch, Button, Modal, Input, Form, InputNumber, Typography, Radi
 import { NotificationType } from '@quillbooking/client';
 import { useNotice, useApi } from '@quillbooking/hooks';
 import EmailEditor from './editor';
-import { LimitsAddIcon, LimitsTrashIcon, UrlIcon } from '@quillbooking/components';
+import { Header, LimitsAddIcon, LimitsTrashIcon, UrlIcon } from '@quillbooking/components';
 import { ReactMultiEmail, isEmail } from 'react-multi-email';
 import 'react-multi-email/dist/style.css';
+import SubjectModal from './subject-modal';
 
 const { TextArea } = Input;
 
@@ -34,11 +35,22 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
     const [form] = Form.useForm();
     const { successNotice, errorNotice } = useNotice();
     const [emails, setEmails] = useState<string[]>([]);
+    const [subjectModal, setSubjectModal] = useState<boolean>(false);
     const [focused, setFocused] = useState(false);
     const notification = notifications[notificationKey];
     const { callApi, loading } = useApi();
 
     console.log(notification)
+
+    const handleMentionClick = (mention: string) => {
+        const currentValue = form.getFieldValue(['template', 'subject']) || '';
+        form.setFieldsValue({
+          template: {
+            subject: currentValue + mention
+          }
+        });
+        setSubjectModal(false);
+      };
 
     const handleSave = () => {
         form.validateFields().then((values) => {
@@ -86,6 +98,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                 times: [{ value: 15, unit: 'minutes' }],
             }}>
             {notificationType === 'email' && (
+                <>
                 <Form.Item name={['template', 'subject']}
                     label={<span className="text-[#09090B] text-[16px] font-semibold">
                         {__('Subject', 'quillbooking')}
@@ -97,11 +110,31 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                     <Input
                         placeholder='New Booking: {{guest.full_name}} @ {{booking.start_date_time_for_host}}'
                         className='h-[48px] rounded-lg'
-                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg' onClick={()=>setSubjectModal(true)}>
                             <UrlIcon />
                         </span>}
                         style={{ padding: "0 0 0 10px" }} />
                 </Form.Item>
+                <Modal
+                open={subjectModal}
+                onCancel={() => setSubjectModal(false)}
+                footer={null}
+                width={700}
+                getContainer={false}
+              >
+                <Flex gap={10} className='items-center border-b pb-4 mb-4'>
+                      <div className='bg-[#EDEDED] rounded-lg p-3 mt-2' >
+                        <UrlIcon />
+                      </div>
+                      <Header header={__('Email Notification', 'quillbooking')}
+                        subHeader={__(
+                          'Customize the email notifications sent to attendees and organizers',
+                          'quillbooking'
+                        )} />
+                </Flex>
+                <SubjectModal onMentionClick={handleMentionClick}/>
+              </Modal >
+              </>
             )}
             <Form.Item name={['template', 'message']}
                 //rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}

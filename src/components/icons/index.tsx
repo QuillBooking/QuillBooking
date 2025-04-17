@@ -81,3 +81,7 @@ export {default as PaymentSettingsIcon} from "./payment-settings-icon";
 export {default as EditNotificationIcon} from "./edit-notification-icon";
 export {default as EmailNotificationIcon} from "./notification-e-icon";
 export {default as SmsNotificationIcon} from "./notification-s-icon";
+export {default as MergeTagAttIcon} from "./merge-tag-att-host-icon";
+export {default as MergeTagBookingIcon} from "./merge-tag-booking-icon";
+export {default as MergeTagOtherIcon} from "./merge-tag-other-icon";
+export {default as MergeTagPaymentIcon} from "./merge-tag-payment-icon";

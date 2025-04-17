@@ -38,12 +38,18 @@ import {
   HeadingTagType,
 } from '@lexical/rich-text';
 import { $createLinkNode, $isLinkNode } from '@lexical/link';
-import { Button, Flex, Select, Modal, Upload } from "antd";
+import { Button, Flex, Select, Modal, Upload, Space, Table } from "antd";
 import { PlusOutlined } from '@ant-design/icons';
 import "../style.scss";
+import { $createMentionNode } from '../mention-node';
+import { Header, UrlIcon } from "@quillbooking/components";
+import { __ } from "@wordpress/i18n";
+import Mentions from "../mentions";
+// Import the ImageNode
+import { $createImageNode, INSERT_IMAGE_COMMAND } from '../img-node';
 
 // Define custom command for image insertion
-export const INSERT_IMAGE_COMMAND = 'INSERT_IMAGE_COMMAND';
+//export const INSERT_IMAGE_COMMAND = 'INSERT_IMAGE_COMMAND';
 
 export const ToolbarPlugin = () => {
   const [editor] = useLexicalComposerContext();
@@ -54,10 +60,7 @@ export const ToolbarPlugin = () => {
   const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [fontFamily, setFontFamily] = useState('Arial');
   const [paragraphFormat, setParagraphFormat] = useState('paragraph');
-  const [imageModalVisible, setImageModalVisible] = useState(false);
-  const [imageUrl, setImageUrl] = useState('');
-  const [imageFile, setImageFile] = useState(null);
-  const fileInputRef = useRef(null);
+  const [mentionModalVisible, setMentionModalVisible] = useState(false);
 
   // Register image insertion command
   useEffect(() => {
@@ -68,25 +71,53 @@ export const ToolbarPlugin = () => {
     return activeEditor.registerCommand(
       INSERT_IMAGE_COMMAND,
       (payload) => {
-        const { src, altText } = payload;
-        // Here you would implement the actual insertion of image
-        // This is a placeholder - you need to implement image node creation
-        activeEditor.update(() => {
-          const selection = $getSelection();
-          if ($isRangeSelection(selection)) {
-            // In a real implementation, you would create an image node
-            // For example: const imageNode = $createImageNode({ src, altText });
-            // selection.insertNodes([imageNode]);
-            
-            // For now, let's just insert a placeholder text
-            const textNode = $createTextNode(`[Image: ${altText || 'Uploaded image'}]`);
-            selection.insertNodes([textNode]);
-            
-            // You would need to implement a proper $createImageNode that extends 
-            // a DecoratorNode from Lexical
-          }
-        });
-        return true;
+        const { src, altText, width, height, id } = payload;
+        
+        // Make sure we have a valid src before proceeding
+        if (!src) {
+          console.error('Image source is undefined or empty');
+          return false;
+        }
+        
+        // Focus the editor to ensure we have a valid selection
+        activeEditor.focus();
+        
+        try {
+          activeEditor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              // Create an ImageNode with the media info
+              const imageNode = $createImageNode({ 
+                src, 
+                altText: altText || 'Image',
+                width: width || 'auto',
+                height: height || 'auto',
+                id: id || undefined
+              });
+              
+              // Insert the node at the current selection
+              selection.insertNodes([imageNode]);
+            } else {
+              // If no selection, insert at the end of the document
+              const root = $getRoot();
+              const lastChild = root.getLastChild();
+              if (lastChild) {
+                const imageNode = $createImageNode({ 
+                  src, 
+                  altText: altText || 'Image',
+                  width: width || 'auto',
+                  height: height || 'auto',
+                  id: id || undefined
+                });
+                lastChild.insertAfter(imageNode);
+              }
+            }
+          });
+          return true;
+        } catch (error) {
+          console.error('Error inserting image:', error);
+          return false;
+        }
       },
       0
     );
@@ -137,7 +168,7 @@ export const ToolbarPlugin = () => {
       }
     }
   }, [activeEditor]);
-  
+
   useEffect(() => {
     return activeEditor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
@@ -188,43 +219,81 @@ export const ToolbarPlugin = () => {
     [activeEditor]
   );
 
-  // Image upload from PC
-  const handleImageUpload = useCallback(() => {
-    setImageModalVisible(true);
-  }, []);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      // Create a preview URL
-      const objectUrl = URL.createObjectURL(file);
-      setImageUrl(objectUrl);
-    }
-  };
-
-  const handleImageInsert = () => {
-    if (imageFile) {
-      // In a real application, you would typically upload this file to a server
-      // and then use the returned URL. For this example, we'll use the object URL.
-      activeEditor.dispatchCommand(INSERT_IMAGE_COMMAND, {
-        src: imageUrl,
-        altText: imageFile.name,
+  // Function to open WordPress media library
+  const openMediaLibrary = useCallback(() => {
+    // Check if we're in a WordPress environment
+    if (window.wp && window.wp.media) {
+      // Focus the editor first to ensure we have a valid selection point
+      activeEditor.focus();
+      
+      // Create the media frame
+      const mediaFrame = window.wp.media({
+        title: 'Select or Upload Media',
+        button: {
+          text: 'Use this media'
+        },
+        multiple: false  // Set to true for multiple selections
       });
-    } else if (imageUrl) {
-      // If user entered a URL manually
-      activeEditor.dispatchCommand(INSERT_IMAGE_COMMAND, {
-        src: imageUrl,
-        altText: 'Image',
-      });
-    }
-    
-    // Close modal and reset state
-    setImageModalVisible(false);
-    setImageUrl('');
-    setImageFile(null);
-  };
 
+      console.log("media frame:",mediaFrame);
+  
+      // When media is selected
+      mediaFrame.on('select', () => {
+        try {
+          // Get the selected attachment
+          const attachment = mediaFrame.state().get('selection').first().toJSON();
+          
+          // Debug to see what's coming from WordPress
+          console.log('Selected attachment:', attachment);
+          
+          // Make sure we have the essential data
+          if (!attachment || !attachment.url) {
+            console.error('Invalid attachment data:', attachment);
+            return;
+          }
+          
+          // Safe way to determine dimensions
+          const width = attachment.width ? `${attachment.width}px` : 'auto';
+          const height = attachment.height ? `${attachment.height}px` : 'auto';
+          
+          // Format the data for our ImageNode and ensure all values are valid
+          const imageData = {
+            src: attachment.url || '/api/placeholder/400/300', // Provide a fallback
+            altText: attachment.alt || attachment.title || 'Image',
+            width: width,
+            height: height,
+            id: attachment.id ? attachment.id.toString() : null
+          };
+          
+          // Insert the selected image into the editor with proper error handling
+          activeEditor.dispatchCommand(INSERT_IMAGE_COMMAND, imageData);
+          console.log("image Data:",imageData);
+        } catch (error) {
+          console.error('Error processing media selection:', error);
+          // Provide user feedback
+          alert('Failed to insert the selected image. Please try again.');
+        }
+      });
+  
+      // Open the media library
+      mediaFrame.open();
+      console.log("open");
+    } else {
+      console.error('WordPress Media Library not available');
+      // Provide fallback for non-WordPress environments or development
+      
+      // For development/testing - create a mock image insertion with placeholder
+      const mockImageData = {
+        src: '/api/placeholder/400/300',
+        altText: 'Placeholder Image',
+        width: '400px',
+        height: '300px',
+        id: undefined  // Change null to undefined to match the type definition
+      };
+      
+      activeEditor.dispatchCommand(INSERT_IMAGE_COMMAND, mockImageData);
+    }
+  }, [activeEditor]);
   const insertLink = useCallback(() => {
     const url = prompt('Enter URL');
     if (url) {
@@ -270,16 +339,18 @@ export const ToolbarPlugin = () => {
     });
   }, [activeEditor]);
 
-  // Ant Design Upload component props
-  const uploadProps = {
-    beforeUpload: (file) => {
-      setImageFile(file);
-      const objectUrl = URL.createObjectURL(file);
-      setImageUrl(objectUrl);
-      return false; // Prevent default upload behavior
-    },
-    fileList: imageFile ? [imageFile] : [],
-  };
+  // Add a function to handle adding a mention
+  const handleAddMention = useCallback((mention, category) => {
+    activeEditor.focus();
+    activeEditor.update(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        const mentionNode = $createMentionNode(mention, category);
+        selection.insertNodes([mentionNode]);
+      }
+    });
+    setMentionModalVisible(false);
+  }, [activeEditor]);
 
   return (
     <>
@@ -374,8 +445,8 @@ export const ToolbarPlugin = () => {
             <IoLinkOutline className="text-[20px] text-[#52525B]" />
           </Button>
           <Button
-            onClick={handleImageUpload}
-            title="Insert Image"
+            onClick={openMediaLibrary}
+            title="Insert Image from Media Library"
             className="border-none shadow-none cursor-pointer p-0"
           >
             <LiaImageSolid className="text-[20px] text-[#52525B]" />
@@ -385,8 +456,7 @@ export const ToolbarPlugin = () => {
         {/* Add Shortcodes Button - Positioned to the right */}
         <Button
           onClick={() => {
-            // Implementation for adding shortcodes
-            alert('Add shortcodes functionality would go here');
+            setMentionModalVisible(true);
           }}
           className="bg-[#E3DFF1] border rounded-lg border-[#333333] cursor-pointer flex items-center"
         >
@@ -461,51 +531,25 @@ export const ToolbarPlugin = () => {
         </Flex>
       </div>
 
-      {/* Image Upload Modal */}
+      {/* Mentions Modal */}
       <Modal
-        title="Insert Image"
-        open={imageModalVisible}
-        onOk={handleImageInsert}
-        onCancel={() => {
-          setImageModalVisible(false);
-          setImageUrl('');
-          setImageFile(null);
-        }}
+        open={mentionModalVisible}
+        onCancel={() => setMentionModalVisible(false)}
+        footer={null}
+        width={700}
         getContainer={false}
       >
-        <div style={{ marginBottom: 16 }}>
-          <p>Upload an image from your computer:</p>
-          <Upload
-            {...uploadProps}
-            listType="picture-card"
-            maxCount={1}
-          >
-            <div>
-              <PlusOutlined />
-              <div style={{ marginTop: 8 }}>Upload</div>
-            </div>
-          </Upload>
-          
-          <p style={{ marginTop: 16 }}>Or enter an image URL:</p>
-          <input
-            type="text"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://example.com/image.jpg"
-            style={{ width: '100%', padding: '8px' }}
-          />
-          
-          {imageUrl && !imageFile && (
-            <div style={{ marginTop: 8 }}>
-              <img 
-                src={imageUrl} 
-                alt="Preview" 
-                style={{ maxWidth: '100%', maxHeight: 200 }} 
-                onError={() => console.log('Error loading image preview')}
-              />
-            </div>
-          )}
-        </div>
+        <Flex gap={10} className='items-center border-b pb-4 mb-4'>
+          <div className='bg-[#EDEDED] rounded-lg p-3 mt-2'>
+            <UrlIcon />
+          </div>
+          <Header header={__('Email Notification', 'quillbooking')}
+            subHeader={__(
+              'Customize the email notifications sent to attendees and organizers',
+              'quillbooking'
+            )} />
+        </Flex>
+        <Mentions onMentionClick={(mention, category) => handleAddMention(mention, category)} />
       </Modal>
     </>
   );

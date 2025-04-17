@@ -68,8 +68,10 @@ const NavBar: React.FC = () => {
 					{
 						key: "group",
 						type: "group",
-						children: items.map((item) => ({
+						children: items.map((item, index) => ({
 							...item,
+							key: item?.key ?? index,
+							type: 'item',
 							style: { paddingLeft: "15px", marginBottom:"24px" }, 
 						})),
 						className: "group"
@@ -89,7 +91,6 @@ const NavBar: React.FC = () => {
 							</a>
 						),
 						style: { paddingLeft: "0px" },
-						"data-key": "button-item",
 					}
 				]}
 			/>

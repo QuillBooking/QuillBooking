@@ -22,14 +22,12 @@ import Calendars from '../pages/calendars';
 import Calendar from '../pages/calendar';
 import Availability from '../pages/availability';
 import AvailabilityDetails from '../pages/availability-details';
-import CreateEvent from '../pages/create-event';
 import Bookings from '../pages/bookings';
 import BookingDetails from '../pages/booking-details';
 import Event from '../pages/event';
-import Settings from '../pages/settings';
 import Help from '../pages/help';
 import Logout from '../pages/logout';
-import { AvailabilityIcon, BookingIcon, CalendarsIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon } from '@quillbooking/components';
+import { AvailabilityIcon, BookingIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon, UpcompingCalendarIcon } from '@quillbooking/components';
 import Navmenu from './navmenu';
 import GeneralSettings from '../pages/global-settings';
 import ProtectedRoute from './protected-route';
@@ -63,7 +61,7 @@ registerAdminPage('calendars', {
 	path: 'calendars',
 	component: () => <Calendars />,
 	label: (
-		<Navmenu icon={<CalendarsIcon />} title={__('Calendars', 'quillbooking')} />
+		<Navmenu icon={<UpcompingCalendarIcon width={24} height={24} />} title={__('Calendars', 'quillbooking')} />
 	),
 	capabilities: [
 		'quillbooking_manage_own_calendars',
@@ -153,14 +151,6 @@ registerAdminPage('availability/:id', {
 	label: __('Availability Details', 'quillbooking'),
 	hidden: true
 });
-
-registerAdminPage('create-event', {
-	path: 'calendars/:id/create-event/:type',
-	hidden: true,
-	component: () => <CreateEvent />,
-	label: __('Create Event', 'quillbooking'),
-});
-
 
 registerAdminPage('booking-details', {
 	path: 'bookings/:id/:period?',

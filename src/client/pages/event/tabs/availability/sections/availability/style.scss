@@ -6,3 +6,7 @@
 .custom-timepicker.ant-picker-disabled .ant-picker-input input {
     color: #9BA7B7 !important; /* Optional: Change text color */
 }
+
+.custom-timepicker input {
+    text-align: right;
+}

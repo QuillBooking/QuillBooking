@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 
+# Enable error tracing for debugging in GitHub Actions
+if [ "${GITHUB_ACTIONS}" = "true" ]; then
+  set -x  # Print commands before execution
+  echo "Running in GitHub Actions environment"
+fi
+
 # Debug: Show environment variables 
-echo "Environment variables: WP_TESTS_DB_NAME=$WP_TESTS_DB_NAME, WP_TESTS_DB_USER=$WP_TESTS_DB_USER"
+echo "Environment variables: WP_TESTS_DB_NAME=$WP_TESTS_DB_NAME, WP_TESTS_DB_USER=$WP_TESTS_DB_USER, WP_TESTS_DB_HOST=$WP_TESTS_DB_HOST, WP_VERSION=$WP_VERSION"
 
 # Check if environment variables are set
 if [[ -n "$WP_TESTS_DB_NAME" && -n "$WP_TESTS_DB_USER" && -n "$WP_TESTS_DB_PASSWORD" ]]; then
@@ -13,6 +19,26 @@ if [[ -n "$WP_TESTS_DB_NAME" && -n "$WP_TESTS_DB_USER" && -n "$WP_TESTS_DB_PASSW
 	DB_HOST=${WP_TESTS_DB_HOST:-localhost}
 	WP_VERSION=${WP_VERSION:-latest}
 	SKIP_DB_CREATE=${SKIP_DB_CREATE:-false}
+elif [ -f .env ]; then
+	# Try loading from .env file if it exists
+	echo "Loading from .env file"
+	set -a
+	# This will properly handle special characters in the values
+	while IFS='=' read -r key value; do
+		if [[ ! $key =~ ^# && -n "$key" ]]; then
+			export "$key=$value"
+		fi
+	done < .env
+	set +a
+	
+	DB_NAME=$WP_TESTS_DB_NAME
+	DB_USER=$WP_TESTS_DB_USER
+	DB_PASS=$WP_TESTS_DB_PASSWORD
+	DB_HOST=${WP_TESTS_DB_HOST:-localhost}
+	WP_VERSION=${WP_VERSION:-latest}
+	SKIP_DB_CREATE=${SKIP_DB_CREATE:-false}
+	
+	echo "Loaded from .env file: DB_NAME=$DB_NAME, DB_USER=$DB_USER, DB_HOST=$DB_HOST"
 else
 	# Fall back to command line arguments
 	echo "Using command line arguments"
@@ -29,6 +55,8 @@ else
 	WP_VERSION=${5-latest}
 	SKIP_DB_CREATE=${6-false}
 fi
+
+echo "Using DB configuration: DB_NAME=$DB_NAME, DB_USER=$DB_USER, DB_HOST=$DB_HOST"
 
 # Use WP_TESTS_DIR from environment if defined
 TMPDIR=${TMPDIR-/tmp}
@@ -166,10 +194,33 @@ install_db() {
 	echo "DEBUG: Using DB_USER=$DB_USER"
 	echo "DEBUG: Using DB_PASS=$DB_PASS"
 	echo "DEBUG: Using DB_NAME=$DB_NAME"
+	echo "DEBUG: Using EXTRA=$EXTRA"
 	
 	# create database using MYSQL_PWD environment variable
 	export MYSQL_PWD=$DB_PASS
+	echo "Trying to access MySQL with user $DB_USER"
+	
+	# First check if we can connect
+	if ! mysql --user="$DB_USER"$EXTRA -e "SELECT 1"; then
+		echo "Error: Cannot connect to MySQL. Please check your credentials and connection."
+		if [ "${GITHUB_ACTIONS}" = "true" ]; then
+			echo "In GitHub Actions, ensuring the database exists:"
+			mysql -uroot -ppassword -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
+			mysql -uroot -ppassword -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';"
+			mysql -uroot -ppassword -e "FLUSH PRIVILEGES;"
+		else
+			exit 1
+		fi
+	fi
+	
+	# Now create the database
 	mysql --user="$DB_USER"$EXTRA -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`"
+	mysql_status=$?
+	if [ $mysql_status -ne 0 ]; then
+		echo "Failed to create database with status $mysql_status"
+		exit 1
+	fi
+	
 	unset MYSQL_PWD
 }
 

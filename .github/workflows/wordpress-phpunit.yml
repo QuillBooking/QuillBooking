@@ -37,7 +37,7 @@ jobs:
           MYSQL_DATABASE: wordpress_test
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
       - name: Checkout code
@@ -62,46 +62,12 @@ jobs:
       - name: Update Composer dependencies
         run: composer update --no-progress --no-ansi --no-interaction
 
-      - name: Initialize MySQL Database
-        run: |
-          # Setup database permissions
-          mysql -uroot -ppassword -e "CREATE DATABASE IF NOT EXISTS wordpress_test;"
-          mysql -uroot -ppassword -e "GRANT ALL PRIVILEGES ON wordpress_test.* TO 'root'@'localhost';"
-          mysql -uroot -ppassword -e "FLUSH PRIVILEGES;"
-          
       - name: Set up WordPress test environment
-        env:
-          WP_TESTS_DB_NAME: wordpress_test
-          WP_TESTS_DB_USER: root
-          WP_TESTS_DB_PASSWORD: password
-          WP_TESTS_DB_HOST: localhost
-          WP_VERSION: ${{ matrix.wordpress }}
         run: |
-          # Explicitly create test directory structure if needed
-          mkdir -p /tmp/wordpress-tests-lib
-          mkdir -p /tmp/wordpress
-          
-          # Run the WordPress test setup script
-          bash bin/install-wp-tests.sh || { echo "WordPress test setup failed"; cat /tmp/wordpress-tests-lib/wp-tests-config.php; exit 1; }
+          bash bin/install-wp-tests.sh wordpress_test root password localhost ${{ matrix.wordpress }}
 
       - name: Run PHPUnit tests
-        env:
-          WP_TESTS_DB_NAME: wordpress_test
-          WP_TESTS_DB_USER: root
-          WP_TESTS_DB_PASSWORD: password
-          WP_TESTS_DB_HOST: localhost
         run: |
-          echo "WordPress config:"
-          cat /tmp/wordpress-tests-lib/wp-tests-config.php
-          echo "Testing MySQL connection:"
-          mysql --user=$WP_TESTS_DB_USER --password=$WP_TESTS_DB_PASSWORD --host=$WP_TESTS_DB_HOST -e "SHOW DATABASES;" || echo "MySQL connection failed"
-          
-          # Create an additional test symlink if needed
-          if [ ! -d "/tmp/wordpress-tests-lib" ]; then
-            echo "WordPress test directory not found"
-            exit 1
-          fi
-          
           composer test
           
   react-test:

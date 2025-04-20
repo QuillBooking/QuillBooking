@@ -8,6 +8,7 @@ interface CardHeaderProps {
 	border?: boolean;
 }
 
+// TODO: add inviteeNumber prop to display the number of invitees
 const CardHeader: React.FC<CardHeaderProps> = ({
 	title,
 	description,

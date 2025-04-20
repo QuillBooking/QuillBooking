@@ -1,7 +1,18 @@
-import { Card, Flex, Switch } from 'antd';
-import SelectTimezone from './select-timezone';
-import type { EventLimits as EventLimitsType } from '@quillbooking/client';
+/**
+ * WordPress dependencies
+*/
 import { __ } from '@wordpress/i18n';
+
+/**
+ * External dependencies
+ * */
+import { Card, Flex, Switch } from 'antd';
+
+/**
+ * Internal dependencies
+ * */
+import type { EventLimits as EventLimitsType } from '@quillbooking/client';
+import SelectTimezone from './select-timezone';
 
 interface SelectTimezoneProps {
   settings: EventLimitsType;
@@ -11,7 +22,7 @@ interface SelectTimezoneProps {
 const TimezoneSection: React.FC<SelectTimezoneProps> = ({ settings, handleChange }) => {
   return (
     <Card className='mt-4'>
-      <Flex className='items-center justify-between px-[20px]'>
+      <Flex className='items-center justify-between px-[20px] mb-4'>
         <Flex vertical gap={1}>
           <div className="text-[#09090B] text-[20px] font-semibold">
             {__("Lock time zone on booking page", "quillbooking")}

@@ -9,7 +9,7 @@
 	>
 	<testsuites>
 		<testsuite name="default">
-			<directory suffix=".php">./phpunit/</directory>
+			<directory prefix="test-" suffix=".php">./phpunit/</directory>
 		</testsuite>
 	</testsuites>
 	<groups>

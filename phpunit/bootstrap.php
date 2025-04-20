@@ -5,11 +5,7 @@
  * @package QuillBooking
  */
 
-// Define constants that the plugin uses
-if ( ! defined( 'ABSPATH' ) ) {
-	define( 'ABSPATH', dirname( dirname( __FILE__ ) ) . '/' );
-}
-
+// Define plugin-specific constants
 if ( ! defined( 'QUILLBOOKING_PLUGIN_FILE' ) ) {
 	define( 'QUILLBOOKING_PLUGIN_FILE', dirname( dirname( __FILE__ ) ) . '/class-quillbooking.php' );
 }
@@ -22,12 +18,37 @@ if ( ! defined( 'QUILLBOOKING_PLUGIN_DIR' ) ) {
 	define( 'QUILLBOOKING_PLUGIN_DIR', dirname( dirname( __FILE__ ) ) . '/' );
 }
 
-if ( ! defined( 'QUILLBOOKING_PLUGIN_URL' ) ) {
-	define( 'QUILLBOOKING_PLUGIN_URL', 'http://example.org/wp-content/plugins/quillbooking/' );
+// Get WordPress tests directory from environment variable
+$_tests_dir = getenv( 'WP_TESTS_DIR' );
+if ( ! $_tests_dir ) {
+	$_tests_dir = '/tmp/wordpress-tests-lib';
 }
 
-// Load autoloader
-require_once dirname( dirname( __FILE__ ) ) . '/includes/autoload.php';
+// Get WordPress directory from environment variable
+$_core_dir = getenv( 'WP_CORE_DIR' );
+if ( ! $_core_dir ) {
+	$_core_dir = '/tmp/wordpress';
+}
 
-// Setup test environment
-class WP_UnitTestCase extends \PHPUnit\Framework\TestCase {} 
+// Make sure WordPress test library exists
+if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
+	echo "Could not find $_tests_dir/includes/functions.php, have you run bin/install-wp-tests.sh ?" . PHP_EOL;
+	exit( 1 );
+}
+
+// Load the WordPress test functions
+require_once $_tests_dir . '/includes/functions.php';
+
+/**
+ * Manually load the plugin being tested.
+ */
+function _manually_load_plugin() {
+	require dirname( dirname( __FILE__ ) ) . '/class-quillbooking.php';
+}
+tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
+
+// Start up the WP testing environment
+require $_tests_dir . '/includes/bootstrap.php';
+
+// Load plugin autoloader
+require_once dirname( dirname( __FILE__ ) ) . '/includes/autoload.php'; 

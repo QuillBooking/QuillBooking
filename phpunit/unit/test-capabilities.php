@@ -12,12 +12,6 @@ if (!function_exists('__')) {
     }
 }
 
-if (!function_exists('get_current_user_id')) {
-    function get_current_user_id() {
-        return 1; // Mock user ID for testing
-    }
-}
-
 /**
  * Test for Capabilities functionality.
  */
@@ -106,7 +100,10 @@ class CapabilitiesTest extends WP_UnitTestCase {
     public function test_can_manage_calendar_as_owner() {
         // Set up a calendar owned by the current user
         $calendar = new \stdClass();
-        $calendar->user_id = 1; // Same as our mocked get_current_user_id()
+        $calendar->user_id = 1; // Using our mock user ID
+        
+        // Set the current user ID in our mock class
+        $this->capabilities->setCurrentUserId(1);
         
         $result = $this->capabilities->can_manage_calendar_mock($calendar);
         
@@ -119,7 +116,10 @@ class CapabilitiesTest extends WP_UnitTestCase {
     public function test_can_manage_calendar_as_admin() {
         // Set up a calendar owned by another user
         $calendar = new \stdClass();
-        $calendar->user_id = 2; // Different from our mocked get_current_user_id()
+        $calendar->user_id = 2; // Different from our mock user ID
+        
+        // Set the current user ID in our mock class
+        $this->capabilities->setCurrentUserId(1);
         
         // Set up user with admin capability
         $this->capabilities->setUserCan('quillbooking_manage_all_calendars', true);
@@ -135,7 +135,10 @@ class CapabilitiesTest extends WP_UnitTestCase {
     public function test_cannot_manage_calendar() {
         // Set up a calendar owned by another user
         $calendar = new \stdClass();
-        $calendar->user_id = 2; // Different from our mocked get_current_user_id()
+        $calendar->user_id = 2; // Different from our mock user ID
+        
+        // Set the current user ID in our mock class
+        $this->capabilities->setCurrentUserId(1);
         
         // Set up user without admin capability
         $this->capabilities->setUserCan('quillbooking_manage_all_calendars', false);
@@ -151,7 +154,10 @@ class CapabilitiesTest extends WP_UnitTestCase {
     public function test_can_read_calendar_as_owner() {
         // Set up a calendar owned by the current user
         $calendar = new \stdClass();
-        $calendar->user_id = 1; // Same as our mocked get_current_user_id()
+        $calendar->user_id = 1; // Using our mock user ID
+        
+        // Set the current user ID in our mock class
+        $this->capabilities->setCurrentUserId(1);
         
         $result = $this->capabilities->can_read_calendar_mock($calendar);
         
@@ -164,7 +170,10 @@ class CapabilitiesTest extends WP_UnitTestCase {
     public function test_can_read_calendar_with_access() {
         // Set up a calendar owned by another user
         $calendar = new \stdClass();
-        $calendar->user_id = 2; // Different from our mocked get_current_user_id()
+        $calendar->user_id = 2; // Different from our mock user ID
+        
+        // Set the current user ID in our mock class
+        $this->capabilities->setCurrentUserId(1);
         
         // Set up user with read capability
         $this->capabilities->setUserCan('quillbooking_read_all_calendars', true);
@@ -180,7 +189,10 @@ class CapabilitiesTest extends WP_UnitTestCase {
     public function test_cannot_read_calendar() {
         // Set up a calendar owned by another user
         $calendar = new \stdClass();
-        $calendar->user_id = 2; // Different from our mocked get_current_user_id()
+        $calendar->user_id = 2; // Different from our mock user ID
+        
+        // Set the current user ID in our mock class
+        $this->capabilities->setCurrentUserId(1);
         
         // Set up user without read capability
         $this->capabilities->setUserCan('quillbooking_read_all_calendars', false);
@@ -197,6 +209,21 @@ class CapabilitiesTest extends WP_UnitTestCase {
  */
 class CapabilitiesMock {
     private $user_capabilities = [];
+    private $current_user_id = 0;
+    
+    /**
+     * Set the current user ID for testing
+     */
+    public function setCurrentUserId($user_id) {
+        $this->current_user_id = $user_id;
+    }
+    
+    /**
+     * Get the current user ID
+     */
+    public function getCurrentUserId() {
+        return $this->current_user_id;
+    }
     
     /**
      * Set whether the current user has a specific capability
@@ -296,7 +323,8 @@ class CapabilitiesMock {
             return true;
         }
 
-        if ($calendar->user_id === get_current_user_id()) {
+        // Use our own getCurrentUserId method instead of WordPress function
+        if ((int)$calendar->user_id === (int)$this->getCurrentUserId()) {
             return true;
         }
 
@@ -311,7 +339,8 @@ class CapabilitiesMock {
             return true;
         }
 
-        if ($calendar->user_id === get_current_user_id()) {
+        // Use our own getCurrentUserId method instead of WordPress function
+        if ((int)$calendar->user_id === (int)$this->getCurrentUserId()) {
             return true;
         }
 

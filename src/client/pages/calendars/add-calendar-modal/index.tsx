@@ -101,7 +101,7 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
                 // <Button key="save" type="primary" loading={loading} onClick={saveCalendar}>
                 //     {__('Save', 'quillbooking')}
                 // </Button>,
-                <Button key="action" type="primary" loading={loading} onClick={saveCalendar} className='w-full bg-color-primary rounded-lg font-[500] py-6 mt-5'>
+                <Button type="primary" loading={loading} onClick={saveCalendar} className='w-full rounded-lg font-[500] mt-3' size='large'>
                     {type === "team" ? __('Add Team', 'quillbooking') : __('Add Host', 'quillbooking')}
                 </Button>,
             ]}

@@ -130,12 +130,19 @@ export type EventAvailability = {
 	range: AvailabilityRange;
 };
 
-export type LimitUnit = 'minutes' | 'hours' | 'days' | 'weeks';
+export type LimitUnit = 'days' | 'weeks' | 'months';
 
 export interface LimitRule {
 	limit: number;
 	unit: LimitUnit;
 }
+
+export interface UnitOption {
+	label: string;
+	disabled: boolean;
+}
+
+export type UnitOptions = Record<LimitUnit, UnitOption>;
 
 export interface EventLimits {
 	general: {

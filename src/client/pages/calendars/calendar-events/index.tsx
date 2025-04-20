@@ -54,33 +54,35 @@ const CalendarEvents: React.FC<{
 		group: __('Group', 'quillbooking'),
 	};
 
+	console.log(calendar.events);
+
 	return (
 		<>
 			{calendar.events.length > 0 ? (
 				<div className="quillbooking-calendar-events">
 					{calendar.events.map((event) => {
-						const isDisabled = disabledEvents[event.id];
+						const isDisabled = event.is_disabled;
 						return (
 							<Card
-								key={event.id}
-								className="quillbooking-calendar-event w-[310px] border-t-4 border-t-color-primary rounded-xl"
-								style={{
-									opacity: isDisabled ? 0.5 : 1,
-									pointerEvents: isDisabled ? 'none' : 'auto',
-								}}
+							key={event.id}
+							className="quillbooking-calendar-event w-[310px] border-t-4 border-t-color-primary rounded-xl"
+							style={{
+								opacity: isDisabled ? 0.5 : 1,
+								pointerEvents: isDisabled ? 'none' : 'auto',
+							}}
 							//onClick={() => navigate(`calendars/${calendar.id}/events/${event.id}`)}
 							>
 								<Flex gap={20} vertical>
 									<Flex
 										justify="space-between"
 										className="border-b pb-2"
-									>
+										>
 										<Flex vertical gap={2}>
 											<Typography.Title
 												level={5}
 												style={{ margin: 0 }}
 												className="capitalize text-[16px] font-[700] text-[#313131]"
-											>
+												>
 												{event.name}
 											</Typography.Title>
 											<Typography.Text

@@ -331,7 +331,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			$calendars = $query->with(
 				array(
 					'events' => function( $query ) use ( $keyword ) {
-						$query->select( 'id', 'calendar_id', 'name', 'duration', 'type', 'slug' );
+						$query->select( 'id', 'calendar_id', 'name', 'duration', 'type', 'slug', 'is_disabled' );
 						if ( $keyword ) {
 							$query->where( 'name', 'like', '%' . $keyword . '%' );
 						}

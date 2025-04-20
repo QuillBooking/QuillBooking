@@ -37,6 +37,7 @@ export type Calendar = {
 		type: EventTypes;
 		slug: string;
 		location: Location[];
+		is_disabled: boolean;
 	}[];
 	created_at: string;
 	updated_at: string;

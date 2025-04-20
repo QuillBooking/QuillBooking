@@ -272,6 +272,11 @@ class REST_Event_Controller extends REST_Controller {
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
+				'is_disabled' => array(
+					'description' => __( 'Is event disabled.', 'quillbooking' ),
+					'type'        => 'boolean',
+					'context'     => array( 'view', 'edit' ),
+				),
 				'description' => array(
 					'description' => __( 'Event description.', 'quillbooking' ),
 					'type'        => 'string',
@@ -344,13 +349,6 @@ class REST_Event_Controller extends REST_Controller {
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
-				),
-				'is_disabled' => array(
-					'description' => __( 'Is event disabled.', 'quillbooking' ),
-					'type'        => 'boolean',
-					'context'     => array( 'view', 'edit' ),
-					'readonly'    => true,
-					'default'     => false,
 				),
 			),
 		);
@@ -455,6 +453,7 @@ class REST_Event_Controller extends REST_Controller {
 				'duration'    => $duration,
 				'color'       => $color,
 				'visibility'  => $visibility,
+				'is_disabled' => false,
 			);
 
 			$event_data = array_filter( $event_data );

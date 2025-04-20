@@ -62,6 +62,7 @@ class Events_Table extends Migration {
         slug varchar(255) NOT NULL,
         status varchar(255) NOT NULL Default 'active',
         type varchar(255) NOT NULL Default 'one-to-one',
+				is_disabled boolean NOT NULL Default 0,
 		duration int(11) NOT NULL Default 30,
 		color varchar(255) NOT NULL Default '#0099ff',
 		visibility varchar(255) NOT NULL Default 'public',

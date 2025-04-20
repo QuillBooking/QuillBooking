@@ -36,15 +36,15 @@ const ScheduleComponent: React.FC<ScheduleComponentProps> = ({ availability, onC
               <Text className='capitalize text-[#1E2125] text-[16px] font-[700] flex-1'>{key}</Text>
             </Flex>
             <TimePicker
-              value={dayjs(day.times[0].start, "HH:mm")}
+              value={dayjs(day.times[0].start, "hh:mm")}
               onChange={(time) => {
                 if (time) {
                   onCustomAvailabilityChange(key, "times", [
-                    { start: time.format("HH:mm"), end: day.times[0].end }
+                    { start: time.format("hh:mm"), end: day.times[0].end }
                   ]);
                 }
               }}
-              format="HH:mm A"
+              format="hh:mm A"
               placeholder="Start Time"
               prefix={<span className='text-[#9BA7B7]'>{__("From", "quillbooking")}</span>}
               className='h-[48px] rounded-lg flex-1 custom-timepicker'
@@ -54,15 +54,15 @@ const ScheduleComponent: React.FC<ScheduleComponentProps> = ({ availability, onC
             />
 
             <TimePicker
-              value={dayjs(day.times[0].end, "HH:mm")}
+              value={dayjs(day.times[0].end, "hh:mm")}
               onChange={(time) => {
                 if (time) {
                   onCustomAvailabilityChange(key, "times", [
-                    { start: day.times[0].start, end: time.format("HH:mm") }
+                    { start: day.times[0].start, end: time.format("hh:mm") }
                   ]);
                 }
               }}
-              format="HH:mm A"
+              format="hh:mm A"
               placeholder="End Time"
               suffixIcon={null}
               prefix={<span className='text-[#9BA7B7]'>{__("To", "quillbooking")}</span>}

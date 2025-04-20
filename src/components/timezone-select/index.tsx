@@ -2,15 +2,16 @@
  * External dependencies
  */
 // import Select from 'react-select';
-import { Select } from 'antd';
-import { map, isObject } from 'lodash';
+import { Select, SelectProps } from 'antd';
+import { map } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import ConfigAPI from '@quillbooking/config';
+import { getCurrentTimezone } from '../../utils';
 
-interface TimezoneSelectProps {
+interface TimezoneSelectProps extends SelectProps {
 	value: string | null;
 	onChange: (value: string) => void;
 }
@@ -18,19 +19,21 @@ interface TimezoneSelectProps {
 /**
  * Timezone Select Component.
  */
-const TimezoneSelect: React.FC<TimezoneSelectProps> = ({ value, onChange }) => {
+const TimezoneSelect: React.FC<TimezoneSelectProps> = ({ value, onChange, ...rest }) => {
 	const timezones = ConfigAPI.getTimezones();
 
+	const options = map(timezones, (label, val) => ({
+		label,
+		value: val,
+	}));
+
 	return (
-		<Select
-            size='large'
-			value={value ? { label: timezones[value], value } : null}
-			onChange={(selected) => {
-				if (selected && isObject(selected)) {
-					onChange(selected.value);
-				}
-			}}
-			options={map(timezones, (label, value) => ({ label, value }))}
+		<Select<string>
+			size="large"
+			value={value ?? getCurrentTimezone()}
+			onChange={(newVal) => onChange(newVal)}
+			options={options}
+			{...rest}
 		/>
 	);
 };

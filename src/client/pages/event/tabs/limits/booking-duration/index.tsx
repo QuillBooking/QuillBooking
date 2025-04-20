@@ -1,5 +1,16 @@
-import { Card, Flex } from 'antd';
+/**
+ * Wordpress dependencies
+ */
 import { __ } from '@wordpress/i18n';
+
+/**
+ * External dependencies
+ */
+import { Card, Flex } from 'antd';
+
+/**
+ * Internal dependencies
+ */
 import type { EventLimits as EventLimitsType, UnitOptions } from '@quillbooking/client';
 import LimitCard from '../limit-card';
 import LimitRow from '../limit-row';

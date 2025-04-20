@@ -13,7 +13,7 @@ import { Card, Flex, Button, Switch, Select, InputNumber, Skeleton, Typography }
  * Internal dependencies
  */
 import type { EventLimits as EventLimitsType, LimitUnit, UnitOption as UnitOptionType, UnitOptions as UnitOptionsType } from '@quillbooking/client';
-import { FieldWrapper, TimezoneSelect, Header, LimitsTrashIcon, LimitsAddIcon, CardHeader } from '@quillbooking/components';
+import { FieldWrapper, TimezoneSelect, Header, LimitsTrashIcon, LimitsAddIcon, CardHeader, ClockIcon, OutlinedClockIcon } from '@quillbooking/components';
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
 import { getCurrentTimeInTimezone } from '@quillbooking/utils';
 import { useEventContext } from '../../state/context';
@@ -24,6 +24,7 @@ import LimitTimezone from './limit-timezone';
 import TimezoneSection from './limit-timezone';
 import BookingFrequency from './booking-frequency';
 import BookingDuration from './booking-duration';
+import EventBuffer from './event-buffer';
 
 const { Title } = Typography;
 
@@ -213,10 +214,6 @@ const EventLimits: React.FC = () => {
         return <Skeleton active />;
     }
 
-    const marks = [
-        { value: 0, label: <span className='absolute left-0'>{__("0 Minutes", "quillbooking")}</span> },
-        { value: 120, label: <span className='absolute right-0'>{__("120 Minutes", "quillbooking")}</span> },
-    ];
 
     return (
         <Card className='rounded-lg'>
@@ -226,117 +223,13 @@ const EventLimits: React.FC = () => {
                     'Manage you buffer time before and after events.',
                     'quillbooking'
                 )}
-                icon={<LuClock5 className='text-[30px]' />}
+                icon={<OutlinedClockIcon width={30} height={30} />}
             />
 
-            <Flex gap={10} vertical>
-                <div className="text-[#09090B] text-[16px]">
-                    {__("Before Event", "quillbooking")}
-                    <span className='text-red-500'>*</span>
-                </div>
-                <Card className='rounded-lg py-2'>
-                    <Slider
-                        value={settings.general.buffer_before}
-                        onChange={(_, newValue) => handleChange("general", "buffer_before", newValue)}
-                        step={5}
-                        min={0}
-                        max={120}
-                        valueLabelDisplay="on"
-                        valueLabelFormat={(value) => (value === 0 || value === 120 ? '' : `${value} Minutes`)}
-                        marks={marks}
-                        sx={{
-                            '& .MuiSlider-track': {
-                                backgroundColor: 'transparent',
-                                border: "none",
-
-                            },
-                            '& .MuiSlider-rail': {
-                                backgroundColor: '#DEE1E6',
-                                height: "10px",
-                            },
-                            '& .MuiSlider-thumb': {
-                                backgroundColor: '#953AE4',
-                                '&:hover, &.Mui-focusVisible, &.Mui-active': {
-                                    boxShadow: '0 0 0 5px rgba(149, 58, 228, 0.3)',
-                                    border: '3px solid white',
-                                }
-                            },
-                            '& .MuiSlider-mark': {
-                                backgroundColor: "transparent",
-                            },
-                            '& .MuiSlider-markLabel': {
-                                color: 'black',
-                                fontSize: '16px',
-                            },
-                            '& .MuiSlider-valueLabel': {
-                                backgroundColor: 'transparent',
-                                position: "absolute",
-                                top: "0",
-                                left: "-38px",
-                                outline: "none",
-                                appearance: "none",
-                                color: 'black',
-                                fontSize: '16px',
-                                transform: 'translateY(-10px)',
-                            },
-                        }}
-                    />
-                </Card>
-            </Flex>
-            <Flex gap={10} vertical className='mt-4'>
-                <div className="text-[#09090B] text-[16px]">
-                    {__("After Event", "quillbooking")}
-                    <span className='text-red-500'>*</span>
-                </div>
-                <Card className='rounded-lg py-2'>
-                    <Slider
-                        value={settings.general.buffer_after}
-                        onChange={(_, newValue) => handleChange("general", "buffer_after", newValue)}
-                        step={5}
-                        min={0}
-                        max={120}
-                        valueLabelDisplay="on"
-                        valueLabelFormat={(value) => (value === 0 || value === 120 ? '' : `${value} Minutes`)}
-                        marks={marks}
-                        sx={{
-                            '& .MuiSlider-track': {
-                                backgroundColor: 'transparent',
-                                border: "none",
-
-                            },
-                            '& .MuiSlider-rail': {
-                                backgroundColor: '#DEE1E6',
-                                height: "10px",
-                            },
-                            '& .MuiSlider-thumb': {
-                                backgroundColor: '#953AE4',
-                                '&:hover, &.Mui-focusVisible, &.Mui-active': {
-                                    boxShadow: '0 0 0 5px rgba(149, 58, 228, 0.3)',
-                                    border: '3px solid white',
-                                }
-                            },
-                            '& .MuiSlider-mark': {
-                                backgroundColor: "transparent",
-                            },
-                            '& .MuiSlider-markLabel': {
-                                color: 'black',
-                                fontSize: '16px',
-                            },
-                            '& .MuiSlider-valueLabel': {
-                                backgroundColor: 'transparent',
-                                position: "absolute",
-                                top: "-17px",
-                                left: "-38px",
-                                outline: "none",
-                                appearance: "none",
-                                color: 'black',
-                                fontSize: '16px',
-                                transform: 'translateY(-10px)',
-                            },
-                        }}
-                    />
-                </Card>
-            </Flex>
+           <EventBuffer handleChange={handleChange} settings={settings} type="buffer_before" title={__("Before Event", "quillbooking")} />
+            
+            <EventBuffer handleChange={handleChange} settings={settings} type="buffer_after" title={__("After Event", "quillbooking")} />
+            
             <Flex gap={10} vertical className='mt-4'>
                 <div className="text-[#09090B] text-[16px]">
                     {__("Minimum Notice", "quillbooking")}

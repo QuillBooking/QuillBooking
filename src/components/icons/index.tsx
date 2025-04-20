@@ -85,3 +85,4 @@ export {default as MergeTagAttIcon} from "./merge-tag-att-host-icon";
 export {default as MergeTagBookingIcon} from "./merge-tag-booking-icon";
 export {default as MergeTagOtherIcon} from "./merge-tag-other-icon";
 export {default as MergeTagPaymentIcon} from "./merge-tag-payment-icon";
+export {default as OutlinedClockIcon} from "./outlined-clock-icon";

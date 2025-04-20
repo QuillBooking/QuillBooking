@@ -1,0 +1,44 @@
+/**
+ * External dependencies
+ */
+import { Flex, Switch } from 'antd';
+
+/**
+ * Internal dependencies
+ */
+import type { EventLimits as EventLimitsType } from '@quillbooking/client';
+
+interface LimitCardProps {
+  settings: {
+    frequency: {
+      enable: boolean;
+    };
+  };
+  handleChange: (section: keyof EventLimitsType, key: string, value: any) => void;
+  title: string;
+  description: string;
+  type: 'frequency' | 'duration';
+}
+
+const LimitCard: React.FC<LimitCardProps> = ({ settings, handleChange, title, description, type }) => {
+
+  return (
+    <Flex className='items-center justify-between px-[20px] mb-4'>
+      <Flex vertical gap={1}>
+        <div className="text-[#09090B] text-[20px] font-semibold">
+          {title}
+        </div>
+        <div className='text-[#71717A] text-[14px]'>
+          {description}
+        </div>
+      </Flex>
+      <Switch
+        checked={settings[type].enable}
+        onChange={(checked) => handleChange(type, 'enable', checked)}
+        className={settings[type].enable ? "bg-color-primary" : "bg-gray-400"}
+      />
+    </Flex>
+  );
+};
+
+export default LimitCard;

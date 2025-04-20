@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Flex, Radio, Input, DatePicker, Typography, Card } from 'antd';
+import { Flex, Radio, Input, DatePicker, Typography } from 'antd';
 import dayjs from 'dayjs';
 
 /**
@@ -14,7 +14,6 @@ import dayjs from 'dayjs';
  */
 import type { AvailabilityRange } from '@quillbooking/client';
 
-const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
 interface RangeSectionProps {
@@ -74,15 +73,6 @@ const RangeSection: React.FC<RangeSectionProps> = ({
                 />
             )}
             {range.type === 'date_range' && (
-                // <RangePicker
-                //     value={[dayjs(range.start_date), dayjs(range.end_date)]}
-                //     onChange={(dates) => {
-                //         if (dates && dates[0] && dates[1]) {
-                //             onDateRangeChange(dates[0]?.format('YYYY-MM-DD'), dates[1]?.format('YYYY-MM-DD'));
-                //         }
-                //     }}
-                //     style={{ width: '100%' }}
-                // />
                 <Flex gap={20} className='mt-4'>
                     <DatePicker
                         value={dayjs(range.start_date)}
@@ -93,6 +83,7 @@ const RangeSection: React.FC<RangeSectionProps> = ({
                         }}
                         placeholder="Start Date"
                         className='w-full h-[48px] rounded-lg'
+                        getPopupContainer={(trigger) => trigger.parentElement || document.body}
                         prefix={<span className='text-[#9BA7B7] pr-[10px]'>{__("From", "quillbooking")}</span>}
                     />
 
@@ -105,6 +96,7 @@ const RangeSection: React.FC<RangeSectionProps> = ({
                         }}
                         placeholder="End Date"
                         className='w-full h-[48px] rounded-lg'
+                        getPopupContainer={(trigger) => trigger.parentElement || document.body}
                         prefix={<span className='text-[#9BA7B7] pr-[10px]'>{__("To", "quillbooking")}</span>}
                     />
                 </Flex>

@@ -6,45 +6,108 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Flex, Button, Typography, Card, Checkbox, TimePicker, DatePicker } from 'antd';
-import { map, isEmpty } from 'lodash';
+import { Flex, Button, Typography, Card, TimePicker, DatePicker } from 'antd';
+import { isEmpty } from 'lodash';
 import dayjs from 'dayjs';
 
 /**
  * Internal dependencies
  */
 import type { DateOverrides, TimeSlot } from '@quillbooking/client';
-import { LimitsAddIcon, LimitsTrashIcon } from '@quillbooking/components';
-import { useState } from '@wordpress/element';
+import { LimitsAddIcon, TrashIcon } from '@quillbooking/components';
+import { useEffect, useState } from '@wordpress/element';
+import './style.scss';
 
 const { Text } = Typography;
 
 interface OverridesSectionProps {
     dateOverrides: DateOverrides | null;
-    onRemoveOverride: (date: string) => void;
-    selectedDate: string | null;
-    overrideTimes: TimeSlot[];
-    isUnavailable: boolean;
-    onDateChange: (date: string | null) => void;
-    onAddTimeSlot: () => void;
-    onRemoveTimeSlot: (index: number) => void;
-    onUpdateTimeSlot: (index: number, field: 'start' | 'end', value: string) => void;
-    onToggleUnavailable: () => void;
+    setDateOverrides: (overrides: DateOverrides | null) => void;
 }
+
+type OverrideDate = Record<
+    number,
+    {
+        date: string;
+        times: TimeSlot;
+    }
+>;
 
 const OverridesSection: React.FC<OverridesSectionProps> = ({
     dateOverrides,
-    onRemoveOverride,
-    selectedDate,
-    overrideTimes,
-    isUnavailable,
-    onDateChange,
-    onAddTimeSlot,
-    onRemoveTimeSlot,
-    onUpdateTimeSlot,
-    onToggleUnavailable,
 }) => {
-    const [addOverride, setAddOverride] = useState(false);
+    const [overrideDates, setOverrideDates] = useState<OverrideDate>({});
+
+    const onAddOverride = () => {
+        const nextIndex = Math.max(0, ...Object.keys(overrideDates).map(Number)) + 1;
+        setOverrideDates({
+            ...overrideDates,
+            [nextIndex]: {
+                date: '',
+                times:
+                {
+                    start: '09:00',
+                    end: '17:00',
+                },
+            },
+        })
+    }
+
+    const onRemoveOverride = (index: number) => {
+        const updatedOverrides = { ...overrideDates };
+        delete updatedOverrides[index];
+        setOverrideDates(updatedOverrides);
+    }
+
+    const onDateChange = (date: string | null, index: number) => {
+        setOverrideDates({
+            ...overrideDates,
+            [index]: {
+                ...overrideDates[index],
+                date: date || '',
+            },
+        })
+    }
+
+    const onUpdateTimeSlot = (index: number, field: 'start' | 'end', value: string) => {
+        setOverrideDates((prev) => {
+            const updatedDate = { ...prev };
+            updatedDate[index] = {
+                ...updatedDate[index],
+                times: {
+                    ...updatedDate[index].times,
+                    [field]: value,
+                },
+            };
+            return updatedDate;
+        });
+    }
+
+    useEffect(() => {
+        if (!dateOverrides) {
+          setOverrideDates({});
+          return;
+        }
+      
+        const flatList = Object.entries(dateOverrides).flatMap(
+          ([date, timesArray]) =>
+            timesArray.map(time => ({
+              date,
+              times: {
+                start: dayjs(time.start, 'HH:mm').format('HH:mm'),
+                end:   dayjs(time.end,   'HH:mm').format('HH:mm'),
+              },
+            }))
+        );
+      
+        const newOverrides = flatList.reduce<OverrideDate>((acc, entry, idx) => {
+          acc[idx] = entry;
+          return acc;
+        }, {});
+      
+        setOverrideDates(newOverrides);
+      }, [dateOverrides]);      
+
     return (
         <Card className='mt-4'>
             <Flex vertical gap={20}>
@@ -52,63 +115,60 @@ const OverridesSection: React.FC<OverridesSectionProps> = ({
                     <Text className='text-[#09090B] font-bold text-[20px]'>{__('Date-specific hours', 'quillbooking')}</Text>
                     <Text className='text-[#71717A] text-[12px]'>{__("Override your availability for specific dates when your hours differ from your regular weekly hours.", "quillbooking")}</Text>
                 </Flex>
-                {isEmpty(dateOverrides) ? (
-                    <Button onClick={() => setAddOverride(true)} className='border-none bg-color-primary text-white w-fit px-4 flex items-start rounded-lg'>
+                {isEmpty(overrideDates) && (
+                    <Button onClick={onAddOverride} className='border-none bg-color-primary text-white w-fit rounded-lg'>
                         {__('Add an override', 'quillbooking')}
                     </Button>
-                ) : (
-                    map(dateOverrides, (times: TimeSlot[], date: string) => (
-                        <Flex key={date} align="center" gap={10}>
-                            <Text>{date}</Text>
-                            <Text>{times.map((slot) => `${slot.start} - ${slot.end}`).join(', ')}</Text>
-                            <Button danger onClick={() => onRemoveOverride(date)} className='border-none shadow-none p-0'>
-                                <LimitsTrashIcon />
+                )}
+                <Flex vertical gap={20}>
+                    {Object.entries(overrideDates).map(([key, dateTime]) => {
+                        const numericKey = Number(key);
+                        return (<Flex align="center" gap={10} key={numericKey}>
+                            <Flex flex={1} className='border border-[#E4E7EC] p-2 rounded-lg' align="center" gap={10}>
+                                <DatePicker
+                                    value={dateTime.date ? dayjs(dateTime.date) : null}
+                                    onChange={(value) => onDateChange(value?.format('YYYY-MM-DD') || null, numericKey)}
+                                    style={{ width: '100%' }}
+                                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                                    suffixIcon={null}
+                                    className='border-none focus-within:shadow-none focus:shadow-none'
+                                />
+                                <div className='border-l-2 border-[#E4E7EC] h-5'>
+                                </div>
+                                <TimePicker.RangePicker
+                                    separator={<span className='text-[#9BA7B7]'>-</span>}
+                                    suffixIcon={null}
+                                    className='border-none focus-within:shadow-none focus:shadow-none'
+                                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                                    format={'hh:mm A'}
+                                    value={[dayjs(dateTime.times.start, 'hh:mm'), dayjs(dateTime.times.end, 'hh:mm')]}
+                                    onChange={(values) => {
+                                        if (values) {
+                                            const [start, end] = values;
+                                            if (start) {
+                                                onUpdateTimeSlot(numericKey, 'start', start.format('HH:mm'));
+                                            }
+                                            if (end) {
+                                                onUpdateTimeSlot(numericKey, 'end', end.format('HH:mm'));
+                                            }
+                                        }
+                                    }}
+                                />
+                            </Flex>
+                            <Button onClick={onAddOverride} className='border-none shadow-none p-0'>
+                                <LimitsAddIcon />
                             </Button>
-                        </Flex>
-                    ))
-                )}
-                {addOverride && (
-                    <Flex vertical gap={20}>
-                        <Flex vertical gap={10}>
-                            <Text strong>{__('Select a Date', 'quillbooking')}</Text>
-                            <DatePicker
-                                value={selectedDate ? dayjs(selectedDate) : null}
-                                onChange={(value) => onDateChange(value?.format('YYYY-MM-DD') || null)}
-                                style={{ width: '100%' }}
-                            />
-                        </Flex>
-
-                        <Flex vertical gap={10}>
-                            <Text strong>{__('What hours are you available?', 'quillbooking')}</Text>
-                            {overrideTimes.map((time, index) => (
-                                <Flex key={index} align="center" gap={10}>
-                                    <TimePicker
-                                        value={dayjs(time.start, 'HH:mm')}
-                                        onChange={(value) => onUpdateTimeSlot(index, 'start', value?.format('HH:mm') || '09:00')}
-                                        format="HH:mm"
-                                    />
-                                    <Text>-</Text>
-                                    <TimePicker
-                                        value={dayjs(time.end, 'HH:mm')}
-                                        onChange={(value) => onUpdateTimeSlot(index, 'end', value?.format('HH:mm') || '17:00')}
-                                        format="HH:mm"
-                                    />
-                                    <Button onClick={onAddTimeSlot} className='border-none shadow-none p-0'>
-                                        <LimitsAddIcon />
-                                    </Button>
-                                    <Button onClick={() => onRemoveTimeSlot(index)} className='border-none shadow-none p-0'>
-                                        <LimitsTrashIcon />
-                                    </Button>
-                                </Flex>
-                            ))}
-                        </Flex>
-
-                        <Flex align="center" gap={10}>
-                            <Checkbox checked={isUnavailable} onChange={onToggleUnavailable} />
-                            <Text>{__('Mark as Unavailable', 'quillbooking')}</Text>
-                        </Flex>
-                    </Flex>
-                )}
+                            <Button
+                                danger
+                                size="small"
+                                onClick={() => onRemoveOverride(numericKey)}
+                                className='border-none shadow-none p-0'
+                            >
+                                <TrashIcon width={24} height={24} />
+                            </Button>
+                        </Flex>)
+                    })}
+                </Flex>
             </Flex>
         </Card>
     );

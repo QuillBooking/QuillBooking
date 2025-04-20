@@ -15,13 +15,14 @@ import { HiOutlineUser } from "react-icons/hi2";
  * Internal dependencies
  */
 import type { Availability, TimeSlot, AvailabilityRange, DateOverrides } from '@quillbooking/client';
-import { CalendarTickIcon, Header } from '@quillbooking/components';
+import { CalendarTickIcon, CardHeader, Header, Schedule } from '@quillbooking/components';
 import OverridesSection from '../overrides';
 import { useState } from 'react';
 import './style.scss'
 import RangeSection from '../range';
-import admin from "../../../../../../../components/icons/admin.png";
-import neil from "../../../../../../../components/icons/neil.png";
+import { useEventContext } from '../../../../state/context';
+import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
+import { getCurrentTimezone } from '@quillbooking/utils';
 
 const { Text } = Typography;
 
@@ -36,16 +37,10 @@ interface AvailabilitySectionProps {
     onRangeTypeChange: (type: 'days' | 'date_range' | 'infinity') => void;
     onDaysChange: (days: number) => void;
     onDateRangeChange: (start_date: string, end_date: string) => void;
-    dateOverrides: DateOverrides;
-    onRemoveOverride: (date: string) => void;
-    selectedDate: string | null;
-    overrideTimes: TimeSlot[];
-    isUnavailable: boolean;
-    onDateChange: (date: string | null) => void;
-    onAddTimeSlot: () => void;
-    onRemoveTimeSlot: (index: number) => void;
-    onUpdateTimeSlot: (index: number, field: 'start' | 'end', value: string) => void;
-    onToggleUnavailable: () => void;
+    dateOverrides: DateOverrides | null;
+    lastPickedAvailability: Availability | null;
+    setAvailability: (availability: Availability | null) => void;
+    setDateOverrides: (overrides: DateOverrides | null) => void;
 }
 
 const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
@@ -60,15 +55,9 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
     onDaysChange,
     onDateRangeChange,
     dateOverrides,
-    onRemoveOverride,
-    selectedDate,
-    overrideTimes,
-    isUnavailable,
-    onDateChange,
-    onAddTimeSlot,
-    onRemoveTimeSlot,
-    onUpdateTimeSlot,
-    onToggleUnavailable,
+    lastPickedAvailability,
+    setAvailability,
+    setDateOverrides
 }) => {
     const weeklyHoursColumns = [
         { title: __('Day', 'quillbooking'), dataIndex: 'day', key: 'day' },
@@ -82,11 +71,20 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
         availability: day.off ? __('Unavailable', 'quillbooking') : __('Available', 'quillbooking'),
         times: day.off ? '-' : day.times.map((slot: TimeSlot) => `${slot.start} - ${slot.end}`).join(', '),
     }));
-
+    const customAvailability = {
+        id: 'default',
+        user_id: 'default',
+        name: __('Default', 'quillbooking'),
+        timezone: getCurrentTimezone(),
+        weekly_hours: DEFAULT_WEEKLY_HOURS,
+        override: {},
+    };
+    const { state: event } = useEventContext();
     const [checked, setChecked] = useState(false);
     const [reservetimes, setReservetimes] = useState(false);
     const [commonSchedule, setCommonSchedule] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
+    const [availabilityType, setAvailabilityType] = useState('existing');
 
     const handleSelectCard = (name) => {
         setSelectedCard(name);
@@ -97,34 +95,34 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
         setReservetimes(value);
     };
 
+    console.log(event);
+
     return (
         <Card className='rounded-lg'>
-            <Flex gap={10} className='items-center border-b pb-4 mb-4'>
-                <div className='bg-[#EDEDED] rounded-lg p-2'>
-                    <CalendarTickIcon />
-                </div>
-                <Header header={__('Availability', 'quillbooking')}
-                    subHeader={__(
-                        'Control your availability nd Works time at different time of days',
-                        'quillbooking'
-                    )} />
-            </Flex>
-            <Flex className='items-center mt-4'>
-                <Flex vertical gap={1}>
-                    <div className="text-[#09090B] text-[16px] font-semibold">
-                        {__("Choose a common schedule", "quillbooking")}
-                    </div>
-                    <div className='text-[#71717A]'>
-                        {__("Enable this if you want to use a common schedule between hosts. When disabled, each host will be booked based on their default or chosen schedule.", "quillbooking")}
-                    </div>
+            <CardHeader title={__('Availability', 'quillbooking')} description={__(
+                'Control your availability nd Works time at different time of days',
+                'quillbooking'
+            )} icon={<CalendarTickIcon />} />
+
+            {(event?.type === 'round-robin') && (
+                <Flex className='items-center mt-4'>
+                    <Flex vertical gap={1}>
+                        <div className="text-[#09090B] text-[16px] font-semibold">
+                            {__("Choose a common schedule", "quillbooking")}
+                        </div>
+                        <div className='text-[#71717A]'>
+                            {__("Enable this if you want to use a common schedule between hosts. When disabled, each host will be booked based on their default or chosen schedule.", "quillbooking")}
+                        </div>
+                    </Flex>
+                    <Switch
+                        checked={commonSchedule}
+                        onChange={setCommonSchedule}
+                        className={commonSchedule ? "bg-color-primary" : "bg-gray-400"}
+                    />
                 </Flex>
-                <Switch
-                    checked={commonSchedule}
-                    onChange={setCommonSchedule}
-                    className={commonSchedule ? "bg-color-primary" : "bg-gray-400"}
-                />
-            </Flex>
-            {!commonSchedule && (
+            )}
+
+            {(!commonSchedule && event?.type === 'round-robin') && (
                 <Flex vertical gap={10} className='mt-4'>
                     <div className="text-[#09090B] text-[16px]">
                         {__("Add Availability Per Users*", "quillbooking")}
@@ -138,7 +136,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                             bodyStyle={{ paddingTop: "18px" }}
                         >
 
-                            <img src={admin} alt='admin.png' className='size-8 rounded-lg' />
+                            {/* <img src={admin} alt='admin.png' className='size-8 rounded-lg' /> */}
                             <div className='text-[#1E2125] font-[700] pt-1'>Admin</div>
                         </Card>
                         <Card
@@ -147,7 +145,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                                 }`}
                             bodyStyle={{ paddingTop: "18px" }}
                         >
-                            <img src={neil} alt='neil.png' className='w-10 h-8 rounded-lg' />
+                            {/* <img src={neil} alt='neil.png' className='w-10 h-8 rounded-lg' /> */}
                             <div className='text-[#1E2125] font-[700] pt-1'>Neil James</div>
                         </Card>
                         <Card
@@ -162,88 +160,70 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                     </Flex>
                 </Flex>
             )}
-            <Flex gap={1} vertical className='mt-5'>
-                <div className="text-[#09090B] text-[16px]">
-                    {__("Availability", "quillbooking")}
+
+
+            <Flex vertical gap={4} className='mt-4'>
+                <Text className='text-[#09090B] text-[16px] font-semibold'>
+                    {__('How do you want to offer your availability for this event type?', 'quillbooking')}
                     <span className='text-red-500'>*</span>
-                </div>
+                </Text>
+                <Radio.Group
+                    value={availabilityType}
+                    onChange={(e) => {
+                        setAvailabilityType(e.target.value);
+                        setAvailability(e.target.value === 'custom' ? customAvailability : lastPickedAvailability);
+                    }}
+                    className='flex gap-1'
+                >
+                    <Radio
+                        value="existing"
+                        className={`flex-1 border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${availabilityType === "existing" ? "border-color-primary bg-color-secondary" : ""
+                            }`}
+                    >
+                        {__('Use an Existing Schedule', 'quillbooking')}
+                    </Radio>
+                    <Radio
+                        value="custom"
+                        className={`flex-1 border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${availabilityType === "custom" ? "border-color-primary bg-color-secondary" : ""
+                            }`}
+                    >
+                        {__('Set Custom Hours', 'quillbooking')}
+                    </Radio>
+                </Radio.Group>
+            </Flex>
+
+            <Flex gap={1} vertical className='mt-5'>
+                <Text className='text-[#09090B] text-[16px] font-semibold'>
+                    {__("Which Schedule Do You Want to Use?", "quillbooking")}
+                    <span className='text-red-500'>*</span>
+                </Text>
                 <Select
                     value={availability.id}
                     onChange={onAvailabilityChange}
                     options={map(storedAvailabilities, (a) => ({ label: a.name, value: a.id }))}
                     className='w-full h-[48px] rounded-lg'
-                    getPopupContainer={(trigger) => trigger.parentElement}
+                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
                 />
             </Flex>
-            <Card className='mt-4 pt-5'>
-                {true ? (
-                    map(availability.weekly_hours, (day, key) => (
-                        <Flex key={key} align="center" gap={10} className='mb-5'>
-                            <Flex gap={10} flex={1} className='items-center'>
-                                <Switch
-                                    checked={!day.off}
-                                    onChange={(_, checked) => onCustomAvailabilityChange(key, "off", !checked)}
-                                    className={!day.off ? "bg-color-primary" : "bg-gray-400"}
-                                />
-                                <Text className='capitalize text-[#1E2125] text-[16px] font-[700]'>{key}</Text>
-                            </Flex>
-                            <TimePicker
-                                value={dayjs(day.times[0].start, "HH:mm")}
-                                onChange={(time) => {
-                                    if (time) {
-                                        onCustomAvailabilityChange(key, "times", [
-                                            { start: time.format("HH:mm"), end: day.times[0].end }
-                                        ]);
-                                    }
-                                }}
-                                format="HH:mm"
-                                placeholder="Start Time"
-                                prefix={<span className='text-[#9BA7B7] pr-[100px]'>{__("From", "quillbooking")}</span>}
-                                suffixIcon={null}
-                                className='h-[48px] rounded-lg flex-1 custom-timepicker'
-                                disabled={day.off}
-                            />
 
-                            <TimePicker
-                                value={dayjs(day.times[0].end, "HH:mm")}
-                                onChange={(time) => {
-                                    if (time) {
-                                        onCustomAvailabilityChange(key, "times", [
-                                            { start: day.times[0].start, end: time.format("HH:mm") }
-                                        ]);
-                                    }
-                                }}
-                                format="HH:mm"
-                                placeholder="End Time"
-                                prefix={<span className='text-[#9BA7B7] pr-[115px]'>{__("To", "quillbooking")}</span>}
-                                suffixIcon={null}
-                                className='h-[48px] rounded-lg flex-1 custom-timepicker'
-                                disabled={day.off}
-                            />
-                        </Flex>
-                    ))
-                ) : (
-                    <Table columns={weeklyHoursColumns} dataSource={weeklyHoursData} pagination={false} bordered />
-                )}
+            <Card className='mt-4 pt-4'>
+                <Schedule availability={availabilityType === "custom" ? customAvailability : availability} onCustomAvailabilityChange={onCustomAvailabilityChange} />
             </Card>
+
             <OverridesSection
                 dateOverrides={dateOverrides}
-                onRemoveOverride={onRemoveOverride}
-                selectedDate={selectedDate}
-                overrideTimes={overrideTimes}
-                isUnavailable={isUnavailable}
-                onDateChange={onDateChange}
-                onAddTimeSlot={onAddTimeSlot}
-                onRemoveTimeSlot={onRemoveTimeSlot}
-                onUpdateTimeSlot={onUpdateTimeSlot}
-                onToggleUnavailable={onToggleUnavailable}
+                setDateOverrides={setDateOverrides}
             />
-            <RangeSection
-                range={range}
-                onRangeTypeChange={onRangeTypeChange}
-                onDaysChange={onDaysChange}
-                onDateRangeChange={onDateRangeChange}
-            />
+            
+            <Card className='border-none'>
+                <RangeSection
+                    range={range}
+                    onRangeTypeChange={onRangeTypeChange}
+                    onDaysChange={onDaysChange}
+                    onDateRangeChange={onDateRangeChange}
+                />
+            </Card>
+
             <Card className='mt-6'>
                 <Flex className='items-center'>
                     <Flex vertical gap={1}>
@@ -261,70 +241,6 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                     />
                 </Flex>
             </Card>
-            {/* <Card style={{ flex: 1.5 }}>
-                <Flex vertical gap={10}>
-                    <Text strong>{__('How do you want to offer your availability for this event type?', 'quillbooking')}</Text>
-                    <Radio.Group
-                        value={isCustomAvailability ? 'custom' : 'existing'}
-                        onChange={(e) => onToggleCustomAvailability(e.target.value === 'custom')}
-                    >
-                        <Radio value="existing">{__('Use an Existing Schedule', 'quillbooking')}</Radio>
-                        <Radio value="custom">{__('Set Custom Hours', 'quillbooking')}</Radio>
-                    </Radio.Group>
-
-                    {!isCustomAvailability && (
-                        <Flex vertical gap={10}>
-                            <Text strong>{__('Which Schedule Do You Want to Use?', 'quillbooking')}</Text>
-                            <Select
-                                value={availability.id}
-                                onChange={onAvailabilityChange}
-                                options={map(storedAvailabilities, (a) => ({ label: a.name, value: a.id }))}
-                                style={{ width: '100%' }}
-                                getPopupContainer={(trigger) => trigger.parentElement}
-                            />
-                        </Flex>
-                    )}
-
-                    <Flex vertical gap={10}>
-                        <Text strong>{__('Weekly Hours', 'quillbooking')}</Text>
-                        <Flex align="center" gap={10}>
-                            <Text>{availability.timezone}</Text>
-                            <Button type="link" onClick={() => onToggleCustomAvailability(true)}>
-                                {__('Edit Availability', 'quillbooking')}
-                            </Button>
-                        </Flex>
-                        {isCustomAvailability ? (
-                            map(availability.weekly_hours, (day, key) => (
-                                <Flex key={key} align="center" gap={10}>
-                                    <Flex gap={10} flex={1}>
-                                        <Checkbox
-                                            checked={!day.off}
-                                            onChange={(e) => onCustomAvailabilityChange(key, 'off', !e.target.checked)}
-                                        />
-                                        <Text style={{ textTransform: 'capitalize' }}>{key}</Text>
-                                    </Flex>
-                                    {!day.off && (
-                                        <TimePicker.RangePicker
-                                            value={[dayjs(day.times[0].start, 'HH:mm'), dayjs(day.times[0].end, 'HH:mm')]}
-                                            onChange={(times) => {
-                                                if (times) {
-                                                    onCustomAvailabilityChange(key, 'times', [
-                                                        { start: times[0]?.format('HH:mm'), end: times[1]?.format('HH:mm') },
-                                                    ]);
-                                                }
-                                            }}
-                                            format="HH:mm"
-                                            style={{ flex: 2 }}
-                                        />
-                                    )}
-                                </Flex>
-                            ))
-                        ) : (
-                            <Table columns={weeklyHoursColumns} dataSource={weeklyHoursData} pagination={false} bordered />
-                        )}
-                    </Flex>
-                </Flex>
-            </Card> */}
         </Card>
     );
 };

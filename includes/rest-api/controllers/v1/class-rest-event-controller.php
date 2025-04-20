@@ -345,6 +345,13 @@ class REST_Event_Controller extends REST_Controller {
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
 				),
+				'is_disabled' => array(
+					'description' => __( 'Is event disabled.', 'quillbooking' ),
+					'type'        => 'boolean',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+					'default'     => false,
+				),
 			),
 		);
 	}
@@ -564,10 +571,6 @@ class REST_Event_Controller extends REST_Controller {
 
 			if ( ! $event ) {
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
-			}
-
-			if ( $event->status == 'disabled' ) {
-				return new WP_Error( 'rest_event_error', __( 'Event is disabled', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
 			$calendarIds = $event->calendar->getTeamMembers();
@@ -986,7 +989,7 @@ class REST_Event_Controller extends REST_Controller {
 					return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 				}
 
-				$event->status = 'disabled';
+				$event->is_disabled = true;
 				$event->save();
 
 			}

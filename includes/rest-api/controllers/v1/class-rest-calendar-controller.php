@@ -339,6 +339,12 @@ class REST_Calendar_Controller extends REST_Controller {
 				)
 			)->paginate( $per_page, array( '*' ), 'page', $page );
 
+			foreach ( $calendars as $cal ) {
+				foreach ( $cal->events as $evt ) {
+						$evt->is_disabled = (bool) $evt->is_disabled;
+				}
+			}
+
 			return new WP_REST_Response( $calendars, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );

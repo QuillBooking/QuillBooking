@@ -77,6 +77,7 @@ class Event_Model extends Model {
 	protected $casts = array(
 		'user_id'     => 'integer',
 		'calendar_id' => 'integer',
+		'is_disabled' => 'boolean',
 	);
 
 	/**

@@ -1,17 +1,36 @@
 #!/usr/bin/env bash
 
-if [ $# -lt 3 ]; then
-	echo "usage: $0 <db-name> <db-user> <db-pass> [db-host] [wp-version] [skip-database-creation]"
-	exit 1
+# Debug: Show environment variables 
+echo "Environment variables: WP_TESTS_DB_NAME=$WP_TESTS_DB_NAME, WP_TESTS_DB_USER=$WP_TESTS_DB_USER"
+
+# Check if environment variables are set
+if [[ -n "$WP_TESTS_DB_NAME" && -n "$WP_TESTS_DB_USER" && -n "$WP_TESTS_DB_PASSWORD" ]]; then
+	# Use environment variables
+	echo "Using environment variables"
+	DB_NAME=$WP_TESTS_DB_NAME
+	DB_USER=$WP_TESTS_DB_USER
+	DB_PASS=$WP_TESTS_DB_PASSWORD
+	DB_HOST=${WP_TESTS_DB_HOST:-localhost}
+	WP_VERSION=${WP_VERSION:-latest}
+	SKIP_DB_CREATE=${SKIP_DB_CREATE:-false}
+else
+	# Fall back to command line arguments
+	echo "Using command line arguments"
+	if [ $# -lt 3 ]; then
+		echo "usage: $0 <db-name> <db-user> <db-pass> [db-host] [wp-version] [skip-database-creation]"
+		echo "  or set WP_TESTS_DB_NAME, WP_TESTS_DB_USER, WP_TESTS_DB_PASSWORD environment variables"
+		exit 1
+	fi
+	
+	DB_NAME=$1
+	DB_USER=$2
+	DB_PASS=$3
+	DB_HOST=${4-localhost}
+	WP_VERSION=${5-latest}
+	SKIP_DB_CREATE=${6-false}
 fi
 
-DB_NAME=$1
-DB_USER=$2
-DB_PASS=$3
-DB_HOST=${4-localhost}
-WP_VERSION=${5-latest}
-SKIP_DB_CREATE=${6-false}
-
+# Use WP_TESTS_DIR from environment if defined
 TMPDIR=${TMPDIR-/tmp}
 TMPDIR=$(echo $TMPDIR | sed -e "s/\/$//")
 WP_TESTS_DIR=${WP_TESTS_DIR-$TMPDIR/wordpress-tests-lib}
@@ -91,8 +110,22 @@ install_test_suite() {
 	if [ ! -d $WP_TESTS_DIR ]; then
 		# set up testing suite
 		mkdir -p $WP_TESTS_DIR
-		svn co --quiet https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/ $WP_TESTS_DIR/includes
-		svn co --quiet https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/data/ $WP_TESTS_DIR/data
+		echo "Checking out includes from SVN using tag/branch: ${WP_TESTS_TAG}"
+		echo "SVN URL: https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/"
+		svn co https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/ $WP_TESTS_DIR/includes
+		svn_status=$?
+		if [ $svn_status -ne 0 ]; then
+			echo "SVN checkout failed with status $svn_status"
+			exit 1
+		fi
+		
+		echo "Checking out data from SVN..."
+		svn co https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/data/ $WP_TESTS_DIR/data
+		svn_status=$?
+		if [ $svn_status -ne 0 ]; then
+			echo "SVN data checkout failed with status $svn_status"
+			exit 1
+		fi
 	fi
 
 	if [ ! -f wp-tests-config.php ]; then
@@ -129,6 +162,11 @@ install_db() {
 		fi
 	fi
 
+	# Debug output
+	echo "DEBUG: Using DB_USER=$DB_USER"
+	echo "DEBUG: Using DB_PASS=$DB_PASS"
+	echo "DEBUG: Using DB_NAME=$DB_NAME"
+	
 	# create database using MYSQL_PWD environment variable
 	export MYSQL_PWD=$DB_PASS
 	mysql --user="$DB_USER"$EXTRA -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`"

@@ -63,10 +63,21 @@ jobs:
         run: composer update --no-progress --no-ansi --no-interaction
 
       - name: Set up WordPress test environment
+        env:
+          WP_TESTS_DB_NAME: wordpress_test
+          WP_TESTS_DB_USER: root
+          WP_TESTS_DB_PASSWORD: password
+          WP_TESTS_DB_HOST: localhost
+          WP_VERSION: ${{ matrix.wordpress }}
         run: |
-          bash bin/install-wp-tests.sh wordpress_test root password localhost ${{ matrix.wordpress }}
+          bash bin/install-wp-tests.sh
 
       - name: Run PHPUnit tests
+        env:
+          WP_TESTS_DB_NAME: wordpress_test
+          WP_TESTS_DB_USER: root
+          WP_TESTS_DB_PASSWORD: password
+          WP_TESTS_DB_HOST: localhost
         run: |
           composer test
           

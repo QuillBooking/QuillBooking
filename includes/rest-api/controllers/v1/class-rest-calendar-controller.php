@@ -304,7 +304,7 @@ class REST_Calendar_Controller extends REST_Controller {
 				return new WP_Error( 'rest_calendar_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
 			}
 
-			$query = Calendar_Model::query();
+			$query = Calendar_Model::query()->with('user');
 
 			if ( ! empty( $keyword ) ) {
 				$query->whereHas(

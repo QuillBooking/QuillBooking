@@ -24,7 +24,7 @@ const EmbedCode: React.FC<{ url: string; icon: React.ReactNode; title: string }>
                 <div className="pb-2 text-[#3F4254] text-[16px] font-semibold">{__("Embed Code",'quillbooking')}</div>
                 <Flex gap={10}>
                     <Input value={url} readOnly className="h-[48px] text-[#999999] rounded-lg" />
-                    <Button className="bg-color-primary h-[48px] px-7 rounded-lg"
+                    <Button className="bg-color-primary h-[48px] px-7 rounded-lg text-white"
                         onClick={() => copyToClipboard(url, __('Link copied', 'quillbooking'))}>
                         <CopyWhiteIcon />
                         <span className="text-white text-[16px] font-[500] self-center">{__("Copy",'quillbooking')}</span>

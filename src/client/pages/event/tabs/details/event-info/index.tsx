@@ -3,7 +3,7 @@
  */
 import React, { useState } from 'react';
 import { Flex, Card, Input, Select, Button } from 'antd';
-import { Header, ShareEventIcon } from '@quillbooking/components';
+import { CardHeader, EventInfoIcon } from '@quillbooking/components';
 import { FaCheck, FaRegEdit } from "react-icons/fa";
 import { __ } from '@wordpress/i18n';
 
@@ -21,14 +21,12 @@ const EventInfo: React.FC<EventInfoProps> = ({ name, description, hosts, color, 
 
     return (
         <Card className='rounded-lg'>
-            <Flex gap={10} className='items-center border-b pb-4'>
-                <ShareEventIcon />
-                <Header header={__('Event Details', 'quillbooking')}
-                    subHeader={__(
-                        'Set your Event Name and Event Host.',
-                        'quillbooking'
-                    )} />
-            </Flex>
+            <CardHeader title={__('Event Details', 'quillbooking')}
+                description={__(
+                    'Set your Event Name and Event Host.',
+                    'quillbooking'
+                )}
+                icon={<EventInfoIcon />} />
             <Flex vertical className='border-b pb-4'>
                 <Flex gap={1} vertical className='mt-4'>
                     <div className="text-[#09090B] text-[16px]">

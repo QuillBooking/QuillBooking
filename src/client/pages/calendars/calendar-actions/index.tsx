@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { __ } from '@wordpress/i18n';
-import { Button, Popconfirm, Flex, Modal } from "antd";
+import { Button, Flex, Modal } from "antd";
 import { EditIcon, DisableIcon, CloneIcon, TrashIcon, CalendarDeleteIcon, CalendarDisableIcon } from "@quillbooking/components"
 import type { Calendar } from '@quillbooking/client';
 
@@ -53,19 +53,19 @@ const CalendarActions: React.FC<CalendarActionsProps> = ({
     };
 
     return (
-        <Flex vertical gap={10} className="items-start text-color-primary-text">
-            <Button type="text" icon={<EditIcon />} onClick={() => onEdit(calendar.id)}>
+        <Flex vertical gap={10} className="items-start text-color-primary-text w-full">
+            <Button type="text" icon={<EditIcon />} onClick={() => onEdit(calendar.id)} className="w-full flex justify-start">
                 {__('Edit', 'quillbooking')}
             </Button>
 
-            <Button type="text" onClick={showDisableModal} icon={<DisableIcon />}>
+            <Button type="text" onClick={showDisableModal} icon={<DisableIcon />} className="w-full flex justify-start">
                 {isDisabled ? __('Enable', 'quillbooking') : __('Disable', 'quillbooking')}
             </Button>
 
-            <Button type="text" icon={<CloneIcon />} onClick={() => onClone(calendar)}>
+            <Button type="text" icon={<CloneIcon />} onClick={() => onClone(calendar)} className="w-full flex justify-start">
                 {__('Clone Events', 'quillbooking')}
             </Button>
-            <Button type="text" icon={<TrashIcon />} onClick={showDeleteModal}>
+            <Button type="text" icon={<TrashIcon />} onClick={showDeleteModal} className="w-full flex justify-start">
                 {__('Delete', 'quillbooking')}
             </Button>
             <Modal
@@ -76,10 +76,10 @@ const CalendarActions: React.FC<CalendarActionsProps> = ({
                 cancelText={__('No', 'quillbooking')}
                 footer={[
                     <Flex className="w-full mt-5 items-center justify-center" gap={10}>
-                        <Button key="cancel" onClick={handleDeleteCancel} className="border rounded-lg py-6 text-[#71717A] font-semibold w-full">
+                        <Button key="cancel" onClick={handleDeleteCancel} className="border rounded-lg text-[#71717A] font-semibold w-full">
                             {__('Back', 'quillbooking')}
                         </Button>
-                        <Button key="save" type="primary" onClick={handleDelete} className="bg-[#EF4444] rounded-lg py-6 font-semibold w-full">
+                        <Button key="save" type="primary" onClick={handleDelete} className="bg-[#EF4444] rounded-lg font-semibold w-full">
                             {__('Yes, Delete', 'quillbooking')}
                         </Button>
                     </Flex>
@@ -101,10 +101,10 @@ const CalendarActions: React.FC<CalendarActionsProps> = ({
                 cancelText={__('No', 'quillbooking')}
                 footer={[
                     <Flex className="w-full mt-5 items-center justify-center" gap={10}>
-                        <Button key="cancel" onClick={handleDisableCancel} className="border rounded-lg py-6 text-[#71717A] font-semibold w-full">
+                        <Button key="cancel" onClick={handleDisableCancel} className="border rounded-lg text-[#71717A] font-semibold w-full">
                             {__('Back', 'quillbooking')}
                         </Button>
-                        <Button key="save" type="primary" onClick={handleDisable} className="bg-[#EF4444] rounded-lg py-6 font-semibold w-full">
+                        <Button key="save" type="primary" onClick={handleDisable} className="bg-[#EF4444] rounded-lg font-semibold w-full">
                             {__('Yes, Disable', 'quillbooking')}
                         </Button>
                     </Flex>

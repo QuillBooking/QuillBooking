@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -15,10 +15,9 @@ import { Card, Switch, Button, Modal, Input, Form, InputNumber, Typography, Radi
 import { NotificationType } from '@quillbooking/client';
 import { useNotice, useApi } from '@quillbooking/hooks';
 import EmailEditor from './editor';
-import { Header, LimitsAddIcon, LimitsTrashIcon, UrlIcon } from '@quillbooking/components';
+import { Header, LimitsAddIcon, LimitsTrashIcon, MergeTagModal, UrlIcon } from '@quillbooking/components';
 import { ReactMultiEmail, isEmail } from 'react-multi-email';
 import 'react-multi-email/dist/style.css';
-import SubjectModal from './subject-modal';
 
 const { TextArea } = Input;
 
@@ -33,14 +32,20 @@ type NotificationCardProps = {
 const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, notificationKey, notificationType, eventId, setNotifications }) => {
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [form] = Form.useForm();
-    const { successNotice, errorNotice } = useNotice();
+    //const { successNotice, errorNotice } = useNotice();
     const [emails, setEmails] = useState<string[]>([]);
-    const [subjectModal, setSubjectModal] = useState<boolean>(false);
+    const [mergeTagModal, setMergeTagModal] = useState<boolean>(false);
     const [focused, setFocused] = useState(false);
-    const notification = notifications[notificationKey];
-    const { callApi, loading } = useApi();
-
-    console.log(notification)
+    // const notification = notifications[notificationKey];
+    // const [message, setMessage] = useState<string>(notification.template.message);
+    //const { callApi, loading } = useApi();
+    
+    // Initialize form with notification data when component mounts
+    useEffect(() => {
+        if (notifications) {
+            form.setFieldsValue(notifications[notificationKey]);
+        }
+    }, []);
 
     const handleMentionClick = (mention: string) => {
         const currentValue = form.getFieldValue(['template', 'subject']) || '';
@@ -49,54 +54,63 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
             subject: currentValue + mention
           }
         });
-        setSubjectModal(false);
-      };
+        setMergeTagModal(false);
+        
+        // Mark as needing to save
+        const updatedValues = form.getFieldsValue();
+        handleFormChange(updatedValues);
+    };
 
     const handleSave = () => {
         form.validateFields().then((values) => {
             const updatedSettings = { ...notifications, [notificationKey]: { ...notifications[notificationKey], ...values } };
-
             setNotifications(updatedSettings);
-            saveNotificationSettings(updatedSettings);
         });
     };
 
-    const handleSwitchChange = (checked: boolean) => {
-        if (!notification) {
-            return;
-        }
-        const updatedSettings = { ...notifications, [notificationKey]: { ...notification, default: checked } };
+    // const handleSwitchChange = (checked: boolean) => {
+    //     if (!notification) {
+    //         return;
+    //     }
+    //     const updatedSettings = { ...notifications, [notificationKey]: { ...notification, default: checked } };
+    //     setNotifications(updatedSettings);
+    // };
 
+    // Handle form field changes
+    const handleFormChange = (changedValues) => {
+        const updatedSettings = { 
+            ...notifications, 
+            [notificationKey]: { 
+                ...notifications[notificationKey], 
+                ...changedValues 
+            } 
+        };
         setNotifications(updatedSettings);
-        saveNotificationSettings(updatedSettings);
     };
 
-    const saveNotificationSettings = (settings: Record<string, NotificationType>) => {
-        callApi({
-            path: `events/${eventId}`,
-            method: 'POST',
-            data: {
-                [`${notificationType}_notifications`]: settings,
-            },
-            onSuccess() {
-                successNotice(__('Notification settings saved successfully', 'quillbooking'));
-            },
-            onError(error) {
-                errorNotice(error.message);
-            },
-        });
-    };
+    // const handleEdit = () => {
+    //     setEditingKey(notificationKey);
+    //     form.setFieldsValue(notification);
+    // };
 
-    const handleEdit = () => {
-        setEditingKey(notificationKey);
-        form.setFieldsValue(notification);
+    // Add form.onFieldsChange to detect changes
+    const onFieldsChange = () => {
+        // This will mark the form as needing to be saved whenever any field changes
+        handleSave();
     };
 
     const renderModalContent = () => (
-        <Form form={form} layout="vertical" className='w-full'
+        <Form 
+            form={form} 
+            layout="vertical" 
+            className='w-full'
             initialValues={{
                 times: [{ value: 15, unit: 'minutes' }],
-            }}>
+                ...form.getFieldsValue(),
+            }}
+            onValuesChange={handleFormChange}
+            onFieldsChange={onFieldsChange}
+        >
             {notificationType === 'email' && (
                 <>
                 <Form.Item name={['template', 'subject']}
@@ -104,40 +118,40 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                         {__('Subject', 'quillbooking')}
                         <span className='text-red-500'>*</span>
                     </span>}
-                    //rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}
+                    rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}
                     className='w-full mb-6'
                 >
                     <Input
                         placeholder='New Booking: {{guest.full_name}} @ {{booking.start_date_time_for_host}}'
                         className='h-[48px] rounded-lg'
-                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg' onClick={()=>setSubjectModal(true)}>
+                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg' onClick={()=>setMergeTagModal(true)}>
                             <UrlIcon />
                         </span>}
                         style={{ padding: "0 0 0 10px" }} />
                 </Form.Item>
                 <Modal
-                open={subjectModal}
-                onCancel={() => setSubjectModal(false)}
-                footer={null}
-                width={700}
-                getContainer={false}
-              >
-                <Flex gap={10} className='items-center border-b pb-4 mb-4'>
-                      <div className='bg-[#EDEDED] rounded-lg p-3 mt-2' >
-                        <UrlIcon />
-                      </div>
-                      <Header header={__('Email Notification', 'quillbooking')}
-                        subHeader={__(
-                          'Customize the email notifications sent to attendees and organizers',
-                          'quillbooking'
-                        )} />
-                </Flex>
-                <SubjectModal onMentionClick={handleMentionClick}/>
-              </Modal >
-              </>
+                    open={mergeTagModal}
+                    onCancel={() => setMergeTagModal(false)}
+                    footer={null}
+                    width={700}
+                    getContainer={false}
+                >
+                    <Flex gap={10} className='items-center border-b pb-4 mb-4'>
+                        <div className='bg-[#EDEDED] rounded-lg p-3 mt-2' >
+                            <UrlIcon />
+                        </div>
+                        <Header header={__('Subject Merge tags', 'quillbooking')}
+                            subHeader={__(
+                            'Choose your Merge tags type and Select one of them related to your input.',
+                            'quillbooking'
+                            )} />
+                    </Flex>
+                    <MergeTagModal onMentionClick={handleMentionClick}/>
+                </Modal>
+                </>
             )}
             <Form.Item name={['template', 'message']}
-                //rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
+                rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
                 className='w-full mb-5'
             >
                 {notificationType === 'email' ? (
@@ -147,29 +161,32 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                             <span className='text-red-500'>*</span>
                         </span>
                         <div className='mt-2'>
-                        <EmailEditor message={notification.template.message}
+                        <EmailEditor message={notifications[notificationKey].template.message}
                             onChange={(content) => {
-                                console.log(content);  // Log the updated value
                                 form.setFieldsValue({ template: { message: content } });
+                                handleFormChange({ template: { message: content } });
                             }} />
-                            </div>
+                        </div>
                     </>
                 ) : (
                     <>
-                        <span className="text-[#09090B] text-[16px] font-semibold">
+                        {/* <span className="text-[#09090B] text-[16px] font-semibold">
                             {__('SMS Body', 'quillbooking')}
                         </span>
                         <TextArea
                             autoSize={{ minRows: 4 }}
-                            value={notification.template.message}
-                            onChange={(e) => form.setFieldsValue({ template: { message: e.target.value } })}
+                            value={form.getFieldValue('template')?.message}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                form.setFieldsValue({ template: { message: value } });
+                                handleFormChange({ template: { message: value } });
+                            }}
                             className='mt-2 rounded-lg'
-                        />
+                        /> */}
                     </>
                 )}
             </Form.Item>
             <Form.Item
-                //rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
                 className='w-full mb-5'
             >
                 {notificationType === 'email' ? (
@@ -183,6 +200,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                             emails={emails}
                             onChange={(_emails: string[]) => {
                                 setEmails(_emails);
+                                handleFormChange({ recipients: _emails });
                             }}
                             autoFocus={true}
                             onFocus={() => setFocused(true)}
@@ -208,8 +226,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                             {__('Sender', 'quillbooking')}
                             <span className='text-red-500'>*</span>
                         </span>}
-                        //rules={[{ required: true, message: __('Type is required', 'quillbooking') }]}
-                        >
+                        rules={[{ required: true, message: __('Type is required', 'quillbooking') }]}
+                    >
                         <Radio.Group className='text-[#3F4254] font-semibold'>
                             <Radio value="sms" className='custom-radio'>{__('SMS', 'quillbooking')}</Radio>
                             <Radio value="whatsapp" className='custom-radio'>{__('WhatsApp', 'quillbooking')}</Radio>
@@ -217,100 +235,14 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                     </Form.Item>
                 )}
             </Form.Item>
-            {notification.times && (
-                <>
-                    <span className="text-[#09090B] text-[16px] font-semibold">
-                        {__('Timing', 'quillbooking')}
-                        <span className='text-red-500'>*</span>
-                    </span>
-                    <Form.List name="times" >
-                        {(fields, { add, remove }) => (
-                            <Flex vertical gap={10} className='mt-3'>
-                                {fields.map(({ key, name, ...restField }, index) => (
-                                    <Flex key={key} align="center" gap={10}>
-                                        <Form.Item
-                                            {...restField}
-                                            name={[name, 'value']}
-                                            rules={[{ required: true, message: __('Value is required', 'quillbooking') }]}
-                                            style={{ marginBottom: 0 }}
-                                        >
-                                            <InputNumber className='h-[48px] rounded-lg pt-2 w-16' />
-                                        </Form.Item>
-                                        <Form.Item
-                                            {...restField}
-                                            name={[name, 'unit']}
-                                            rules={[{ required: true, message: __('Unit is required', 'quillbooking') }]}
-                                            style={{ marginBottom: 0 }}
-                                        >
-                                            <Select
-                                                className='h-[48px] rounded-lg w-44'
-                                                getPopupContainer={(trigger) => trigger.parentElement}
-                                                options={[
-                                                    { value: 'minutes', label: <span>{__('Minutes Before', 'quillbooking')}</span> },
-                                                    { value: 'hours', label: <span>{__('Hours Before', 'quillbooking')}</span> },
-                                                    { value: 'days', label: <span>{__('Days Before', 'quillbooking')}</span> },
-                                                ]}
-                                            />
-                                        </Form.Item>
 
-                                        {/* Only show Remove button if it's NOT the first item */}
-                                        {index > 0 && (
-                                            <Button onClick={() => remove(name)} danger className='border-none shadow-none p-0'>
-                                                <LimitsTrashIcon />
-                                            </Button>
-                                        )}
-
-                                        {/* Only show Add button beside the first item */}
-                                        {index === 0 && (
-                                            <Button onClick={() => add({ value: 15, unit: 'minutes' })} className='border-none shadow-none p-0'>
-                                                <LimitsAddIcon />
-                                            </Button>
-                                        )}
-                                    </Flex>
-                                ))}
-                            </Flex>
-                        )}
-                    </Form.List>
-
-                </>
-            )}
-            {/* <Form.Item>
-                <Button type="primary" onClick={handleSave} loading={loading}>
-                    {__('Save', 'quillbooking')}
-                </Button>
-            </Form.Item> */}
         </Form>
     );
 
     return (
         <Card style={{ marginBottom: 16 }}>
-            {/* <Flex justify="space-between">
-                <Flex vertical>
-                    <Flex gap={15}>
-                        <Typography.Title level={5} className='text-[#09090B] text-[20px] font-[500] m-0'>{notification.label}</Typography.Title>
-                        {notification.default && (
-                            <span className='bg-color-primary text-white rounded-lg text-[11px] pt-[3px] px-2 h-[22px] mt-[7px]'>{__("ENABLED", "quillbooking")}</span>
-                        )}
-                    </Flex>
-                    <span className='text-[#625C68] text-[14px]'>{__("This SMS will be sent to the attendee if phone number is provided during booking.", "quillbooking")}</span>
-                </Flex> */}
             <Flex gap={10} align="center">
-                {/* <Button onClick={handleEdit}>{__('Edit', 'quillbooking')}</Button>
-                    <Switch
-                        checked={notification.default}
-                        loading={loading}
-                        onChange={handleSwitchChange}
-                    /> */}
-                {/* <Modal
-                        title={notification.label}
-                        open={editingKey === notificationKey}
-                        onCancel={() => setEditingKey(null)}
-                        footer={null}
-                        getContainer={false}
-                        width={800}
-                    >  */}
                 {renderModalContent()}
-                {/* </Modal> */}
             </Flex>
         </Card>
     );

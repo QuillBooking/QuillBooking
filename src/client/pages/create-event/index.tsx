@@ -2,21 +2,19 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 
 /**
  * External dependencies
  */
-import { Typography, Input, Button, Select, InputNumber, Card, Flex, Checkbox, Form, Steps, Modal } from 'antd';
+import { Input, Button, Card, Flex, Steps, Modal } from 'antd';
 
 /**
  * Internal dependencies
  */
-import { CollectiveIcon, FieldWrapper, GroupIcon, Header, RoundRobinIcon, ShareEventIcon, SingleIcon } from '@quillbooking/components';
-import { useApi, useNotice, useBreadcrumbs, useNavigate } from '@quillbooking/hooks';
-import { useParams } from '@quillbooking/navigation';
+import { CollectiveIcon, GroupIcon, Header, HostSelect, RoundRobinIcon, ShareEventIcon, SingleIcon } from '@quillbooking/components';
+import { useApi, useNotice, useNavigate, useCurrentUser } from '@quillbooking/hooks';
 import type { Event, AdditionalSettings } from '@quillbooking/client';
-import ColorSelector from '../event/tabs/details/color-selector';
 import Locations from '../event/tabs/details/locations';
 import './style.scss'
 import { FaCheck } from 'react-icons/fa';
@@ -37,15 +35,12 @@ interface CreateEventProps {
 }
 
 const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose, calendarType, calendarId }) => {
-    // const { id, type } = useParams<{ id: string; type: 'one-to-one' | 'group' | 'round-robin' }>();
-    // if (!id || !type) {
-    //     return null;
-    // }
     const [current, setCurrent] = useState(0);
     const { callApi, loading } = useApi();
+    const currentUser = useCurrentUser();
     const { successNotice, errorNotice } = useNotice();
-    //const setBreadcrumbs = useBreadcrumbs();
     const navigate = useNavigate();
+    const [selectedUser, setSelectedUser] = useState<number>(0);
     const [event, setEvent] = useState<Partial<Event>>({
         name: '',
         description: '',
@@ -56,6 +51,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
         color: '',
         visibility: 'public',
         location: [],
+        hosts: [],
         additional_settings: {
             max_invitees: 1,
             show_remaining: true,
@@ -64,6 +60,12 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
             allow_attendees_to_select_duration: false,
             allow_additional_guests: false,
         },
+    });
+
+    const [validationErrors, setValidationErrors] = useState({
+        name: false,
+        location: false,
+        members: false,
     });
 
     const eventTypes: Record<string, string> =
@@ -77,7 +79,34 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                 "group": __('Group', 'quillbooking'),
             };
 
-    const next = () => setCurrent((prev) => prev + 1);
+    const next = () => {
+        // For step 1 (current === 0), we only need to check event.type
+        if (current === 0) {
+            if (!event.type) {
+                errorNotice(__('Please select an event type', 'quillbooking'));
+                return;
+            }
+
+            if (calendarType === 'team' && (!event.hosts || event.hosts.length === 0)) {
+                setValidationErrors(prev => ({ ...prev, members: true }));
+                errorNotice(__('Please select at least one team member', 'quillbooking'));
+                return;
+            }
+        }
+
+        // For step 2 (current === 1), validate name and description
+        if (current === 1) {
+            const errors = {
+                name: !event.name,
+                location: false,
+                members: false,
+            };
+
+            setValidationErrors(errors);
+        }
+
+        setCurrent((prev) => prev + 1);
+    };
     const prev = () => setCurrent((prev) => prev - 1);
 
     const durations = [
@@ -86,49 +115,20 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
         { value: 60, label: __("60 Minutes", "quillbooking"), description: __("In-depth discussion", "quillbooking") }
     ];
 
-    //const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset');
-
-    // useEffect(() => {
-    //     setBreadcrumbs([
-    //         {
-    //             path: `calendars/${id}/create-event`,
-    //             title: getEventTitle(type),
-    //         }
-    //     ]);
-    // }, [id, type]);
-
-    // const getEventTitle = (type: string) => {
-    //     switch (type) {
-    //         case 'one-to-one':
-    //             return __('Create One-to-One Event', 'quillbooking');
-    //         case 'group':
-    //             return __('Create Group Event', 'quillbooking');
-    //         case 'round-robin':
-    //             return __('Create Round-Robin Event', 'quillbooking');
-    //         default:
-    //             return __('Create Event', 'quillbooking');
-    //     }
-    // };
-
     const handleChange = (key: string, value: any) => {
         setEvent({ ...event, [key]: value });
     };
 
-    const handleAdditionalSettingsChange = (key: keyof AdditionalSettings, value: any) => {
-        if (!event.additional_settings) {
+    const handleSubmit = () => {
+        if (!event.name || !event.description || !event.location || event.location.length === 0) {
+            setValidationErrors({
+                name: !event.name,
+                location: !event.location || event.location.length === 0,
+                members: !event.hosts
+            });
             return;
         }
 
-        setEvent({
-            ...event,
-            additional_settings: {
-                ...event.additional_settings,
-                [key]: value,
-            },
-        });
-    };
-
-    const handleSubmit = () => {
         callApi({
             path: 'events',
             method: 'POST',
@@ -143,67 +143,60 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
         });
     };
 
-    const durationOptions = [
-        { value: 15, label: '15' },
-        { value: 30, label: '30' },
-        { value: 45, label: '45' },
-        { value: 60, label: '60' },
-        { value: 'custom', label: __('Custom', 'quillbooking') },
-    ];
-
-    // const handleDurationChange = (value: number | string) => {
-    //     if (value === 'custom') {
-    //         setDurationMode('custom');
-    //     } else {
-    //         setDurationMode('preset');
-    //         handleChange('duration', value);
-    //     }
-    // };
-
     const steps = [
         {
             title: 'Select Event Type',
             content: (
                 <Flex vertical>
-                    {calendarType !== 'team' && (
+                    {/* {calendarType !== 'team' && currentUser.isAdmin() && (
                         <Flex gap={1} vertical className=''>
                             <div className="text-[#09090B] text-[16px]">
                                 {__("Select Event Host", "quillbooking")}
                                 <span className='text-red-500'>*</span>
                             </div>
-                            <Select
-                                placeholder="Select Host"
-                                className="h-[48px] rounded-lg"
-                                // onChange={(selectedId) => {
-                                //     const selectedHost = hosts.find((host) => host.id === selectedId);
-                                //     onChange("hosts", selectedHost ? [selectedHost] : []);
-                                // }}
-                                getPopupContainer={(trigger) => trigger.parentElement}
-                                options={[
-                                    { value: 'host', label: 'Host Name' },
-                                ]}
+                            <HostSelect
+                                value={event.user_id || 0}
+                                onChange={(userId) => {
+                                    handleChange('user_id', userId);
+                                    setSelectedUser(userId);
+                                }}
+                                placeholder={__('Select Host', 'quillbooking')}
+                                defaultValue={0}
+                                selectFirstHost={false}
                             />
                             <span className='text-[#818181] text-[12px]'>{__("Please select the hosts you want to assign to this event", "quillbooking")}</span>
                         </Flex>
-                    )}
+                    )} */}
                     {calendarType === 'team' && (
                         <Flex gap={1} vertical className=''>
                             <div className="text-[#09090B] text-[16px]">
                                 {__("Select Team Members", "quillbooking")}
                                 <span className='text-red-500'>*</span>
                             </div>
-                            <Select
-                                placeholder="Select Team"
-                                className="h-[48px] rounded-lg"
-                                // onChange={(selectedId) => {
-                                //     const selectedHost = hosts.find((host) => host.id === selectedId);
-                                //     onChange("hosts", selectedHost ? [selectedHost] : []);
-                                // }}
-                                getPopupContainer={(trigger) => trigger.parentElement}
-                                options={[
-                                    { value: 'team1', label: 'Team Member' },
-                                ]}
+                            <HostSelect
+                                value={event.hosts?.map(host => host.id) || []}
+                                onChange={(userIds: number[]) => {
+                                    // Update both user_id (primary host) and hosts array
+                                    const updatedEvent = {
+                                        ...event,
+                                        user_id: userIds[0] || 0, // Set first selected as primary
+                                        hosts: userIds.map(id => ({ id, name: '' })) // Minimal host object
+                                    };
+                                    setEvent(updatedEvent);
+
+                                    // Clear validation error when users are selected
+                                    if (userIds.length > 0) {
+                                        setValidationErrors(prev => ({ ...prev, members: false }));
+                                    }
+                                }}
+                                multiple
+                                placeholder={__('Select team members...', 'quillbooking')}
                             />
+                            {validationErrors.members && (
+                                <span className="text-red-500 text-sm">
+                                    {__("At least one team member is required", "quillbooking")}
+                                </span>
+                            )}
                             <span className='text-[#818181] text-[12px]'>{__("Select the members you want to assign to this team.", "quillbooking")}</span>
                         </Flex>
                     )}
@@ -233,7 +226,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                                 className={`cursor-pointer rounded-xl border-2 pl-2 ${event.type === 'round-robin' ? 'border-color-primary' : ''
                                     }`}
                             >
-                                <Flex gap={15} align='center'>
+                                {/* <Flex gap={15} align='center'>
                                     <CollectiveIcon />
                                     <Flex vertical>
                                         <h3 className="text-[#2E2C2F] text-[18px] font-bold">{__('Collective', 'quillbooking')}</h3>
@@ -245,7 +238,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                                         <span className="text-[12px] text-[#979797]"> {__('Good for Panel Interviews, Group Sales Calls, etc.', 'quillbooking')}</span>
 
                                     </Flex>
-                                </Flex>
+                                </Flex> */}
                             </Card>
                         </Flex>
                     )}
@@ -309,11 +302,19 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                                 </div>
                                 <Input
                                     value={event.name}
-                                    onChange={(e) => handleChange('name', e.target.value)}
+                                    onChange={(e) => {
+                                        handleChange('name', e.target.value);
+                                        setValidationErrors(prev => ({ ...prev, name: false }));
+                                    }}
                                     placeholder={__('Enter name of this event calendar', 'quillbooking')}
                                     className='h-[48px] rounded-lg'
-                                    required
+                                    status={validationErrors.name ? 'error' : ''}
                                 />
+                                {validationErrors.name && (
+                                    <span className="text-red-500 text-sm">
+                                        {__("Event name is required", "quillbooking")}
+                                    </span>
+                                )}
                             </Flex>
                             <Flex gap={1} vertical className='mt-4'>
                                 <div className="text-[#09090B] text-[16px]">
@@ -322,11 +323,12 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                                 </div>
                                 <Input.TextArea
                                     value={event.description || ''}
-                                    onChange={(e) => handleChange('description', e.target.value)}
+                                    onChange={(e) => {
+                                        handleChange('description', e.target.value);
+                                    }}
                                     placeholder={__('type your Description', 'quillbooking')}
                                     rows={4}
                                     className='rounded-lg'
-                                    required
                                 />
                             </Flex>
                         </Flex>
@@ -384,6 +386,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                                     {__("Custom Duration", "quillbooking")}
                                 </div>
                                 <Input
+                                    type='number'
                                     suffix={<span className='border-l pl-3'>{__("Min", "quillbooking")}</span>}
                                     className='h-[48px] rounded-lg flex items-center w-[194px]'
                                     value={event.duration}
@@ -411,8 +414,17 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                             </div>
                         </Flex>
                         <div className='grid grid-cols-2 gap-[15px]'>
-                            <Locations locations={event.location || []} onChange={(locations) => handleChange('location', locations)} onKeepDialogOpen={() => setVisible(true)} />
+                            <Locations locations={event.location || []}
+                                onChange={(locations) => {
+                                    handleChange('location', locations);
+                                    setValidationErrors(prev => ({ ...prev, location: false }));
+                                }} onKeepDialogOpen={() => setVisible(true)} />
                         </div>
+                        {validationErrors.location && (
+                            <span className="text-red-500 text-sm">
+                                {__("At least one location is required", "quillbooking")}
+                            </span>
+                        )}
                     </Flex>
                 </Card>
             ),
@@ -427,6 +439,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
             destroyOnClose
             className='w-fit'
         >
+
             <Flex vertical className="quillbooking-create-event">
                 <Flex gap={10} className='items-center pb-8'>
                     <ShareEventIcon />
@@ -447,7 +460,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                 <Flex className="items-center justify-end" gap={10}>
                     {current > 0 && (
                         <Button onClick={prev}
-                            className='bg-[#FBF9FC] text-color-primary text-[16px] py-5 px-16 font-semibold rounded-lg border-none'
+                            className='bg-[#FBF9FC] text-color-primary text-[16px] px-16 font-semibold rounded-lg border-none'
                         >
                             {__("Back", "quillbooking")}
                         </Button>
@@ -456,8 +469,8 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                         <Button
                             type="primary"
                             onClick={next}
-                            disabled={current === 0 && !event.type}
-                            className={`rounded-lg py-5 px-12 font-semibold text-[16px] text-white bg-color-primary border-none transition ${current === 0
+                            disabled={current === 0 && !event.type || current === 1 && !event.name && !event.description || current === 2 && !event.location}
+                            className={`rounded-lg px-12 font-semibold text-[16px] text-white bg-color-primary border-none transition ${current === 0
                                 ? 'w-full' // custom style for step 0
                                 : ''      // other steps
                                 }`}
@@ -470,144 +483,14 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                             type="primary"
                             onClick={handleSubmit}
                             disabled={
-                                !event.name || !event.description || !event.location
+                                !event.location || event.location.length === 0
                             }
-                            className='bg-color-primary py-5 px-8 text-white text-[16px] font-semibold rounded-lg border-none'
+                            className='bg-color-primary px-8 text-white text-[16px] font-semibold rounded-lg border-none'
                         >
                             {__("Submit Event", "quillbooking")}
                         </Button>
                     )}
                 </Flex>
-                {/* <Select
-                    style={{ width: '100%' }}
-                    placeholder="Select event type"
-                    options={Object.entries(eventTypes).map(([value, label]) => ({
-                        value,
-                        label,
-                    }))}
-                    value={event.type}
-                    onChange={(value) => setEvent({ ...event, type: value })}
-                />
-                <Form layout="vertical" onFinish={handleSubmit}>
-                    <Flex vertical gap={20}>
-                        <Card>
-                            <Flex gap={20} vertical>
-                                <FieldWrapper
-                                    label={__('Event Name', 'quillbooking')}
-                                    description={__('The name of the event', 'quillbooking')}
-                                    style={{ flex: 1 }}
-                                >
-                                    <Form.Item
-                                        name="name"
-                                        rules={[{ required: true, message: __('Please enter the event name', 'quillbooking') }]}
-                                    >
-                                        <Flex>
-                                            <ColorSelector
-                                                value={event.color || ''}
-                                                onChange={(color) => handleChange('color', color)}
-                                            />
-                                            <Input
-                                                value={event.name}
-                                                onChange={(e) => handleChange('name', e.target.value)}
-                                                placeholder={__('Enter a name for the event', 'quillbooking')}
-                                                size='large'
-                                                style={{
-                                                    borderRadius: '0 4px 4px 0',
-                                                    flex: 1,
-                                                    borderLeft: 'none',
-                                                }}
-                                            />
-                                        </Flex>
-                                    </Form.Item>
-                                </FieldWrapper>
-                                <FieldWrapper
-                                    label={__('Event Description', 'quillbooking')}
-                                    description={__('A short description of the event', 'quillbooking')}
-                                    style={{ flex: 1 }}
-                                >
-                                    <Input.TextArea
-                                        value={event.description || ''}
-                                        onChange={(e) => handleChange('description', e.target.value)}
-                                        placeholder={__('Enter a description for the event', 'quillbooking')}
-                                        rows={4}
-                                    />
-                                </FieldWrapper>
-                            </Flex>
-                        </Card>
-                        <Card>
-                            <Flex gap={20} vertical>
-                                <FieldWrapper
-                                    label={__('Event Duration', 'quillbooking')}
-                                    description={__('The duration of the event in minutes', 'quillbooking')}
-                                    style={{ flex: 1 }}
-                                >
-                                    <Select
-                                        options={durationOptions}
-                                        value={durationMode === 'custom' ? 'custom' : event.duration}
-                                        onChange={handleDurationChange}
-                                    />
-                                </FieldWrapper>
-                                {durationMode === 'custom' && (
-                                    <FieldWrapper
-                                        label={__('Custom Duration', 'quillbooking')}
-                                        description={__('Enter a custom duration in minutes', 'quillbooking')}
-                                        style={{ flex: 1 }}
-                                    >
-                                        <InputNumber
-                                            value={event.duration}
-                                            onChange={(value) => handleChange('duration', value)}
-                                            placeholder={__('Enter a custom duration in minutes', 'quillbooking')}
-                                        />
-                                    </FieldWrapper>
-                                )}
-                            </Flex>
-                        </Card> */}
-                {/* {type === 'group' && ( */}
-                {/* <Card>
-                            <Flex gap={20} vertical>
-                                <FieldWrapper
-                                    label={__('Max Invitees', 'quillbooking')}
-                                    description={__('Maximum number of invitees in a spot', 'quillbooking')}
-                                    style={{ flex: 1 }}
-                                >
-                                    <InputNumber
-                                        value={event.additional_settings?.max_invitees}
-                                        onChange={(value) => handleAdditionalSettingsChange('max_invitees', value)}
-                                        placeholder={__('Enter max invitees', 'quillbooking')}
-                                    />
-                                </FieldWrapper>
-                                <FieldWrapper
-                                    label={__('Display Remaining Spots', 'quillbooking')}
-                                    description={__('Display remaining spots on booking page', 'quillbooking')}
-                                    style={{ flex: 1 }}
-                                >
-                                    <Checkbox
-                                        checked={event.additional_settings?.show_remaining}
-                                        onChange={(e) => handleAdditionalSettingsChange('show_remaining', e.target.checked)}
-                                    />
-                                </FieldWrapper>
-                            </Flex>
-                        </Card> */}
-                {/* )} */}
-                {/* <FieldWrapper
-                        label={__('Locations', 'quillbooking')}
-                        description={__('Select locations for the event', 'quillbooking')}
-                        style={{ flex: 1 }}
-                    >
-                        <Form.Item
-                            name="locations"
-                            rules={[{ required: true, message: __('Please select at least one location', 'quillbooking') }]}
-                        >
-                            <Locations locations={event.location || []} onChange={(locations) => handleChange('location', locations)} />
-                        </Form.Item>
-                    </FieldWrapper> */}
-                {/* <Form.Item>
-                            <Button type="primary" htmlType="submit" loading={loading}>
-                                {__('Create', 'quillbooking')}
-                            </Button>
-                        </Form.Item>
-                    </Flex>
-                </Form> */}
             </Flex>
         </Modal>
     );

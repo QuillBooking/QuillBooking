@@ -1,14 +1,14 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, forwardRef, useImperativeHandle } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
  * External dependencies
  */
 import { Card, Flex, Radio, Switch, Typography } from 'antd';
-import { map } from 'lodash';
+import { map, set } from 'lodash';
 
 /**
  * Internal dependencies
@@ -21,16 +21,34 @@ import { EditNotificationIcon, EmailNotificationIcon, Header, SmsNotificationIco
 import { BsInfoCircleFill } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
 
+export interface NotificationsTabHandle {
+  saveSettings: () => Promise<void>;
+}
 
-const NotificationsTab: React.FC<{ notificationType: 'email' | 'sms' }> = ({ notificationType }) => {
+interface NotificationsTabProps {
+  notificationType: 'email' | 'sms';
+  disabled?: boolean;
+  setDisabled?: (disabled: boolean) => void;
+}
+
+const NotificationsTab = forwardRef<NotificationsTabHandle, NotificationsTabProps>(({ notificationType, disabled, setDisabled }, ref) => {
     const { state: event } = useEventContext();
     const { callApi, loading } = useApi();
-    const { errorNotice } = useNotice();
+    const { successNotice, errorNotice } = useNotice();
     const [notificationSettings, setNotificationSettings] = useState<Record<string, NotificationType> | null>(null);
+    const [newNotificationSettings, setNewNotificationSettings] = useState<any>(null);
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [isNoticeVisible, setNoticeVisible] = useState(true);
-    const firstEight = notificationSettings ? Object.entries(notificationSettings).slice(0, 8) : [];
-    const lastFour = notificationSettings ? Object.entries(notificationSettings).slice(8) : [];
+
+    // Expose the saveSettings method through the ref
+    useImperativeHandle(ref, () => ({
+        saveSettings: async () => {
+            if (notificationSettings) {
+                return saveNotificationSettings(newNotificationSettings);
+            }
+            return Promise.resolve();
+        }
+    }));
 
     useEffect(() => {
         fetchNotificationSettings();
@@ -53,16 +71,49 @@ const NotificationsTab: React.FC<{ notificationType: 'email' | 'sms' }> = ({ not
     };
 
     const handleSwitchChange = (checked, key) => {
-        setNotificationSettings(prev => {
+        setNewNotificationSettings(prev => {
             if (!prev) return prev;
 
-            return {
+            const updated = {
                 ...prev,
                 [key]: {
                     ...prev[key],
                     default: checked,
                 }
             };
+            
+            // Mark as needing to save if setDisabled is provided
+            if (setDisabled) {
+                setDisabled(false);
+            }
+            
+            return updated;
+        });
+    };
+
+    const saveNotificationSettings = async (settings: Record<string, NotificationType>) => {
+        if (!event) return Promise.reject('No event found');
+        
+        return new Promise<void>((resolve, reject) => {
+            callApi({
+                path: `events/${event.id}`,
+                method: 'POST',
+                data: {
+                    [`${notificationType}_notifications`]: settings,
+                },
+                onSuccess() {
+                    successNotice(__('Notification settings saved successfully', 'quillbooking'));
+                    if (setDisabled) {
+                        setDisabled(true);
+                    }
+                    setNotificationSettings(newNotificationSettings);
+                    resolve();
+                },
+                onError(error) {
+                    errorNotice(error.message);
+                    reject(error);
+                },
+            });
         });
     };
 
@@ -144,24 +195,6 @@ const NotificationsTab: React.FC<{ notificationType: 'email' | 'sms' }> = ({ not
                             </div>
                         );
                     })}
-                {/* {map(notificationSettings, (_notification, key) => (
-                    <div key={key} onClick={() => setEditingKey(editingKey === key ? null : key)}>
-                        <Card style={{ marginBottom: 16, cursor: 'pointer' }}
-                            className={editingKey === key ? 'border border-color-primary bg-color-secondary' : 'border'}>
-                            <Flex justify="space-between">
-                                <Flex vertical>
-                                    <Flex gap={15}>
-                                        <Typography.Title level={5} className='text-[#09090B] text-[20px] font-[500] m-0'>{_notification.label}</Typography.Title>
-                                        {_notification.default && (
-                                            <span className='bg-color-primary text-white rounded-lg text-[11px] pt-[3px] px-2 h-[22px] mt-[7px]'>{__("ENABLED", "quillbooking")}</span>
-                                        )}
-                                    </Flex>
-                                    <span className='text-[#625C68] text-[14px]'>{__("This SMS will be sent to the attendee if phone number is provided during booking.", "quillbooking")}</span>
-                                </Flex>
-                            </Flex>
-                        </Card>
-                    </div>
-                ))} */}
             </Card>
             <Card>
                 <Flex className='justify-between items-center border-b pb-4 mb-4'>
@@ -192,17 +225,14 @@ const NotificationsTab: React.FC<{ notificationType: 'email' | 'sms' }> = ({ not
                         notificationKey={editingKey}
                         notificationType={notificationType}
                         eventId={event?.id || 0}
-                        setNotifications={setNotificationSettings}
+                        setNotifications={(updatedNotifications) => {
+                            setNewNotificationSettings(updatedNotifications);
+                            if (setDisabled) {
+                                setDisabled(false);
+                            }
+                        }}
                     />
                 )}
-                {/* <NotificationCard
-                    key={key}
-                    notifications={notificationSettings}
-                    notificationKey={key}
-                    notificationType={notificationType}
-                    eventId={event?.id || 0}
-                    setNotifications={setNotificationSettings}
-                /> */}
             </Card>
             <Card>
                 <Flex gap={10} className='items-center border-b pb-4 mb-4'>
@@ -265,6 +295,6 @@ const NotificationsTab: React.FC<{ notificationType: 'email' | 'sms' }> = ({ not
             </Card>
         </div>
     );
-};
+});
 
 export default NotificationsTab;

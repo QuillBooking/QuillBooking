@@ -38,6 +38,7 @@ export type Calendar = {
 		slug: string;
 		location: Location[];
 		is_disabled: boolean;
+		booking_count:number;
 	}[];
 	created_at: string;
 	updated_at: string;

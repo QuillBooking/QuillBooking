@@ -72,28 +72,48 @@ class Booking_EndDate extends Merge_Tag {
 	 *
 	 * @return string
 	 */
-	public function get_value( $booking, $options = array() ) {
-		$end_time = $booking->end_time;
-		$timezone = Arr::get( $options, 'timezone', 'attendee' );
-		$format   = Arr::get( $options, 'format', 'F j, Y' );
-
-		$end_time = new \DateTime( $end_time );
-		if ( ! $end_time ) {
+	public function get_value($booking, $options = array())
+	{
+	
+		if (empty($booking->end_time)) {
 			return '';
 		}
 
-		switch ( $timezone ) {
+		$timezone = Arr::get($options, 'timezone', 'attendee');
+		$format   = Arr::get($options, 'format', 'F j, Y');
+
+		try {
+			$end_time = new \DateTime($booking->end_time);
+		} catch (\Exception $e) {
+			return ''; 
+		}
+
+	
+		if (empty($booking->timezone)) {
+			$booking->timezone = 'UTC'; 
+		}
+
+	
+		switch ($timezone) {
 			case 'attendee':
-				$end_time->setTimezone( new \DateTimeZone( $booking->timezone ) );
+			
+				$end_time->setTimezone(new \DateTimeZone($booking->timezone));
 				break;
 			case 'host':
-				$end_time->setTimezone( new \DateTimeZone( $booking->event->availability['timezone'] ) );
+			
+				if (isset($booking->event->availability['timezone'])) {
+					$end_time->setTimezone(new \DateTimeZone($booking->event->availability['timezone']));
+				} else {
+			
+					$end_time->setTimezone(new \DateTimeZone('UTC'));
+				}
 				break;
 			case 'utc':
-				$end_time->setTimezone( new \DateTimeZone( 'UTC' ) );
+		
+				$end_time->setTimezone(new \DateTimeZone('UTC'));
 				break;
 		}
 
-		return $end_time->format( $format );
+		return $end_time->format($format);
 	}
 }

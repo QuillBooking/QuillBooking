@@ -120,9 +120,36 @@ const UserSelect: React.FC<UserSelectProps> = ({ value, onChange, multiple = fal
                 onChange={handleChange}
                 value={getValue()}
                 placeholder={placeholder || __('Search host and select one', 'quillbooking')}
-                isOptionDisabled={(option) => option.disabled}
-                className='rounded-lg h-[48px]'
+                isOptionDisabled={(option) => option ? (option as any).disabled : false}
+                classNamePrefix="custom-select"
+                styles={{
+                    control: (base, state) => ({
+                        ...base,
+                        height: '48px', 
+                        borderRadius: '0.5rem', 
+                        borderColor: state.isFocused ? '#ccc' : '#e2e8f0',
+                        boxShadow: 'none',
+                        minHeight: '48px', 
+                    }),
+                    indicatorsContainer: (base) => ({
+                        ...base,
+                        height: '48px',
+                    }),
+                    indicatorSeparator: () => ({
+                        display: 'none', 
+                    }),
+                    valueContainer: (base) => ({
+                        ...base,
+                        height: '48px',
+                        padding: '0 8px',
+                    }),
+                    multiValue: (base) => ({
+                        ...base,
+                        backgroundColor: '#edf2f7',
+                    }),
+                }}
             />
+
         </div>
     );
 };

@@ -13,7 +13,7 @@ import { Flex, Button, Input, Modal } from 'antd';
  * Internal dependencies
  */
 import type { Calendar } from '@quillbooking/client';
-import { UserSelect, HostSelect, TimezoneSelect, FieldWrapper, Header, ShareEventIcon } from '@quillbooking/components';
+import { UserSelect, HostSelect, Header, ShareEventIcon } from '@quillbooking/components';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { getCurrentTimezone } from '@quillbooking/utils';
 
@@ -31,7 +31,6 @@ interface AddCalendarModalProps {
 const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type, excludedUsers, onSaved }) => {
     const { callApi, loading } = useApi();
     const [formData, setFormData] = useState<Partial<Calendar & { members: number[] }>>({
-        name: "test",
         type,
         members: [],
         timezone: getCurrentTimezone(),
@@ -75,11 +74,7 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
             errorNotice(__('Please select team members.', 'quillbooking'));
             return false;
         }
-
-        // if (!formData.timezone) {
-        //     errorNotice(__('Please select a timezone.', 'quillbooking'));
-        //     return false;
-        // }
+      
 
         return true;
     };
@@ -95,13 +90,7 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
             onCancel={closeHandler}
             className='rounded-lg'
             footer={[
-                // <Button key="cancel" onClick={onClose}>
-                //     {__('Cancel', 'quillbooking')}
-                // </Button>,
-                // <Button key="save" type="primary" loading={loading} onClick={saveCalendar}>
-                //     {__('Save', 'quillbooking')}
-                // </Button>,
-                <Button key="action" type="primary" loading={loading} onClick={saveCalendar} className='w-full bg-color-primary rounded-lg font-[500] py-6 mt-5'>
+                <Button key="action" type="primary" loading={loading} onClick={saveCalendar} className='w-full bg-color-primary rounded-lg font-[500] mt-5'>
                     {type === "team" ? __('Add Team', 'quillbooking') : __('Add Host', 'quillbooking')}
                 </Button>,
             ]}
@@ -117,6 +106,16 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
                                     'quillbooking'
                                 )} />
                         </Flex>
+                        <div className="text-[#09090B] text-[16px] mt-5">
+                            {__("Host Name", "quillbooking")}
+                            <span className='text-red-500'>*</span>
+                        </div>
+                        <Input
+                            value={formData.name}
+                            onChange={(e) => updateFormData('name', e.target.value)}
+                            className='h-[48px] rounded-lg'
+                            placeholder='Enter Name of this Host'
+                        />
                         <div className="text-[#09090B] text-[16px] mt-5">
                             {__("Select Host", "quillbooking")}
                             <span className='text-red-500'>*</span>
@@ -164,27 +163,8 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
                         <div className="text-[#848484]">
                             {__("Select the members you want to assign to this team", "quillbooking")}
                         </div>
-                        {/* <FieldWrapper
-                            label={__('Timezone', 'quillbooking')}
-                            description={__('Select the timezone for the calendar.', 'quillbooking')}
-                        >
-                            <TimezoneSelect
-                                value={formData.timezone || null}
-                                onChange={(value) => updateFormData('timezone', value)}
-                            />
-                        </FieldWrapper> */}
                     </>
                 )}
-                {/* <FieldWrapper
-                    label={__('Name', 'quillbooking')}
-                    description={__('Enter the name for the calendar.', 'quillbooking')}
-                >
-                    <Input
-                        value={formData.name}
-                        onChange={(e) => updateFormData('name', e.target.value)}
-                    />
-                </FieldWrapper>
-                 */}
             </Flex>
         </Modal>
     );

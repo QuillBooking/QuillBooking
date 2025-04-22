@@ -7,14 +7,14 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Switch, Select, Input, InputNumber, Radio, Skeleton, Typography, Divider, Checkbox } from 'antd';
+import { Card, Flex, Button, Switch, Select, Input, InputNumber, Radio, Skeleton, Typography, Divider, Checkbox, Modal } from 'antd';
 
 /**
  * Internal dependencies
  */
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
-import { AdvancedSettingsIcon, EditIcon, FieldWrapper, Header, UrlIcon } from '@quillbooking/components';
+import { AdvancedSettingsIcon, EditIcon, FieldWrapper, Header, UrlIcon, MergeTagModal } from '@quillbooking/components';
 import { BiEditAlt } from "react-icons/bi";
 
 const { Title } = Typography;
@@ -52,6 +52,8 @@ const unitOptions = [
 const EventAdvancedSettings: React.FC = () => {
     const { state: event } = useEventContext();
     const [slug, setSlug] = useState<string>(event?.slug || '');
+    const [mergeTagModal, setMergeTagModal] = useState<boolean>(false);
+    const [bookingTitle, setBookingTitle] = useState<string>('');
     const { callApi, loading } = useApi();
     const { successNotice, errorNotice } = useNotice();
     const [showSlugField, setShowSlugField] = useState(false);
@@ -62,6 +64,12 @@ const EventAdvancedSettings: React.FC = () => {
     const handleCheckboxChange = () => {
         setPassingFields(!passingFields); // Toggle passingFields state
     };
+
+    const handleMentionClick = (mention: string) => {
+        setBookingTitle((prev) => prev + mention);
+        setMergeTagModal(false);
+    };
+
 
     const fetchSettings = () => {
         if (!event) return;
@@ -140,13 +148,34 @@ const EventAdvancedSettings: React.FC = () => {
                         </div>
                         {/* static */}
                         <Input
+                            value={bookingTitle}
                             placeholder={__("{event name} between {host name} and {{guest.first_name}}", "quillbooking")}
                             className="h-[48px] rounded-lg"
-                            suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                            onChange={(e) => setBookingTitle(e.target.value)}
+                            suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg' onClick={() => setMergeTagModal(true)}>
                                 <UrlIcon />
                             </span>}
                             style={{ padding: "0 0 0 10px" }}
                         />
+                        <Modal
+                            open={mergeTagModal}
+                            onCancel={() => setMergeTagModal(false)}
+                            footer={null}
+                            width={700}
+                            getContainer={false}
+                        >
+                            <Flex gap={10} className='items-center border-b pb-4 mb-4'>
+                                <div className='bg-[#EDEDED] rounded-lg p-3 mt-2' >
+                                    <UrlIcon />
+                                </div>
+                                <Header header={__('Booking Title Merge tags', 'quillbooking')}
+                                    subHeader={__(
+                                        'Choose your Merge tags type and Select one of them related to your input.',
+                                        'quillbooking'
+                                    )} />
+                            </Flex>
+                            <MergeTagModal onMentionClick={handleMentionClick} />
+                        </Modal >
                     </Flex>
                     <Flex vertical className='mt-4'>
                         <div className="text-[#09090B] text-[16px]">
@@ -272,21 +301,21 @@ const EventAdvancedSettings: React.FC = () => {
                                         <FieldWrapper label={<span className="text-[#09090B] text-[16px] font-[500]">
                                             {__('Add Time', 'quillbooking')}
                                         </span>}>
-                                        <Flex gap={15} className='w-full mb-4'>
-                                            <InputNumber
-                                                value={settings.cannot_cancel_time_value}
-                                                onChange={(value) => handleChange('cannot_cancel_time_value', value)}
-                                                size='large'
-                                                className='rounded-lg h-[48px] w-full'
-                                            />
-                                            <Select
-                                                value={settings.cannot_cancel_time_unit}
-                                                options={unitOptions}
-                                                onChange={(value) => handleChange('cannot_cancel_time_unit', value)}
-                                                size='large'
-                                                getPopupContainer={(trigger) => trigger.parentElement}
-                                                className='rounded-lg h-[48px] w-full'
-                                            />
+                                            <Flex gap={15} className='w-full mb-4'>
+                                                <InputNumber
+                                                    value={settings.cannot_cancel_time_value}
+                                                    onChange={(value) => handleChange('cannot_cancel_time_value', value)}
+                                                    size='large'
+                                                    className='rounded-lg h-[48px] w-full'
+                                                />
+                                                <Select
+                                                    value={settings.cannot_cancel_time_unit}
+                                                    options={unitOptions}
+                                                    onChange={(value) => handleChange('cannot_cancel_time_unit', value)}
+                                                    size='large'
+                                                    getPopupContainer={(trigger) => trigger.parentElement}
+                                                    className='rounded-lg h-[48px] w-full'
+                                                />
                                             </Flex>
                                         </FieldWrapper>
                                     )}
@@ -338,7 +367,7 @@ const EventAdvancedSettings: React.FC = () => {
                                 >
                                     <Input
                                         value={slug}
-                                        onChange={(e) => setSlug( e.target.value)}
+                                        onChange={(e) => setSlug(e.target.value)}
                                         size='large'
                                         placeholder={__('event-slug', 'quillbooking')}
                                         className='rounded-lg h-[48px]'

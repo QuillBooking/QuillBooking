@@ -7,12 +7,7 @@ import { useState, useEffect, useRef } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Button, Flex, Switch, Typography } from 'antd';
-import {
-	SettingOutlined,
-	ClockCircleOutlined,
-	BorderBottomOutlined,
-} from '@ant-design/icons';
+import { Button, Flex, Switch } from 'antd';
 
 /**
  * Internal dependencies
@@ -45,8 +40,6 @@ import Calendar from '../calendar';
 import {
 	EventDetails,
 	Availability,
-	Limits,
-	Fields,
 	Notifications,
 	AdvancedSettings,
 	Payments,
@@ -204,7 +197,15 @@ const Event: React.FC = () => {
 		{
 			key: 'details',
 			label: __('Event Details', 'quillbooking'),
-			children: <EventDetails onKeepDialogOpen={() => setOpen(true)} />,
+			// children: <EventDetails onKeepDialogOpen={() => setOpen(true)} />,
+			children: event ? (
+				<EventDetails
+					onKeepDialogOpen={() => setOpen(true)}
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			) : null,
 			icon: <CalendarsIcon />,
 		},
 		{
@@ -228,13 +229,23 @@ const Event: React.FC = () => {
 		{
 			key: 'email-notifications',
 			label: __('Email Notification', 'quillbooking'),
-			children: <Notifications notificationType="email" />,
+			children: <Notifications 
+            notificationType="email" 
+            ref={childRef}
+            disabled={saveDisabled}
+            setDisabled={setSaveDisabled}
+        />,
 			icon: <EmailNotiIcon />,
 		},
 		{
 			key: 'sms-notifications',
 			label: __('SMS Notification', 'quillbooking'),
-			children: <Notifications notificationType="sms" />,
+			children: <Notifications 
+            notificationType="sms" 
+            ref={childRef}
+            disabled={saveDisabled}
+            setDisabled={setSaveDisabled}
+        />,
 			icon: <SmsNotiIcon />,
 		},
 		{
@@ -318,7 +329,8 @@ const Event: React.FC = () => {
 				open={open}
 				onClose={handleClose}
 				fullScreen
-				>
+				className='z-[1000000000000000000]'
+			>
 				<DialogTitle className="border-b" sx={{ padding: '10px 16px' }}>
 					<Flex className="justify-between items-center">
 						<Flex gap={10}>
@@ -377,8 +389,8 @@ const Event: React.FC = () => {
 								loading={loading}
 								disabled={saveDisabled}
 								className={`rounded-lg font-[500] text-white ${saveDisabled
-										? 'bg-gray-400 cursor-not-allowed'
-										: 'bg-color-primary '
+									? 'bg-gray-400 cursor-not-allowed'
+									: 'bg-color-primary '
 									}`}
 							>
 								{__('Save Changes', 'quillbooking')}

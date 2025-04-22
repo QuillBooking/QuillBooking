@@ -11,11 +11,11 @@ const DataOptions = [
     { key: "payment", icon: <MergeTagPaymentIcon />, title: __("Payment Data", 'quillbooking'), description: __("Select one of Merge tags that related to your input.", 'quillbooking') },
 ];
 
-interface SubjectProps {
+interface MergeProps {
     onMentionClick: (mention: string) => void;
   }
 
-const SubjectModal: React.FC<SubjectProps> = ({ onMentionClick }) => {
+const MergeTagModal: React.FC<MergeProps> = ({ onMentionClick }) => {
     if (!open) return null;
     const [selectedKey, setSelectedKey] = useState("attendee");
 
@@ -333,5 +333,5 @@ const SubjectModal: React.FC<SubjectProps> = ({ onMentionClick }) => {
     );
 };
 
-export default SubjectModal;
+export default MergeTagModal;
 

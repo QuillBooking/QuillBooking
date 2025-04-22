@@ -249,7 +249,7 @@ const PopupCode: React.FC<{ url: string; icon: React.ReactNode; title: string }>
                 <div className="pb-2 text-[#3F4254] text-[16px] font-semibold">{__("Copy the shortcode below and insert it in your WordPress page or post.", "quillbooking")}</div>
                 <Flex gap={10} vertical>
                     <Input value={url} readOnly className="h-[140px] text-[#999999] rounded-lg" />
-                    <Button className="bg-color-primary h-[48px] px-9 w-fit rounded-lg"
+                    <Button className="bg-color-primary h-[48px] px-9 w-fit rounded-lg text-white"
                         onClick={() => copyToClipboard(url, __('Link copied', 'quillbooking'))}>
                         <CopyWhiteIcon />
                         <span className="text-white text-[16px] font-[500] self-center">{__("Copy", 'quillbooking')}</span>

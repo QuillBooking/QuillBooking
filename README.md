@@ -26,7 +26,7 @@ Copy `.env.example` to `.env` and update the database credentials
 
 ```bash
 # Set up the WordPress test environment (first time only)
-bin/install-wp-tests.sh wordpress_test WP_TESTS_DB_USER WP_TESTS_DB_PASS localhost latest
+./setup-wp-tests.sh
 
 # Run the tests
 composer test

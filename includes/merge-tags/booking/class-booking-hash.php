@@ -45,7 +45,11 @@ class Booking_Hash extends Merge_Tag {
 	 * @param array         $options
 	 * @return string
 	 */
-	public function get_value( $booking, $options = array() ) {
+	public function get_value($booking, $options = array())
+	{
+		if (!isset($booking->hash_id) || empty($booking->hash_id)) {
+			return '';
+		}
 		return $booking->hash_id;
 	}
 }

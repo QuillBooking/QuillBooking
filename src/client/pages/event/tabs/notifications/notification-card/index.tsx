@@ -36,15 +36,16 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
     const [emails, setEmails] = useState<string[]>([]);
     const [mergeTagModal, setMergeTagModal] = useState<boolean>(false);
     const [focused, setFocused] = useState(false);
-    const notification = notifications[notificationKey];
+    // const notification = notifications[notificationKey];
+    // const [message, setMessage] = useState<string>(notification.template.message);
     //const { callApi, loading } = useApi();
     
     // Initialize form with notification data when component mounts
     useEffect(() => {
-        if (notification) {
-            form.setFieldsValue(notification);
+        if (notifications) {
+            form.setFieldsValue(notifications[notificationKey]);
         }
-    }, [notification]);
+    }, []);
 
     const handleMentionClick = (mention: string) => {
         const currentValue = form.getFieldValue(['template', 'subject']) || '';
@@ -67,13 +68,13 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
         });
     };
 
-    const handleSwitchChange = (checked: boolean) => {
-        if (!notification) {
-            return;
-        }
-        const updatedSettings = { ...notifications, [notificationKey]: { ...notification, default: checked } };
-        setNotifications(updatedSettings);
-    };
+    // const handleSwitchChange = (checked: boolean) => {
+    //     if (!notification) {
+    //         return;
+    //     }
+    //     const updatedSettings = { ...notifications, [notificationKey]: { ...notification, default: checked } };
+    //     setNotifications(updatedSettings);
+    // };
 
     // Handle form field changes
     const handleFormChange = (changedValues) => {
@@ -87,10 +88,10 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
         setNotifications(updatedSettings);
     };
 
-    const handleEdit = () => {
-        setEditingKey(notificationKey);
-        form.setFieldsValue(notification);
-    };
+    // const handleEdit = () => {
+    //     setEditingKey(notificationKey);
+    //     form.setFieldsValue(notification);
+    // };
 
     // Add form.onFieldsChange to detect changes
     const onFieldsChange = () => {
@@ -105,7 +106,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
             className='w-full'
             initialValues={{
                 times: [{ value: 15, unit: 'minutes' }],
-                ...notification
+                ...form.getFieldsValue(),
             }}
             onValuesChange={handleFormChange}
             onFieldsChange={onFieldsChange}
@@ -160,7 +161,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                             <span className='text-red-500'>*</span>
                         </span>
                         <div className='mt-2'>
-                        <EmailEditor message={notification.template.message}
+                        <EmailEditor message={notifications[notificationKey].template.message}
                             onChange={(content) => {
                                 form.setFieldsValue({ template: { message: content } });
                                 handleFormChange({ template: { message: content } });
@@ -169,19 +170,19 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                     </>
                 ) : (
                     <>
-                        <span className="text-[#09090B] text-[16px] font-semibold">
+                        {/* <span className="text-[#09090B] text-[16px] font-semibold">
                             {__('SMS Body', 'quillbooking')}
                         </span>
                         <TextArea
                             autoSize={{ minRows: 4 }}
-                            value={notification.template.message}
+                            value={form.getFieldValue('template')?.message}
                             onChange={(e) => {
                                 const value = e.target.value;
                                 form.setFieldsValue({ template: { message: value } });
                                 handleFormChange({ template: { message: value } });
                             }}
                             className='mt-2 rounded-lg'
-                        />
+                        /> */}
                     </>
                 )}
             </Form.Item>
@@ -234,70 +235,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                     </Form.Item>
                 )}
             </Form.Item>
-            {notification.times && (
-                <>
-                    <span className="text-[#09090B] text-[16px] font-semibold">
-                        {__('Timing', 'quillbooking')}
-                        <span className='text-red-500'>*</span>
-                    </span>
-                    <Form.List name="times" >
-                        {(fields, { add, remove }) => (
-                            <Flex vertical gap={10} className='mt-3'>
-                                {fields.map(({ key, name, ...restField }, index) => (
-                                    <Flex key={key} align="center" gap={10}>
-                                        <Form.Item
-                                            {...restField}
-                                            name={[name, 'value']}
-                                            rules={[{ required: true, message: __('Value is required', 'quillbooking') }]}
-                                            style={{ marginBottom: 0 }}
-                                        >
-                                            <InputNumber className='h-[48px] rounded-lg pt-2 w-16' />
-                                        </Form.Item>
-                                        <Form.Item
-                                            {...restField}
-                                            name={[name, 'unit']}
-                                            rules={[{ required: true, message: __('Unit is required', 'quillbooking') }]}
-                                            style={{ marginBottom: 0 }}
-                                        >
-                                            <Select
-                                                className='h-[48px] rounded-lg w-44'
-                                                getPopupContainer={(trigger) => trigger.parentElement}
-                                                options={[
-                                                    { value: 'minutes', label: <span>{__('Minutes Before', 'quillbooking')}</span> },
-                                                    { value: 'hours', label: <span>{__('Hours Before', 'quillbooking')}</span> },
-                                                    { value: 'days', label: <span>{__('Days Before', 'quillbooking')}</span> },
-                                                ]}
-                                            />
-                                        </Form.Item>
 
-                                        {/* Only show Remove button if it's NOT the first item */}
-                                        {index > 0 && (
-                                            <Button onClick={() => {
-                                                remove(name);
-                                                // Mark as needing to save after removal
-                                                setTimeout(() => handleSave(), 0);
-                                            }} danger className='border-none shadow-none p-0'>
-                                                <LimitsTrashIcon />
-                                            </Button>
-                                        )}
-
-                                        {/* Only show Add button beside the first item */}
-                                        {index === 0 && (
-                                            <Button onClick={() => {
-                                                add({ value: 15, unit: 'minutes' });
-                                                // Mark as needing to save after addition
-                                                setTimeout(() => handleSave(), 0);
-                                            }} className='border-none shadow-none p-0'>
-                                                <LimitsAddIcon />
-                                            </Button>
-                                        )}
-                                    </Flex>
-                                ))}
-                            </Flex>
-                        )}
-                    </Form.List>
-                </>
-            )}
         </Form>
     );
 

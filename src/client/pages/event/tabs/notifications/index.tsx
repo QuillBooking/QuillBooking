@@ -8,7 +8,7 @@ import { __ } from '@wordpress/i18n';
  * External dependencies
  */
 import { Card, Flex, Radio, Switch, Typography } from 'antd';
-import { map } from 'lodash';
+import { map, set } from 'lodash';
 
 /**
  * Internal dependencies
@@ -36,6 +36,7 @@ const NotificationsTab = forwardRef<NotificationsTabHandle, NotificationsTabProp
     const { callApi, loading } = useApi();
     const { successNotice, errorNotice } = useNotice();
     const [notificationSettings, setNotificationSettings] = useState<Record<string, NotificationType> | null>(null);
+    const [newNotificationSettings, setNewNotificationSettings] = useState<any>(null);
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [isNoticeVisible, setNoticeVisible] = useState(true);
 
@@ -43,7 +44,7 @@ const NotificationsTab = forwardRef<NotificationsTabHandle, NotificationsTabProp
     useImperativeHandle(ref, () => ({
         saveSettings: async () => {
             if (notificationSettings) {
-                return saveNotificationSettings(notificationSettings);
+                return saveNotificationSettings(newNotificationSettings);
             }
             return Promise.resolve();
         }
@@ -70,7 +71,7 @@ const NotificationsTab = forwardRef<NotificationsTabHandle, NotificationsTabProp
     };
 
     const handleSwitchChange = (checked, key) => {
-        setNotificationSettings(prev => {
+        setNewNotificationSettings(prev => {
             if (!prev) return prev;
 
             const updated = {
@@ -105,6 +106,7 @@ const NotificationsTab = forwardRef<NotificationsTabHandle, NotificationsTabProp
                     if (setDisabled) {
                         setDisabled(true);
                     }
+                    setNotificationSettings(newNotificationSettings);
                     resolve();
                 },
                 onError(error) {
@@ -224,7 +226,7 @@ const NotificationsTab = forwardRef<NotificationsTabHandle, NotificationsTabProp
                         notificationType={notificationType}
                         eventId={event?.id || 0}
                         setNotifications={(updatedNotifications) => {
-                            setNotificationSettings(updatedNotifications);
+                            setNewNotificationSettings(updatedNotifications);
                             if (setDisabled) {
                                 setDisabled(false);
                             }

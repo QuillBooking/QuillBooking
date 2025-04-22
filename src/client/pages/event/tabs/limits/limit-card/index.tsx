@@ -6,15 +6,9 @@ import { Flex, Switch } from 'antd';
 /**
  * Internal dependencies
  */
-import type { EventLimits as EventLimitsType } from '@quillbooking/client';
+import type { LimitBaseProps } from '@quillbooking/client';
 
-interface LimitCardProps {
-  settings: {
-    frequency: {
-      enable: boolean;
-    };
-  };
-  handleChange: (section: keyof EventLimitsType, key: string, value: any) => void;
+interface LimitCardProps extends LimitBaseProps {
   title: string;
   description: string;
   type: 'frequency' | 'duration';

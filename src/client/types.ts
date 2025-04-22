@@ -324,3 +324,8 @@ export type FieldsGroup = {
 	[key: string]: FieldType;
 };
 
+
+export interface LimitBaseProps {
+	settings: EventLimits;
+  handleChange: (section: keyof EventLimits, key: string, value: any) => void;
+}

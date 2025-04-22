@@ -11,12 +11,10 @@ import { Card, Flex, Switch } from 'antd';
 /**
  * Internal dependencies
  * */
-import type { EventLimits as EventLimitsType } from '@quillbooking/client';
+import type { LimitBaseProps } from '@quillbooking/client';
 import SelectTimezone from './select-timezone';
 
-interface SelectTimezoneProps {
-  settings: EventLimitsType;
-  handleChange: (section: keyof EventLimitsType, key: string, value: any) => void;
+interface SelectTimezoneProps extends LimitBaseProps {
 }
 
 const TimezoneSection: React.FC<SelectTimezoneProps> = ({ settings, handleChange }) => {

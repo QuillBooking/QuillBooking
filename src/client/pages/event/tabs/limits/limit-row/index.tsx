@@ -1,12 +1,10 @@
 import { Button, Flex, Input, Select } from 'antd';
 import { LimitsAddIcon, TrashIcon } from '@quillbooking/components';
 import { __ } from '@wordpress/i18n';
-import type { EventLimits as EventLimitsType, LimitUnit, UnitOptions } from '@quillbooking/client';
+import type { LimitBaseProps, LimitUnit, UnitOptions } from '@quillbooking/client';
 
 
-interface LimitRowProps {
-  settings: EventLimitsType;
-  handleChange: (section: keyof EventLimitsType, key: string, value: any) => void;
+interface LimitRowProps extends LimitBaseProps {
   addLimit: (section: 'frequency' | 'duration') => void;
   removeLimit: (section: 'frequency' | 'duration', index: number) => void;
   unitOptions: UnitOptions;

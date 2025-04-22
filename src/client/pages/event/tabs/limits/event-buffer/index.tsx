@@ -12,12 +12,10 @@ import { Slider } from '@mui/material';
 /**
  * Internal dependencies
  */
-import type { EventLimits as EventLimitsType } from '@quillbooking/client';
+import type { LimitBaseProps } from '@quillbooking/client';
 
 
-interface EventBufferProps {
-  settings: EventLimitsType;
-  handleChange: (section: keyof EventLimitsType, key: string, value: any) => void;
+interface EventBufferProps extends LimitBaseProps {
   type: 'buffer_before' | 'buffer_after';
   title: string;
 }

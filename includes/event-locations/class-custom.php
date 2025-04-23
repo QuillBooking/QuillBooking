@@ -55,7 +55,7 @@ class Custom extends Location {
 				'label'    => __( 'Display on Booking', 'quillbooking' ),
 				'desc'     => __( 'Display on booking page', 'quillbooking' ),
 				'type'     => 'checkbox',
-				'required' => false,
+				'required' => true,
 			),
 		);
 	}

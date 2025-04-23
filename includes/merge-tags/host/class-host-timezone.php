@@ -46,6 +46,6 @@ class Host_Timezone extends Merge_Tag {
 	 * @return string
 	 */
 	public function get_value( $booking, $options = array() ) {
-		return $booking->calendar->timezone;
+		return $booking?->calendar?->timezone ?? '';
 	}
 }

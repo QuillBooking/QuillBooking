@@ -45,7 +45,8 @@ class Host_Email extends Merge_Tag {
 	 * @param array         $options
 	 * @return string
 	 */
-	public function get_value( $booking, $options = array() ) {
-		return $booking->calendar->user->user_email;
+	public function get_value($booking, $options = array())
+	{
+		return $booking?->calendar?->user?->user_email ?? '';
 	}
 }

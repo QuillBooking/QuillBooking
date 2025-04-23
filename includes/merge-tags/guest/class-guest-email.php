@@ -46,6 +46,6 @@ class Guest_Email extends Merge_Tag {
 	 * @return string
 	 */
 	public function get_value( $booking, $options = array() ) {
-		return $booking->guest->email;
+		return isset($booking->guest->email) ? $booking->guest->email : '';
 	}
 }

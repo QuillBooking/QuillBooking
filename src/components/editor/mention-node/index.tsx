@@ -38,6 +38,8 @@ export class MentionNode extends TextNode {
       gap: 4px;
     `;
 		dom.className = 'mention-node';
+		dom.dataset.mentionCategory = this.__category;
+		dom.dataset.mentionName = this.__mention;
 
 		// Create wrapper for the icon
 		const iconContainer = document.createElement('span');
@@ -56,6 +58,45 @@ export class MentionNode extends TextNode {
 		dom.appendChild(textContainer);
 
 		return dom;
+	}
+
+	static exportDOM(node) {
+		const element = document.createElement('span');
+		element.className = 'mention-node';
+		element.style.cssText = node.getLatest().style.cssText;
+		element.dataset.mentionCategory = node.__category;
+		element.dataset.mentionName = node.__mention;
+
+		const iconContainer = document.createElement('span');
+		iconContainer.className = 'mention-icon';
+		iconContainer.innerHTML = node.getSvgIcon();
+
+		const textContainer = document.createElement('span');
+		textContainer.textContent = node.__text;
+
+		element.append(iconContainer, textContainer);
+		return { element };
+	}
+
+	// Define how to import from DOM
+	static importDOM() {
+		return {
+			span: (domNode) => {
+				if (domNode.classList.contains('mention-node')) {
+					return {
+						conversion: (domNode) => {
+							const category = domNode.dataset.mentionCategory;
+							const mention = domNode.dataset.mentionName;
+							return {
+								node: new MentionNode(mention, category, mention, undefined)
+							};
+						},
+						priority: 1 as 0 | 1 | 2 | 3 | 4,
+					};
+				}
+				return null;
+			},
+		};
 	}
 
 	getSvgIcon() {

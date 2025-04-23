@@ -6,7 +6,7 @@ import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
-import {CheckListPlugin} from '@lexical/react/LexicalCheckListPlugin';
+import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, $createParagraphNode, $createTextNode, TextNode } from 'lexical';
@@ -17,7 +17,7 @@ import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { $generateNodesFromDOM, $generateHtmlFromNodes } from '@lexical/html';
 import { AutoLinkPlugin } from '@lexical/react/LexicalAutoLinkPlugin';
 import { MentionNode } from './mention-node';
-import { ImageNode,$createImageNode } from './img-node';
+import { ImageNode, $createImageNode } from './img-node';
 
 import "./style.scss";
 import WordCountPlugin from './word-count';
@@ -157,7 +157,7 @@ function HtmlSerializerPlugin({ onChange }) {
 
 export default function Editor({ message, onChange }) {
   const [editorActive, setEditorActive] = useState(false);
-  const [htmlContent, setHtmlContent] = useState(message || '');
+  const [htmlContent, setHtmlContent] = useState(message);
   const [wordCount, setWordCount] = useState(0);
 
   const initialConfig = {
@@ -176,7 +176,7 @@ export default function Editor({ message, onChange }) {
       TableRowNode,
       LinkNode,
       MentionNode,
-      ImageNode,
+      // ImageNode,
     ],
   };
 
@@ -222,147 +222,33 @@ export default function Editor({ message, onChange }) {
 
   return (
     <div className="email-body-editor">
-      {editorActive ? (
-        <LexicalComposer initialConfig={initialConfig}>
-          <div className="editor-container">
-            <ToolbarPlugin />
-            <div className="editor-inner">
-              <RichTextPlugin
-                contentEditable={
-                  <ContentEditable
-                    className="editor-input"
-                    onFocus={() => setEditorActive(true)}
-                  />
-                }
-                placeholder={
-                  <div className="editor-placeholder">Type your message here...</div>
-                }
-              />
-              <OnChangePlugin onChange={handleEditorChange} />
-              <HtmlSerializerPlugin onChange={handleHtmlChange} />
-              <HistoryPlugin />
-              <ListPlugin />
-              <LinkPlugin />
-              <AutoLinkPlugin matchers={MATCHERS} />
-              <CheckListPlugin/>
-              <InitialContentPlugin initialContent={message} />
-            </div>
-            <WordCountPlugin wordCount={wordCount}/>
+      <LexicalComposer initialConfig={initialConfig}>
+        <div className="editor-container">
+          <ToolbarPlugin />
+          <div className="editor-inner">
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable
+                  className="editor-input"
+                  onFocus={() => setEditorActive(true)}
+                />
+              }
+              placeholder={
+                <div className="editor-placeholder">Type your message here...</div>
+              }
+            />
+            <OnChangePlugin onChange={handleEditorChange} />
+            <HtmlSerializerPlugin onChange={handleHtmlChange} />
+            <HistoryPlugin />
+            <ListPlugin />
+            <LinkPlugin />
+            <AutoLinkPlugin matchers={MATCHERS} />
+            <CheckListPlugin />
+            <InitialContentPlugin initialContent={message} />
           </div>
-        </LexicalComposer>
-      ) : (
-        <div className="preview-container">
-          <div
-            className="rendered-html-preview"
-            onClick={() => setEditorActive(true)}
-            dangerouslySetInnerHTML={{ __html: message }}
-            style={{
-              cursor: 'text',
-              padding: '1rem',
-              border: '1px solid #ddd',
-              borderRadius: '6px',
-              fontFamily: 'inherit',
-            }}
-          />
+          <WordCountPlugin wordCount={wordCount} />
         </div>
-      )}
+      </LexicalComposer>
     </div>
   );
 }
-
-
-
-// // @ts-nocheck
-
-// /**
-//  * WordPress dependencies
-//  */
-// import { useEffect, useState } from '@wordpress/element';
-
-// const EmailEditor = ({ message, onChange }: { message: string; onChange: (content: string) => void }) => {
-//     const [restoreTextMode, setRestoreTextMode] = useState<boolean>(false);
-//     // Random ID to avoid conflicts
-//     const editorId = `email-editor-${Math.floor(Math.random() * 100000)}`;
-
-//     useEffect(() => {
-//         if (window.tinymce.get(editorId)) {
-//             setRestoreTextMode(window.tinymce.get(editorId).isHidden());
-//             window.wp.oldEditor.remove(editorId);
-//         }
-
-//         window.wp.oldEditor.initialize(editorId, {
-//             tinymce: {
-//                 toolbar1:
-//                     "formatselect | styleselect | bold italic strikethrough | forecolor backcolor | link | alignleft aligncenter alignright alignjustify | numlist bullist outdent indent | insert ast_placeholders | fontsizeselect",
-//                 toolbar2:
-//                     'strikethrough,hr,forecolor,pastetext,removeformat,charmap,outdent,indent,undo,redo,wp_help',
-//                 height: 300, // Set initial height
-//                 setup: function (editor) {
-//                     editor.on('init', function () {
-//                         editor.getContainer().style.minHeight = '300px'; // Set min height
-//                     });
-//                 },
-//                 urlconverter_callback: (url, node, on_save) => {
-//                     // Check for merge tag format and strip protocol if necessary
-//                     if (url.startsWith('http://{{') || url.startsWith('https://{{')) {
-//                         url = url.replace(/^https?:\/\//, ''); // Remove the http or https prefix
-//                     }
-
-//                     // Return the cleaned or original URL
-//                     return url;
-//                 },
-//             },
-//             quicktags: true,
-//             mediaButtons: true,
-//         });
-
-//         const editor = window.tinymce.get(editorId);
-//         if (editor?.initialized) {
-//             onInit();
-//         } else if (editor) {
-//             editor.on('init', onInit);
-//         }
-//     }, []);
-
-//     const onInit = () => {
-//         const editor = window.tinymce.get(editorId);
-
-//         if (restoreTextMode) {
-//             window.switchEditors.go(editorId, 'html');
-//         }
-
-//         editor.on('NodeChange', debounce(() => {
-//             const content = editor.getContent({ format: 'html' }); // Fetch as HTML
-//             onChange(content); // Pass it back
-//         }, 250));
-//     }
-
-//     // Debounce function with proper typing
-//     const debounce = (fn: Function, delay: number) => {
-//         let timer: NodeJS.Timeout | null = null;
-//         return function () {
-//             const context = this;
-//             const args = arguments;
-//             if (timer) {
-//                 clearTimeout(timer);
-//             }
-//             timer = setTimeout(() => {
-//                 fn.apply(context, args);
-//             }, delay);
-//         };
-//     }
-
-//     return (
-//         <textarea
-//         title='editor'
-//             className='wp-editor-area'
-//             id={editorId}
-//             value={message}
-//             onChange={({ target: { message } }) => {
-//                 onChange(message);
-//             }}
-//         />
-//     );
-// }
-
-// export default EmailEditor;

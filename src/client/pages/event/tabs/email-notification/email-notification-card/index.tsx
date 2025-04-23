@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -17,6 +17,7 @@ import { useNotice, useApi } from '@quillbooking/hooks';
 import { Header, LimitsAddIcon, LimitsTrashIcon, MergeTagModal, UrlIcon, Editor } from '@quillbooking/components';
 import { ReactMultiEmail } from 'react-multi-email';
 import 'react-multi-email/dist/style.css';
+import { debounce } from 'lodash';
 
 type NotificationCardProps = {
     notifications: Record<string, NotificationType>;
@@ -88,17 +89,17 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({ notifications,
     };
 
     // Handle form field changes
-    const handleFormChange = (changedValues) => {
+    const handleFormChange = useMemo(() => debounce((changedValues) => {
         const updatedSettings = {
             ...notifications,
             [notificationKey]: {
                 ...notifications[notificationKey],
                 ...changedValues,
-                recipients: emails // Make sure emails are included
+                recipients: emails
             }
         };
         setNotifications(updatedSettings);
-    };
+    }, 500), [notifications, notificationKey, emails]);
 
     // Add form.onFieldsChange to detect changes
     const onFieldsChange = () => {
@@ -121,7 +122,7 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({ notifications,
                     [{ value: 15, unit: 'minutes' }]
             }}
             onValuesChange={handleFormChange}
-            onFieldsChange={onFieldsChange}
+        //onFieldsChange={onFieldsChange}
         >
             <Form.Item name={['template', 'subject']}
                 label={<span className="text-[#09090B] text-[16px] font-semibold">
@@ -169,12 +170,12 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({ notifications,
                 <div className='mt-2'>
                     <Editor message={notification?.template?.message || ''}
                         onChange={(content) => {
-                            form.setFieldsValue({ 
-                                template: { 
+                            form.setFieldsValue({
+                                template: {
                                     ...form.getFieldValue('template'),
-                                    message: content 
-                                } 
-                            });                    
+                                    message: content
+                                }
+                            });
                             handleFormChange({ template: { message: content } });
                         }} />
                 </div>
@@ -253,9 +254,9 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({ notifications,
 
                                         {/* Only show Remove button if it's NOT the first item */}
                                         {index > 0 && (
-                                            <Button 
-                                                onClick={() => remove(name)} 
-                                                danger 
+                                            <Button
+                                                onClick={() => remove(name)}
+                                                danger
                                                 className='border-none shadow-none p-0'
                                             >
                                                 <LimitsTrashIcon />
@@ -264,8 +265,8 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({ notifications,
 
                                         {/* Only show Add button beside the first item */}
                                         {index === 0 && (
-                                            <Button 
-                                                onClick={() => add({ value: 15, unit: 'minutes' })} 
+                                            <Button
+                                                onClick={() => add({ value: 15, unit: 'minutes' })}
                                                 className='border-none shadow-none p-0'
                                             >
                                                 <LimitsAddIcon />

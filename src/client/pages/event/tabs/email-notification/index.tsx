@@ -41,8 +41,6 @@ const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTab
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [isNoticeVisible, setNoticeVisible] = useState(true);
 
-    console.log(notificationSettings)
-
     // Expose the saveSettings method through the ref
     useImperativeHandle(ref, () => ({
         saveSettings: async () => {

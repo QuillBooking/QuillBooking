@@ -46,7 +46,11 @@ class Booking_Cancel_URL extends Merge_Tag {
 	 *
 	 * @return string
 	 */
-	public function get_value( $booking, $options = array() ) {
+	public function get_value($booking, $options = array())
+	{
+		if (! $booking instanceof Booking_Model) {
+			return ''; // Return an empty string if the booking is invalid or null
+		}
 		return $booking->getCancelUrl();
 	}
 }

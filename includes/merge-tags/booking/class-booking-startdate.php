@@ -75,27 +75,34 @@ class Booking_StartDate extends Merge_Tag {
 	 * @return string
 	 */
 	public function get_value( $booking, $options = array() ) {
-		$start_time = $booking->start_time;
-		$timezone   = Arr::get( $options, 'timezone', 'attendee' );
-		$format     = Arr::get( $options, 'format', 'F j, Y' );
-
-		$start_time = new \DateTime( $start_time );
-		if ( ! $start_time ) {
+		if (empty($booking->start_time)) {
+			return ''; 
+		}
+		
+		try {
+			$start_time = new \DateTime($booking->start_time);
+		} catch (\Exception $e) {
 			return '';
 		}
 
-		switch ( $timezone ) {
+		$timezone = Arr::get($options, 'timezone', 'attendee');
+		$format   = Arr::get($options, 'format', 'F j, Y');
+
+		switch ($timezone) {
 			case 'attendee':
-				$start_time->setTimezone( new \DateTimeZone( $booking->timezone ) );
+				if (! empty($booking->timezone)) {
+					$start_time->setTimezone(new \DateTimeZone($booking->timezone));
+				}
 				break;
 			case 'host':
-				$start_time->setTimezone( new \DateTimeZone( $booking->event->availability['timezone'] ) );
+				$host_timezone = isset($booking->event->availability['timezone']) ? $booking->event->availability['timezone'] : 'UTC';
+				$start_time->setTimezone(new \DateTimeZone($host_timezone));
 				break;
 			case 'utc':
-				$start_time->setTimezone( new \DateTimeZone( 'UTC' ) );
+				$start_time->setTimezone(new \DateTimeZone('UTC'));
 				break;
 		}
 
-		return $start_time->format( $format );
+		return $start_time->format($format);
 	}
 }

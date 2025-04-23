@@ -5,13 +5,6 @@
  * @package QuillBooking
  */
 
-// Mock WordPress functions that we need
-if (!function_exists('__')) {
-    function __($text, $domain = 'default') {
-        return $text;
-    }
-}
-
 /**
  * Test for Capabilities functionality.
  */
@@ -27,7 +20,39 @@ class CapabilitiesTest extends WP_UnitTestCase {
      */
     public function setUp(): void {
         parent::setUp();
+        
+        // Make the test instance available globally for the mock class
+        global $phpunit_test_instance;
+        $phpunit_test_instance = $this;
+        
+        // Setup mock WordPress functions using WP test framework methods
+        add_filter('__', array($this, 'mock_translate'));
+        
         $this->capabilities = new CapabilitiesMock();
+    }
+    
+    /**
+     * Teardown the test
+     */
+    public function tearDown(): void {
+        // Remove our filter mocks
+        remove_filter('__', array($this, 'mock_translate'));
+        
+        // Remove the global reference
+        global $phpunit_test_instance;
+        $phpunit_test_instance = null;
+        
+        parent::tearDown();
+    }
+    
+    /**
+     * Mock translation function
+     *
+     * @param string $text Text to translate.
+     * @return string The original text (no translation in tests).
+     */
+    public function mock_translate($text) {
+        return $text;
     }
 
     /**
@@ -210,6 +235,16 @@ class CapabilitiesTest extends WP_UnitTestCase {
 class CapabilitiesMock {
     private $user_capabilities = [];
     private $current_user_id = 0;
+    private $test_instance;
+    
+    /**
+     * Constructor
+     */
+    public function __construct() {
+        // Store reference to the test class instance
+        global $phpunit_test_instance;
+        $this->test_instance = $phpunit_test_instance;
+    }
     
     /**
      * Set the current user ID for testing
@@ -241,39 +276,46 @@ class CapabilitiesMock {
     }
     
     /**
+     * Helper method to translate strings using our filter
+     */
+    private function translate($text) {
+        return apply_filters('__', $text);
+    }
+    
+    /**
      * Get core capabilities (copied from actual implementation)
      */
     public function get_core_capabilities() {
         $capabilities = array(
 			// Calendar Capabilities
 			'calendars'    => array(
-				'title'        => __( 'Calendar Management', 'quillbooking' ),
+				'title'        => $this->translate('Calendar Management'),
 				'capabilities' => array(
-					'quillbooking_manage_own_calendars' => __( 'Manage only the user\'s own calendars', 'quillbooking' ),
-					'quillbooking_read_all_calendars'   => __( 'Read access to all calendars across users', 'quillbooking' ),
-					'quillbooking_manage_all_calendars' => __( 'Manage all calendars created by all users', 'quillbooking' ),
+					'quillbooking_manage_own_calendars' => $this->translate('Manage only the user\'s own calendars'),
+					'quillbooking_read_all_calendars'   => $this->translate('Read access to all calendars across users'),
+					'quillbooking_manage_all_calendars' => $this->translate('Manage all calendars created by all users'),
 				),
 			),
 
 			// Booking Capabilities
 			'bookings'     => array(
-				'title'        => __( 'Booking Access', 'quillbooking' ),
+				'title'        => $this->translate('Booking Access'),
 				'capabilities' => array(
-					'quillbooking_read_own_bookings'   => __( 'Read only the user\'s own bookings', 'quillbooking' ),
-					'quillbooking_read_all_bookings'   => __( 'Read access to all bookings', 'quillbooking' ),
-					'quillbooking_manage_own_bookings' => __( 'Manage only the user\'s own bookings', 'quillbooking' ),
-					'quillbooking_manage_all_bookings' => __( 'Manage all bookings across calendars', 'quillbooking' ),
+					'quillbooking_read_own_bookings'   => $this->translate('Read only the user\'s own bookings'),
+					'quillbooking_read_all_bookings'   => $this->translate('Read access to all bookings'),
+					'quillbooking_manage_own_bookings' => $this->translate('Manage only the user\'s own bookings'),
+					'quillbooking_manage_all_bookings' => $this->translate('Manage all bookings across calendars'),
 				),
 			),
 
 			// Availability Capabilities
 			'availability' => array(
-				'title'        => __( 'Availability Management', 'quillbooking' ),
+				'title'        => $this->translate('Availability Management'),
 				'capabilities' => array(
-					'quillbooking_read_own_availability'   => __( 'Read only the user\'s own availability', 'quillbooking' ),
-					'quillbooking_read_all_availability'   => __( 'Read access to all availability schedules across users', 'quillbooking' ),
-					'quillbooking_manage_own_availability' => __( 'Manage only the user\'s own availability schedules', 'quillbooking' ),
-					'quillbooking_manage_all_availability' => __( 'Manage all availability schedules for all users', 'quillbooking' ),
+					'quillbooking_read_own_availability'   => $this->translate('Read only the user\'s own availability'),
+					'quillbooking_read_all_availability'   => $this->translate('Read access to all availability schedules across users'),
+					'quillbooking_manage_own_availability' => $this->translate('Manage only the user\'s own availability schedules'),
+					'quillbooking_manage_all_availability' => $this->translate('Manage all availability schedules for all users'),
 				),
 			),
 		);

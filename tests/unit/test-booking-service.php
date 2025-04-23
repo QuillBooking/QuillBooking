@@ -5,32 +5,6 @@
  * @package QuillBooking
  */
 
-// Mock WordPress functions that we need
-if (!function_exists('sanitize_text_field')) {
-    function sanitize_text_field($str) {
-        return trim(strip_tags($str));
-    }
-}
-
-if (!function_exists('sanitize_email')) {
-    function sanitize_email($email) {
-        return filter_var($email, FILTER_SANITIZE_EMAIL);
-    }
-}
-
-if (!function_exists('get_user_by')) {
-    function get_user_by($field, $value) {
-        // Just return false as we don't need user objects for these tests
-        return false;
-    }
-}
-
-if (!function_exists('home_url')) {
-    function home_url() {
-        return 'https://example.com';
-    }
-}
-
 /**
  * Test for Booking Service functionality.
  */
@@ -48,8 +22,73 @@ class BookingServiceTest extends WP_UnitTestCase {
     public function setUp(): void {
         parent::setUp();
         
+        // Make the test instance available globally for the mock class
+        global $phpunit_test_instance;
+        $phpunit_test_instance = $this;
+        
+        // Setup mock WordPress functions using WP test framework methods
+        add_filter('sanitize_text_field', array($this, 'mock_sanitize_text_field'));
+        add_filter('sanitize_email', array($this, 'mock_sanitize_email'));
+        add_filter('home_url', array($this, 'mock_home_url'));
+        
         // Create our BookingServiceMock
         $this->booking_service = new BookingServiceMock();
+    }
+    
+    /**
+     * Teardown the test
+     */
+    public function tearDown(): void {
+        // Remove our filter mocks
+        remove_filter('sanitize_text_field', array($this, 'mock_sanitize_text_field'));
+        remove_filter('sanitize_email', array($this, 'mock_sanitize_email'));
+        remove_filter('home_url', array($this, 'mock_home_url'));
+        
+        // Remove the global reference
+        global $phpunit_test_instance;
+        $phpunit_test_instance = null;
+        
+        parent::tearDown();
+    }
+    
+    /**
+     * Mock sanitize_text_field function
+     *
+     * @param string $str Input string to sanitize.
+     * @return string Sanitized string.
+     */
+    public function mock_sanitize_text_field($str) {
+        return trim(strip_tags($str));
+    }
+    
+    /**
+     * Mock sanitize_email function
+     *
+     * @param string $email Email to sanitize.
+     * @return string Sanitized email.
+     */
+    public function mock_sanitize_email($email) {
+        return filter_var($email, FILTER_SANITIZE_EMAIL);
+    }
+    
+    /**
+     * Mock home_url function
+     *
+     * @return string Home URL.
+     */
+    public function mock_home_url() {
+        return 'https://example.com';
+    }
+    
+    /**
+     * Mock get_user_by function by using a test spy
+     *
+     * @param string $field Field to query user by.
+     * @param mixed $value Value to search for.
+     * @return false Always returns false for testing.
+     */
+    public function mock_get_user_by($field, $value) {
+        return false;
     }
 
     /**
@@ -331,6 +370,22 @@ class BookingServiceTest extends WP_UnitTestCase {
 class BookingServiceMock {
     
     /**
+     * Reference to the test class instance
+     *
+     * @var BookingServiceTest
+     */
+    private $test_instance;
+    
+    /**
+     * Constructor
+     */
+    public function __construct() {
+        // Store reference to the test class instance
+        global $phpunit_test_instance;
+        $this->test_instance = $phpunit_test_instance;
+    }
+    
+    /**
      * Book an event slot (simulated version)
      */
     public function book_event_slot($event, $calendar_id, $start_date, $duration, $timezone, $invitees, $location, $status = false, $fields = array()) {
@@ -374,8 +429,8 @@ class BookingServiceMock {
         // First, we need to sanitize the invitee
         $invitee = array_map(
             function($item) {
-                $name = isset($item['name']) ? sanitize_text_field($item['name']) : null;
-                $email = isset($item['email']) ? sanitize_email($item['email']) : null;
+                $name = isset($item['name']) ? apply_filters('sanitize_text_field', $item['name']) : null;
+                $email = isset($item['email']) ? apply_filters('sanitize_email', $item['email']) : null;
 
                 if (!$name || !$email) {
                     throw new \Exception('Invalid invitee');
@@ -386,7 +441,13 @@ class BookingServiceMock {
                     'email' => $email,
                 ];
 
-                if ($user = get_user_by('email', $email)) {
+                // Use our mocked get_user_by with test class method
+                $user = false;
+                if (isset($this->test_instance) && method_exists($this->test_instance, 'mock_get_user_by')) {
+                    $user = $this->test_instance->mock_get_user_by('email', $email);
+                }
+                
+                if ($user) {
                     $guest['user_id'] = $user->ID;
                 }
 

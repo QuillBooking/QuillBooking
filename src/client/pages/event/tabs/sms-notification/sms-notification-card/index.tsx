@@ -14,7 +14,6 @@ import { Card, Switch, Button, Modal, Input, Form, InputNumber, Typography, Radi
  */
 import { NotificationType } from '@quillbooking/client';
 import { useNotice, useApi } from '@quillbooking/hooks';
-import EmailEditor from './editor';
 import { Header, LimitsAddIcon, LimitsTrashIcon, MergeTagModal, UrlIcon } from '@quillbooking/components';
 import { ReactMultiEmail, isEmail } from 'react-multi-email';
 import 'react-multi-email/dist/style.css';
@@ -29,7 +28,7 @@ type NotificationCardProps = {
     setNotifications: (notifications: Record<string, NotificationType>) => void;
 };
 
-const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, notificationKey, notificationType, eventId, setNotifications }) => {
+const SmsNotificationCard: React.FC<NotificationCardProps> = ({ notifications, notificationKey, notificationType, eventId, setNotifications }) => {
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [form] = Form.useForm();
     //const { successNotice, errorNotice } = useNotice();
@@ -161,11 +160,11 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                             <span className='text-red-500'>*</span>
                         </span>
                         <div className='mt-2'>
-                        <EmailEditor message={notifications[notificationKey].template.message}
+                        {/* <EmailEditor message={notifications[notificationKey].template.message}
                             onChange={(content) => {
                                 form.setFieldsValue({ template: { message: content } });
                                 handleFormChange({ template: { message: content } });
-                            }} />
+                            }} /> */}
                         </div>
                     </>
                 ) : (
@@ -305,4 +304,4 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
     );
 };
 
-export default NotificationCard;
+export default SmsNotificationCard;

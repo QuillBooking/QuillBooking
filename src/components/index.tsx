@@ -19,3 +19,4 @@ export { default as BookingActions } from './booking-actions';
 export { default as CardHeader } from './card-header';
 export { default as Schedule } from './schedule';;
 export { default as MergeTagModal } from "./merge-tag-modal";
+export { default as Editor } from "./editor";

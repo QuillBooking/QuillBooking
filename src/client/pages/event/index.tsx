@@ -43,6 +43,8 @@ import {
 	Notifications,
 	AdvancedSettings,
 	Payments,
+	WebhookFeeds,
+	EmailNotificationTab,
 } from './tabs';
 import {
 	Box,
@@ -197,7 +199,6 @@ const Event: React.FC = () => {
 		{
 			key: 'details',
 			label: __('Event Details', 'quillbooking'),
-			// children: <EventDetails onKeepDialogOpen={() => setOpen(true)} />,
 			children: event ? (
 				<EventDetails
 					onKeepDialogOpen={() => setOpen(true)}
@@ -229,41 +230,53 @@ const Event: React.FC = () => {
 		{
 			key: 'email-notifications',
 			label: __('Email Notification', 'quillbooking'),
-			children: <Notifications 
-            notificationType="email" 
-            ref={childRef}
-            disabled={saveDisabled}
-            setDisabled={setSaveDisabled}
-        />,
+			children: <EmailNotificationTab
+				//notificationType="email"
+				ref={childRef}
+				disabled={saveDisabled}
+				setDisabled={setSaveDisabled}
+			/>,
 			icon: <EmailNotiIcon />,
 		},
 		{
 			key: 'sms-notifications',
 			label: __('SMS Notification', 'quillbooking'),
-			children: <Notifications 
-            notificationType="sms" 
-            ref={childRef}
-            disabled={saveDisabled}
-            setDisabled={setSaveDisabled}
-        />,
+			children: <Notifications
+				notificationType="sms"
+				ref={childRef}
+				disabled={saveDisabled}
+				setDisabled={setSaveDisabled}
+			/>,
 			icon: <SmsNotiIcon />,
 		},
 		{
 			key: 'advanced-settings',
 			label: __('Advanced Settings', 'quillbooking'),
-			children: <AdvancedSettings />,
+			children: event ? (
+				<AdvancedSettings
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			) : null,
 			icon: <SettingsIcon />,
 		},
 		{
 			key: 'payment-settings',
 			label: __('Payments Settings', 'quillbooking'),
-			children: <Payments />,
+			children: event ? (
+				<Payments
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			) : null,
 			icon: <PaymentSettingsIcon />,
 		},
 		{
 			key: 'webhooks-feeds',
 			label: __('Webhooks Feeds', 'quillbooking'),
-			children: <Payments />,
+			children: <WebhookFeeds />,
 			icon: <WebhookIcon />,
 		},
 		// {

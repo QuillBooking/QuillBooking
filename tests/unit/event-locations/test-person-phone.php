@@ -5,7 +5,7 @@ use QuillBooking\Event_Locations\Person_Phone;
 /**
  * @group event-locations
  */
-class PersonPhoneTest extends WP_UnitTestCase
+class PersonPhoneTest extends QuillBooking_Base_Test_Case
 {
 
     // Test Singleton Instance

@@ -6,7 +6,7 @@ use QuillBooking\Models\Booking_Model;
 /**
  * @group merge-tags
  */
-class ConfirmURLTest extends WP_UnitTestCase
+class ConfirmURLTest extends QuillBooking_Base_Test_Case
 {
 
     /** @var Confirm_URL */

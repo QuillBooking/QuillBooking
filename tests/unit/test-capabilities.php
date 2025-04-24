@@ -6,9 +6,9 @@
  */
 
 /**
- * Test for Capabilities functionality.
+ * Test for QuillBooking capabilities
  */
-class CapabilitiesTest extends WP_UnitTestCase {
+class CapabilitiesTest extends QuillBooking_Base_Test_Case {
 
     /**
      * The CapabilitiesMock class simulates the behavior of QuillBooking\Capabilities

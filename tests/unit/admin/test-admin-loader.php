@@ -5,10 +5,10 @@ use QuillBooking\Admin\Admin_Loader;
 /**
  * @group admin
  */
-class AdminLoaderTest extends WP_UnitTestCase
+class AdminLoaderTest extends QuillBooking_Base_Test_Case
 {
 
-    protected function setUp(): void
+    public function setUp(): void
     {
         parent::setUp();
 

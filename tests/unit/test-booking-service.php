@@ -8,7 +8,7 @@
 /**
  * Test for Booking Service functionality.
  */
-class BookingServiceTest extends WP_UnitTestCase {
+class BookingServiceTest extends QuillBooking_Base_Test_Case {
 
     /**
      * The BookingServiceMock class simulates the behavior of Booking_Service

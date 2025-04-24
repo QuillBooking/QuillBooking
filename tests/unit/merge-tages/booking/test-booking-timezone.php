@@ -6,7 +6,7 @@ use QuillBooking\Models\Booking_Model;
 /**
  * @group merge-tags
  */
-class BookingTimezoneTest extends WP_UnitTestCase
+class BookingTimezoneTest extends QuillBooking_Base_Test_Case
 {
 
     /** @var Booking_Timezone */

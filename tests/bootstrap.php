@@ -59,6 +59,9 @@ require_once dirname( dirname( __FILE__ ) ) . '/includes/autoload.php';
 // Load QuillBooking test setup
 require_once dirname( __FILE__ ) . '/test-setup.php';
 
+// Load the Base Test Case abstract class
+require_once dirname( __FILE__ ) . '/class-quillbooking-base-test-case.php';
+
 // Define the WP_TESTS_TABLE_PREFIX constant if not already defined
 if ( ! defined( 'WP_TESTS_TABLE_PREFIX' ) ) {
 	global $wpdb;

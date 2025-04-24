@@ -6,9 +6,9 @@ use QuillBooking\Admin\Admin_Loader;
 /**
  * @group admin
  */
-class AdminTest extends WP_UnitTestCase
+class AdminTest extends QuillBooking_Base_Test_Case
 {
-    protected function setUp(): void
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -18,7 +18,7 @@ class AdminTest extends WP_UnitTestCase
         $user->add_cap('manage_quillbooking');
     }
 
-    protected function tearDown(): void
+    public function tearDown(): void
     {
         wp_set_current_user(0);
         parent::tearDown();

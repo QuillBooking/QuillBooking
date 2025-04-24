@@ -5,7 +5,7 @@ use QuillBooking\Event_Locations\Online;
 /**
  * @group event-locations
  */
-class OnlineTest extends WP_UnitTestCase
+class OnlineTest extends QuillBooking_Base_Test_Case
 {
 
     // Test Singleton Instance

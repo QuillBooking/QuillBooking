@@ -21,11 +21,6 @@
         "php": ">=7.4",
         "composer/installers": "~1.0"
     },
-    "autoload-dev": {
-        "psr-4": {
-            "QuillBooking\\Tests\\": "tests/"
-        }
-    },
     "config": {
         "process-timeout": 0,
         "allow-plugins": {

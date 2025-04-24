@@ -39,7 +39,6 @@ import { Provider } from './state/context';
 import Calendar from '../calendar';
 import {
 	EventDetails,
-	Availability,
 	Notifications,
 	AdvancedSettings,
 	Payments,
@@ -57,6 +56,7 @@ import {
 import { IoCloseSharp } from 'react-icons/io5';
 import ShareModal from '../calendars/share-modal';
 import EventFieldsTab from './tabs/fields';
+import AvailabilityLimits from './tabs/availability-limits';
 
 const Event: React.FC = () => {
 	const {
@@ -212,7 +212,7 @@ const Event: React.FC = () => {
 		{
 			key: 'availability',
 			label: __('Availability & Limits', 'quillbooking'),
-			children: <Availability />,
+			children: <AvailabilityLimits />,
 			icon: <AvailabilityIcon />,
 		},
 		{

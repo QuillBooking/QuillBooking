@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Flex, Button } from 'antd';
+import { Card } from 'antd';
 import dayjs from 'dayjs';
 
 /**
@@ -16,14 +16,12 @@ import dayjs from 'dayjs';
 import type {
 	Availability,
 	AvailabilityRange,
-	TimeSlot,
 	DateOverrides,
 } from '@quillbooking/client';
 import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
-import { useEventContext } from '../../state/context';
-import { RangeSection, AvailabilitySection } from './sections';
-import EventLimits from '../limits';
+import { useEventContext } from '../../../state/context';
+import { AvailabilitySection } from './sections';
 
 
 const AvailabilityTab: React.FC = () => {
@@ -39,9 +37,6 @@ const AvailabilityTab: React.FC = () => {
 	const { state: event } = useEventContext();
 	const { callApi, loading } = useApi();
 	const { successNotice, errorNotice } = useNotice();
-
-	// State for the date override modal
-	const [isOverrideModalVisible, setIsOverrideModalVisible] = useState(false);
 
 	// Fetch availability data
 	const fetchAvailability = () => {
@@ -99,34 +94,10 @@ const AvailabilityTab: React.FC = () => {
 	}
 
 	return (
-		<div className='grid grid-cols-2 gap-5 px-9'>
-			{/* Availability Range Section */}
-			{/* <RangeSection
-				range={range}
-				onRangeTypeChange={(type) => {
-					setRange({
-						type,
-						days: type === 'days' ? 90 : undefined,
-						start_date:
-							type === 'date_range'
-								? dayjs().format('YYYY-MM-DD')
-								: undefined,
-						end_date:
-							type === 'date_range'
-								? dayjs()
-									.add(90, 'days')
-									.format('YYYY-MM-DD')
-								: undefined,
-					});
-				}}
-				onDaysChange={(days) => setRange({ ...range, days })}
-				onDateRangeChange={(start_date, end_date) =>
-					setRange({ ...range, start_date, end_date })
-				}
-			/> */}
-			{/* Custom or Existing Availability Section */}
+		<>
 			<AvailabilitySection
 				isCustomAvailability={isCustomAvailability}
+				hosts={event?.hosts}
 				availability={availability}
 				storedAvailabilities={storedAvailabilities}
 				onAvailabilityChange={(id) => {
@@ -182,10 +153,7 @@ const AvailabilityTab: React.FC = () => {
 				setAvailability={setAvailability}
 				setDateOverrides={setDateOverrides}
 			/>
-
-			<EventLimits />
-
-		</div>
+		</>
 	);
 };
 

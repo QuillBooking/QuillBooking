@@ -131,14 +131,14 @@ const OverridesSection: React.FC<OverridesSectionProps> = ({
                                     style={{ width: '100%' }}
                                     getPopupContainer={(trigger) => trigger.parentElement || document.body}
                                     suffixIcon={null}
-                                    className='border-none focus-within:shadow-none focus:shadow-none'
+                                    className='border-none focus-within:shadow-none focus:shadow-none flex-1'
                                 />
                                 <div className='border-l-2 border-[#E4E7EC] h-5'>
                                 </div>
                                 <TimePicker.RangePicker
                                     separator={<span className='text-[#9BA7B7]'>-</span>}
                                     suffixIcon={null}
-                                    className='border-none focus-within:shadow-none focus:shadow-none'
+                                    className='border-none focus-within:shadow-none focus:shadow-none flex-1/2'
                                     getPopupContainer={(trigger) => trigger.parentElement || document.body}
                                     format={'hh:mm A'}
                                     value={[dayjs(dateTime.times.start, 'hh:mm'), dayjs(dateTime.times.end, 'hh:mm')]}

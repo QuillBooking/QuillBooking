@@ -1,4 +1,4 @@
-import { Button, Flex, Input, Select } from 'antd';
+import { Button, Flex, InputNumber, Select } from 'antd';
 import { LimitsAddIcon, TrashIcon } from '@quillbooking/components';
 import { __ } from '@wordpress/i18n';
 import type { LimitBaseProps, LimitUnit, UnitOptions } from '@quillbooking/client';
@@ -19,13 +19,13 @@ const LimitRow: React.FC<LimitRowProps> = ({ settings, handleChange, addLimit, r
         <div className='border-t pt-4'>
           {settings[type].limits.map((limit, index) => (
             <Flex align="center" gap={10} className='w-full mb-4'>
-              <Input
-                type="mumber"
+              <InputNumber
+                controls={false}
                 value={limit.limit}
                 min={1}
                 onChange={(value) => {
                   const updatedLimits = [...settings[type].limits];
-                  updatedLimits[index].limit = Number(value.target.value) || (type == 'frequency' ? 1 : 120);
+                  updatedLimits[index].limit = Number(value) || (type == 'frequency' ? 1 : 120);
                   handleChange(type, 'limits', updatedLimits);
                 }}
                 className='w-3/5 rounded-lg h-[48px]'
@@ -64,17 +64,21 @@ const LimitRow: React.FC<LimitRowProps> = ({ settings, handleChange, addLimit, r
                 }}
                 className='w-2/5 rounded-lg h-[48px]'
               />
-              <Button onClick={() => addLimit(type)} className='border-none shadow-none p-0'>
+
+              {index === 0 && (<Button onClick={() => addLimit(type)} className='border-none shadow-none p-0'>
                 <LimitsAddIcon />
-              </Button>
-              <Button
-                danger
-                size="small"
-                onClick={() => removeLimit(type, index)}
-                className='border-none shadow-none p-0'
-              >
-                <TrashIcon width={24} height={24} />
-              </Button>
+              </Button>)}
+
+              {index !== 0 && (
+                <Button
+                  danger
+                  size="small"
+                  onClick={() => removeLimit(type, index)}
+                  className='border-none shadow-none p-0'
+                >
+                  <TrashIcon width={24} height={24} />
+                </Button>
+              )}
             </Flex>
           ))}
         </div>

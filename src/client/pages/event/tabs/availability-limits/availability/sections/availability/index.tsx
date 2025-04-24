@@ -20,7 +20,7 @@ import OverridesSection from '../overrides';
 import { useState } from 'react';
 import './style.scss'
 import RangeSection from '../range';
-import { useEventContext } from '../../../../state/context';
+import { useEventContext } from '../../../../../state/context';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
 import { getCurrentTimezone } from '@quillbooking/utils';
 
@@ -41,6 +41,7 @@ interface AvailabilitySectionProps {
     lastPickedAvailability: Availability | null;
     setAvailability: (availability: Availability | null) => void;
     setDateOverrides: (overrides: DateOverrides | null) => void;
+    hosts: any;
 }
 
 const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
@@ -57,20 +58,10 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
     dateOverrides,
     lastPickedAvailability,
     setAvailability,
-    setDateOverrides
+    setDateOverrides,
+    hosts
 }) => {
-    const weeklyHoursColumns = [
-        { title: __('Day', 'quillbooking'), dataIndex: 'day', key: 'day' },
-        { title: __('Availability', 'quillbooking'), dataIndex: 'availability', key: 'availability' },
-        { title: __('Time Slots', 'quillbooking'), dataIndex: 'times', key: 'times' },
-    ];
 
-    const weeklyHoursData = map(availability?.weekly_hours, (day, key) => ({
-        key,
-        day: __(key, 'quillbooking'),
-        availability: day.off ? __('Unavailable', 'quillbooking') : __('Available', 'quillbooking'),
-        times: day.off ? '-' : day.times.map((slot: TimeSlot) => `${slot.start} - ${slot.end}`).join(', '),
-    }));
     const customAvailability = {
         id: 'default',
         user_id: 'default',
@@ -80,9 +71,9 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
         override: {},
     };
     const { state: event } = useEventContext();
-    const [checked, setChecked] = useState(false);
-    const [reservetimes, setReservetimes] = useState(false);
-    const [commonSchedule, setCommonSchedule] = useState(false);
+    const [checked, setChecked] = useState<boolean>(false);
+    const [reservetimes, setReservetimes] = useState<boolean>(false);
+    const [commonSchedule, setCommonSchedule] = useState<boolean>(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [availabilityType, setAvailabilityType] = useState('existing');
 
@@ -95,7 +86,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
         setReservetimes(value);
     };
 
-    console.log(event);
+    console.log('hosts', event);
 
     return (
         <Card className='rounded-lg'>
@@ -162,35 +153,37 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
             )}
 
 
-            <Flex vertical gap={4} className='mt-4'>
-                <Text className='text-[#09090B] text-[16px] font-semibold'>
-                    {__('How do you want to offer your availability for this event type?', 'quillbooking')}
-                    <span className='text-red-500'>*</span>
-                </Text>
-                <Radio.Group
-                    value={availabilityType}
-                    onChange={(e) => {
-                        setAvailabilityType(e.target.value);
-                        setAvailability(e.target.value === 'custom' ? customAvailability : lastPickedAvailability);
-                    }}
-                    className='flex gap-1'
-                >
-                    <Radio
-                        value="existing"
-                        className={`flex-1 border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${availabilityType === "existing" ? "border-color-primary bg-color-secondary" : ""
-                            }`}
+            {(commonSchedule || event?.type === 'group' || event?.type === 'one-to-one' )&& (
+                <Flex vertical gap={4} className='mt-4'>
+                    <Text className='text-[#09090B] text-[16px] font-semibold'>
+                        {__('How do you want to offer your availability for this event type?', 'quillbooking')}
+                        <span className='text-red-500'>*</span>
+                    </Text>
+                    <Radio.Group
+                        value={availabilityType}
+                        onChange={(e) => {
+                            setAvailabilityType(e.target.value);
+                            setAvailability(e.target.value === 'custom' ? customAvailability : lastPickedAvailability);
+                        }}
+                        className='flex gap-1'
                     >
-                        {__('Use an Existing Schedule', 'quillbooking')}
-                    </Radio>
-                    <Radio
-                        value="custom"
-                        className={`flex-1 border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${availabilityType === "custom" ? "border-color-primary bg-color-secondary" : ""
-                            }`}
-                    >
-                        {__('Set Custom Hours', 'quillbooking')}
-                    </Radio>
-                </Radio.Group>
-            </Flex>
+                        <Radio
+                            value="existing"
+                            className={`flex-1 border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${availabilityType === "existing" ? "border-color-primary bg-color-secondary" : ""
+                                }`}
+                        >
+                            {__('Use an Existing Schedule', 'quillbooking')}
+                        </Radio>
+                        <Radio
+                            value="custom"
+                            className={`flex-1 border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${availabilityType === "custom" ? "border-color-primary bg-color-secondary" : ""
+                                }`}
+                        >
+                            {__('Set Custom Hours', 'quillbooking')}
+                        </Radio>
+                    </Radio.Group>
+                </Flex>)}
+
 
             <Flex gap={1} vertical className='mt-5'>
                 <Text className='text-[#09090B] text-[16px] font-semibold'>
@@ -200,7 +193,15 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                 <Select
                     value={availability.id}
                     onChange={onAvailabilityChange}
-                    options={map(storedAvailabilities, (a) => ({ label: a.name, value: a.id }))}
+                    options={Object.values(hosts).map((host) => ({
+                        label: host.name,
+                        title: host.name,
+                        options: Object.values(host.availabilities).map((availability) => ({
+                            label: availability.name,
+                            value: availability.id,
+                            title: availability.name,
+                        })),
+                    }))}
                     className='w-full h-[48px] rounded-lg'
                     getPopupContainer={(trigger) => trigger.parentElement || document.body}
                 />
@@ -214,7 +215,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                 dateOverrides={dateOverrides}
                 setDateOverrides={setDateOverrides}
             />
-            
+
             <Card className='border-none'>
                 <RangeSection
                     range={range}

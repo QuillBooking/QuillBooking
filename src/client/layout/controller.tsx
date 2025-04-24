@@ -27,7 +27,7 @@ import BookingDetails from '../pages/booking-details';
 import Event from '../pages/event';
 import Help from '../pages/help';
 import Logout from '../pages/logout';
-import { AvailabilityIcon, BookingIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon, UpcompingCalendarIcon } from '@quillbooking/components';
+import { AvailabilityIcon, BookingIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon, UpcomingCalendarIcon } from '@quillbooking/components';
 import Navmenu from './navmenu';
 import GeneralSettings from '../pages/global-settings';
 import ProtectedRoute from './protected-route';
@@ -61,7 +61,7 @@ registerAdminPage('calendars', {
 	path: 'calendars',
 	component: () => <Calendars />,
 	label: (
-		<Navmenu icon={<UpcompingCalendarIcon width={24} height={24} />} title={__('Calendars', 'quillbooking')} />
+		<Navmenu icon={<UpcomingCalendarIcon width={24} height={24} />} title={__('Calendars', 'quillbooking')} />
 	),
 	capabilities: [
 		'quillbooking_manage_own_calendars',

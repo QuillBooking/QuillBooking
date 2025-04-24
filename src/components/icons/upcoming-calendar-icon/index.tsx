@@ -1,6 +1,6 @@
 import { IconProps } from '@quillbooking/client';
 
-const AllCalendarIcon: React.FC<IconProps> = ({ width = 18, height = 18 }) => {
+const UpcomingCalendarIcon: React.FC<IconProps> = ({ width = 18, height = 18 }) => {
 	return (
 		<svg
 			width={width}
@@ -34,4 +34,4 @@ const AllCalendarIcon: React.FC<IconProps> = ({ width = 18, height = 18 }) => {
 	);
 };
 
-export default AllCalendarIcon;
+export default UpcomingCalendarIcon;

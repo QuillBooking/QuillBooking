@@ -5,17 +5,14 @@ import { __ } from '@wordpress/i18n';
 import { useState } from '@wordpress/element';
 
 /**
- * External dependencies
- */
-import { Flex, Button, Input, Modal } from 'antd';
-
-/**
  * Internal dependencies
  */
 import type { Calendar } from '@quillbooking/client';
-import { UserSelect, HostSelect, Header, ShareEventIcon } from '@quillbooking/components';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { getCurrentTimezone } from '@quillbooking/utils';
+import HostCalendar from './host-calendar';
+import TeamCalendar from './team-calendar';
+import { DEFAULT_WEEKLY_HOURS } from '../../../../constants';
 
 interface AddCalendarModalProps {
     open: boolean;
@@ -24,6 +21,15 @@ interface AddCalendarModalProps {
     type: string;
     excludedUsers: number[];
 };
+
+const customAvailability = {
+    id: 'default',
+    user_id: 'default',
+    name: __('Default', 'quillbooking'),
+    timezone: getCurrentTimezone(),
+    weekly_hours: DEFAULT_WEEKLY_HOURS,
+    override: {},
+  };
 
 /**
  * Calendar Events Component.
@@ -34,6 +40,7 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
         type,
         members: [],
         timezone: getCurrentTimezone(),
+        availability: customAvailability
     });
 
     const updateFormData = (key: keyof typeof formData, value: any) => {
@@ -43,7 +50,7 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
 
     const saveCalendar = async () => {
         if (!validate() || loading) return;
-
+        console.log('formData', formData);
         callApi({
             path: `calendars`,
             method: 'POST',
@@ -74,10 +81,23 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
             errorNotice(__('Please select team members.', 'quillbooking'));
             return false;
         }
-      
+
 
         return true;
     };
+
+    const validateHost = () => {
+        if (!formData.name) {
+            errorNotice(__('Please enter a name for the formData.', 'quillbooking'));
+            return false;
+        }
+
+        if (!formData.user_id) {
+            errorNotice(__('Please select a user.', 'quillbooking'));
+            return false;
+        }
+        return true;
+    }
 
     const closeHandler = () => {
         onClose();
@@ -85,88 +105,30 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({ open, onClose, type
     };
 
     return (
-        <Modal
-            open={open}
-            onCancel={closeHandler}
-            className='rounded-lg'
-            footer={[
-                <Button key="action" type="primary" loading={loading} onClick={saveCalendar} className='w-full bg-color-primary rounded-lg font-[500] mt-5'>
-                    {type === "team" ? __('Add Team', 'quillbooking') : __('Add Host', 'quillbooking')}
-                </Button>,
-            ]}
-        >
-            <Flex vertical>
-                {type === 'host' && (
-                    <>
-                        <Flex gap={10} className='items-center'>
-                            <ShareEventIcon />
-                            <Header header={__('Add New Calendar Host', 'quillbooking')}
-                                subHeader={__(
-                                    'Add the following data to Add New Calendar Host',
-                                    'quillbooking'
-                                )} />
-                        </Flex>
-                        <div className="text-[#09090B] text-[16px] mt-5">
-                            {__("Host Name", "quillbooking")}
-                            <span className='text-red-500'>*</span>
-                        </div>
-                        <Input
-                            value={formData.name}
-                            onChange={(e) => updateFormData('name', e.target.value)}
-                            className='h-[48px] rounded-lg'
-                            placeholder='Enter Name of this Host'
-                        />
-                        <div className="text-[#09090B] text-[16px] mt-5">
-                            {__("Select Host", "quillbooking")}
-                            <span className='text-red-500'>*</span>
-                        </div>
-                        <UserSelect
-                            value={formData.user_id || 0}
-                            onChange={(value) => updateFormData('user_id', value)}
-                            exclude={excludedUsers}
-                        />
-                        <div className="text-[#848484]">
-                            {__("A particular user can have one calendar with multiple events. Please select a user who does not have a calendar yet", "quillbooking")}
-                        </div>
-                    </>
-                )}
-                {type === 'team' && (
-                    <>
-                        <Flex gap={10} className='items-center'>
-                            <ShareEventIcon />
-                            <Header header={__('Add New Team', 'quillbooking')}
-                                subHeader={__(
-                                    'Add the following data to Add New Team',
-                                    'quillbooking'
-                                )} />
-                        </Flex>
-                        <div className="text-[#09090B] text-[16px] mt-5">
-                            {__("Team Name", "quillbooking")}
-                            <span className='text-red-500'>*</span>
-                        </div>
-                        <Input
-                            value={formData.name}
-                            onChange={(e) => updateFormData('name', e.target.value)}
-                            className='h-[48px] rounded-lg'
-                            placeholder='Enter Name of this Team'
-                        />
-                        <div className="text-[#09090B] text-[16px] mt-5">
-                            {__("Select Team Members", "quillbooking")}
-                            <span className='text-red-500'>*</span>
-                        </div>
-                        <HostSelect
-                            value={formData.members || []}
-                            onChange={(value) => updateFormData('members', value)}
-                            multiple
-                            placeholder={__('Select team members...', 'quillbooking')}
-                        />
-                        <div className="text-[#848484]">
-                            {__("Select the members you want to assign to this team", "quillbooking")}
-                        </div>
-                    </>
-                )}
-            </Flex>
-        </Modal>
+        <>
+            {type === 'host' && (
+                <HostCalendar
+                    formData={formData}
+                    updateFormData={updateFormData}
+                    excludedUsers={excludedUsers}
+                    open={open}
+                    closeHandler={closeHandler}
+                    loading={loading}
+                    saveCalendar={saveCalendar}
+                    validateHost={validateHost}
+                />
+            )}
+            {type === 'team' && (
+                <TeamCalendar
+                    formData={formData}
+                    updateFormData={updateFormData}
+                    open={open}
+                    closeHandler={closeHandler}
+                    loading={loading}
+                    saveCalendar={saveCalendar}
+                />
+            )}
+        </>
     );
 };
 

@@ -1,18 +1,16 @@
 <?php
 /**
- * Base Test Case Trait
+ * Base Test Case Class
  *
  * Provides common functionality for QuillBooking tests
  *
- * @package QuillBooking\Tests\Traits
+ * @package QuillBooking\Tests
  */
-
-namespace QuillBooking\Tests\Traits;
 
 /**
- * Base Test Case trait
+ * Base Test Case abstract class
  */
-trait Base_Test_Case {
+abstract class QuillBooking_Base_Test_Case extends WP_UnitTestCase {
 
 	/**
 	 * Set up the test case - ensure database tables are created

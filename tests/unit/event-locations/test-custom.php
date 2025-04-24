@@ -5,7 +5,7 @@ use QuillBooking\Event_Locations\Custom;
 /**
  * @group event-locations
  */
-class CustomLocationTest extends WP_UnitTestCase
+class CustomLocationTest extends QuillBooking_Base_Test_Case
 {
     /** @var Custom */
     private $location;

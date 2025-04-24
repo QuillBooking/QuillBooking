@@ -8,7 +8,7 @@
 /**
  * Basic test case.
  */
-class QuillBookingBaseTest extends WP_UnitTestCase {
+class QuillBookingBaseTest extends QuillBooking_Base_Test_Case {
 
 	/**
 	 * Test if plugin constants are defined correctly.

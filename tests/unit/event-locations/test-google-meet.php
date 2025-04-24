@@ -5,7 +5,7 @@ use QuillBooking\Event_Locations\Google_Meet;
 /**
  * @group event-locations
  */
-class GoogleMeetTest extends WP_UnitTestCase
+class GoogleMeetTest extends QuillBooking_Base_Test_Case
 {
     /** @var Google_Meet */
     private $location;

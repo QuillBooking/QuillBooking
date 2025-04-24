@@ -7,16 +7,10 @@
  * @package QuillBooking\Tests
  */
 
-
-use WP_UnitTestCase;
-use QuillBooking\Tests\Traits\Base_Test_Case;
-
 /**
  * Database Tables Test
  */
-class DatabaseTablesTest extends WP_UnitTestCase {
-	
-	use Base_Test_Case;
+class DatabaseTablesTest extends QuillBooking_Base_Test_Case {
 
 	/**
 	 * Test all tables were created

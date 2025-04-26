@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "webpack.config.js",
   "dependencies": {
+    "@ant-design/colors": "^8.0.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@lexical/code": "^0.30.0",
@@ -23,7 +24,7 @@
     "@wordpress/i18n": "^5.14.0",
     "@wordpress/media-utils": "^5.15.1",
     "@wordpress/prettier-config": "^4.14.0",
-    "antd": "^5.22.6",
+    "antd": "^5.23.0",
     "autoprefixer": "^10.4.21",
     "classnames": "^2.5.1",
     "date-fns-tz": "^3.2.0",

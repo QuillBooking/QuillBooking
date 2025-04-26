@@ -2,7 +2,6 @@ import { Button, Flex, Input, Modal } from 'antd';
 import {
 	CardHeader,
 	HostSelect,
-	ShareEventIcon,
 	UpcomingCalendarOutlinedIcon,
 } from '@quillbooking/components';
 import { __ } from '@wordpress/i18n';
@@ -47,7 +46,6 @@ const TeamCalendar: React.FC<TeamCalendarProps> = ({
 		>
 			<Flex vertical>
 				<Flex gap={10} className="items-center">
-					<ShareEventIcon />
 					<CardHeader
 						title={__('Add New Team', 'quillbooking')}
 						description={__(

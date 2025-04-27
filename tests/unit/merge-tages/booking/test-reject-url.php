@@ -56,7 +56,7 @@ class RejectUrlTest extends QuillBooking_Base_Test_Case
     {
         $booking = $this->getMockBuilder(Booking_Model::class)
             ->disableOriginalConstructor()
-            ->onlyMethods($hasRejectUrl ? ['getRejectUrl'] : [])
+            ->addMethods($hasRejectUrl ? ['getRejectUrl'] : [])
             ->getMock();
 
         if ($hasRejectUrl) {

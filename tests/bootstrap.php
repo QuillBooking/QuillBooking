@@ -68,5 +68,29 @@ if ( ! defined( 'WP_TESTS_TABLE_PREFIX' ) ) {
 	define( 'WP_TESTS_TABLE_PREFIX', $wpdb->prefix );
 }
 
+/**
+ * Adds a wp_die handler for use during tests.
+ *
+ * If bootstrap.php triggers wp_die, it will not cause the script to fail. This
+ * means that tests will look like they passed even though they should have
+ * failed. So we throw an exception if WordPress dies during test setup. This
+ * way the failure is observable.
+ *
+ * @param string|WP_Error $message The error message.
+ *
+ * @throws Exception When a `wp_die()` occurs.
+ */
+function fail_if_died( $message ) {
+	if ( is_wp_error( $message ) ) {
+		$message = $message->get_error_message();
+	}
+
+	throw new Exception( 'WordPress died: ' . $message );
+}
+tests_add_filter( 'wp_die_handler', 'fail_if_died' );
+
 // Initialize QuillBooking tables in the test database
-QuillBooking\Tests\initialize_test_database(); 
+QuillBooking\Tests\initialize_test_database();
+
+// Uncomment this if you want to revert to normal wp_die behavior during tests
+// remove_filter( 'wp_die_handler', 'fail_if_died' );

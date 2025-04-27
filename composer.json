@@ -15,7 +15,8 @@
         "sirbrillig/phpcs-variable-analysis": "^2.8",
         "phpunit/phpunit": "^9.6",
         "yoast/phpunit-polyfills": "^1.0",
-        "spatie/phpunit-watcher": "^1.24"
+        "spatie/phpunit-watcher": "^1.24",
+        "php-mock/php-mock-phpunit": "^2.13"
     },
     "require": {
         "php": ">=7.4",

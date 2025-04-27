@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Host email
  *
@@ -15,7 +16,8 @@ use QuillBooking\Models\Booking_Model;
 /**
  * Host email Merge Tag
  */
-class Host_Email extends Merge_Tag {
+class Host_Email extends Merge_Tag
+{
 
 	/**
 	 * Name
@@ -47,6 +49,10 @@ class Host_Email extends Merge_Tag {
 	 */
 	public function get_value($booking, $options = array())
 	{
-		return $booking?->calendar?->user?->user_email ?? '';
+		if (isset($booking) && isset($booking->calendar) && isset($booking->calendar->user) && isset($booking->calendar->user->user_email)) {
+			return $booking->calendar->user->user_email;
+		}
+
+		return '';
 	}
 }

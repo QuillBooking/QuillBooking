@@ -120,7 +120,7 @@ class Booking_Actions {
 		</div>
 		<?php
 		echo $this->get_footer();
-		exit;
+		return true;
 	}
 
 	/**
@@ -176,7 +176,7 @@ class Booking_Actions {
 		}
 
 		echo $this->get_footer();
-		exit;
+		return true;
 	}
 
 	/**

@@ -45,7 +45,8 @@ class Host_Name extends Merge_Tag {
 	 * @param array         $options
 	 * @return string
 	 */
-	public function get_value( $booking, $options = array() ) {
-		return $booking->calendar->name;
+	public function get_value($booking, $options = array())
+	{
+		return isset($booking) && isset($booking->calendar) && isset($booking->calendar->name) ? $booking->calendar->name : '';
 	}
 }

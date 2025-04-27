@@ -8,23 +8,24 @@ use Illuminate\Support\Arr;
 
 class Booking_Actions {
 
+
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		add_action( 'wp_loaded', array( $this, 'init' ) );
+		 add_action( 'wp_loaded', array( $this, 'init' ) );
 
 		// Enqueue scripts and styles
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 
-		/**
-		 * Enqueue Scripts.
-		 *
-		 * @since 1.0.0
-		 */
+	/**
+	 * Enqueue Scripts.
+	 *
+	 * @since 1.0.0
+	 */
 	public function enqueue_scripts() {
-		$asset_file   = QUILLBOOKING_PLUGIN_DIR . 'build/renderer/index.asset.php';
+		 $asset_file  = QUILLBOOKING_PLUGIN_DIR . 'build/renderer/index.asset.php';
 		$asset        = file_exists( $asset_file ) ? require $asset_file : null;
 		$dependencies = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
 		$version      = isset( $asset['version'] ) ? $asset['version'] : QUILLBOOKING_VERSION;
@@ -81,7 +82,7 @@ class Booking_Actions {
 	 * @return void
 	 */
 	public function render_booking_page() {
-		$calendar = Arr::get( $_GET, 'quillbooking_calendar', null );
+		 $calendar = Arr::get( $_GET, 'quillbooking_calendar', null );
 		if ( ! $calendar ) {
 			return;
 		}
@@ -105,7 +106,7 @@ class Booking_Actions {
 
 		add_filter(
 			'quillbooking_config',
-			function( $config ) use ( $calendar, $event ) {
+			function ( $config ) use ( $calendar, $event ) {
 				$config['calendar'] = $calendar->toArray();
 				if ( $event ) {
 					$config['event'] = $event->toArray();
@@ -229,20 +230,22 @@ class Booking_Actions {
 	public function get_head() {
 		ob_start();
 		?>
-		<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-			"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+		<!DOCTYPE html
+			PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 		<html xmlns="http://www.w3.org/1999/xhtml" <?php language_attributes(); ?>>
+
 		<head>
-			<meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
-			<meta http-equiv="Imagetoolbar" content="No"/>
+			<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+			<meta http-equiv="Imagetoolbar" content="No" />
 			<meta name="viewport" content="width=device-width, initial-scale=1">
 			<title><?php esc_html_e( 'Request Unsubscribe', 'quillbooking' ); ?></title>
 			<meta name="robots" content="noindex">
 			<?php wp_head(); ?>
 		</head>
+
 		<body class="quillbooking-body">
-		<?php
-		return ob_get_clean();
+			<?php
+			return ob_get_clean();
 	}
 
 	/**
@@ -255,6 +258,7 @@ class Booking_Actions {
 		wp_footer();
 		?>
 		</body>
+
 		</html>
 		<?php
 		return ob_get_clean();

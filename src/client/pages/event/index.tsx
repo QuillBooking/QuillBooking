@@ -7,12 +7,7 @@ import { useState, useEffect, useRef } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Button, Flex, Switch, Typography } from 'antd';
-import {
-	SettingOutlined,
-	ClockCircleOutlined,
-	BorderBottomOutlined,
-} from '@ant-design/icons';
+import { Button, Flex, Switch } from 'antd';
 
 /**
  * Internal dependencies
@@ -44,12 +39,11 @@ import { Provider } from './state/context';
 import Calendar from '../calendar';
 import {
 	EventDetails,
-	Availability,
-	Limits,
-	Fields,
 	Notifications,
 	AdvancedSettings,
 	Payments,
+	WebhookFeeds,
+	EmailNotificationTab,
 } from './tabs';
 import {
 	Box,
@@ -62,6 +56,7 @@ import {
 import { IoCloseSharp } from 'react-icons/io5';
 import ShareModal from '../calendars/share-modal';
 import EventFieldsTab from './tabs/fields';
+import AvailabilityLimits from './tabs/availability-limits';
 
 const Event: React.FC = () => {
 	const {
@@ -204,13 +199,20 @@ const Event: React.FC = () => {
 		{
 			key: 'details',
 			label: __('Event Details', 'quillbooking'),
-			children: <EventDetails onKeepDialogOpen={() => setOpen(true)} />,
+			children: event ? (
+				<EventDetails
+					onKeepDialogOpen={() => setOpen(true)}
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			) : null,
 			icon: <CalendarsIcon />,
 		},
 		{
 			key: 'availability',
 			label: __('Availability & Limits', 'quillbooking'),
-			children: <Availability />,
+			children: <AvailabilityLimits />,
 			icon: <AvailabilityIcon />,
 		},
 		{
@@ -228,31 +230,53 @@ const Event: React.FC = () => {
 		{
 			key: 'email-notifications',
 			label: __('Email Notification', 'quillbooking'),
-			children: <Notifications notificationType="email" />,
+			children: <EmailNotificationTab
+				//notificationType="email"
+				ref={childRef}
+				disabled={saveDisabled}
+				setDisabled={setSaveDisabled}
+			/>,
 			icon: <EmailNotiIcon />,
 		},
 		{
 			key: 'sms-notifications',
 			label: __('SMS Notification', 'quillbooking'),
-			children: <Notifications notificationType="sms" />,
+			children: <Notifications
+				notificationType="sms"
+				ref={childRef}
+				disabled={saveDisabled}
+				setDisabled={setSaveDisabled}
+			/>,
 			icon: <SmsNotiIcon />,
 		},
 		{
 			key: 'advanced-settings',
 			label: __('Advanced Settings', 'quillbooking'),
-			children: <AdvancedSettings />,
+			children: event ? (
+				<AdvancedSettings
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			) : null,
 			icon: <SettingsIcon />,
 		},
 		{
 			key: 'payment-settings',
 			label: __('Payments Settings', 'quillbooking'),
-			children: <Payments />,
+			children: event ? (
+				<Payments
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			) : null,
 			icon: <PaymentSettingsIcon />,
 		},
 		{
 			key: 'webhooks-feeds',
 			label: __('Webhooks Feeds', 'quillbooking'),
-			children: <Payments />,
+			children: <WebhookFeeds />,
 			icon: <WebhookIcon />,
 		},
 		// {
@@ -318,7 +342,8 @@ const Event: React.FC = () => {
 				open={open}
 				onClose={handleClose}
 				fullScreen
-				>
+				className='z-[1000000000000000000]'
+			>
 				<DialogTitle className="border-b" sx={{ padding: '10px 16px' }}>
 					<Flex className="justify-between items-center">
 						<Flex gap={10}>
@@ -377,8 +402,8 @@ const Event: React.FC = () => {
 								loading={loading}
 								disabled={saveDisabled}
 								className={`rounded-lg font-[500] text-white ${saveDisabled
-										? 'bg-gray-400 cursor-not-allowed'
-										: 'bg-color-primary '
+									? 'bg-gray-400 cursor-not-allowed'
+									: 'bg-color-primary '
 									}`}
 							>
 								{__('Save Changes', 'quillbooking')}

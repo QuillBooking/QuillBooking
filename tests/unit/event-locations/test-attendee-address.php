@@ -6,7 +6,7 @@ use QuillBooking\Managers\Fields_Manager;
 use QuillBooking\Managers\Locations_Manager;
 
 
-class AttendeeAddressTest extends WP_UnitTestCase
+class AttendeeAddressTest extends QuillBooking_Base_Test_Case
 {
     /** @var Attendee_Address */
     private $location;

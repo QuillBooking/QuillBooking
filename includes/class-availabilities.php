@@ -53,6 +53,24 @@ class Availabilities {
 	}
 
 	/**
+	 * Get User Availabilities
+	 *
+	 * @param string $id
+	 *
+	 * @return array
+	 */
+	public static function get_user_availabilities( $id ) {
+		$availabilities = self::get_availabilities();
+
+		return array_filter(
+			$availabilities,
+			function( $availability ) use ( $id ) {
+				return $id === $availability['user_id'];
+			}
+		);
+	}
+
+	/**
 	 * Add Availability
 	 *
 	 * @param array $availability

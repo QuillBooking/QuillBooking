@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * Main header component.
  */

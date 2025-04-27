@@ -29,7 +29,7 @@ import {
 } from '@quillbooking/hooks';
 import { SlOptions } from 'react-icons/sl';
 import { map } from 'lodash';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ShareModal from '../share-modal';
 import EventActions from '../event-actions';
 import CreateEvent from '../../create-event';
@@ -46,31 +46,37 @@ const CalendarEvents: React.FC<{
 	const copyToClipboard = useCopyToClipboard();
 	const [modalShareId, setModalShareId] = useState<number | null>(null);
 	const [disabledEvents, setDisabledEvents] = useState({});
-	const navigate = useNavigate();
 	const [showCreateEventModal, setShowCreateEventModal] = useState(false);
-
-	const hostEventsTypes = {
-		'one-to-one': __('One to One', 'quillbooking'),
-		group: __('Group', 'quillbooking'),
-	};
-
 	console.log(calendar.events);
+
+	// useEffect(() => {
+	// 	if (calendar?.events?.length > 0) {
+	// 		const saved = localStorage.getItem('disabledEvents');
+	// 		if (saved) {
+	// 			setDisabledEvents(JSON.parse(saved));
+	// 		}
+	// 	}
+	// }, [calendar.events]);
+
+	// // Save to localStorage whenever disabledEvents changes
+	// useEffect(() => {
+	// 	localStorage.setItem('disabledEvents', JSON.stringify(disabledEvents));
+	// }, [disabledEvents]);
 
 	return (
 		<>
 			{calendar.events.length > 0 ? (
 				<div className="quillbooking-calendar-events">
 					{calendar.events.map((event) => {
-						const isDisabled = event.is_disabled;
+						const isDisabled = false;
 						return (
 							<Card
-							key={event.id}
-							className="quillbooking-calendar-event w-[310px] border-t-4 border-t-color-primary rounded-xl"
-							style={{
-								opacity: isDisabled ? 0.5 : 1,
-								pointerEvents: isDisabled ? 'none' : 'auto',
-							}}
-							//onClick={() => navigate(`calendars/${calendar.id}/events/${event.id}`)}
+								key={event.id}
+								className="quillbooking-calendar-event w-[310px] border-t-4 border-t-color-primary rounded-xl"
+								style={{
+									opacity: isDisabled ? 0.5 : 1,
+									pointerEvents: isDisabled ? 'none' : 'auto',
+								}}
 							>
 								<Flex gap={20} vertical>
 									<Flex
@@ -173,7 +179,7 @@ const CalendarEvents: React.FC<{
 													)}
 												</span>
 												<span className="text-[#09090B] text-[14px] font-[500] capitalize">
-													24
+													{event.booking_count}
 												</span>
 											</div>
 										</Flex>

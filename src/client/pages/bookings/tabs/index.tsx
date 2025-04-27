@@ -19,7 +19,7 @@ import {
 	CompletedCalendarIcon,
 	LatestCalendarIcon,
 	PendingCalendarIcon,
-	UpcompingCalendarIcon,
+	UpcomingCalendarIcon,
 } from '@quillbooking/components';
 import { IconType } from 'react-icons';
 import React from 'react';
@@ -57,7 +57,7 @@ const BookingsTabs: React.FC<BookingsTabsProps> = ({
 		{
 			value: 'upcoming',
 			label: __('Upcoming', 'quillbooking'),
-			icon: UpcompingCalendarIcon as IconType,
+			icon: UpcomingCalendarIcon as IconType,
 		},
 		{
 			value: 'completed',

@@ -5,7 +5,7 @@ use QuillBooking\Event_Locations\Zoom;
 /**
  * @group event-locations
  */
-class ZoomTest extends WP_UnitTestCase
+class ZoomTest extends QuillBooking_Base_Test_Case
 {
 
     // Test Singleton Instance

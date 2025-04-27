@@ -38,6 +38,7 @@ export type Calendar = {
 		slug: string;
 		location: Location[];
 		is_disabled: boolean;
+		booking_count:number;
 	}[];
 	created_at: string;
 	updated_at: string;
@@ -324,3 +325,8 @@ export type FieldsGroup = {
 	[key: string]: FieldType;
 };
 
+
+export interface LimitBaseProps {
+	settings: EventLimits;
+  handleChange: (section: keyof EventLimits, key: string, value: any) => void;
+}

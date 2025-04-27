@@ -23,6 +23,7 @@ use QuillBooking\Capabilities;
 use QuillBooking\Availabilities;
 use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Models\Calendar_Model;
+use QuillBooking\Models\User_Model;
 
 /**
  * Event Controller class
@@ -568,39 +569,27 @@ class REST_Event_Controller extends REST_Controller {
 			$id    = $request->get_param( 'id' );
 			$event = Event_Model::with( 'calendar' )->find( $id );
 
-			if ( ! $event ) {
-				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
-			}
+			$usersId = $event->calendar->getTeamMembers() ?: array( $event->user->ID );
+			$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
 
-			$calendarIds = $event->calendar->getTeamMembers();
+			$users = array();
+			foreach ( $usersId as $userId ) {
+					$user = User_Model::find( $userId );
 
-			if ( $calendarIds ) {
-				if ( ! is_array( $calendarIds ) ) {
-					$calendarIds = array( $calendarIds );
-				}
+				if ( $user ) {
+						$user_avatar_url = get_avatar_url( $user->ID );
+						$availabilities  = Availabilities::get_user_availabilities( $user->ID );
 
-				$calendars = array();
-				foreach ( $calendarIds as $calendarId ) {
-					$calendar = Calendar_Model::find( $calendarId );
-					if ( $calendar ) {
-						$calendars[] = array(
-							'id'   => $calendar->id,
-							'name' => $calendar->name,
+						$users[] = array(
+							'id'             => $user->ID,
+							'name'           => $user->display_name,
+							'image'          => $user_avatar_url,
+							'availabilities' => $availabilities,
 						);
-					}
-				}
-				$event->hosts = $calendars;
-			} else {
-				$calendar = $event->calendar;
-				if ( $calendar ) {
-					$event->hosts = array(
-						array(
-							'id'   => $calendar->id,
-							'name' => $calendar->name,
-						),
-					);
 				}
 			}
+
+			$event->hosts = $users;
 
 			return new WP_REST_Response( $event, 200 );
 		} catch ( Exception $e ) {

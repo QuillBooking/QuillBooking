@@ -6,7 +6,7 @@ use QuillBooking\Models\Booking_Model;
 /**
  * @group merge-tags
  */
-class BookingDetailsUrlTest extends WP_UnitTestCase
+class BookingDetailsUrlTest extends QuillBooking_Base_Test_Case
 {
     /** @var Booking_Details_URL */
     private $tag;

@@ -36,6 +36,9 @@ if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
 	exit( 1 );
 }
 
+// Load Composer's autoloader for PSR-4 class loading
+require_once dirname( dirname( __FILE__ ) ) . '/vendor/autoload.php';
+
 // Load the WordPress test functions
 require_once $_tests_dir . '/includes/functions.php';
 
@@ -51,4 +54,19 @@ tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 require $_tests_dir . '/includes/bootstrap.php';
 
 // Load plugin autoloader
-require_once dirname( dirname( __FILE__ ) ) . '/includes/autoload.php'; 
+require_once dirname( dirname( __FILE__ ) ) . '/includes/autoload.php';
+
+// Load QuillBooking test setup
+require_once dirname( __FILE__ ) . '/test-setup.php';
+
+// Load the Base Test Case abstract class
+require_once dirname( __FILE__ ) . '/class-quillbooking-base-test-case.php';
+
+// Define the WP_TESTS_TABLE_PREFIX constant if not already defined
+if ( ! defined( 'WP_TESTS_TABLE_PREFIX' ) ) {
+	global $wpdb;
+	define( 'WP_TESTS_TABLE_PREFIX', $wpdb->prefix );
+}
+
+// Initialize QuillBooking tables in the test database
+QuillBooking\Tests\initialize_test_database(); 

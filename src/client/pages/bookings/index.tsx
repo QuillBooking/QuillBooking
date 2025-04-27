@@ -28,7 +28,7 @@ import { groupBookingsByDate } from '@quillbooking/utils';
 import BookingList from './booking-list';
 import AddBookingModal from './add-booking-modal';
 import MonthSelector from './month-selector';
-import { UpcompingCalendarIcon } from '@quillbooking/components';
+import { UpcomingCalendarIcon } from '@quillbooking/components';
 
 /**
  * Main Bookings Component.
@@ -162,7 +162,7 @@ const Bookings: React.FC = () => {
 			) : (
 				<div className="flex flex-col gap-4 justify-center items-center mt-4 h-full border border-solid borderColor-[#DEDEDE] rounded-xl p-4 my-6 py-6 bg-[#FDFDFD]">
 					<div className="w-36 h-36 flex justify-center items-center rounded-full bg-[#F4F5FA] border border-solid borderColor-[#E1E2E9]">
-						<UpcompingCalendarIcon width={60} height={60} />
+						<UpcomingCalendarIcon width={60} height={60} />
 					</div>
 
 					<p className="text-xl font-medium my-1 text-color-primary-text">

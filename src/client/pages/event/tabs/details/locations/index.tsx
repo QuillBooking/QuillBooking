@@ -8,7 +8,7 @@ import { __, sprintf } from '@wordpress/i18n';
  * External dependencies
  */
 import { Card, Flex, Button, Input, Modal, Form, Switch, Checkbox } from 'antd';
-import { map, isEmpty, get } from 'lodash';
+import { map, isEmpty, get, uniqueId } from 'lodash';
 
 /**
  * Internal dependencies
@@ -16,31 +16,41 @@ import { map, isEmpty, get } from 'lodash';
 import ConfigAPI from '@quillbooking/config';
 import type { LocationField } from '@quillbooking/config';
 import type { Location } from '@quillbooking/client';
-import { Header, EventLocIcon, EditIcon } from '@quillbooking/components';
+import { EditIcon, TrashIcon } from '@quillbooking/components';
 import { FaPlus } from 'react-icons/fa';
-import { SiGooglemeet } from "react-icons/si";
-import { BiLogoZoom } from "react-icons/bi";
 import "./style.scss";
-import { BsMicrosoftTeams } from 'react-icons/bs';
-import { FaRegEdit } from "react-icons/fa";
 import meet from "../../../../../../../assets/icons/google/google_meet.png";
 import zoom from "../../../../../../../assets/icons/zoom/zoom_video.png";
 import teams from "../../../../../../../assets/icons/teams/teams.png";
 
+// Extended Location type to include custom ID for multiple custom locations
+interface ExtendedLocation extends Location {
+    id?: string;
+}
+
 const Locations: React.FC<{
-    locations: Location[];
-    onChange: (locations: Location[]) => void;
+    locations: ExtendedLocation[];
+    onChange: (locations: ExtendedLocation[]) => void;
     onKeepDialogOpen: () => void;
 }> = ({ locations, onChange, onKeepDialogOpen }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingLocationIndex, setEditingLocationIndex] = useState<number | null>(null);
-    const [newLocationType, setNewLocationType] = useState<string | null>(null); // Track the new location type
+    const [newLocationType, setNewLocationType] = useState<string | null>(null);
+    const [editingCustomId, setEditingCustomId] = useState<string | null>(null);
+    // Track custom locations separately
+    const [customLocations, setCustomLocations] = useState<{id: string, fields?: Record<string, any>, visible: boolean}[]>(
+        locations.filter(loc => loc.type === "custom").map(loc => ({
+            id: loc.id || uniqueId('custom-'),
+            fields: loc.fields,
+            visible: true
+        }))
+    );
+    // Cache for non-custom locations
+    const [cachedLocationData, setCachedLocationData] = useState<Record<string, any>>({});
     const [form] = Form.useForm();
     const locationTypes = ConfigAPI.getLocations();
 
-    console.log(locationTypes);
-    console.log(locations)
-
+    // Handle regular location type changes
     const handleLocationTypeChange = (index: number, newType: string) => {
         const locationType = get(locationTypes, newType);
 
@@ -57,87 +67,263 @@ const Locations: React.FC<{
 
         // Otherwise, open the modal to fill the fields
         setEditingLocationIndex(index);
-        setNewLocationType(newType); // Set the new location type
+        setNewLocationType(newType);
         setIsModalVisible(true);
     };
 
+    // Handle modal submission
     const handleModalOk = async () => {
         try {
             const values = await form.validateFields();
-            console.log("Form Values Before Submit:", form.getFieldsValue());
-            console.log("Validated values:", values);
             console.log("Form Values:", values);
-            const updatedLocations = [...locations];
-            updatedLocations[editingLocationIndex!] = {
-                type: newLocationType!, // Use the new location type
-                fields: values,
-            };
-            onChange(updatedLocations);
+            
+            // Update location based on type
+            if (newLocationType === "custom" && editingCustomId) {
+                // Handle custom location update
+                const updatedLocations = [...locations];
+                const locationIndex = updatedLocations.findIndex(loc => 
+                    loc.type === "custom" && loc.id === editingCustomId);
+                
+                if (locationIndex !== -1) {
+                    // Update existing custom location
+                    updatedLocations[locationIndex] = {
+                        type: "custom",
+                        id: editingCustomId,
+                        fields: values,
+                    };
+                } else {
+                    // Add new custom location with the generated ID
+                    updatedLocations.push({
+                        type: "custom",
+                        id: editingCustomId,
+                        fields: values,
+                    });
+                    
+                    // Only now add to customLocations array since form submission was successful
+                    setCustomLocations(prev => [
+                        ...prev, 
+                        { id: editingCustomId, fields: values, visible: true }
+                    ]);
+                }
+                
+                // Update existing custom location if applicable
+                if (locationIndex === -1) {
+                    // New location was added, no need to update customLocations here
+                } else {
+                    // Update existing location in customLocations
+                    const updatedCustomLocations = [...customLocations];
+                    const customIndex = updatedCustomLocations.findIndex(custom => custom.id === editingCustomId);
+                    
+                    if (customIndex !== -1) {
+                        updatedCustomLocations[customIndex].fields = values;
+                        setCustomLocations(updatedCustomLocations);
+                    }
+                }
+                
+                onChange(updatedLocations);
+            } else {
+                // Handle regular location update (unchanged)
+                const updatedLocations = [...locations];
+                if (editingLocationIndex !== null) {
+                    updatedLocations[editingLocationIndex] = {
+                        type: newLocationType!,
+                        fields: values,
+                    };
+                    
+                    // Cache the location data when saving
+                    setCachedLocationData(prev => ({
+                        ...prev,
+                        [newLocationType!]: values
+                    }));
+                    
+                    onChange(updatedLocations);
+                }
+            }
+            
             setIsModalVisible(false);
             setEditingLocationIndex(null);
-            setNewLocationType(null); // Reset the new location type
+            setNewLocationType(null);
+            setEditingCustomId(null);
             form.resetFields();
         } catch (error) {
             console.error("Validation failed:", error);
         }
     };
 
-
+    // Handle modal cancellation
     const handleModalCancel = () => {
-        // Remove the location if the user cancels the modal
-        if (editingLocationIndex !== null) {
-            const updatedLocations = locations.filter((_, i) => i !== editingLocationIndex);
-            onChange(updatedLocations);
+        // Clean up regular locations if needed
+        if (editingLocationIndex !== null && newLocationType !== "custom") {
+            const currentLocation = locations[editingLocationIndex];
+            // Only remove if it's a new location with no fields
+            if (!currentLocation?.fields || Object.keys(currentLocation.fields).length === 0) {
+                const updatedLocations = locations.filter((_, i) => i !== editingLocationIndex);
+                onChange(updatedLocations);
+            }
         }
-
+        
+        // Clean up empty custom location
+        if (newLocationType === "custom" && editingCustomId) {
+            // If this is a new custom location being created (not yet in locations array)
+            const existingCustomLoc = locations.find(
+                loc => loc.type === "custom" && loc.id === editingCustomId
+            );
+            
+            if (!existingCustomLoc) {
+                // Remove from customLocations state
+                setCustomLocations(prev => prev.filter(custom => custom.id !== editingCustomId));
+            }
+        }
+        
         setIsModalVisible(false);
         setEditingLocationIndex(null);
-        setNewLocationType(null); // Reset the new location type
+        setNewLocationType(null);
+        setEditingCustomId(null);
         form.resetFields();
-
+    
         if (typeof onKeepDialogOpen === "function") {
             onKeepDialogOpen();
+        }
+    };
+
+    // Edit location handler
+    const handleEditLocation = (type: string, customId?: string) => {
+        if (type === "custom" && customId) {
+            // Edit custom location
+            const customLocation = locations.find(loc => loc.type === type && loc.id === customId);
+            if (customLocation?.fields) {
+                setNewLocationType(type);
+                setEditingCustomId(customId);
+                form.setFieldsValue(customLocation.fields);
+                setIsModalVisible(true);
+            }
         } else {
-            console.warn("onKeepDialogOpen is not defined or not a function");
+            // Edit standard location
+            const index = locations.findIndex(loc => loc.type === type);
+            if (index !== -1) {
+                setEditingLocationIndex(index);
+                setNewLocationType(type);
+                form.setFieldsValue(locations[index].fields);
+                setIsModalVisible(true);
+            }
         }
     };
 
-    const handleEditLocation = (type: string) => {
-        const index = locations.findIndex(loc => loc.type === type);
-        if (index !== -1) {
-            setEditingLocationIndex(index);
-            setNewLocationType(type);
-            form.setFieldsValue(locations[index].fields); // prefill form with existing fields
-            setIsModalVisible(true);
-        }
+    // Add custom location
+    const addCustomLocation = () => {
+        const newCustomId = uniqueId('custom-');
+        
+        // Don't add to customLocations array yet, just prepare the ID for editing
+        // We'll add it only after successful submission
+        
+        // Open modal to edit the new custom location
+        setNewLocationType("custom");
+        setEditingCustomId(newCustomId);
+        form.resetFields();
+        setIsModalVisible(true);
     };
 
-    const removeLocation = (index: number) => {
-        const updatedLocations = locations.filter((_, i) => i !== index);
+    // Remove custom location completely
+    const removeCustomLocation = (customId: string) => {
+        // Remove from customLocations state
+        setCustomLocations(prev => prev.filter(custom => custom.id !== customId));
+        
+        // Remove from locations array
+        const updatedLocations = locations.filter(
+            loc => !(loc.type === "custom" && loc.id === customId)
+        );
+        
         onChange(updatedLocations);
     };
 
-    const addLocation = () => {
-        const newLocation = {
-            type: 'custom',
-            fields: {},
-        };
-        onChange([...locations, newLocation]);
+    // Toggle checkbox for regular locations
+    const handleCheckboxChange = (type: string, checked: boolean) => {
+        // If not custom, handle regular location toggle
+        const existingIndex = locations.findIndex(loc => loc.type === type);
+        
+        if (checked) {
+            // If the location was previously saved, restore its data
+            const savedFields = cachedLocationData[type] || {};
+            
+            if (existingIndex !== -1) {
+                const updatedLocations = [...locations];
+                updatedLocations[existingIndex] = {
+                    type,
+                    fields: Object.keys(savedFields).length > 0 ? savedFields : {},
+                };
+                onChange(updatedLocations);
+            } else {
+                const updatedLocations = [...locations];
+                updatedLocations.push({
+                    type,
+                    fields: Object.keys(savedFields).length > 0 ? savedFields : {},
+                });
+                onChange(updatedLocations);
+                
+                // If there are saved fields but the location needs configuration, open modal
+                if (Object.keys(savedFields).length === 0 && !isEmpty(get(locationTypes, `${type}.fields`))) {
+                    handleLocationTypeChange(updatedLocations.length - 1, type);
+                }
+            }
+        } else {
+            // When unchecking, save the current location data before removing
+            const locationToRemove = locations.find(loc => loc.type === type);
+            if (locationToRemove && locationToRemove.fields) {
+                setCachedLocationData(prev => ({
+                    ...prev,
+                    [type]: locationToRemove.fields
+                }));
+            }
+            
+            const updatedLocations = locations.filter(loc => loc.type !== type);
+            onChange(updatedLocations);
+        }
+    };
+
+    // Toggle custom location checkbox
+    const handleCustomCheckboxChange = (customId: string, checked: boolean) => {
+        // Update the customLocations visibility state
+        setCustomLocations(prev => prev.map(custom => 
+            custom.id === customId ? {...custom, visible: checked} : custom
+        ));
+        
+        if (checked) {
+            // Get the custom location data
+            const customLocation = customLocations.find(custom => custom.id === customId);
+            
+            // Add to locations array if not already there
+            if (customLocation) {
+                const existingIndex = locations.findIndex(
+                    loc => loc.type === "custom" && loc.id === customId
+                );
+                
+                if (existingIndex === -1) {
+                    const updatedLocations = [...locations];
+                    updatedLocations.push({
+                        type: "custom",
+                        id: customId,
+                        fields: customLocation.fields || {},
+                    });
+                    onChange(updatedLocations);
+                    
+                    // If fields need configuration, open the modal
+                    if (!customLocation.fields || Object.keys(customLocation.fields).length === 0) {
+                        setNewLocationType("custom");
+                        setEditingCustomId(customId);
+                        setIsModalVisible(true);
+                    }
+                }
+            }
+        } else {
+            // Remove from locations array but keep in customLocations
+            const updatedLocations = locations.filter(
+                loc => !(loc.type === "custom" && loc.id === customId)
+            );
+            onChange(updatedLocations);
+        }
     };
 
     return (
-        //<Card className='rounded-lg'>
-        // <Flex vertical gap={20}>
-        //     <Flex gap={10} className='items-center border-b pb-4'>
-        //         <div className="bg-[#EDEDED] rounded-lg p-2">
-        //             <EventLocIcon />
-        //         </div>
-        //         <Header header={__('Event Location', 'quillbooking')}
-        //             subHeader={__(
-        //                 'Select Where you will Meet Guests.',
-        //                 'quillbooking'
-        //             )} />
-        //     </Flex>
         <>
             <Flex vertical gap={15}>
                 <Flex vertical gap={10} className='justify-start items-start'>
@@ -145,25 +331,12 @@ const Locations: React.FC<{
                         {__("Conferencing", "quillbooking")}
                     </div>
                     <Checkbox
-                        className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "google_meet")
+                        className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "google-meet")
                             ? "border-color-primary bg-color-secondary" // Checked styles
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
-                        onChange={(e) => {
-                            const checked = e.target.checked;
-                            const existingIndex = locations.findIndex(loc => loc.type === "google_meet");
-
-                            if (checked) {
-                                if (existingIndex !== -1) {
-                                    handleLocationTypeChange(existingIndex, "google_meet");
-                                } else {
-                                    handleLocationTypeChange(locations.length, "google_meet");
-                                }
-                            } else {
-                                const updatedLocations = locations.filter(loc => loc.type !== "google_meet");
-                                onChange(updatedLocations);
-                            }
-                        }}
+                        checked={locations.some(loc => loc.type === "google-meet")}
+                        onChange={(e) => handleCheckboxChange("google-meet", e.target.checked)}
                     >
                         <Flex gap={12} className='items-center ml-2'>
                             <img src={meet} alt='google_meet.png' className='size-7' />
@@ -171,33 +344,19 @@ const Locations: React.FC<{
                                 <div className="text-[#3F4254] text-[16px] font-semibold">
                                     {__("Google Meet", "quillbooking")}
                                 </div>
-                                <div className="text-[#3F4254] text-[12px] italic">
-                                    {__("Connected", "quillbooking")}
+                                <div className="text-[#9197A4] text-[12px] italic">
+                                    {__("Need to be Connect First - Visit the Google Meet integration page from Settings.", "quillbooking")}
                                 </div>
                             </Flex>
                         </Flex>
                     </Checkbox>
                     <Checkbox
-                        className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "zoom_video")
-                            ? "border-color-primary bg-color-secondary" // Checked styles
-                            : "border-[#D3D4D6] bg-white" // Default styles
+                        className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "zoom")
+                            ? "border-color-primary bg-color-secondary" 
+                            : "border-[#D3D4D6] bg-white"
                             }`}
-                        checked={locations.some(loc => loc.type === "zoom_video")}
-                        onChange={(e) => {
-                            const checked = e.target.checked;
-                            const existingIndex = locations.findIndex(loc => loc.type === "zoom_video");
-
-                            if (checked) {
-                                if (existingIndex !== -1) {
-                                    handleLocationTypeChange(existingIndex, "zoom_video");
-                                } else {
-                                    handleLocationTypeChange(locations.length, "zoom_video");
-                                }
-                            } else {
-                                const updatedLocations = locations.filter(loc => loc.type !== "zoom_video");
-                                onChange(updatedLocations);
-                            }
-                        }}
+                        checked={locations.some(loc => loc.type === "zoom")}
+                        onChange={(e) => handleCheckboxChange("zoom", e.target.checked)}
                     >
                         <Flex gap={12} className='items-center ml-2'>
                             <img src={zoom} alt='zoom.png' className='size-7' />
@@ -205,33 +364,19 @@ const Locations: React.FC<{
                                 <div className="text-[#3F4254] text-[16px] font-semibold">
                                     {__("Zoom Video", "quillbooking")}
                                 </div>
-                                <div className="text-[#3F4254] text-[12px] italic">
-                                    {__("Connected", "quillbooking")}
+                                <div className="text-[#9197A4] text-[12px] italic">
+                                    {__("Need to be Connect First - Visit the Google Meet integration page from Settings.", "quillbooking")}
                                 </div>
                             </Flex>
                         </Flex>
                     </Checkbox>
                     <Checkbox
-                        className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "ms_teams")
-                            ? "border-color-primary bg-color-secondary" // Checked styles
-                            : "border-[#D3D4D6] bg-white" // Default styles
+                        className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "ms-teams")
+                            ? "border-color-primary bg-color-secondary" 
+                            : "border-[#D3D4D6] bg-white" 
                             }`}
-                        checked={locations.some(loc => loc.type === "ms_teams")}
-                        onChange={(e) => {
-                            const checked = e.target.checked;
-                            const existingIndex = locations.findIndex(loc => loc.type === "ms_teams");
-
-                            if (checked) {
-                                if (existingIndex !== -1) {
-                                    handleLocationTypeChange(existingIndex, "ms_teams");
-                                } else {
-                                    handleLocationTypeChange(locations.length, "ms_teams");
-                                }
-                            } else {
-                                const updatedLocations = locations.filter(loc => loc.type !== "ms_teams");
-                                onChange(updatedLocations);
-                            }
-                        }}
+                        checked={locations.some(loc => loc.type === "ms-teams")}
+                        onChange={(e) => handleCheckboxChange("ms-teams", e.target.checked)}
                     >
                         <Flex gap={12} className='items-center ml-2'>
                             <img src={teams} alt='teams.png' className='size-7' />
@@ -239,8 +384,8 @@ const Locations: React.FC<{
                                 <div className="text-[#3F4254] text-[16px] font-semibold">
                                     {__("MS Teams", "quillbooking")}
                                 </div>
-                                <div className="text-[#3F4254] text-[12px] italic">
-                                    {__("Connected", "quillbooking")}
+                                <div className="text-[#9197A4] text-[12px] italic">
+                                    {__("Need to be Connect First - Visit the Google Meet integration page from Settings.", "quillbooking")}
                                 </div>
                             </Flex>
                         </Flex>
@@ -252,31 +397,17 @@ const Locations: React.FC<{
                     </div>
                     <Checkbox
                         className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "attendee_address")
-                            ? "border-color-primary bg-color-secondary" // Checked styles
-                            : "border-[#D3D4D6] bg-white" // Default styles
+                            ? "border-color-primary bg-color-secondary" 
+                            : "border-[#D3D4D6] bg-white" 
                             }`}
                         checked={locations.some(loc => loc.type === "attendee_address")}
-                        onChange={(e) => {
-                            const checked = e.target.checked;
-                            const existingIndex = locations.findIndex(loc => loc.type === "attendee_address");
-
-                            if (checked) {
-                                if (existingIndex !== -1) {
-                                    handleLocationTypeChange(existingIndex, "attendee_address");
-                                } else {
-                                    handleLocationTypeChange(locations.length, "attendee_address");
-                                }
-                            } else {
-                                const updatedLocations = locations.filter(loc => loc.type !== "attendee_address");
-                                onChange(updatedLocations);
-                            }
-                        }}
+                        onChange={(e) => handleCheckboxChange("attendee_address", e.target.checked)}
                     >
                         <Flex vertical>
                             <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
                                 {__("Attendee Address", "quillbooking")}
                             </div>
-                            <div className="text-[#3F4254] text-[12px] italic ml-2">
+                            <div className="text-[#9197A4] text-[12px] italic ml-2">
                                 {__("In Person", "quillbooking")}
                             </div>
                         </Flex>
@@ -287,24 +418,10 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "person_address")}
-                        onChange={(e) => {
-                            const checked = e.target.checked;
-                            const existingIndex = locations.findIndex(loc => loc.type === "person_address");
-
-                            if (checked) {
-                                if (existingIndex !== -1) {
-                                    handleLocationTypeChange(existingIndex, "person_address");
-                                } else {
-                                    handleLocationTypeChange(locations.length, "person_address");
-                                }
-                            } else {
-                                const updatedLocations = locations.filter(loc => loc.type !== "person_address");
-                                onChange(updatedLocations);
-                            }
-                        }}
+                        onChange={(e) => handleCheckboxChange("person_address", e.target.checked)}
                     >
-                        <Flex align='center' className='justify-between gap-x-[22rem]'>
-                            <Flex vertical>
+                        <Flex align='center' className='justify-between'>
+                            <Flex vertical className='w-[505px]'>
                                 <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
                                     {__("Organizer Address", "quillbooking")}
                                 </div>
@@ -312,9 +429,9 @@ const Locations: React.FC<{
                                     {
                                         (() => {
                                             const personAddress = locations.find(loc => loc.type === "person_address");
-                                            return personAddress?.fields?.location
-                                                ? personAddress.fields.location
-                                                : __("In Person", "quillbooking");
+                                            // If there's cached data, use it; otherwise fall back to "In Person"
+                                            const cachedFields = cachedLocationData["person_address"] || {};
+                                            return personAddress?.fields?.location || cachedFields?.location || <span className='text-[#9197A4]'>{__("In Person", "quillbooking")}</span>;
                                         })()
                                     }
                                 </div>
@@ -326,7 +443,7 @@ const Locations: React.FC<{
                                         return (
                                             <Button
                                                 onClick={() => handleEditLocation("person_address")}
-                                                className='bg-transparent border-none text-[#3F4254]'
+                                                className='bg-transparent border-none text-[#3F4254] shadow-none'
                                             >
                                                 <EditIcon />
                                                 {__('Edit', 'quillbooking')}
@@ -351,27 +468,13 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "attendee_phone")}
-                        onChange={(e) => {
-                            const checked = e.target.checked;
-                            const existingIndex = locations.findIndex(loc => loc.type === "attendee_phone");
-
-                            if (checked) {
-                                if (existingIndex !== -1) {
-                                    handleLocationTypeChange(existingIndex, "attendee_phone");
-                                } else {
-                                    handleLocationTypeChange(locations.length, "attendee_phone");
-                                }
-                            } else {
-                                const updatedLocations = locations.filter(loc => loc.type !== "attendee_phone");
-                                onChange(updatedLocations);
-                            }
-                        }}
+                        onChange={(e) => handleCheckboxChange("attendee_phone", e.target.checked)}
                     >
                         <Flex vertical>
                             <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
                                 {__("Attendee Phone", "quillbooking")}
                             </div>
-                            <div className="text-[#3F4254] text-[12px] italic ml-2">
+                            <div className="text-[#9197A4] text-[12px] italic ml-2">
                                 {__("Phone", "quillbooking")}
                             </div>
                         </Flex>
@@ -382,24 +485,10 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "person_phone")}
-                        onChange={(e) => {
-                            const checked = e.target.checked;
-                            const existingIndex = locations.findIndex(loc => loc.type === "person_phone");
-
-                            if (checked) {
-                                if (existingIndex !== -1) {
-                                    handleLocationTypeChange(existingIndex, "person_phone");
-                                } else {
-                                    handleLocationTypeChange(locations.length, "person_phone");
-                                }
-                            } else {
-                                const updatedLocations = locations.filter(loc => loc.type !== "person_phone");
-                                onChange(updatedLocations);
-                            }
-                        }}
+                        onChange={(e) => handleCheckboxChange("person_phone", e.target.checked)}
                     >
-                        <Flex align='center' className='justify-between gap-x-[26rem]'>
-                            <Flex vertical>
+                        <Flex align='center' className='justify-between'>
+                            <Flex vertical className='w-[505px]'>
                                 <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
                                     {__("Organizer Phone", "quillbooking")}
                                 </div>
@@ -407,9 +496,9 @@ const Locations: React.FC<{
                                     {
                                         (() => {
                                             const personPhone = locations.find(loc => loc.type === "person_phone");
-                                            return personPhone?.fields?.phone
-                                                ? personPhone.fields.phone
-                                                : __("Phone", "quillbooking");
+                                            // If there's cached data, use it; otherwise fall back to "Phone"
+                                            const cachedFields = cachedLocationData["person_phone"] || {};
+                                            return personPhone?.fields?.phone || cachedFields?.phone || <span className='text-[#9197A4]'>{__("Phone", "quillbooking")}</span>;
                                         })()
                                     }
                                 </div>
@@ -421,7 +510,7 @@ const Locations: React.FC<{
                                         return (
                                             <Button
                                                 onClick={() => handleEditLocation("person_phone")}
-                                                className='bg-transparent border-none text-[#3F4254]'
+                                                className='bg-transparent border-none text-[#3F4254] shadow-none'
                                             >
                                                 <EditIcon />
                                                 {__('Edit', 'quillbooking')}
@@ -439,24 +528,10 @@ const Locations: React.FC<{
                             : "border-[#D3D4D6] bg-white" // Default styles
                             }`}
                         checked={locations.some(loc => loc.type === "online")}
-                        onChange={(e) => {
-                            const checked = e.target.checked;
-                            const existingIndex = locations.findIndex(loc => loc.type === "online");
-
-                            if (checked) {
-                                if (existingIndex !== -1) {
-                                    handleLocationTypeChange(existingIndex, "online");
-                                } else {
-                                    handleLocationTypeChange(locations.length, "online");
-                                }
-                            } else {
-                                const updatedLocations = locations.filter(loc => loc.type !== "online");
-                                onChange(updatedLocations);
-                            }
-                        }}
+                        onChange={(e) => handleCheckboxChange("online", e.target.checked)}
                     >
-                        <Flex align='center' className='justify-between gap-x-[22rem]'>
-                            <Flex vertical>
+                        <Flex align='center' className='justify-between'>
+                            <Flex vertical className='w-[505px]'>
                                 <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
                                     {__("Online Meeting", "quillbooking")}
                                 </div>
@@ -464,9 +539,9 @@ const Locations: React.FC<{
                                     {
                                         (() => {
                                             const meetingUrl = locations.find(loc => loc.type === "online");
-                                            return meetingUrl?.fields?.meeting_url
-                                                ? meetingUrl.fields.meeting_url
-                                                : __("Online", "quillbooking");
+                                            // If there's cached data, use it; otherwise fall back to "Online"
+                                            const cachedFields = cachedLocationData["online"] || {};
+                                            return meetingUrl?.fields?.meeting_url || cachedFields?.meeting_url || <span className='text-[#9197A4]'>{__("Online", "quillbooking")}</span>;
                                         })()
                                     }
                                 </div>
@@ -478,7 +553,7 @@ const Locations: React.FC<{
                                         return (
                                             <Button
                                                 onClick={() => handleEditLocation("online")}
-                                                className='bg-transparent border-none text-[#3F4254]'
+                                                className='bg-transparent border-none text-[#3F4254] shadow-none'
                                             >
                                                 <EditIcon />
                                                 {__('Edit', 'quillbooking')}
@@ -491,106 +566,71 @@ const Locations: React.FC<{
                         </Flex>
                     </Checkbox>
                 </Flex>
-                {/* Display All Locations */}
-                {/* {map(locations, (location, index) => {
-                    return (
-                        <Flex key={index} align="center" gap={10}>
-                            <Select
-                                value={location.type || undefined} // Use undefined for placeholder
-                                onChange={(value) => handleLocationTypeChange(index, value)}
-                                getPopupContainer={(trigger) => trigger.parentElement}
-                                options={map(locationTypes, (locType, key) => ({
-                                    label: locType.title,
-                                    value: key,
-                                }))}
-                                placeholder={__('Select location', 'quillbooking')}
-                                style={{ flex: 1 }}
-                            />
-                            <Button danger onClick={() => removeLocation(index)}>
-                                {__('Remove', 'quillbooking')}
-                            </Button>
-                        </Flex>
-                    );
-                })} */}
 
-                {/* Add Another Location Option */}
                 <Flex vertical gap={2} className='justify-start items-start'>
                     <div className="text-[#09090B] text-[16px]">
                         {__("Other", "quillbooking")}
                     </div>
-                    {
-                        locations.some(loc => loc.type === "custom") && (
+                    
+                    {/* Custom Locations - Render each custom location */}
+                    {customLocations.map((customLoc) => {
+                        const customLocation = locations.find(
+                            loc => loc.type === "custom" && loc.id === customLoc.id
+                        );
+                        
+                        return (
                             <Checkbox
-                                className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "custom")
-                                    ? "border-color-primary bg-color-secondary"
-                                    : "border-[#D3D4D6] bg-white"
-                                    }`}
-                                checked={locations.some(loc => loc.type === "custom")}
-                                onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    const existingIndex = locations.findIndex(loc => loc.type === "custom");
-
-                                    if (checked) {
-                                        // Add or edit the custom location
-                                        if (existingIndex !== -1) {
-                                            handleLocationTypeChange(existingIndex, "custom");
-                                        } else {
-                                            handleLocationTypeChange(locations.length, "custom");
-                                        }
-                                    } else {
-                                        // Remove the custom location directly, no modal
-                                        const updatedLocations = locations.filter(loc => loc.type !== "custom");
-                                        onChange(updatedLocations);
-                                    }
-                                }}
+                                key={customLoc.id}
+                                className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${
+                                    customLocation
+                                        ? "border-color-primary bg-color-secondary"
+                                        : "border-[#D3D4D6] bg-white"
+                                }`}
+                                checked={!!customLocation}
+                                onChange={(e) => handleCustomCheckboxChange(customLoc.id, e.target.checked)}
                             >
-                                <Flex align='center' className='justify-between gap-x-[26rem]'>
-                                    <Flex vertical>
+                                <Flex align='center' className='justify-between'>
+                                    <Flex vertical className='w-[415px]'>
                                         <div className="text-[#3F4254] text-[16px] font-semibold ml-2">
-                                            {
-                                                (() => {
-                                                    const customLocation = locations.find(loc => loc.type === "custom");
-                                                    return customLocation?.fields?.location
-                                                        ? customLocation.fields.location
-                                                        : __("Custom", "quillbooking");
-                                                })()
-                                            }
+                                            {customLocation?.fields?.location || customLoc.fields?.location || __("Custom", "quillbooking")}
                                         </div>
                                         <div className="text-[#3F4254] text-[12px] italic ml-2">
-                                            {__("description", "quillbooking")}
+                                            {customLocation?.fields?.description || customLoc.fields?.description || __("Custom", "quillbooking")}
                                         </div>
-
                                     </Flex>
-                                    {
-                                        (() => {
-                                            const customLocation = locations.find(loc => loc.type === "custom");
-                                            if (customLocation?.fields?.location) {
-                                                return (
-                                                    <Button
-                                                        onClick={() => handleEditLocation("custom")}
-                                                        className='bg-transparent border-none text-[#3F4254]'
-                                                    >
-                                                        <EditIcon />
-                                                        {__('Edit', 'quillbooking')}
-                                                    </Button>
-                                                );
-                                            }
-                                            return null;
-                                        })()
-                                    }
+                                    {customLocation?.fields?.location && (
+                                        <Flex>
+                                            <Button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditLocation("custom", customLoc.id);
+                                                }}
+                                                className='bg-transparent border-none text-[#3F4254] shadow-none'
+                                            >
+                                                <EditIcon />
+                                                {__('Edit', 'quillbooking')}
+                                            </Button>
+                                            <Button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removeCustomLocation(customLoc.id);
+                                                }}
+                                                className='bg-transparent border-none text-[#3F4254] shadow-none'
+                                            >
+                                                <div className='text-[#EF4444]'>
+                                                    <TrashIcon />
+                                                </div>
+                                                {__('Delete', 'quillbooking')}
+                                            </Button>
+                                        </Flex>
+                                    )}
                                 </Flex>
                             </Checkbox>
-                        )
-                    }
+                        );
+                    })}
+                    
                     <Button
-                        onClick={() => {
-                            const existingIndex = locations.findIndex(loc => loc.type === "custom");
-                            if (existingIndex !== -1) {
-                                handleLocationTypeChange(existingIndex, "custom");
-                            } else {
-                                handleLocationTypeChange(locations.length, "custom"); // Add new one
-                            }
-                        }}
+                        onClick={addCustomLocation}
                         icon={<FaPlus className='text-color-primary' />}
                         className='text-color-primary font-semibold outline-none border-none shadow-none'>
                         {__('Add Custom Location', 'quillbooking')}
@@ -603,7 +643,11 @@ const Locations: React.FC<{
                 title={
                     <div>
                         <h2 className='text-[#09090B] text-[30px] font-[700]'>
-                            {sprintf(__(' %s ', 'quillbooking'), get(locationTypes, `${newLocationType}.title`, ''))}
+                            {
+                                newLocationType === "custom" 
+                                    ? __('Custom Location', 'quillbooking')
+                                    : sprintf(__(' %s ', 'quillbooking'), get(locationTypes, `${newLocationType}.title`, ''))
+                            }
                         </h2>
                         <span className='text-[#979797] font-[400] text-[14px]'>Add the following data.</span>
                     </div>
@@ -611,51 +655,108 @@ const Locations: React.FC<{
                 open={isModalVisible}
                 getContainer={false}
                 footer={null}
-                //onOk={handleModalOk}
                 onCancel={handleModalCancel}
             >
                 <Form form={form} layout="vertical">
-                    {newLocationType &&
-                        map(
-                            get(locationTypes, `${newLocationType}.fields`, {}),
-                            (field: LocationField, fieldKey) => (
-                                <Form.Item
-                                    key={fieldKey}
-                                    name={fieldKey}
-                                    {...(field.type === "checkbox" && { valuePropName: "checked" })}
-                                    rules={[
-                                        {
-                                            required: field.required,
-                                            message: sprintf(__('Please enter %s', 'quillbooking'), field.label),
-                                        },
-                                    ]}
-                                >
-                                    {field.type === 'checkbox' ? (
-                                        <Checkbox className='custom-check text-[#3F4254] font-semibold'>{field.label}</Checkbox>
-                                    ) : (
-                                        <>
-                                            <div className="text-[#09090B] text-[16px] mb-2">
+                    {newLocationType === "custom" ? (
+                        // Custom location form fields
+                        <>
+                            <Form.Item
+                                name="location"
+                                label={
+                                    <div className="text-[#09090B] text-[16px]">
+                                        {__("Location Name", "quillbooking")}
+                                        <span className="text-red-500">*</span>
+                                    </div>
+                                }
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: __('Please enter location name', 'quillbooking'),
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    placeholder={__('Location Name', 'quillbooking')}
+                                    className="rounded-lg h-[48px]"
+                                />
+                            </Form.Item>
+                            
+                            <Form.Item
+                                name="description"
+                                label={
+                                    <div className="text-[#09090B] text-[16px]">
+                                        {__("Description", "quillbooking")}
+                                        <span className="text-red-500">*</span>
+                                    </div>
+                                }
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: __('Please enter description', 'quillbooking'),
+                                    },
+                                ]}
+                            >
+                                <Input
+                                    placeholder={__('Description', 'quillbooking')}
+                                    className="rounded-lg h-[48px]"
+                                />
+                            </Form.Item>
+                            
+                            <Form.Item
+                                name="display_on_booking"
+                                valuePropName="checked"
+                            >
+                                <Checkbox className="custom-check text-[#3F4254] font-semibold">
+                                    {__("Display on booking", "quillbooking")}
+                                </Checkbox>
+                            </Form.Item>
+                            </>
+                    ) : (
+                        // Standard location form fields
+                        newLocationType && map(get(locationTypes, `${newLocationType}.fields`, {}), (field: LocationField, fieldKey) => (
+                            <Form.Item
+                                key={fieldKey}
+                                name={fieldKey}
+                                {...(field.type === 'checkbox'
+                                    ? { valuePropName: 'checked' } // only for checkbox
+                                    : {
+                                        label: (
+                                            <div className="text-[#09090B] text-[16px]">
                                                 {field.label}
-                                                <span className='text-red-500'>*</span>
-                                                {field.label === "Person Phone" && (
+                                                <span className="text-red-500">*</span>
+                                                {field.label === 'Person Phone' && (
                                                     <span className="text-[#afb9c4] text-sm ml-2">(with country code)</span>
                                                 )}
                                             </div>
-                                            <Input
-                                                type={field.type}
-                                                onChange={(e) => form.setFieldsValue({ [fieldKey]: e.target.value })}
-                                                placeholder={sprintf(__('%s', 'quillbooking'), field.label)}
-                                                className='rounded-lg h-[48px]'
-                                            />
-                                        </>
-                                    )}
-                                </Form.Item>
-                            )
-                        )}
+                                        ),
+                                    })}
+                                rules={[
+                                    {
+                                        required: field.required,
+                                        message: sprintf(__('Please enter %s', 'quillbooking'), field.label),
+                                    },
+                                ]}
+                            >
+                                {field.type === 'checkbox' ? (
+                                    <Checkbox className="custom-check text-[#3F4254] font-semibold">
+                                        {field.label}
+                                    </Checkbox>
+                                ) : (
+                                    <Input
+                                        type={field.type}
+                                        placeholder={sprintf(__('%s', 'quillbooking'), field.label)}
+                                        className="rounded-lg h-[48px]"
+                                    />
+                                )}
+                            </Form.Item>
+                        ))
+                    )}
+
                     <Form.Item>
                         <Button
                             htmlType="submit"
-                            className="w-full bg-color-primary text-white font-semibold rounded-lg py-2 transition-all"
+                            className="w-full bg-color-primary text-white font-semibold rounded-lg transition-all"
                             onClick={handleModalOk}
                         >
                             Submit
@@ -664,8 +765,6 @@ const Locations: React.FC<{
                 </Form>
             </Modal>
         </>
-        //</Flex >
-        //</Card >
     );
 };
 

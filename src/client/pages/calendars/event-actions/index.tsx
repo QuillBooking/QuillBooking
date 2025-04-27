@@ -117,6 +117,7 @@ const EventActions: React.FC<EventActionsProps> = ({
 				onClick={() =>
 					navigate(`calendars/${calendarId}/events/${event.id}`)
 				}
+				className="w-full flex justify-start"
 			>
 				{__('Edit', 'quillbooking')}
 			</Button>
@@ -125,16 +126,17 @@ const EventActions: React.FC<EventActionsProps> = ({
 				type="text"
 				onClick={showDisableModal}
 				icon={<DisableIcon />}
+				className="w-full flex justify-start"
 			>
 				{isDisabled
 					? __('Enable', 'quillbooking')
 					: __('Disable', 'quillbooking')}
 			</Button>
 
-			<Button type="text" icon={<CloneIcon />} onClick={() => handleClone()}>
+			<Button type="text" icon={<CloneIcon />} onClick={() => handleClone()} className="w-full flex justify-start">
                 {__('Clone Events', 'quillbooking')}
             </Button>
-			<Button type="text" icon={<TrashIcon />} onClick={showDeleteModal}>
+			<Button type="text" icon={<TrashIcon />} onClick={showDeleteModal} className="w-full flex justify-start">
 				{__('Delete', 'quillbooking')}
 			</Button>
 			<Modal
@@ -151,7 +153,7 @@ const EventActions: React.FC<EventActionsProps> = ({
 						<Button
 							key="cancel"
 							onClick={handleDeleteCancel}
-							className="border rounded-lg py-6 text-[#71717A] font-semibold w-full"
+							className="border rounded-lg text-[#71717A] font-semibold w-full"
 						>
 							{__('Back', 'quillbooking')}
 						</Button>
@@ -159,7 +161,7 @@ const EventActions: React.FC<EventActionsProps> = ({
 							key="save"
 							type="primary"
 							onClick={handleDelete}
-							className="bg-[#EF4444] rounded-lg py-6 font-semibold w-full"
+							className="bg-[#EF4444] rounded-lg font-semibold w-full"
 						>
 							{__('Yes, Delete', 'quillbooking')}
 						</Button>
@@ -203,7 +205,7 @@ const EventActions: React.FC<EventActionsProps> = ({
 						<Button
 							key="cancel"
 							onClick={handleDisableCancel}
-							className="border rounded-lg py-6 text-[#71717A] font-semibold w-full"
+							className="border rounded-lg text-[#71717A] font-semibold w-full"
 						>
 							{__('Back', 'quillbooking')}
 						</Button>
@@ -211,7 +213,7 @@ const EventActions: React.FC<EventActionsProps> = ({
 							key="save"
 							type="primary"
 							onClick={handleDisable}
-							className="bg-[#EF4444] rounded-lg py-6 font-semibold w-full"
+							className="bg-[#EF4444] rounded-lg font-semibold w-full"
 						>
 							{__('Yes, Disable', 'quillbooking')}
 						</Button>

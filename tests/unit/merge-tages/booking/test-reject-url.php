@@ -6,7 +6,7 @@ use QuillBooking\Models\Booking_Model;
 /**
  * @group merge-tags
  */
-class RejectUrlTest extends WP_UnitTestCase
+class RejectUrlTest extends QuillBooking_Base_Test_Case
 {
 
     /** @var Reject_URL */

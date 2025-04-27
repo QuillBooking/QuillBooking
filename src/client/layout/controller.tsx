@@ -27,7 +27,7 @@ import BookingDetails from '../pages/booking-details';
 import Event from '../pages/event';
 import Help from '../pages/help';
 import Logout from '../pages/logout';
-import { AvailabilityIcon, BookingIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon, UpcompingCalendarIcon } from '@quillbooking/components';
+import { AvailabilityIcon, BookingIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon, UpcomingCalendarIcon } from '@quillbooking/components';
 import Navmenu from './navmenu';
 import GeneralSettings from '../pages/global-settings';
 import ProtectedRoute from './protected-route';
@@ -53,7 +53,7 @@ registerAdminPage('home', {
 	path: '/',
 	component: () => <Home />,
 	label: (
-		<Navmenu icon={<HomeIcon />} title={__('Home', 'quillbooking')} />
+		<Navmenu icon={<HomeIcon width={24} height={24}/>} title={__('Home', 'quillbooking')} />
 	),
 });
 
@@ -61,7 +61,7 @@ registerAdminPage('calendars', {
 	path: 'calendars',
 	component: () => <Calendars />,
 	label: (
-		<Navmenu icon={<UpcompingCalendarIcon width={24} height={24} />} title={__('Calendars', 'quillbooking')} />
+		<Navmenu icon={<UpcomingCalendarIcon width={24} height={24} />} title={__('Calendars', 'quillbooking')} />
 	),
 	capabilities: [
 		'quillbooking_manage_own_calendars',
@@ -84,7 +84,7 @@ registerAdminPage('bookings', {
 	path: 'bookings',
 	component: () => <Bookings />,
 	label: (
-		<Navmenu icon={<BookingIcon />} title={__('Bookings', 'quillbooking')} />
+		<Navmenu icon={<BookingIcon width={24} height={24}/>} title={__('Bookings', 'quillbooking')} />
 	),
 	capabilities: [
 		'quillbooking_read_own_bookings',
@@ -107,7 +107,7 @@ registerAdminPage('availability', {
 	path: 'availability',
 	component: () => <Availability />,
 	label: (
-		<Navmenu icon={<AvailabilityIcon />} title={__('Availability', 'quillbooking')} />
+		<Navmenu icon={<AvailabilityIcon width={24} height={24}/>} title={__('Availability', 'quillbooking')} />
 	),
 	capabilities: [
 		'quillbooking_read_own_availability',
@@ -119,7 +119,7 @@ registerAdminPage('settings', {
 	path: 'settings/:tab?',
 	component: () => <GeneralSettings />,
 	label: (
-		<Navmenu icon={<SettingsIcon />} title={__('Settings', 'quillbooking')} />
+		<Navmenu icon={<SettingsIcon width={24} height={24}/>} title={__('Settings', 'quillbooking')} />
 	),
 });
 
@@ -127,7 +127,7 @@ registerAdminPage('help', {
 	path: 'help',
 	component: () => <Help />,
 	label: (
-		<Navmenu icon={<HelpIcon />} title={__('Help and Support', 'quillbooking')} />
+		<Navmenu icon={<HelpIcon width={24} height={24}/>} title={__('Help and Support', 'quillbooking')} />
 	),
 });
 

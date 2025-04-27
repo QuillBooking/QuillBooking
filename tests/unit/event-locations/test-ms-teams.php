@@ -5,7 +5,7 @@ use QuillBooking\Event_Locations\MS_Teams;
 /**
  * @group event-locations
  */
-class MSTeamsTest extends WP_UnitTestCase
+class MSTeamsTest extends QuillBooking_Base_Test_Case
 {
     /** @var MS_Teams */
     private $location;

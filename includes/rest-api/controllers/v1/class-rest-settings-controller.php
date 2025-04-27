@@ -244,7 +244,7 @@ class REST_Settings_Controller extends REST_Controller
 	{
 		$settings = $request->get_json_params();
 		Settings::update_many($settings);
-		
+
 		// Return updated settings
 		return $this->get($request);
 	}

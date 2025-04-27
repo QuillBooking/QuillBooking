@@ -11,7 +11,11 @@ import { Button, Card, Flex, Modal } from 'antd';
 /**
  * Internal dependencies
  */
-import { CardHeader, Schedule, ShareEventIcon } from '@quillbooking/components';
+import {
+	CardHeader,
+	Schedule,
+	UpcomingCalendarOutlinedIcon,
+} from '@quillbooking/components';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
 import { getCurrentTimezone } from '@quillbooking/utils';
 import { Calendar } from 'client/types';
@@ -49,6 +53,14 @@ const HostAvailability: React.FC<HostAvailabilityProps> = ({
 			open={open}
 			onCancel={closeHandler}
 			className="rounded-lg"
+			width={{
+				xs: '90%',
+				sm: '80%',
+				md: '70%',
+				lg: '60%',
+				xl: '50%',
+				xxl: '40%',
+			}}
 			footer={[
 				<Button
 					size="large"
@@ -58,39 +70,55 @@ const HostAvailability: React.FC<HostAvailabilityProps> = ({
 					onClick={saveCalendar}
 					className="w-full bg-color-primary rounded-lg font-[500] mt-5"
 				>
-					{__('Confirm', 'quillbooking')}
+					{__('Add New Host', 'quillbooking')}
 				</Button>,
 			]}
 		>
 			<Flex vertical>
-				<Flex gap={10} className="items-center">
-					<CardHeader
-						title={__('Add New Calendar Host', 'quillbooking')}
-						description={__(
-							'Add the following data to Add New Calendar Host',
-							'quillbooking'
-						)}
-						icon={<ShareEventIcon />}
-					/>
+				<CardHeader
+					title={__('Add New Calendar Host', 'quillbooking')}
+					description={__(
+						'Add the following data to Add New Calendar Host',
+						'quillbooking'
+					)}
+					icon={<UpcomingCalendarOutlinedIcon />}
+				/>
+				<Flex vertical>
+					<div className="pb-2">
+						<div className="text-[#09090B] text-[16px] mt-5">
+							{__('Select Host Availability', 'quillbooking')}
+							<span className="text-red-500">*</span>
+						</div>
+						<p className="text-[#818181] text-[14px]">
+							{__(
+								'Control Host availability and Works time at different time of days',
+								'quillbooking'
+							)}
+						</p>
+					</div>
+					<Card>
+						<Schedule
+							availability={customAvailability}
+							onCustomAvailabilityChange={(day, field, value) => {
+								const updatedAvailability = {
+									...customAvailability,
+								};
+								if (field === 'off') {
+									updatedAvailability.weekly_hours[day].off =
+										value;
+								} else {
+									updatedAvailability.weekly_hours[
+										day
+									].times = value;
+								}
+								updateFormData(
+									'availability' as keyof Calendar,
+									updatedAvailability
+								);
+							}}
+						/>
+					</Card>
 				</Flex>
-				<Card>
-					<Schedule
-						availability={customAvailability}
-						onCustomAvailabilityChange={(day, field, value) => {
-							const updatedAvailability = {
-								...customAvailability,
-							};
-							if (field === 'off') {
-								updatedAvailability.weekly_hours[day].off =
-									value;
-							} else {
-								updatedAvailability.weekly_hours[day].times =
-									value;
-							}
-							updateFormData('availability', updatedAvailability);
-						}}
-					/>
-				</Card>
 			</Flex>
 		</Modal>
 	);

@@ -18,6 +18,7 @@ use WP_REST_Response;
 use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
 use QuillBooking\Availabilities;
+use QuillBooking\Availability_service;
 use QuillBooking\Models\Event_Meta_Model;
 
 /**
@@ -404,21 +405,23 @@ class REST_Availability_Controller extends REST_Controller
 	{
 		$weekly_hours = $request->get_param('weekly_hours');
 		$override = $request->get_param('override');
-		$id = substr(md5(uniqid(rand(), true)), 0, 8);
 		$user_id = $request->get_param('user_id') ? $request->get_param('user_id') : get_current_user_id();
 		$name = $request->get_param('name');
 		$timezone = $request->get_param('timezone');
 
-		$availability = Availabilities::add_availability(
-			array(
-				'id' => $id,
-				'user_id' => $user_id,
-				'name' => $name,
-				'weekly_hours' => $weekly_hours,
-				'override' => $override,
-				'timezone' => $timezone,
-			)
+		$availability_service = new Availability_service();
+
+		$availability = $availability_service->create_availability(
+			$user_id,
+			$name,
+			$weekly_hours,
+			$override,
+			$timezone
 		);
+
+		if (!$availability) {
+			return new WP_Error('rest_availability_invalid_id', __('Invalid availability ID.', 'quill-booking'), array('status' => 400));
+		}
 
 		return new WP_REST_Response($availability, 201);
 	}

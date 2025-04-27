@@ -58,16 +58,14 @@ const HostData: React.FC<HostDataProps> = ({
 				</Button>,
 			]}
 		>
-			<Flex gap={10} className="items-center">
-				<CardHeader
-					title={__('Add New Calendar Host', 'quillbooking')}
-					description={__(
-						'Add the following data to Add New Calendar Host',
-						'quillbooking'
-					)}
-					icon={<UpcomingCalendarOutlinedIcon />}
-				/>
-			</Flex>
+			<CardHeader
+				title={__('Add New Calendar Host', 'quillbooking')}
+				description={__(
+					'Add the following data to Add New Calendar Host',
+					'quillbooking'
+				)}
+				icon={<UpcomingCalendarOutlinedIcon />}
+			/>
 
 			<Flex vertical>
 				<div className="text-[#09090B] text-[16px] mt-5">

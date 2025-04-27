@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Calendar } from 'client/types';
+import { Availability, Calendar } from 'client/types';
 
 /**
  * Internal dependencies
@@ -15,8 +15,12 @@ import { useState } from '@wordpress/element';
 import HostAvailability from './host-availability';
 import HostData from './host-data';
 
+interface CalendarWithAvailability extends Calendar {
+	availability: Availability;
+}
+
 interface HostCalendarProps {
-	formData: Partial<Calendar & { members: number[] }>;
+	formData: Partial<CalendarWithAvailability & { members: number[] }>;
 	updateFormData: (
 		key: keyof HostCalendarProps['formData'],
 		value: any
@@ -42,16 +46,7 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
 	const [showAvailbility, setShowAvailability] = useState(false);
 	return (
 		<>
-			{showAvailbility ? (
-				<HostAvailability
-					closeHandler={closeHandler}
-					loading={loading}
-					open={open}
-					formData={formData}
-					saveCalendar={saveCalendar}
-					updateFormData={updateFormData}
-				/>
-			) : (
+			{!showAvailbility ? (
 				<HostData
 					closeHandler={closeHandler}
 					loading={loading}
@@ -62,6 +57,15 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
 					updateFormData={updateFormData}
 					validateHost={validateHost}
 				/>
+			) : (
+			<HostAvailability
+				closeHandler={closeHandler}
+				loading={loading}
+				open={open}
+				formData={formData}
+				saveCalendar={saveCalendar}
+				updateFormData={updateFormData}
+			/>
 			)}
 		</>
 	);

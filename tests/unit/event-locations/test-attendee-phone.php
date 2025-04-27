@@ -5,7 +5,7 @@ use QuillBooking\Event_Locations\Attendee_Phone;
 /**
  * @group event-locations
  */
-class AttendeePhoneTest extends WP_UnitTestCase
+class AttendeePhoneTest extends QuillBooking_Base_Test_Case
 {
     /** @var Attendee_Phone */
     private $location;

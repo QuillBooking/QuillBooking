@@ -7,34 +7,21 @@ import { useEffect, useState } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Switch, Select, InputNumber, Skeleton, Typography } from 'antd';
+import { Card, Skeleton } from 'antd';
 
 /**
  * Internal dependencies
  */
 import type { EventLimits as EventLimitsType, LimitUnit, UnitOption as UnitOptionType, UnitOptions as UnitOptionsType } from '@quillbooking/client';
-import { FieldWrapper, TimezoneSelect, Header, LimitsTrashIcon, LimitsAddIcon, CardHeader, ClockIcon, OutlinedClockIcon } from '@quillbooking/components';
+import { CardHeader, OutlinedClockIcon } from '@quillbooking/components';
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
-import { getCurrentTimeInTimezone } from '@quillbooking/utils';
-import { useEventContext } from '../../state/context';
-import { LuClock5 } from "react-icons/lu";
-import { Box, Slider } from '@mui/material';
-import { RiDeleteBinLine } from 'react-icons/ri';
-import LimitTimezone from './limit-timezone';
+import { useEventContext } from '../../../state/context';
 import TimezoneSection from './limit-timezone';
 import BookingFrequency from './booking-frequency';
 import BookingDuration from './booking-duration';
 import EventBuffer from './event-buffer';
-
-const { Title } = Typography;
-
-const timeOptions = [
-    { value: 0, label: __('No buffer time', 'quillbooking') },
-    ...Array.from({ length: 24 }, (_, i) => {
-        const value = (i + 1) * 5;
-        return { value, label: `${value} ${__('minutes', 'quillbooking')}` };
-    }),
-];
+import MinimunmNotice from './minimum-notice';
+import TimeSlotIntervals from './intervals';
 
 
 const UnitOptions = {
@@ -226,43 +213,13 @@ const EventLimits: React.FC = () => {
                 icon={<OutlinedClockIcon width={30} height={30} />}
             />
 
-           <EventBuffer handleChange={handleChange} settings={settings} type="buffer_before" title={__("Before Event", "quillbooking")} />
-            
+            <EventBuffer handleChange={handleChange} settings={settings} type="buffer_before" title={__("Before Event", "quillbooking")} />
+
             <EventBuffer handleChange={handleChange} settings={settings} type="buffer_after" title={__("After Event", "quillbooking")} />
-            
-            <Flex gap={10} vertical className='mt-4'>
-                <div className="text-[#09090B] text-[16px]">
-                    {__("Minimum Notice", "quillbooking")}
-                    <span className='text-red-500'>*</span>
-                </div>
-                <Flex gap={5} className='w-full'>
-                    <InputNumber
-                        value={settings.general.minimum_notices}
-                        onChange={(value) => handleChange('general', 'minimum_notices', value)}
-                        className='h-[48px] rounded-lg w-3/4 pt-2'
-                    />
-                    <Select
-                        value={settings.general.minimum_notice_unit}
-                        options={UnitOptions}
-                        onChange={(value) => handleChange('general', 'minimum_notice_unit', value)}
-                        getPopupContainer={(trigger) => trigger.parentElement}
-                        className='h-[48px] rounded-lg w-1/4'
-                    />
-                </Flex>
-            </Flex>
-            <Flex gap={10} vertical className='mt-4'>
-                <div className="text-[#09090B] text-[16px]">
-                    {__("Time Slot Intervals", "quillbooking")}
-                    <span className='text-red-500'>*</span>
-                </div>
-                <Select
-                    value={settings.general.time_slot}
-                    options={timeOptions}
-                    onChange={(value) => handleChange('general', 'time_slot', value)}
-                    getPopupContainer={(trigger) => trigger.parentElement}
-                    className='h-[48px] w-full rounded-lg'
-                />
-            </Flex>
+
+            <MinimunmNotice handleChange={handleChange} settings={settings} />
+
+            <TimeSlotIntervals handleChange={handleChange} settings={settings} />
 
             <BookingFrequency
                 settings={settings}

@@ -235,6 +235,63 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notifications, noti
                     </Form.Item>
                 )}
             </Form.Item>
+            {notifications[notificationKey].times && (
+                 <>
+                     <span className="text-[#09090B] text-[16px] font-semibold">
+                         {__('Timing', 'quillbooking')}
+                         <span className='text-red-500'>*</span>
+                     </span>
+                     <Form.List name="times" >
+                         {(fields, { add, remove }) => (
+                             <Flex vertical gap={10} className='mt-3'>
+                                 {fields.map(({ key, name, ...restField }, index) => (
+                                     <Flex key={key} align="center" gap={10}>
+                                         <Form.Item
+                                             {...restField}
+                                             name={[name, 'value']}
+                                             rules={[{ required: true, message: __('Value is required', 'quillbooking') }]}
+                                             style={{ marginBottom: 0 }}
+                                         >
+                                             <InputNumber className='h-[48px] rounded-lg pt-2 w-16' />
+                                         </Form.Item>
+                                         <Form.Item
+                                             {...restField}
+                                             name={[name, 'unit']}
+                                             rules={[{ required: true, message: __('Unit is required', 'quillbooking') }]}
+                                             style={{ marginBottom: 0 }}
+                                         >
+                                             <Select
+                                                 className='h-[48px] rounded-lg w-44'
+                                                 getPopupContainer={(trigger) => trigger.parentElement}
+                                                 options={[
+                                                     { value: 'minutes', label: <span>{__('Minutes Before', 'quillbooking')}</span> },
+                                                     { value: 'hours', label: <span>{__('Hours Before', 'quillbooking')}</span> },
+                                                     { value: 'days', label: <span>{__('Days Before', 'quillbooking')}</span> },
+                                                 ]}
+                                             />
+                                         </Form.Item>
+ 
+                                         {/* Only show Remove button if it's NOT the first item */}
+                                         {index > 0 && (
+                                             <Button onClick={() => remove(name)} danger className='border-none shadow-none p-0'>
+                                                 <LimitsTrashIcon />
+                                             </Button>
+                                         )}
+ 
+                                         {/* Only show Add button beside the first item */}
+                                         {index === 0 && (
+                                             <Button onClick={() => add({ value: 15, unit: 'minutes' })} className='border-none shadow-none p-0'>
+                                                 <LimitsAddIcon />
+                                             </Button>
+                                         )}
+                                     </Flex>
+                                 ))}
+                             </Flex>
+                         )}
+                     </Form.List>
+ 
+                 </>
+             )}
 
         </Form>
     );

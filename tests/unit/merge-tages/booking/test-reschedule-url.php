@@ -6,7 +6,7 @@ use QuillBooking\Models\Booking_Model;
 /**
  * @group merge-tags
  */
-class RescheduleUrlTest extends WP_UnitTestCase
+class RescheduleUrlTest extends QuillBooking_Base_Test_Case
 {
 
     /** @var Reschedule_URL */

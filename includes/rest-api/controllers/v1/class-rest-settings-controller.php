@@ -85,7 +85,7 @@ class REST_Settings_Controller extends REST_Controller {
 						'start_from'              => array(
 							'type'        => 'string',
 							'description' => __( 'Start from', 'quillbooking' ),
-							'default'     => 'suturday',
+							'default'     => 'Monday',
 						),
 						'time_format'             => array(
 							'type'        => 'string',
@@ -118,72 +118,72 @@ class REST_Settings_Controller extends REST_Controller {
 							'default'     => 'daily',
 						),
 					),
-					'payments'    => array(
-						'type'        => 'object',
-						'description' => __( 'Payments settings', 'quillbooking' ),
-						'properties'  => array(
-							'currency' => array(
-								'type'        => 'string',
-								'description' => __( 'Currency', 'quillbooking' ),
-								'default'     => '',
-							),
+				),
+				'payments' => array(
+					'type'        => 'object',
+					'description' => __( 'Payments settings', 'quillbooking' ),
+					'properties'  => array(
+						'currency' => array(
+							'type'        => 'string',
+							'description' => __( 'Currency', 'quillbooking' ),
+							'default'     => '',
 						),
 					),
-					'email'       => array(
-						'type'        => 'object',
-						'description' => __( 'Email settings', 'quillbooking' ),
-						'properties'  => array(
-							'from_name'               => array(
-								'type'        => 'string',
-								'description' => __( 'From name', 'quillbooking' ),
-								'default'     => '',
-							),
-							'from_email'              => array(
-								'type'        => 'string',
-								'description' => __( 'From email', 'quillbooking' ),
-								'default'     => '',
-							),
-							'reply_to_name'           => array(
-								'type'        => 'string',
-								'description' => __( 'Reply to Name', 'quillbooking' ),
-								'default'     => '',
-							),
-							'reply_to_email'          => array(
-								'type'        => 'string',
-								'description' => __( 'Reply to Email', 'quillbooking' ),
-								'default'     => '',
-							),
-							'use_host_from_name'      => array(
-								'type'        => 'boolean',
-								'description' => __( 'Use host from name', 'quillbooking' ),
-								'default'     => false,
-							),
-							'use_host_reply_to_email' => array(
-								'type'        => 'boolean',
-								'description' => __( 'Use host reply to email', 'quillbooking' ),
-								'default'     => false,
-							),
-							'include_ics'             => array(
-								'type'        => 'boolean',
-								'description' => __( 'Include ICS', 'quillbooking' ),
-								'default'     => false,
-							),
-							'footer'                  => array(
-								'type'        => 'string',
-								'description' => __( 'Footer', 'quillbooking' ),
-								'default'     => '',
-							),
+				),
+				'email' => array(
+					'type'        => 'object',
+					'description' => __( 'Email settings', 'quillbooking' ),
+					'properties'  => array(
+						'from_name'               => array(
+							'type'        => 'string',
+							'description' => __( 'From name', 'quillbooking' ),
+							'default'     => '',
+						),
+						'from_email'              => array(
+							'type'        => 'string',
+							'description' => __( 'From email', 'quillbooking' ),
+							'default'     => '',
+						),
+						'reply_to_name'           => array(
+							'type'        => 'string',
+							'description' => __( 'Reply to Name', 'quillbooking' ),
+							'default'     => '',
+						),
+						'reply_to_email'          => array(
+							'type'        => 'string',
+							'description' => __( 'Reply to Email', 'quillbooking' ),
+							'default'     => '',
+						),
+						'use_host_from_name'      => array(
+							'type'        => 'boolean',
+							'description' => __( 'Use host from name', 'quillbooking' ),
+							'default'     => false,
+						),
+						'use_host_reply_to_email' => array(
+							'type'        => 'boolean',
+							'description' => __( 'Use host reply to email', 'quillbooking' ),
+							'default'     => false,
+						),
+						'include_ics'             => array(
+							'type'        => 'boolean',
+							'description' => __( 'Include ICS', 'quillbooking' ),
+							'default'     => false,
+						),
+						'footer'                  => array(
+							'type'        => 'string',
+							'description' => __( 'Footer', 'quillbooking' ),
+							'default'     => '',
 						),
 					),
-					'theme'       => array(
-						'type'        => 'object',
-						'description' => __( 'Theme settings', 'quillbooking' ),
-						'properties'  => array(
-							'color_scheme' => array(
-								'type'        => 'string',
-								'description' => __( 'Color scheme', 'quillbooking' ),
-								'default'     => 'system',
-							),
+				),
+				'theme' => array(
+					'type'        => 'object',
+					'description' => __( 'Theme settings', 'quillbooking' ),
+					'properties'  => array(
+						'color_scheme' => array(
+							'type'        => 'string',
+							'description' => __( 'Color scheme', 'quillbooking' ),
+							'default'     => 'system',
 						),
 					),
 				),

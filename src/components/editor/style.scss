@@ -1,0 +1,247 @@
+.email-body-editor {
+  font-family: Arial, sans-serif;
+  
+  .editor-container {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    overflow: hidden;
+
+    h1 {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-top: 0.75rem;
+    }
+    
+    h3 {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    
+    blockquote {
+      border-left: 4px solid #ccc;
+      margin-left: 0;
+      padding-left: 16px;
+      font-style: italic;
+    }
+    a{
+      color:#0066ff;
+      text-decoration: underline;
+    }
+    & [style*="font-family: Arial"] {
+      font-family: Arial, sans-serif !important;
+    }
+    
+    & [style*="font-family: Times New Roman"] {
+      font-family: "Times New Roman", Times, serif !important;
+    }
+    
+    & [style*="font-family: Courier New"] {
+      font-family: "Courier New", Courier, monospace !important;
+    }
+    
+    & [style*="font-family: Georgia"] {
+      font-family: Georgia, serif !important;
+    }
+  }
+
+  .editor-inner {
+    position: relative;
+    padding: 10px;
+    min-height: 150px;
+  }
+
+  .editor-input {
+    width: 100%;
+    height: 100%;
+    min-height: 150px;
+    resize: none;
+    font-size: 16px;
+    outline: none;
+    position: relative;
+    tab-size: 1;
+    padding: 15px;
+    line-height: 1.5;
+  }
+
+  .editor-placeholder {
+    color: #999;
+    overflow: hidden;
+    position: absolute;
+    text-overflow: ellipsis;
+    top: 25px;
+    left: 15px;
+    font-size: 16px;
+    pointer-events: none;
+  }
+}
+
+/* Toolbar Styles */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+  align-items: center;
+  gap: 4px;
+
+  .toolbar-item-group {
+    display: flex;
+    align-items: center;
+    margin-right: 4px;
+  }
+
+  .toolbar-separator {
+    width: 1px;
+    height: 24px;
+    background-color: #ddd;
+    margin: 0 4px;
+  }
+
+  .toolbar-item {
+    border: none;
+    background: none;
+    border-radius: 4px;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    width: 32px;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #e9ecef;
+    }
+
+    &.active {
+      background-color: #e9ecef;
+      color: #0066ff;
+    }
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+
+  .toolbar-select {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+    height: 32px;
+    min-width: 100px;
+    cursor: pointer;
+  }
+
+  .color-button {
+    position: relative;
+    width: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .color-indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 2px;
+  }
+
+  .dropdown {
+    position: relative;
+    
+    &::after {
+      content: '';
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 4px solid #666;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+  }
+
+  .size-controls {
+    display: flex;
+    align-items: center;
+    
+    .font-size {
+      padding: 0 8px;
+      font-size: 14px;
+    }
+  }
+}
+
+/* Rich Text Format Styles */
+.editor-paragraph {
+  margin: 0;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.editor-text-bold {
+  font-weight: bold;
+}
+
+.editor-text-italic {
+  font-style: italic;
+}
+
+.editor-text-underline {
+  text-decoration: underline;
+}
+
+.editor-text-linethrough{
+  text-decoration: line-through;
+}
+
+.editor-list-ol {
+  padding: 0;
+  margin: 0;
+  margin-left: 16px;
+  list-style-type: decimal;
+}
+
+.editor-list-ul {
+  padding: 0;
+  margin: 0;
+  margin-left: 16px;
+  list-style-type: disc ;
+}
+
+.editor-list-checklist li {
+  display: flex;
+  align-items: center;
+  margin-left: 0;
+}
+
+.editor-list-checklist li:before {
+  content: '☑';
+  margin-right: 8px;
+}
+
+/* Preview Styles */
+.rendered-html-preview {
+  min-height: 150px;
+}
+
+.custom-ant-select .ant-select-selector {
+  background-color: #F4F4F5 !important;
+  border: none !important;
+  box-shadow: none !important;
+}

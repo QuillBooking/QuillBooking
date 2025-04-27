@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Flex, Radio, Input, DatePicker, Typography } from 'antd';
+import { Flex, Radio, DatePicker, Typography, InputNumber } from 'antd';
 import dayjs from 'dayjs';
 
 /**
@@ -63,13 +63,17 @@ const RangeSection: React.FC<RangeSectionProps> = ({
                 </Radio>
             </Radio.Group>
             {range.type === 'days' && (
-                <Input
-                    type="number"
+                <InputNumber
+                    controls={false}
                     value={range.days}
-                    onChange={(e) => onDaysChange(parseInt(e.target.value, 10))}
+                    onChange={(value) => {
+                        if (value !== null) {
+                            onDaysChange(value);
+                        }
+                    }}
                     placeholder={__('Enter number of days', 'quillbooking')}
                     suffix={<span className='text-[#9BA7B7] border-l pl-4'>{__("Days into the future", "quillbooking")}</span>}
-                    className='mt-4 rounded-lg h-[48px] flex items-center'
+                    className='mt-4 rounded-lg h-[48px] flex items-center w-full'
                 />
             )}
             {range.type === 'date_range' && (

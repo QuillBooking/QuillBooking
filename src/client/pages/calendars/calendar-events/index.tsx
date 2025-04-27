@@ -49,26 +49,12 @@ const CalendarEvents: React.FC<{
 	const [showCreateEventModal, setShowCreateEventModal] = useState(false);
 	console.log(calendar.events);
 
-	// useEffect(() => {
-	// 	if (calendar?.events?.length > 0) {
-	// 		const saved = localStorage.getItem('disabledEvents');
-	// 		if (saved) {
-	// 			setDisabledEvents(JSON.parse(saved));
-	// 		}
-	// 	}
-	// }, [calendar.events]);
-
-	// // Save to localStorage whenever disabledEvents changes
-	// useEffect(() => {
-	// 	localStorage.setItem('disabledEvents', JSON.stringify(disabledEvents));
-	// }, [disabledEvents]);
-
 	return (
 		<>
 			{calendar.events.length > 0 ? (
 				<div className="quillbooking-calendar-events">
 					{calendar.events.map((event) => {
-						const isDisabled = false;
+						const isDisabled = event.is_disabled;
 						return (
 							<Card
 								key={event.id}

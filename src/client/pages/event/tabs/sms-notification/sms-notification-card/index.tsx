@@ -13,292 +13,152 @@ import { Card, Switch, Button, Modal, Input, Form, InputNumber, Typography, Radi
  * External dependencies
  */
 import { NotificationType } from '@quillbooking/client';
-import { useNotice, useApi } from '@quillbooking/hooks';
-import { Header, LimitsAddIcon, LimitsTrashIcon, MergeTagModal, UrlIcon } from '@quillbooking/components';
-import { ReactMultiEmail, isEmail } from 'react-multi-email';
-import 'react-multi-email/dist/style.css';
+import { Header, MergeTagModal, UrlIcon } from '@quillbooking/components';
+import Mentions from '../../../../../../components/editor/mentions';
 
 const { TextArea } = Input;
 
 type NotificationCardProps = {
     notifications: Record<string, NotificationType>;
     notificationKey: string;
-    notificationType: 'email' | 'sms';
-    eventId: number;
     setNotifications: (notifications: Record<string, NotificationType>) => void;
 };
 
-const SmsNotificationCard: React.FC<NotificationCardProps> = ({ notifications, notificationKey, notificationType, eventId, setNotifications }) => {
-    const [editingKey, setEditingKey] = useState<string | null>(null);
+const SmsNotificationCard: React.FC<NotificationCardProps> = ({ notifications, notificationKey, setNotifications }) => {
     const [form] = Form.useForm();
-    //const { successNotice, errorNotice } = useNotice();
-    const [emails, setEmails] = useState<string[]>([]);
     const [mergeTagModal, setMergeTagModal] = useState<boolean>(false);
-    const [focused, setFocused] = useState(false);
-    // const notification = notifications[notificationKey];
-    // const [message, setMessage] = useState<string>(notification.template.message);
-    //const { callApi, loading } = useApi();
-    
-    // Initialize form with notification data when component mounts
-    useEffect(() => {
-        if (notifications) {
-            form.setFieldsValue(notifications[notificationKey]);
-        }
-    }, []);
 
-    const handleMentionClick = (mention: string) => {
-        const currentValue = form.getFieldValue(['template', 'subject']) || '';
+    // Get the current notification
+    const notification = notifications[notificationKey];
+
+    // Update form when notification changes
+    useEffect(() => {
+        if (notification) {
+            // Reset the form with current notification values
+            form.setFieldsValue({
+                template: {
+                    message: notification.template?.message || '',
+                    type: notification.template?.type || '',
+                }
+            });
+        }
+    }, [notification, form]);
+    console.log(notification)
+
+    const handleMentionClick = (mention: string, category) => {
+        const currentValue = form.getFieldValue(['template', 'message']) || '';
         form.setFieldsValue({
-          template: {
-            subject: currentValue + mention
-          }
+            template: {
+                ...form.getFieldValue('template'),
+                message: currentValue + mention
+            }
         });
         setMergeTagModal(false);
-        
-        // Mark as needing to save
-        const updatedValues = form.getFieldsValue();
-        handleFormChange(updatedValues);
+
+        // Update notifications with the new message
+        handleFormChange(form.getFieldsValue());
     };
 
-    const handleSave = () => {
-        form.validateFields().then((values) => {
-            const updatedSettings = { ...notifications, [notificationKey]: { ...notifications[notificationKey], ...values } };
-            setNotifications(updatedSettings);
-        });
-    };
-
-    // const handleSwitchChange = (checked: boolean) => {
-    //     if (!notification) {
-    //         return;
-    //     }
-    //     const updatedSettings = { ...notifications, [notificationKey]: { ...notification, default: checked } };
-    //     setNotifications(updatedSettings);
-    // };
-
-    // Handle form field changes
     const handleFormChange = (changedValues) => {
-        const updatedSettings = { 
-            ...notifications, 
-            [notificationKey]: { 
-                ...notifications[notificationKey], 
-                ...changedValues 
-            } 
-        };
-        setNotifications(updatedSettings);
+        // Create deep copy of notifications to avoid reference issues
+        const updatedNotifications = JSON.parse(JSON.stringify(notifications));
+
+        // Ensure template object exists
+        if (!updatedNotifications[notificationKey].template) {
+            updatedNotifications[notificationKey].template = {};
+        }
+
+        // Update only the fields that changed
+        if (changedValues.template) {
+            if (changedValues.template.message !== undefined) {
+                updatedNotifications[notificationKey].template.message = changedValues.template.message;
+            }
+            if (changedValues.template.type !== undefined) {
+                // Store the type value in the subject field (based on your code structure)
+                updatedNotifications[notificationKey].template.subject = changedValues.template.type;
+            }
+        }
+
+        // Update parent component
+        setNotifications(updatedNotifications);
     };
 
-    // const handleEdit = () => {
-    //     setEditingKey(notificationKey);
-    //     form.setFieldsValue(notification);
-    // };
+    // Check if notification exists before rendering
+    if (!notification) {
+        return <Card>No notification data found</Card>;
+    }
 
-    // Add form.onFieldsChange to detect changes
-    const onFieldsChange = () => {
-        // This will mark the form as needing to be saved whenever any field changes
-        handleSave();
-    };
-
-    const renderModalContent = () => (
-        <Form 
-            form={form} 
-            layout="vertical" 
-            className='w-full'
-            initialValues={{
-                times: [{ value: 15, unit: 'minutes' }],
-                ...form.getFieldsValue(),
-            }}
-            onValuesChange={handleFormChange}
-            onFieldsChange={onFieldsChange}
-        >
-            {notificationType === 'email' && (
-                <>
-                <Form.Item name={['template', 'subject']}
-                    label={<span className="text-[#09090B] text-[16px] font-semibold">
-                        {__('Subject', 'quillbooking')}
-                        <span className='text-red-500'>*</span>
-                    </span>}
-                    rules={[{ required: true, message: __('Subject is required', 'quillbooking') }]}
-                    className='w-full mb-6'
+    return (
+        <Card style={{ marginBottom: 16 }}>
+            <Flex gap={10} align="center">
+                <Form
+                    form={form}
+                    layout="vertical"
+                    className='w-full'
+                    initialValues={{
+                        template: {
+                            message: notification.template?.message || '',
+                            type: notification.template?.type || ''
+                        }
+                    }}
+                    onValuesChange={handleFormChange}
                 >
-                    <Input
-                        placeholder='New Booking: {{guest.full_name}} @ {{booking.start_date_time_for_host}}'
-                        className='h-[48px] rounded-lg'
-                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg' onClick={()=>setMergeTagModal(true)}>
-                            <UrlIcon />
-                        </span>}
-                        style={{ padding: "0 0 0 10px" }} />
-                </Form.Item>
+                    <Form.Item
+                        label={
+                            <Flex justify='space-between' align='center'>
+                                <span className="text-[#09090B] text-[16px] font-semibold w-[540px]">
+                                    {__('SMS Body', 'quillbooking')}
+                                </span>
+                                <div className='bg-[#EEEEEE] p-2 rounded-lg border border-[#D3D4D6]' onClick={() => setMergeTagModal(true)}>
+                                    <UrlIcon />
+                                </div>
+                            </Flex>
+                        }
+                        name={['template', 'message']}
+                        rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
+                        className='w-full mb-5'
+                    >
+                        <TextArea
+                            autoSize={{ minRows: 4 }}
+                            className='mt-2 rounded-lg'
+                        />
+                    </Form.Item>
+                    <Form.Item
+                        className='w-full mb-5'
+                    >
+                        <Form.Item name={['template', 'type']}
+                            label={<span className="text-[#09090B] text-[16px] font-semibold">
+                                {__('Sender', 'quillbooking')}
+                                <span className='text-red-500'>*</span>
+                            </span>}
+                            rules={[{ required: true, message: __('Type is required', 'quillbooking') }]}
+                        >
+                            <Radio.Group className='text-[#3F4254] font-semibold'>
+                                <Radio value="sms" className='custom-radio'>{__('SMS', 'quillbooking')}</Radio>
+                                <Radio value="whatsapp" className='custom-radio'>{__('WhatsApp', 'quillbooking')}</Radio>
+                            </Radio.Group>
+                        </Form.Item>
+                    </Form.Item>
+                </Form>
                 <Modal
                     open={mergeTagModal}
                     onCancel={() => setMergeTagModal(false)}
                     footer={null}
-                    width={700}
+                    width={1000}
                     getContainer={false}
                 >
                     <Flex gap={10} className='items-center border-b pb-4 mb-4'>
                         <div className='bg-[#EDEDED] rounded-lg p-3 mt-2' >
                             <UrlIcon />
                         </div>
-                        <Header header={__('Subject Merge tags', 'quillbooking')}
+                        <Header header={__('SMS Merge tags', 'quillbooking')}
                             subHeader={__(
-                            'Choose your Merge tags type and Select one of them related to your input.',
-                            'quillbooking'
+                                'Choose your Merge tags type and Select one of them related to your input.',
+                                'quillbooking'
                             )} />
                     </Flex>
-                    <MergeTagModal onMentionClick={handleMentionClick}/>
+                    <Mentions onMentionClick={(mention, category) => handleMentionClick(mention, category)} />
                 </Modal>
-                </>
-            )}
-            <Form.Item name={['template', 'message']}
-                rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
-                className='w-full mb-5'
-            >
-                {notificationType === 'email' ? (
-                    <>
-                        <span className="text-[#09090B] text-[16px] font-semibold">
-                            {__('Email Body', 'quillbooking')}
-                            <span className='text-red-500'>*</span>
-                        </span>
-                        <div className='mt-2'>
-                        {/* <EmailEditor message={notifications[notificationKey].template.message}
-                            onChange={(content) => {
-                                form.setFieldsValue({ template: { message: content } });
-                                handleFormChange({ template: { message: content } });
-                            }} /> */}
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        {/* <span className="text-[#09090B] text-[16px] font-semibold">
-                            {__('SMS Body', 'quillbooking')}
-                        </span>
-                        <TextArea
-                            autoSize={{ minRows: 4 }}
-                            value={form.getFieldValue('template')?.message}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                form.setFieldsValue({ template: { message: value } });
-                                handleFormChange({ template: { message: value } });
-                            }}
-                            className='mt-2 rounded-lg'
-                        /> */}
-                    </>
-                )}
-            </Form.Item>
-            <Form.Item
-                className='w-full mb-5'
-            >
-                {notificationType === 'email' ? (
-                    <>
-                        <span className="text-[#09090B] text-[16px] font-semibold">
-                            {__('Additional Recipients', 'quillbooking')}
-                            <span className='text-red-500'>*</span>
-                        </span>
-                        <ReactMultiEmail
-                            placeholder={__('Enter email addresses separated by commas', 'quillbooking')}
-                            emails={emails}
-                            onChange={(_emails: string[]) => {
-                                setEmails(_emails);
-                                handleFormChange({ recipients: _emails });
-                            }}
-                            autoFocus={true}
-                            onFocus={() => setFocused(true)}
-                            onBlur={() => setFocused(false)}
-                            delimiter={','}
-                            getLabel={(email, index, removeEmail) => {
-                                return (
-                                    <div data-tag key={index}>
-                                        <div data-tag-item>{email}</div>
-                                        <span data-tag-handle onClick={() => removeEmail(index)}>
-                                            ×
-                                        </span>
-                                    </div>
-                                );
-                            }}
-                            className='min-h-[48px] rounded-lg'
-                        />
-                        <span className='text-[#818181]'>{__("Provided email address will set as CC to this email notification.", "quillbooking")}</span>
-                    </>
-                ) : (
-                    <Form.Item name={['template', 'type']}
-                        label={<span className="text-[#09090B] text-[16px] font-semibold">
-                            {__('Sender', 'quillbooking')}
-                            <span className='text-red-500'>*</span>
-                        </span>}
-                        rules={[{ required: true, message: __('Type is required', 'quillbooking') }]}
-                    >
-                        <Radio.Group className='text-[#3F4254] font-semibold'>
-                            <Radio value="sms" className='custom-radio'>{__('SMS', 'quillbooking')}</Radio>
-                            <Radio value="whatsapp" className='custom-radio'>{__('WhatsApp', 'quillbooking')}</Radio>
-                        </Radio.Group>
-                    </Form.Item>
-                )}
-            </Form.Item>
-            {notifications[notificationKey].times && (
-                 <>
-                     <span className="text-[#09090B] text-[16px] font-semibold">
-                         {__('Timing', 'quillbooking')}
-                         <span className='text-red-500'>*</span>
-                     </span>
-                     <Form.List name="times" >
-                         {(fields, { add, remove }) => (
-                             <Flex vertical gap={10} className='mt-3'>
-                                 {fields.map(({ key, name, ...restField }, index) => (
-                                     <Flex key={key} align="center" gap={10}>
-                                         <Form.Item
-                                             {...restField}
-                                             name={[name, 'value']}
-                                             rules={[{ required: true, message: __('Value is required', 'quillbooking') }]}
-                                             style={{ marginBottom: 0 }}
-                                         >
-                                             <InputNumber className='h-[48px] rounded-lg pt-2 w-16' />
-                                         </Form.Item>
-                                         <Form.Item
-                                             {...restField}
-                                             name={[name, 'unit']}
-                                             rules={[{ required: true, message: __('Unit is required', 'quillbooking') }]}
-                                             style={{ marginBottom: 0 }}
-                                         >
-                                             <Select
-                                                 className='h-[48px] rounded-lg w-44'
-                                                 getPopupContainer={(trigger) => trigger.parentElement}
-                                                 options={[
-                                                     { value: 'minutes', label: <span>{__('Minutes Before', 'quillbooking')}</span> },
-                                                     { value: 'hours', label: <span>{__('Hours Before', 'quillbooking')}</span> },
-                                                     { value: 'days', label: <span>{__('Days Before', 'quillbooking')}</span> },
-                                                 ]}
-                                             />
-                                         </Form.Item>
- 
-                                         {/* Only show Remove button if it's NOT the first item */}
-                                         {index > 0 && (
-                                             <Button onClick={() => remove(name)} danger className='border-none shadow-none p-0'>
-                                                 <LimitsTrashIcon />
-                                             </Button>
-                                         )}
- 
-                                         {/* Only show Add button beside the first item */}
-                                         {index === 0 && (
-                                             <Button onClick={() => add({ value: 15, unit: 'minutes' })} className='border-none shadow-none p-0'>
-                                                 <LimitsAddIcon />
-                                             </Button>
-                                         )}
-                                     </Flex>
-                                 ))}
-                             </Flex>
-                         )}
-                     </Form.List>
- 
-                 </>
-             )}
-
-        </Form>
-    );
-
-    return (
-        <Card style={{ marginBottom: 16 }}>
-            <Flex gap={10} align="center">
-                {renderModalContent()}
             </Flex>
         </Card>
     );

@@ -17,19 +17,19 @@ import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import NotificationCard from './email-notification-card';
 import { NotificationType } from '@quillbooking/client';
-import { EditNotificationIcon, EmailNotificationIcon, Header, SmsNotificationIcon } from '@quillbooking/components';
+import { CardHeader, EditNotificationIcon, EmailNotificationIcon, Header, SmsNotificationIcon } from '@quillbooking/components';
 import { BsInfoCircleFill } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
 import EmailNotificationCard from './email-notification-card';
 
 export interface NotificationsTabHandle {
-  saveSettings: () => Promise<void>;
+    saveSettings: () => Promise<void>;
 }
 
 interface NotificationsTabProps {
-  //notificationType: 'email' | 'sms';
-  disabled?: boolean;
-  setDisabled?: (disabled: boolean) => void;
+    //notificationType: 'email' | 'sms';
+    disabled?: boolean;
+    setDisabled?: (disabled: boolean) => void;
 }
 
 const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTabProps>(({ disabled, setDisabled }, ref) => {
@@ -41,19 +41,28 @@ const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTab
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [isNoticeVisible, setNoticeVisible] = useState(true);
 
+    useEffect(() => {
+        fetchNotificationSettings();
+    }, [event]);
+
+    // Add this useEffect to ensure newNotificationSettings gets updated when notificationSettings changes
+    useEffect(() => {
+        if (notificationSettings) {
+            setNewNotificationSettings(notificationSettings);
+        }
+    }, [notificationSettings]);
+
     // Expose the saveSettings method through the ref
     useImperativeHandle(ref, () => ({
         saveSettings: async () => {
             if (notificationSettings) {
-                return saveNotificationSettings(newNotificationSettings);
+                return saveNotificationSettings();
             }
             return Promise.resolve();
         }
     }));
 
-    useEffect(() => {
-        fetchNotificationSettings();
-    }, [event]);
+
 
     const fetchNotificationSettings = () => {
         if (!event) {
@@ -70,37 +79,42 @@ const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTab
             },
         });
     };
-
     const handleSwitchChange = (checked, key) => {
+        console.log("Toggle switch changed:", checked, key);
+
         setNewNotificationSettings(prev => {
             if (!prev) return prev;
 
-            const updated = {
-                ...prev,
-                [key]: {
-                    ...prev[key],
-                    default: checked,
-                }
+            // Create a complete copy with all existing values
+            const updated = { ...prev };
+
+            // Update just the default property for this notification
+            updated[key] = {
+                ...updated[key],
+                default: checked
             };
-            
+
+            console.log("Updated notification settings:", updated);
+
             // Mark as needing to save if setDisabled is provided
             if (setDisabled) {
                 setDisabled(false);
             }
-            
+
             return updated;
         });
     };
 
-    const saveNotificationSettings = async (settings: Record<string, NotificationType>) => {
-        if (!event) return Promise.reject('No event found');
-        
+    const saveNotificationSettings = async () => {
+        if (!event || !newNotificationSettings) return Promise.reject('No event or settings found');
+        console.log(newNotificationSettings)
+
         return new Promise<void>((resolve, reject) => {
             callApi({
                 path: `events/${event.id}`,
                 method: 'POST',
                 data: {
-                    [`email_notifications`]: settings,
+                    [`email_notifications`]: newNotificationSettings,
                 },
                 onSuccess() {
                     successNotice(__('Notification settings saved successfully', 'quillbooking'));
@@ -118,6 +132,7 @@ const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTab
         });
     };
 
+
     if (loading || !notificationSettings) {
         return <Card title={__('Notifications', 'quillbooking')} loading />;
     }
@@ -125,16 +140,13 @@ const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTab
     return (
         <div className='grid grid-cols-2 gap-5 px-9'>
             <Card>
-                <Flex gap={10} className='items-center border-b pb-4 mb-4'>
-                            <div className='bg-[#EDEDED] rounded-lg p-2' >
-                                <EmailNotificationIcon />
-                            </div>
-                            <Header header={__('Email Notification', 'quillbooking')}
-                                subHeader={__(
-                                    'Customize the email notifications sent to attendees and organizers',
-                                    'quillbooking'
-                                )} />
-                </Flex>
+                <CardHeader title={__('Email Notification', 'quillbooking')}
+                    description={__(
+                        'Customize the email notifications sent to attendees and organizers',
+                        'quillbooking'
+                    )}
+                    icon={<EmailNotificationIcon />} />
+                    <div className='mt-4'>
                 {isNoticeVisible && (
                     <Flex className='justify-between items-start border py-3 px-5 mb-4 bg-[#FBFBFB] border-[#E0E0E0]'>
                         <Flex vertical>
@@ -180,26 +192,22 @@ const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTab
                             </div>
                         );
                     })}
+                    </div>
             </Card>
             <Card>
-                <Flex className='justify-between items-center border-b pb-4 mb-4'>
-                    <Flex gap={10} className='items-center'>
-                        <div className='bg-[#EDEDED] rounded-lg p-2' >
-                            <EditNotificationIcon />
-                        </div>
-                        <Header header={__('Edit', 'quillbooking')}
-                            subHeader={__(
-                                'Booking Confirmation Email to Attendee',
-                                'quillbooking'
-                            )} />
-
-                    </Flex>
+                <Flex className='justify-between items-center border-b mb-4'>
+                    <CardHeader title={__('Edit', 'quillbooking')}
+                        description={__(
+                            'Booking Confirmation Email to Attendee',
+                            'quillbooking'
+                        )}
+                        icon={<EditNotificationIcon />} border={false}/>
                     {editingKey && (
                         <Switch
-                            checked={notificationSettings[editingKey]?.default}
+                            checked={newNotificationSettings?.[editingKey]?.default || false}
                             loading={loading}
                             onChange={(checked) => handleSwitchChange(checked, editingKey)}
-                            className={notificationSettings[editingKey]?.default ? "bg-color-primary" : "bg-gray-400"}
+                            className={newNotificationSettings?.[editingKey]?.default ? "bg-color-primary" : "bg-gray-400"}
                         />
                     )}
                 </Flex>
@@ -208,7 +216,6 @@ const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTab
                         key={editingKey}
                         notifications={notificationSettings}
                         notificationKey={editingKey}
-                        eventId={event?.id || 0}
                         setNotifications={(updatedNotifications) => {
                             setNewNotificationSettings(updatedNotifications);
                             if (setDisabled) {
@@ -219,22 +226,18 @@ const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTab
                 )}
             </Card>
             <Card>
-                <Flex gap={10} className='items-center border-b pb-4 mb-4'>
-                    <div className='bg-[#EDEDED] rounded-lg p-2' >
-                        <EmailNotificationIcon />
-                    </div>
-                    <Header header={__('Other Notification', 'quillbooking')}
-                        subHeader={__(
+            <CardHeader title={__('Other Notification', 'quillbooking')}
+                        description={__(
                             'Optimize your email notifications for confirmations and declines',
                             'quillbooking'
-                        )} />
-                </Flex>
+                        )}
+                        icon={<EmailNotificationIcon />} />
                 {notificationSettings &&
                     Object.entries(notificationSettings).map(([key, _notification], index) => {
-                        if (index < 8) return null; // Skip items 9-12 here
+                        if (index < 8) return null; 
 
                         return (
-                            <div key={key} onClick={() => setEditingKey(editingKey === key ? null : key)}>
+                            <div key={key} onClick={() => setEditingKey(editingKey === key ? null : key)} className='mt-4'>
                                 <Card
                                     style={{ marginBottom: 16, cursor: 'pointer' }}
                                     className={editingKey === key ? 'border border-color-primary bg-color-secondary' : 'border'}

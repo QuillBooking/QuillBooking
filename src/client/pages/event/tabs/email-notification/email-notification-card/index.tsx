@@ -22,12 +22,10 @@ import { debounce } from 'lodash';
 type NotificationCardProps = {
     notifications: Record<string, NotificationType>;
     notificationKey: string;
-    eventId: number;
     setNotifications: (notifications: Record<string, NotificationType>) => void;
 };
 
-const EmailNotificationCard: React.FC<NotificationCardProps> = ({ notifications, notificationKey, eventId, setNotifications }) => {
-    const [editingKey, setEditingKey] = useState<string | null>(null);
+const EmailNotificationCard: React.FC<NotificationCardProps> = ({ notifications, notificationKey, setNotifications }) => {
     const [form] = Form.useForm();
     const [emails, setEmails] = useState<string[]>([]);
     const [mergeTagModal, setMergeTagModal] = useState<boolean>(false);
@@ -73,21 +71,6 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({ notifications,
         handleFormChange(updatedValues);
     };
 
-    const handleSave = () => {
-        form.validateFields().then((values) => {
-            const updatedSettings = {
-                ...notifications,
-                [notificationKey]: {
-                    ...notifications[notificationKey],
-                    template: values.template,
-                    times: values.times,
-                    recipients: emails
-                }
-            };
-            setNotifications(updatedSettings);
-        });
-    };
-
     // Handle form field changes
     const handleFormChange = useMemo(() => debounce((changedValues) => {
         const updatedSettings = {
@@ -100,12 +83,6 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({ notifications,
         };
         setNotifications(updatedSettings);
     }, 500), [notifications, notificationKey, emails]);
-
-    // Add form.onFieldsChange to detect changes
-    const onFieldsChange = () => {
-        // This will mark the form as needing to be saved whenever any field changes
-        handleSave();
-    };
 
     const renderModalContent = () => (
         <Form

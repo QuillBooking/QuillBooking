@@ -49,6 +49,11 @@ export type CalendarResponse = Response & {
 	data: Calendar[];
 };
 
+export type ConnectedIntegrationsFields = {
+	name: string;
+	connected: boolean;
+}
+
 export type Event = {
 	id: number;
 	hash_id: string;
@@ -70,6 +75,13 @@ export type Event = {
 	additional_settings: AdditionalSettings;
 	hosts?: Host[];
 	fields?: EventMetaData[];
+	connected_integrations: {
+		apple: ConnectedIntegrationsFields;
+		google: ConnectedIntegrationsFields;
+		outlook: ConnectedIntegrationsFields;
+		twilio: ConnectedIntegrationsFields;
+		zoom: ConnectedIntegrationsFields;
+	  };
 };
 
 export type AdditionalSettings = {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Booking Tasks
  *
@@ -20,11 +21,12 @@ use Illuminate\Support\Arr;
  */
 class Booking_Tasks {
 
+
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		add_action( 'quillbooking_booking_created', array( $this, 'schedule_booking_tasks' ) );
+		 add_action( 'quillbooking_booking_created', array( $this, 'schedule_booking_tasks' ) );
 		add_action( 'quillbooking_booking_confirmed', array( $this, 'schedule_booking_tasks' ) );
 		add_action( 'quillbooking_booking_rescheduled', array( $this, 'schedule_booking_tasks' ) );
 	}
@@ -86,18 +88,29 @@ class Booking_Tasks {
 	 *
 	 * @return \DateInterval|null
 	 */
-	private function get_date_interval( $value, $unit ) {
+	private function get_date_interval( $value, $unit ): ?\DateInterval {
+		$unit = strtolower( $unit );
 		try {
 			switch ( $unit ) {
 				case 'minutes':
-					return new \DateInterval( "PT{$value}M" );
+					$interval = new \DateInterval( 'PT' . abs( $value ) . 'M' );
+					break;
 				case 'hours':
-					return new \DateInterval( "PT{$value}H" );
+					$interval = new \DateInterval( 'PT' . abs( $value ) . 'H' );
+					break;
 				case 'days':
-					return new \DateInterval( "P{$value}D" );
+					$interval = new \DateInterval( 'P' . abs( $value ) . 'D' );
+					break;
 				default:
 					return null;
 			}
+
+			// ✨ Add this block
+			if ( $value < 0 ) {
+				$interval->invert = 1;
+			}
+
+			return $interval;
 		} catch ( \Exception $e ) {
 			return null;
 		}
@@ -111,8 +124,12 @@ class Booking_Tasks {
 	 * @return int
 	 */
 	private function get_seconds_from_interval( $interval ) {
-		return ( $interval->d * 24 * 60 * 60 ) +
+		$seconds = ( $interval->d * 24 * 60 * 60 ) +
 			( $interval->h * 60 * 60 ) +
-			( $interval->i * 60 );
+			( $interval->i * 60 ) +
+			$interval->s; // Include seconds
+
+		// Return negative seconds if the interval is inverted
+		return $interval->invert === 1 ? -$seconds : $seconds;
 	}
 }

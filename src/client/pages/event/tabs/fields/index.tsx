@@ -24,14 +24,14 @@ import { useEventContext } from '../../state/context';
 import './style.scss';
 import { CardHeader, QuestionOutlineIcon } from '@quillbooking/components';
 import {
-	EventFieldsTabHandle,
-	EventFieldsTabProps,
+	EventTabHandle,
+	EventTabProps,
 	Fields,
 	FieldType,
 } from 'client/types';
 import Question from './question';
 
-const EventFieldsTab = forwardRef<EventFieldsTabHandle, EventFieldsTabProps>(
+const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 	(props, ref) => {
 		const { state: event } = useEventContext();
 		const { callApi, loading } = useApi();

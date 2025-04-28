@@ -62,7 +62,7 @@ const HostSelect: React.FC<HostSelectProps> = ({
                 method: 'GET',
                 onSuccess: (response: CalendarResponse) => {
                     const newHosts = response.data.filter(
-                        host => !hosts.some(existingHost => existingHost.id === host.id)
+                        host => !hosts.some(existingHost => existingHost.id === host.user_id)
                     );
                     
                     if (newHosts.length > 0) {
@@ -70,8 +70,8 @@ const HostSelect: React.FC<HostSelectProps> = ({
                     }
                     
                     const mappedHosts = map(response.data, (host) => ({
-                        value: host.id,
-                        label: host.name,
+                        value: host.user_id,
+                        label: host.user?.display_name,
                         disabled: exclude?.includes(host.id),
                     }));
                     resolve(mappedHosts as MappedHost[]);
@@ -155,10 +155,11 @@ const HostSelect: React.FC<HostSelectProps> = ({
 
     const getValue = () => {
         if (multiple && Array.isArray(value)) {
+            // TODO: update this to use the user structure not the host
             return map(value, (id) => {
-                const host = hosts.find((u) => u.id === id);
+                const host = hosts.find((u) => u.user_id === id);
                 if (host && isObject(host)) {
-                    return { value: host.id, label: host.name };
+                    return { value: host.user_id, label: host.user.display_name };
                 }
                 return null;
             }).filter(Boolean);

@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 /**
@@ -22,23 +22,36 @@ import "./style.scss";
 import meet from "../../../../../../../assets/icons/google/google_meet.png";
 import zoom from "../../../../../../../assets/icons/zoom/zoom_video.png";
 import teams from "../../../../../../../assets/icons/teams/teams.png";
+import { useApi, useNavigate } from '@quillbooking/hooks';
 
 // Extended Location type to include custom ID for multiple custom locations
 interface ExtendedLocation extends Location {
     id?: string;
 }
 
+type Integration = {
+    name: string;
+    connected: boolean;
+};
+
 const Locations: React.FC<{
     locations: ExtendedLocation[];
     onChange: (locations: ExtendedLocation[]) => void;
     onKeepDialogOpen: () => void;
-}> = ({ locations, onChange, onKeepDialogOpen }) => {
+    connected_integrations: {
+        apple: Integration;
+        google: Integration;
+        outlook: Integration;
+        twilio: Integration;
+        zoom: Integration;
+    };
+}> = ({ locations, onChange, onKeepDialogOpen, connected_integrations }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingLocationIndex, setEditingLocationIndex] = useState<number | null>(null);
     const [newLocationType, setNewLocationType] = useState<string | null>(null);
     const [editingCustomId, setEditingCustomId] = useState<string | null>(null);
     // Track custom locations separately
-    const [customLocations, setCustomLocations] = useState<{id: string, fields?: Record<string, any>, visible: boolean}[]>(
+    const [customLocations, setCustomLocations] = useState<{ id: string, fields?: Record<string, any>, visible: boolean }[]>(
         locations.filter(loc => loc.type === "custom").map(loc => ({
             id: loc.id || uniqueId('custom-'),
             fields: loc.fields,
@@ -48,8 +61,27 @@ const Locations: React.FC<{
     // Cache for non-custom locations
     const [cachedLocationData, setCachedLocationData] = useState<Record<string, any>>({});
     const [form] = Form.useForm();
+    const navigate = useNavigate();
+    // const { callApi, loading } = useApi();
     const locationTypes = ConfigAPI.getLocations();
+    const integrations = ConfigAPI.getIntegrations();
+    console.log(integrations);
 
+    // const fetchIntegrations = async () => {
+    //         callApi({
+    //             path: `integrations`,
+    //             method: 'GET',
+    //             onSuccess(response) {
+    //                 console.log(response)
+    //             },
+    //         });
+    //     };
+
+    //     useEffect(() => {
+    //         fetchIntegrations();
+    //     }, []);
+
+    console.log(locationTypes)
     // Handle regular location type changes
     const handleLocationTypeChange = (index: number, newType: string) => {
         const locationType = get(locationTypes, newType);
@@ -76,14 +108,14 @@ const Locations: React.FC<{
         try {
             const values = await form.validateFields();
             console.log("Form Values:", values);
-            
+
             // Update location based on type
             if (newLocationType === "custom" && editingCustomId) {
                 // Handle custom location update
                 const updatedLocations = [...locations];
-                const locationIndex = updatedLocations.findIndex(loc => 
+                const locationIndex = updatedLocations.findIndex(loc =>
                     loc.type === "custom" && loc.id === editingCustomId);
-                
+
                 if (locationIndex !== -1) {
                     // Update existing custom location
                     updatedLocations[locationIndex] = {
@@ -98,14 +130,14 @@ const Locations: React.FC<{
                         id: editingCustomId,
                         fields: values,
                     });
-                    
+
                     // Only now add to customLocations array since form submission was successful
                     setCustomLocations(prev => [
-                        ...prev, 
+                        ...prev,
                         { id: editingCustomId, fields: values, visible: true }
                     ]);
                 }
-                
+
                 // Update existing custom location if applicable
                 if (locationIndex === -1) {
                     // New location was added, no need to update customLocations here
@@ -113,13 +145,13 @@ const Locations: React.FC<{
                     // Update existing location in customLocations
                     const updatedCustomLocations = [...customLocations];
                     const customIndex = updatedCustomLocations.findIndex(custom => custom.id === editingCustomId);
-                    
+
                     if (customIndex !== -1) {
                         updatedCustomLocations[customIndex].fields = values;
                         setCustomLocations(updatedCustomLocations);
                     }
                 }
-                
+
                 onChange(updatedLocations);
             } else {
                 // Handle regular location update (unchanged)
@@ -129,17 +161,17 @@ const Locations: React.FC<{
                         type: newLocationType!,
                         fields: values,
                     };
-                    
+
                     // Cache the location data when saving
                     setCachedLocationData(prev => ({
                         ...prev,
                         [newLocationType!]: values
                     }));
-                    
+
                     onChange(updatedLocations);
                 }
             }
-            
+
             setIsModalVisible(false);
             setEditingLocationIndex(null);
             setNewLocationType(null);
@@ -161,26 +193,26 @@ const Locations: React.FC<{
                 onChange(updatedLocations);
             }
         }
-        
+
         // Clean up empty custom location
         if (newLocationType === "custom" && editingCustomId) {
             // If this is a new custom location being created (not yet in locations array)
             const existingCustomLoc = locations.find(
                 loc => loc.type === "custom" && loc.id === editingCustomId
             );
-            
+
             if (!existingCustomLoc) {
                 // Remove from customLocations state
                 setCustomLocations(prev => prev.filter(custom => custom.id !== editingCustomId));
             }
         }
-        
+
         setIsModalVisible(false);
         setEditingLocationIndex(null);
         setNewLocationType(null);
         setEditingCustomId(null);
         form.resetFields();
-    
+
         if (typeof onKeepDialogOpen === "function") {
             onKeepDialogOpen();
         }
@@ -212,10 +244,10 @@ const Locations: React.FC<{
     // Add custom location
     const addCustomLocation = () => {
         const newCustomId = uniqueId('custom-');
-        
+
         // Don't add to customLocations array yet, just prepare the ID for editing
         // We'll add it only after successful submission
-        
+
         // Open modal to edit the new custom location
         setNewLocationType("custom");
         setEditingCustomId(newCustomId);
@@ -227,12 +259,12 @@ const Locations: React.FC<{
     const removeCustomLocation = (customId: string) => {
         // Remove from customLocations state
         setCustomLocations(prev => prev.filter(custom => custom.id !== customId));
-        
+
         // Remove from locations array
         const updatedLocations = locations.filter(
             loc => !(loc.type === "custom" && loc.id === customId)
         );
-        
+
         onChange(updatedLocations);
     };
 
@@ -240,11 +272,11 @@ const Locations: React.FC<{
     const handleCheckboxChange = (type: string, checked: boolean) => {
         // If not custom, handle regular location toggle
         const existingIndex = locations.findIndex(loc => loc.type === type);
-        
+
         if (checked) {
             // If the location was previously saved, restore its data
             const savedFields = cachedLocationData[type] || {};
-            
+
             if (existingIndex !== -1) {
                 const updatedLocations = [...locations];
                 updatedLocations[existingIndex] = {
@@ -259,7 +291,7 @@ const Locations: React.FC<{
                     fields: Object.keys(savedFields).length > 0 ? savedFields : {},
                 });
                 onChange(updatedLocations);
-                
+
                 // If there are saved fields but the location needs configuration, open modal
                 if (Object.keys(savedFields).length === 0 && !isEmpty(get(locationTypes, `${type}.fields`))) {
                     handleLocationTypeChange(updatedLocations.length - 1, type);
@@ -274,7 +306,7 @@ const Locations: React.FC<{
                     [type]: locationToRemove.fields
                 }));
             }
-            
+
             const updatedLocations = locations.filter(loc => loc.type !== type);
             onChange(updatedLocations);
         }
@@ -283,20 +315,20 @@ const Locations: React.FC<{
     // Toggle custom location checkbox
     const handleCustomCheckboxChange = (customId: string, checked: boolean) => {
         // Update the customLocations visibility state
-        setCustomLocations(prev => prev.map(custom => 
-            custom.id === customId ? {...custom, visible: checked} : custom
+        setCustomLocations(prev => prev.map(custom =>
+            custom.id === customId ? { ...custom, visible: checked } : custom
         ));
-        
+
         if (checked) {
             // Get the custom location data
             const customLocation = customLocations.find(custom => custom.id === customId);
-            
+
             // Add to locations array if not already there
             if (customLocation) {
                 const existingIndex = locations.findIndex(
                     loc => loc.type === "custom" && loc.id === customId
                 );
-                
+
                 if (existingIndex === -1) {
                     const updatedLocations = [...locations];
                     updatedLocations.push({
@@ -305,7 +337,7 @@ const Locations: React.FC<{
                         fields: customLocation.fields || {},
                     });
                     onChange(updatedLocations);
-                    
+
                     // If fields need configuration, open the modal
                     if (!customLocation.fields || Object.keys(customLocation.fields).length === 0) {
                         setNewLocationType("custom");
@@ -338,21 +370,31 @@ const Locations: React.FC<{
                         checked={locations.some(loc => loc.type === "google-meet")}
                         onChange={(e) => handleCheckboxChange("google-meet", e.target.checked)}
                     >
-                        <Flex gap={12} className='items-center ml-2'>
-                            <img src={meet} alt='google_meet.png' className='size-7' />
-                            <Flex vertical>
-                                <div className="text-[#3F4254] text-[16px] font-semibold">
-                                    {__("Google Meet", "quillbooking")}
-                                </div>
-                                <div className="text-[#9197A4] text-[12px] italic">
-                                    {__("Need to be Connect First - Visit the Google Meet integration page from Settings.", "quillbooking")}
-                                </div>
+                        <Flex>
+                            <Flex gap={12} className='items-center ml-2'>
+                                <img src={meet} alt='google_meet.png' className='size-7' />
+                                <Flex vertical>
+                                    <div className="text-[#3F4254] text-[16px] font-semibold">
+                                        {__("Google Meet", "quillbooking")}
+                                    </div>
+                                    <div className="text-[#9197A4] text-[12px] italic">
+                                        {__("Need to be Connect First - Visit the Google Meet integration page from Settings.", "quillbooking")}
+                                    </div>
+                                </Flex>
                             </Flex>
+                            {!connected_integrations.google && (
+                                <Button
+                                    onClick={() => navigate('home')}
+                                    className='bg-transparent shadow-none border border-color-primary text-color-primary'
+                                >
+                                    {__('Connect', 'quillbooking')}
+                                </Button>
+                            )}
                         </Flex>
                     </Checkbox>
                     <Checkbox
                         className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "zoom")
-                            ? "border-color-primary bg-color-secondary" 
+                            ? "border-color-primary bg-color-secondary"
                             : "border-[#D3D4D6] bg-white"
                             }`}
                         checked={locations.some(loc => loc.type === "zoom")}
@@ -372,8 +414,8 @@ const Locations: React.FC<{
                     </Checkbox>
                     <Checkbox
                         className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "ms-teams")
-                            ? "border-color-primary bg-color-secondary" 
-                            : "border-[#D3D4D6] bg-white" 
+                            ? "border-color-primary bg-color-secondary"
+                            : "border-[#D3D4D6] bg-white"
                             }`}
                         checked={locations.some(loc => loc.type === "ms-teams")}
                         onChange={(e) => handleCheckboxChange("ms-teams", e.target.checked)}
@@ -397,8 +439,8 @@ const Locations: React.FC<{
                     </div>
                     <Checkbox
                         className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${locations.some(loc => loc.type === "attendee_address")
-                            ? "border-color-primary bg-color-secondary" 
-                            : "border-[#D3D4D6] bg-white" 
+                            ? "border-color-primary bg-color-secondary"
+                            : "border-[#D3D4D6] bg-white"
                             }`}
                         checked={locations.some(loc => loc.type === "attendee_address")}
                         onChange={(e) => handleCheckboxChange("attendee_address", e.target.checked)}
@@ -571,21 +613,20 @@ const Locations: React.FC<{
                     <div className="text-[#09090B] text-[16px]">
                         {__("Other", "quillbooking")}
                     </div>
-                    
+
                     {/* Custom Locations - Render each custom location */}
                     {customLocations.map((customLoc) => {
                         const customLocation = locations.find(
                             loc => loc.type === "custom" && loc.id === customLoc.id
                         );
-                        
+
                         return (
                             <Checkbox
                                 key={customLoc.id}
-                                className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${
-                                    customLocation
+                                className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${customLocation
                                         ? "border-color-primary bg-color-secondary"
                                         : "border-[#D3D4D6] bg-white"
-                                }`}
+                                    }`}
                                 checked={!!customLocation}
                                 onChange={(e) => handleCustomCheckboxChange(customLoc.id, e.target.checked)}
                             >
@@ -628,7 +669,7 @@ const Locations: React.FC<{
                             </Checkbox>
                         );
                     })}
-                    
+
                     <Button
                         onClick={addCustomLocation}
                         icon={<FaPlus className='text-color-primary' />}
@@ -644,7 +685,7 @@ const Locations: React.FC<{
                     <div>
                         <h2 className='text-[#09090B] text-[30px] font-[700]'>
                             {
-                                newLocationType === "custom" 
+                                newLocationType === "custom"
                                     ? __('Custom Location', 'quillbooking')
                                     : sprintf(__(' %s ', 'quillbooking'), get(locationTypes, `${newLocationType}.title`, ''))
                             }
@@ -681,7 +722,7 @@ const Locations: React.FC<{
                                     className="rounded-lg h-[48px]"
                                 />
                             </Form.Item>
-                            
+
                             <Form.Item
                                 name="description"
                                 label={
@@ -702,7 +743,7 @@ const Locations: React.FC<{
                                     className="rounded-lg h-[48px]"
                                 />
                             </Form.Item>
-                            
+
                             <Form.Item
                                 name="display_on_booking"
                                 valuePropName="checked"
@@ -711,7 +752,7 @@ const Locations: React.FC<{
                                     {__("Display on booking", "quillbooking")}
                                 </Checkbox>
                             </Form.Item>
-                            </>
+                        </>
                     ) : (
                         // Standard location form fields
                         newLocationType && map(get(locationTypes, `${newLocationType}.fields`, {}), (field: LocationField, fieldKey) => (

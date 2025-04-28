@@ -35,19 +35,19 @@
       color:#0066ff;
       text-decoration: underline;
     }
-    & [style*="font-family: Arial"] {
+    & [style="font-family: Arial"] {
       font-family: Arial, sans-serif !important;
     }
     
-    & [style*="font-family: Times New Roman"] {
+    & [style="font-family: Times New Roman"] {
       font-family: "Times New Roman", Times, serif !important;
     }
     
-    & [style*="font-family: Courier New"] {
+    & [style="font-family: Courier New"] {
       font-family: "Courier New", Courier, monospace !important;
     }
     
-    & [style*="font-family: Georgia"] {
+    & [style="font-family: Georgia"] {
       font-family: Georgia, serif !important;
     }
   }

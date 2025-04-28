@@ -88,4 +88,5 @@ export {default as MergeTagPaymentIcon} from "./merge-tag-payment-icon";
 export {default as OutlinedClockIcon} from "./outlined-clock-icon";
 export {default as DirectLinkIcon } from "./direct-link-icon";
 export {default as EventInfoIcon} from "./event-info-icon";
+export { default as AlertIcon } from "./alert-icon";
 export {default as UpcomingCalendarOutlinedIcon} from "./upcoming-calendar-outlined-icon";

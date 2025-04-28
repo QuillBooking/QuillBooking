@@ -39,11 +39,12 @@ import { Provider } from './state/context';
 import Calendar from '../calendar';
 import {
 	EventDetails,
-	Notifications,
+	Availability,
 	AdvancedSettings,
 	Payments,
 	WebhookFeeds,
 	EmailNotificationTab,
+	SmsNotificationTab,
 } from './tabs';
 import {
 	Box,
@@ -57,6 +58,12 @@ import { IoCloseSharp } from 'react-icons/io5';
 import ShareModal from '../calendars/share-modal';
 import EventFieldsTab from './tabs/fields';
 import AvailabilityLimits from './tabs/availability-limits';
+import { useLocation } from 'react-router-dom';
+
+interface NoticeType {
+	title: string;
+	message: string;
+  }
 
 const Event: React.FC = () => {
 	const {
@@ -77,6 +84,15 @@ const Event: React.FC = () => {
 	const [checked, setChecked] = useState(true);
 	const [modalShareId, setModalShareId] = useState<string | null>(null);
 	const [saveDisabled, setSaveDisabled] = useState(true);
+	const location = useLocation();
+	const [notice, setNotice] = useState<NoticeType | null>(null);
+
+	useEffect(() => {
+    if (location.state?.notice) {
+      setNotice(location.state.notice);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
 	const navigate = useNavigate();
 	const setBreadcrumbs = useBreadcrumbs();
@@ -205,6 +221,8 @@ const Event: React.FC = () => {
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
+					notice={notice} 
+					clearNotice={() => setNotice(null)}
 				/>
 			) : null,
 			icon: <CalendarsIcon />,
@@ -231,7 +249,6 @@ const Event: React.FC = () => {
 			key: 'email-notifications',
 			label: __('Email Notification', 'quillbooking'),
 			children: <EmailNotificationTab
-				//notificationType="email"
 				ref={childRef}
 				disabled={saveDisabled}
 				setDisabled={setSaveDisabled}
@@ -241,8 +258,7 @@ const Event: React.FC = () => {
 		{
 			key: 'sms-notifications',
 			label: __('SMS Notification', 'quillbooking'),
-			children: <Notifications
-				notificationType="sms"
+			children: <SmsNotificationTab
 				ref={childRef}
 				disabled={saveDisabled}
 				setDisabled={setSaveDisabled}

@@ -4,7 +4,11 @@
 use phpmock\phpunit\PHPMock;
 use QuillBooking\Booking\Booking_Ajax;
 
+
+
+
 class BookingAjaxTest extends WP_UnitTestCase {
+
 
 
 	use PHPMock;
@@ -153,8 +157,15 @@ class BookingAjaxTest extends WP_UnitTestCase {
 	 * Test booking_details method
 	 */
 	public function test_booking_details() {
+		$newEvent = new FakeEventModel(
+			array(
+				'id'       => 1,
+				'duration' => 60,
+			)
+		);
+
 		$_POST = array(
-			'id'         => $this->event->id,
+			'id'         => $newEvent->id,
 			'start_date' => '2023-01-01 10:00',
 			'timezone'   => 'UTC',
 			'duration'   => 60,
@@ -192,7 +203,14 @@ class BookingAjaxTest extends WP_UnitTestCase {
 	public function test_ajax_cancel_booking() {
 		remove_all_actions( 'quillbooking_booking_attendee_cancelled' );
 		remove_all_actions( 'quillbooking_booking_cancelled' );
-		$_POST = array( 'id' => $this->booking->id );
+
+		$newBooking = new FakeBookingModel(
+			array(
+				'id' => 1,
+			)
+		);
+
+		$_POST = array( 'id' => $newBooking->id );
 
 		$wpSendJsonSuccessMock = $this->getFunctionMock( 'QuillBooking\Booking', 'wp_send_json_success' );
 		$wpSendJsonSuccessMock->expects( $this->once() )
@@ -215,9 +233,29 @@ class BookingAjaxTest extends WP_UnitTestCase {
 		$response = json_decode( $output, true );
 
 		$this->assertTrue( $response['success'] );
+		$this->assertEquals( 'cancelled', $newBooking->status );
 		$this->assertEquals( 'Booking cancelled', $response['data']['message'] );
 	}
 
+	/**
+	 * Test ajax_cancel_booking method with completed booking
+	 */
+	public function test_ajax_cancel_booking_completed() {
+		// throw exception if booking is completed
+		$booking = new FakeBookingModel(
+			array(
+				'id'     => 1,
+				'status' => 'completed',
+			)
+		);
+		$_POST   = array( 'id' => $booking->id );
+		ob_start();
+		$this->booking_ajax->ajax_cancel_booking();
+		$output   = ob_get_clean();
+		$response = json_decode( $output, true );
+		$this->assertFalse( $response['success'] );
+		$this->assertEquals( 'Booking is already completed', $response['data']['message'] );
+	}
 	/**
 	 * Test ajax_reschedule_booking method
 	 */
@@ -225,20 +263,29 @@ class BookingAjaxTest extends WP_UnitTestCase {
 		remove_all_actions( 'quillbooking_booking_attendee_rescheduled' );
 		remove_all_actions( 'quillbooking_booking_rescheduled' );
 
+		$original_date = new DateTime( '2023-01-01 10:00', new DateTimeZone( 'UTC' ) );
+
+		$newBooking = new FakeBookingModel(
+			array(
+				'id'         => 4432,
+				'event'      => new FakeEventModel(),
+				'status'     => 'pending',
+				'start_time' => $original_date->format( 'Y-m-d H:i:s' ),
+				'slot_time'  => 30,
+			)
+		);
+
 		$_POST = array(
-			'id'         => $this->booking->id,
-			'start_date' => '2023-01-02 10:00',
+			'id'         => $newBooking->id,
+			'start_date' => '2023-01-01 10:00:00',
 			'timezone'   => 'UTC',
 			'duration'   => 60,
 		);
 
-		$original_date             = new DateTime( '2023-01-01 10:00', new DateTimeZone( 'UTC' ) );
-		$this->booking->start_time = $original_date->format( 'Y-m-d H:i:s' );
-		$this->booking->slot_time  = 60;
-
-		$this->booking->event = new FakeEventModel();
-
 		FakeEventModel::$mockAvailableSlots = true;
+
+		$end_date = clone $original_date;
+		$end_date->modify( "+{$_POST['duration']} minutes" );
 
 		$wpSendJsonSuccessMock = $this->getFunctionMock( 'QuillBooking\Booking', 'wp_send_json_success' );
 		$wpSendJsonSuccessMock->expects( $this->once() )
@@ -261,22 +308,38 @@ class BookingAjaxTest extends WP_UnitTestCase {
 		$response = json_decode( $output, true );
 
 		$this->assertTrue( $response['success'] );
+		$this->assertEquals( $_POST['start_date'], $newBooking->start_time );
+		$this->assertEquals( $newBooking->end_time, $end_date->format( 'Y-m-d H:i:s' ) );
 		$this->assertEquals( 'Booking rescheduled', $response['data']['message'] );
 	}
-}
 
+	/**
+	 * Test ajax_reschedule_booking method with completed booking
+	 */
+	public function test_ajax_reschedule_booking_completed() {
+		remove_all_actions( 'quillbooking_booking_attendee_rescheduled' );
+		remove_all_actions( 'quillbooking_booking_rescheduled' );
 
+		// throw exception if booking is completed
+		$booking = new FakeBookingModel(
+			array(
+				'id'     => 1,
+				'status' => 'completed',
+			)
+		);
 
-// Mock class for BookingService
-class FakeBookingService {
+		$_POST = array(
+			'id'         => $booking->id,
+			'start_date' => '2023-01-02 10:00',
+			'timezone'   => 'UTC',
+			'duration'   => 60,
+		);
 
-	public function book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $invitee, $location ) {
-		// Mock implementation
-		return new FakeBookingModel();
-	}
-
-	public function validate_invitee( $event, $invitee ) {
-		// Mock implementation
-		return $invitee;
+		ob_start();
+		$this->booking_ajax->ajax_reschedule_booking();
+		$output   = ob_get_clean();
+		$response = json_decode( $output, true );
+		$this->assertFalse( $response['success'] );
+		$this->assertEquals( 'Booking is already completed', $response['data']['message'] );
 	}
 }

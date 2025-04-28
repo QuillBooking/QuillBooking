@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -47,6 +47,10 @@ interface EditorProps {
 export default function Editor({ message, onChange, type }: EditorProps) {
   const [editorActive, setEditorActive] = useState(false);
   const [wordCount, setWordCount] = useState(0);
+  // Keep track of the initial load to prevent resetting content during editing
+  const initialLoadRef = useRef(true);
+  // Store initial message to compare if it changes from parent
+  const initialMessageRef = useRef(message);
 
   const initialConfig = {
     namespace: 'EmailBodyEditor',
@@ -96,6 +100,21 @@ export default function Editor({ message, onChange, type }: EditorProps) {
     }
   }, [editorActive, message]);
 
+  // Check if message was changed externally (not from this editor's onChange)
+  useEffect(() => {
+    // Skip the first render and during active editing
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+
+    // Only update the editor if the message prop changes from an external source
+    // and the editor is not currently focused/active
+    if (!editorActive && message !== initialMessageRef.current) {
+      initialMessageRef.current = message;
+    }
+  }, [message, editorActive]);
+
   return (
     <div className="email-body-editor">
       <LexicalComposer initialConfig={initialConfig}>
@@ -107,13 +126,15 @@ export default function Editor({ message, onChange, type }: EditorProps) {
                 <ContentEditable
                   className="editor-input"
                   onFocus={() => setEditorActive(true)}
+                  onBlur={() => setEditorActive(false)}
                 />
               }
+              placeholder={<div className="editor-placeholder">Enter content here...</div>}
             />
             <OnChangePlugin onChange={handleEditorChange} />
             <HtmlSerializer onChange={handleHtmlChange} />
             <HistoryPlugin />
-            {type == 'email' &&(
+            {type === 'email' && (
               <>
                 <ListPlugin />
                 <LinkPlugin />
@@ -121,7 +142,8 @@ export default function Editor({ message, onChange, type }: EditorProps) {
                 <CheckListPlugin />
               </>
             )}
-            <InitialContentPlugin initialContent={message} />
+            {/* Only load initial content once when the component mounts */}
+            {initialLoadRef.current && <InitialContentPlugin initialContent={initialMessageRef.current} />}
           </div>
           <WordCountPlugin wordCount={wordCount} />
         </div>

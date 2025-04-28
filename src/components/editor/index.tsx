@@ -41,9 +41,10 @@ const theme = {
 interface EditorProps {
   message: string;
   onChange: (html: string) => void;
+  type: string;
 }
 
-export default function Editor({ message, onChange }: EditorProps) {
+export default function Editor({ message, onChange, type }: EditorProps) {
   const [editorActive, setEditorActive] = useState(false);
   const [wordCount, setWordCount] = useState(0);
 
@@ -99,7 +100,7 @@ export default function Editor({ message, onChange }: EditorProps) {
     <div className="email-body-editor">
       <LexicalComposer initialConfig={initialConfig}>
         <div className="editor-container">
-          <ToolbarPlugin />
+          <ToolbarPlugin type={type}/>
           <div className="editor-inner">
             <RichTextPlugin
               contentEditable={
@@ -108,17 +109,18 @@ export default function Editor({ message, onChange }: EditorProps) {
                   onFocus={() => setEditorActive(true)}
                 />
               }
-              placeholder={
-                <div className="editor-placeholder">Type your message here...</div>
-              }
             />
             <OnChangePlugin onChange={handleEditorChange} />
             <HtmlSerializer onChange={handleHtmlChange} />
             <HistoryPlugin />
-            <ListPlugin />
-            <LinkPlugin />
-            <AutoLinkMatchers />
-            <CheckListPlugin />
+            {type == 'email' &&(
+              <>
+                <ListPlugin />
+                <LinkPlugin />
+                <AutoLinkMatchers />
+                <CheckListPlugin />
+              </>
+            )}
             <InitialContentPlugin initialContent={message} />
           </div>
           <WordCountPlugin wordCount={wordCount} />

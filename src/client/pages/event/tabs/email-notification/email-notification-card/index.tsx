@@ -50,7 +50,6 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({
 	setNotifications,
 }) => {
 	const [form] = Form.useForm();
-	const [emails, setEmails] = useState<string[]>([]);
 	const [mergeTagModal, setMergeTagModal] = useState<boolean>(false);
 	const [focused, setFocused] = useState(false);
 	const notification = notifications[notificationKey];
@@ -77,7 +76,7 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({
 
 			form.setFieldsValue(formValues);
 		}
-	}, [notification, notificationKey]);
+	}, []);
 
 	const handleMentionClick = (mention: string) => {
 		const currentValue = form.getFieldValue(['template', 'subject']) || '';
@@ -109,13 +108,12 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({
                             ...notifications[notificationKey].template,
                             ...changedValues?.template,
                         },
-                        recipients: emails,
 					},
 				};
 				setNotifications(updatedSettings);
 				console.log('key ', notificationKey);
 			}, 500),
-		[notifications, notificationKey, emails]
+		[notificationKey]
 	);
 
 	const renderModalContent = () => (
@@ -207,17 +205,12 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({
 					<Editor
 						message={notification?.template?.message || ''}
 						onChange={(content) => {
-							form.setFieldsValue({
-								template: {
-									...form.getFieldValue('template'),
-									message: content,
-								},
-							});
 							handleFormChange({
 								template: { message: content },
                             
 							});
 						}}
+						type='email'
 					/>
 				</div>
 			</Form.Item>
@@ -231,12 +224,11 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({
 						'Enter email addresses separated by commas',
 						'quillbooking'
 					)}
-					emails={emails}
+					emails={notification.recipients}
 					onChange={(_emails: string[]) => {
-						setEmails(_emails);
 						handleFormChange({ recipients: _emails });
 					}}
-					autoFocus={true}
+					autoFocus={false}
 					onFocus={() => setFocused(true)}
 					onBlur={() => setFocused(false)}
 					delimiter={','}

@@ -42,8 +42,8 @@ export interface NotificationsTabHandle {
 
 interface NotificationsTabProps {
 	//notificationType: 'email' | 'sms';
-	disabled?: boolean;
-	setDisabled?: (disabled: boolean) => void;
+	disabled: boolean;
+	setDisabled: (disabled: boolean) => void;
 }
 
 const EmailNotificationTab = forwardRef<
@@ -67,11 +67,11 @@ const EmailNotificationTab = forwardRef<
 	}, [event]);
 
 	// Add this useEffect to ensure notificationSettings gets updated when notificationSettings changes
-	useEffect(() => {
-		if (notificationSettings) {
-			setNotificationSettings(notificationSettings);
-		}
-	}, [notificationSettings]);
+	// useEffect(() => {
+	// 	if (notificationSettings) {
+	// 		setNotificationSettings(notificationSettings);
+	// 	}
+	// }, [notificationSettings]);
 
 	// Expose the saveSettings method through the ref
 	useImperativeHandle(ref, () => ({
@@ -117,9 +117,9 @@ const EmailNotificationTab = forwardRef<
 			console.log('Updated notification settings:', updated);
 
 			// Mark as needing to save if setDisabled is provided
-			if (setDisabled) {
-				setDisabled(false);
-			}
+
+			setDisabled(false);
+
 
 			return updated;
 		});
@@ -146,9 +146,9 @@ const EmailNotificationTab = forwardRef<
 							'quillbooking'
 						)
 					);
-					if (setDisabled) {
-						setDisabled(true);
-					}
+
+					setDisabled(true);
+
 					setNotificationSettings(notificationSettings);
 					console.log(
 						'Notification settings saved successfully',
@@ -213,9 +213,7 @@ const EmailNotificationTab = forwardRef<
 						notificationKey={editingKey}
 						setNotifications={(updatedNotifications) => {
 							setNotificationSettings(updatedNotifications);
-							if (setDisabled) {
-								setDisabled(false);
-							}
+							setDisabled(false);
 						}}
 					/>
 				)}

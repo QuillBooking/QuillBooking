@@ -1,4 +1,4 @@
-import { Card, Flex, Typography } from 'antd';
+import { Card } from 'antd';
 import {
 	CardHeader,
 	EmailNotificationIcon,

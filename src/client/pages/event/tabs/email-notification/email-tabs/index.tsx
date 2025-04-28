@@ -22,7 +22,6 @@ const EmailTabs: React.FC<EmailTabsProps> = ({
 	setEditingKey,
 	editingKey,
 }) => {
-  console.log('adfasdfasdfasdfasdfasdfasdf', editingKey);
 	return (
 		<Card>
 			<CardHeader

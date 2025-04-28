@@ -17,7 +17,7 @@ import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import SmsNotificationCard from './sms-notification-card'; // Fixed the typo in the import
 import { NotificationType } from '@quillbooking/client';
-import { CardHeader, EditNotificationIcon, Header, SmsNotificationIcon } from '@quillbooking/components';
+import { CardHeader, EditNotificationIcon, Header, NoticeComponent, SmsNotificationIcon } from '@quillbooking/components';
 import { BsInfoCircleFill } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
 
@@ -128,27 +128,27 @@ const SmsNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTabPr
 
     return (
         <div className='w-full px-9'>
-            {isConnectionVisible&&(
-            <Card>
-                <CardHeader title={__('Sms Notification', 'quillbooking')}
-                    description={__(
-                        'Customize the sms notifications sent to attendees and organizers',
-                        'quillbooking'
-                    )}
-                    icon={<SmsNotificationIcon />} />
-                <Card className='mt-4 px-4'>
-                    <Flex justify='space-between' align='center'>
-                        <span>{__("You didn't configure twilio yet. Please configure it.", "quillbooking")}</span>
-                        <Button type="primary"
-                            size="middle"
-                            onClick={() => {setConnected(true); setIsConnectionVisible(false)}}
-                            loading={loading}
-                            className='rounded-lg font-[500] text-white bg-color-primary'>
-                            {__("Connect to Twilio", "quillbooking")}
-                        </Button>
-                    </Flex>
+            {isConnectionVisible && (
+                <Card>
+                    <CardHeader title={__('Sms Notification', 'quillbooking')}
+                        description={__(
+                            'Customize the sms notifications sent to attendees and organizers',
+                            'quillbooking'
+                        )}
+                        icon={<SmsNotificationIcon />} />
+                    <Card className='mt-4 px-4'>
+                        <Flex justify='space-between' align='center'>
+                            <span>{__("You didn't configure twilio yet. Please configure it.", "quillbooking")}</span>
+                            <Button type="primary"
+                                size="middle"
+                                onClick={() => { setConnected(true); setIsConnectionVisible(false) }}
+                                loading={loading}
+                                className='rounded-lg font-[500] text-white bg-color-primary'>
+                                {__("Connect to Twilio", "quillbooking")}
+                            </Button>
+                        </Flex>
+                    </Card>
                 </Card>
-            </Card>
             )}
             {connected && (
                 <div className='grid grid-cols-2 gap-5'>
@@ -160,20 +160,10 @@ const SmsNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTabPr
                             )}
                             icon={<SmsNotificationIcon />} />
                         <div className='mt-4'>
-                            {isNoticeVisible && (
-                                <Flex className='justify-between items-start border py-3 px-5 mb-4 bg-[#FBFBFB] border-[#E0E0E0]'>
-                                    <Flex vertical>
-                                        <Flex className='items-baseline gap-2'>
-                                            <BsInfoCircleFill className='text-[#727C88] text-[14px]' />
-                                            <span className='text-[#727C88] text-[16px] font-semibold'>{__("Notice", "quillbooking")}</span>
-                                        </Flex>
-                                        <span className='text-[#999999]'>{__("You can Choose the settings for each one and change its internal settings.", "quillbooking")}</span>
-                                    </Flex>
-                                    <IoClose
-                                        onClick={() => setNoticeVisible(false)}
-                                        className='text-[#727C88] text-[18px] cursor-pointer pt-1'
-                                    />
-                                </Flex>)}
+                            <NoticeComponent
+                                isNoticeVisible={isNoticeVisible}
+                                setNoticeVisible={setNoticeVisible}
+                            />
                             {newNotificationSettings &&
                                 Object.entries(newNotificationSettings).map(([key, _notification], index) => {
                                     return (

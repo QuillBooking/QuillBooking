@@ -20,6 +20,7 @@ const NotificationRow: React.FC<NotificationRowProps> = ({
 		<div
 			key={noticationKey}
 			onClick={() => setEditingKey(changedKey === noticationKey ? null : noticationKey)}
+			className='mt-4'
 		>
 			<Card
 				style={{

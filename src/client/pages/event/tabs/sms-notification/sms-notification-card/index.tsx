@@ -13,7 +13,7 @@ import { Card, Switch, Button, Modal, Input, Form, InputNumber, Typography, Radi
  * External dependencies
  */
 import { NotificationType } from '@quillbooking/client';
-import { Header, MergeTagModal, UrlIcon } from '@quillbooking/components';
+import { Editor, Header, MergeTagModal, UrlIcon } from '@quillbooking/components';
 import Mentions from '../../../../../../components/editor/mentions';
 
 const { TextArea } = Input;
@@ -75,7 +75,7 @@ const SmsNotificationCard: React.FC<NotificationCardProps> = ({ notifications, n
             }
             if (changedValues.template.type !== undefined) {
                 // Store the type value in the subject field (based on your code structure)
-                updatedNotifications[notificationKey].template.subject = changedValues.template.type;
+                updatedNotifications[notificationKey].template.type = changedValues.template.type;
             }
         }
 
@@ -109,18 +109,33 @@ const SmsNotificationCard: React.FC<NotificationCardProps> = ({ notifications, n
                                 <span className="text-[#09090B] text-[16px] font-semibold w-[540px]">
                                     {__('SMS Body', 'quillbooking')}
                                 </span>
-                                <div className='bg-[#EEEEEE] p-2 rounded-lg border border-[#D3D4D6]' onClick={() => setMergeTagModal(true)}>
+                                {/* <div className='bg-[#EEEEEE] p-2 rounded-lg border border-[#D3D4D6]' onClick={() => setMergeTagModal(true)}>
                                     <UrlIcon />
-                                </div>
+                                </div> */}
                             </Flex>
                         }
                         name={['template', 'message']}
                         rules={[{ required: true, message: __('Message is required', 'quillbooking') }]}
                         className='w-full mb-5'
                     >
-                        <TextArea
+                        {/* <TextArea
                             autoSize={{ minRows: 4 }}
                             className='mt-2 rounded-lg'
+                        /> */}
+                       <Editor message={notification?.template?.message || ''}
+						onChange={(content) => {
+							form.setFieldsValue({
+								template: {
+									...form.getFieldValue('template'),
+									message: content,
+								},
+							});
+							handleFormChange({
+								template: { message: content },
+                            
+							});
+						}}
+                        type='sms'
                         />
                     </Form.Item>
                     <Form.Item

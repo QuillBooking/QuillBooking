@@ -25,7 +25,11 @@ import Attachments from "./attachments";
 import AddingShortCode from "./adding-shortcode";
 import { Flex } from 'antd';
 
-export const ToolbarPlugin = () => {
+interface ToolbarProps{
+  type:string;
+}
+
+export const ToolbarPlugin = ({type}:ToolbarProps) => {
   const [editor] = useLexicalComposerContext();
   const [activeEditor, setActiveEditor] = useState(editor);
   const [isBold, setIsBold] = useState(false);
@@ -191,34 +195,41 @@ export const ToolbarPlugin = () => {
   );
 
   return (
-      <Flex
-        gap={15}
-        justify='center'
-        align='center'
-        wrap
-        className="toolbar p-5 bg-white border-b border-b-[#e0e0e0] text-[#52525B]"
-      >
-        {/* Paragraph format & Font family */}
-        <FontEditing
-          activeEditor={activeEditor}
-          paragraphFormat={paragraphFormat}
-          handleFormatChange={handleFormatChange}
-          fontFamily={fontFamily}
-          onFontFamilyChange={onFontFamilyChange}
-          updateToolbar={updateToolbar}
-        />
+    <Flex
+      gap={15}
+      justify='center'
+      align='center'
+      wrap
+      className="toolbar p-5 bg-white border-b border-b-[#e0e0e0] text-[#52525B]"
+    >
+      {type == 'email' && (
+        <>
+          {/* Paragraph format & Font family */}
+          < FontEditing
+            activeEditor={activeEditor}
+            paragraphFormat={paragraphFormat}
+            handleFormatChange={handleFormatChange}
+            fontFamily={fontFamily}
+            onFontFamilyChange={onFontFamilyChange}
+            updateToolbar={updateToolbar}
+          />
 
-        {/* Link and Image */}
-        <Attachments activeEditor={activeEditor} />
+          {/* Link and Image */}
+          <Attachments activeEditor={activeEditor} />
+        </>
+      )}
 
-        {/* Add Shortcodes Button - Positioned to the right */}
-        <AddingShortCode activeEditor={activeEditor} />
+      {/* Add Shortcodes Button - Positioned to the right */}
+      <AddingShortCode activeEditor={activeEditor} />
+      {type == 'email' && (
+        <>
+          {/* Lists */}
+          <ListStyles activeEditor={activeEditor} />
 
-        {/* Lists */}
-        <ListStyles activeEditor={activeEditor} />
-
-        {/* Alignment */}
-        <AlignmentStyles activeEditor={activeEditor} />
-      </Flex>
+          {/* Alignment */}
+          <AlignmentStyles activeEditor={activeEditor} />
+        </>
+      )}
+    </Flex>
   );
 };

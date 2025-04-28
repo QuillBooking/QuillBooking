@@ -1,7 +1,12 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect, forwardRef, useImperativeHandle } from '@wordpress/element';
+import {
+	useState,
+	useEffect,
+	forwardRef,
+	useImperativeHandle,
+} from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -17,252 +22,209 @@ import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import NotificationCard from './email-notification-card';
 import { NotificationType } from '@quillbooking/client';
-import { EditNotificationIcon, EmailNotificationIcon, Header, SmsNotificationIcon } from '@quillbooking/components';
-import { BsInfoCircleFill } from "react-icons/bs";
-import { IoClose } from "react-icons/io5";
+import {
+	CardHeader,
+	EditNotificationIcon,
+	EmailNotificationIcon,
+	Header,
+	SmsNotificationIcon,
+} from '@quillbooking/components';
+import { BsInfoCircleFill } from 'react-icons/bs';
+import { IoClose } from 'react-icons/io5';
 import EmailNotificationCard from './email-notification-card';
+import EmatilTabs from './email-tabs';
+import EmailTabs from './email-tabs';
+import OtherNotifications from './other-notifications';
 
 export interface NotificationsTabHandle {
-  saveSettings: () => Promise<void>;
+	saveSettings: () => Promise<void>;
 }
 
 interface NotificationsTabProps {
-  //notificationType: 'email' | 'sms';
-  disabled?: boolean;
-  setDisabled?: (disabled: boolean) => void;
+	//notificationType: 'email' | 'sms';
+	disabled: boolean;
+	setDisabled: (disabled: boolean) => void;
 }
 
-const EmailNotificationTab = forwardRef<NotificationsTabHandle, NotificationsTabProps>(({ disabled, setDisabled }, ref) => {
-    const { state: event } = useEventContext();
-    const { callApi, loading } = useApi();
-    const { successNotice, errorNotice } = useNotice();
-    const [notificationSettings, setNotificationSettings] = useState<Record<string, NotificationType> | null>(null);
-    const [newNotificationSettings, setNewNotificationSettings] = useState<any>(null);
-    const [editingKey, setEditingKey] = useState<string | null>(null);
-    const [isNoticeVisible, setNoticeVisible] = useState(true);
+const EmailNotificationTab = forwardRef<
+	NotificationsTabHandle,
+	NotificationsTabProps
+>(({ disabled, setDisabled }, ref) => {
+	const { state: event } = useEventContext();
+	const { callApi, loading } = useApi();
+	const { successNotice, errorNotice } = useNotice();
+	const [notificationSettings, setNotificationSettings] = useState<Record<
+		string,
+		NotificationType
+	> | null>(null);
+	// const [notificationSettings, setNotificationSettings] =
+	// 	useState<any>(null);
+	const [editingKey, setEditingKey] = useState<string | null>(null);
+	const [isNoticeVisible, setNoticeVisible] = useState(true);
 
-    // Expose the saveSettings method through the ref
-    useImperativeHandle(ref, () => ({
-        saveSettings: async () => {
-            if (notificationSettings) {
-                return saveNotificationSettings(newNotificationSettings);
-            }
-            return Promise.resolve();
-        }
-    }));
+	useEffect(() => {
+		fetchNotificationSettings();
+	}, [event]);
 
-    useEffect(() => {
-        fetchNotificationSettings();
-    }, [event]);
+	// Add this useEffect to ensure notificationSettings gets updated when notificationSettings changes
+	// useEffect(() => {
+	// 	if (notificationSettings) {
+	// 		setNotificationSettings(notificationSettings);
+	// 	}
+	// }, [notificationSettings]);
 
-    const fetchNotificationSettings = () => {
-        if (!event) {
-            return;
-        }
-        callApi({
-            path: `events/${event.id}/meta/email_notifications`,
-            method: 'GET',
-            onSuccess(response: Record<string, NotificationType>) {
-                setNotificationSettings(response);
-            },
-            onError(error) {
-                errorNotice(error.message);
-            },
-        });
-    };
+	// Expose the saveSettings method through the ref
+	useImperativeHandle(ref, () => ({
+		saveSettings: async () => {
+			if (notificationSettings) {
+				return saveNotificationSettings();
+			}
+			return Promise.resolve();
+		},
+	}));
 
-    const handleSwitchChange = (checked, key) => {
-        setNewNotificationSettings(prev => {
-            if (!prev) return prev;
+	const fetchNotificationSettings = () => {
+		if (!event) {
+			return;
+		}
+		callApi({
+			path: `events/${event.id}/meta/email_notifications`,
+			method: 'GET',
+			onSuccess(response: Record<string, NotificationType>) {
+				setNotificationSettings(response);
+			},
+			onError(error) {
+				errorNotice(error.message);
+			},
+		});
+	};
 
-            const updated = {
-                ...prev,
-                [key]: {
-                    ...prev[key],
-                    default: checked,
-                }
-            };
-            
-            // Mark as needing to save if setDisabled is provided
-            if (setDisabled) {
-                setDisabled(false);
-            }
-            
-            return updated;
-        });
-    };
+	const handleSwitchChange = (checked, key) => {
+		console.log('Toggle switch changed:', checked, key);
 
-    const saveNotificationSettings = async (settings: Record<string, NotificationType>) => {
-        if (!event) return Promise.reject('No event found');
-        
-        return new Promise<void>((resolve, reject) => {
-            callApi({
-                path: `events/${event.id}`,
-                method: 'POST',
-                data: {
-                    [`email_notifications`]: settings,
-                },
-                onSuccess() {
-                    successNotice(__('Notification settings saved successfully', 'quillbooking'));
-                    if (setDisabled) {
-                        setDisabled(true);
-                    }
-                    setNotificationSettings(newNotificationSettings);
-                    resolve();
-                },
-                onError(error) {
-                    errorNotice(error.message);
-                    reject(error);
-                },
-            });
-        });
-    };
+		setNotificationSettings((prev) => {
+			if (!prev) return prev;
 
-    if (loading || !notificationSettings) {
-        return <Card title={__('Notifications', 'quillbooking')} loading />;
-    }
+			// Create a complete copy with all existing values
+			const updated = { ...prev };
 
-    return (
-        <div className='grid grid-cols-2 gap-5 px-9'>
-            <Card>
-                <Flex gap={10} className='items-center border-b pb-4 mb-4'>
-                            <div className='bg-[#EDEDED] rounded-lg p-2' >
-                                <EmailNotificationIcon />
-                            </div>
-                            <Header header={__('Email Notification', 'quillbooking')}
-                                subHeader={__(
-                                    'Customize the email notifications sent to attendees and organizers',
-                                    'quillbooking'
-                                )} />
-                </Flex>
-                {isNoticeVisible && (
-                    <Flex className='justify-between items-start border py-3 px-5 mb-4 bg-[#FBFBFB] border-[#E0E0E0]'>
-                        <Flex vertical>
-                            <Flex className='items-baseline gap-2'>
-                                <BsInfoCircleFill className='text-[#727C88] text-[14px]' />
-                                <span className='text-[#727C88] text-[16px] font-semibold'>{__("Notice", "quillbooking")}</span>
-                            </Flex>
-                            <span className='text-[#999999]'>{__("You can Choose the settings for each one and change its internal settings.", "quillbooking")}</span>
-                        </Flex>
-                        <IoClose
-                            onClick={() => setNoticeVisible(false)}
-                            className='text-[#727C88] text-[18px] cursor-pointer pt-1'
-                        />
-                    </Flex>)}
-                {notificationSettings &&
-                    Object.entries(notificationSettings).map(([key, _notification], index) => {
-                        if (index >= 8) return null;
+			// Update just the default property for this notification
+			updated[key] = {
+				...updated[key],
+				default: checked,
+			};
 
-                        return (
-                            <div key={key} onClick={() => setEditingKey(editingKey === key ? null : key)}>
-                                <Card
-                                    style={{ marginBottom: 16, cursor: 'pointer' }}
-                                    className={editingKey === key ? 'border border-color-primary bg-color-secondary' : 'border'}
-                                >
-                                    <Flex gap={10}>
-                                        <Flex vertical>
-                                            <Flex gap={15}>
-                                                <Typography.Title level={5} className='text-[#09090B] text-[20px] font-[500] m-0'>
-                                                    {_notification.label}
-                                                </Typography.Title>
-                                                {_notification.default && (
-                                                    <span className='bg-color-primary text-white rounded-lg text-[11px] pt-[3px] px-2 h-[22px] mt-[7px]'>
-                                                        {__('ENABLED', 'quillbooking')}
-                                                    </span>
-                                                )}
-                                            </Flex>
-                                            <span className='text-[#625C68] text-[14px]'>
-                                                {__('This SMS will be sent to the attendee if phone number is provided during booking.', 'quillbooking')}
-                                            </span>
-                                        </Flex>
-                                    </Flex>
-                                </Card>
-                            </div>
-                        );
-                    })}
-            </Card>
-            <Card>
-                <Flex className='justify-between items-center border-b pb-4 mb-4'>
-                    <Flex gap={10} className='items-center'>
-                        <div className='bg-[#EDEDED] rounded-lg p-2' >
-                            <EditNotificationIcon />
-                        </div>
-                        <Header header={__('Edit', 'quillbooking')}
-                            subHeader={__(
-                                'Booking Confirmation Email to Attendee',
-                                'quillbooking'
-                            )} />
+			console.log('Updated notification settings:', updated);
 
-                    </Flex>
-                    {editingKey && (
-                        <Switch
-                            checked={notificationSettings[editingKey]?.default}
-                            loading={loading}
-                            onChange={(checked) => handleSwitchChange(checked, editingKey)}
-                            className={notificationSettings[editingKey]?.default ? "bg-color-primary" : "bg-gray-400"}
-                        />
-                    )}
-                </Flex>
-                {editingKey && notificationSettings[editingKey] && (
-                    <EmailNotificationCard
-                        key={editingKey}
-                        notifications={notificationSettings}
-                        notificationKey={editingKey}
-                        eventId={event?.id || 0}
-                        setNotifications={(updatedNotifications) => {
-                            setNewNotificationSettings(updatedNotifications);
-                            if (setDisabled) {
-                                setDisabled(false);
-                            }
-                        }}
-                    />
-                )}
-            </Card>
-            <Card>
-                <Flex gap={10} className='items-center border-b pb-4 mb-4'>
-                    <div className='bg-[#EDEDED] rounded-lg p-2' >
-                        <EmailNotificationIcon />
-                    </div>
-                    <Header header={__('Other Notification', 'quillbooking')}
-                        subHeader={__(
-                            'Optimize your email notifications for confirmations and declines',
-                            'quillbooking'
-                        )} />
-                </Flex>
-                {notificationSettings &&
-                    Object.entries(notificationSettings).map(([key, _notification], index) => {
-                        if (index < 8) return null; // Skip items 9-12 here
+			// Mark as needing to save if setDisabled is provided
 
-                        return (
-                            <div key={key} onClick={() => setEditingKey(editingKey === key ? null : key)}>
-                                <Card
-                                    style={{ marginBottom: 16, cursor: 'pointer' }}
-                                    className={editingKey === key ? 'border border-color-primary bg-color-secondary' : 'border'}
-                                >
-                                    <Flex>
-                                        <Flex vertical>
-                                            <Flex gap={15}>
-                                                <Typography.Title level={5} className='text-[#09090B] text-[20px] font-[500] m-0'>
-                                                    {_notification.label}
-                                                </Typography.Title>
-                                                {_notification.default && (
-                                                    <span className='bg-color-primary text-white rounded-lg text-[11px] pt-[3px] px-2 h-[22px] mt-[7px]'>
-                                                        {__('ENABLED', 'quillbooking')}
-                                                    </span>
-                                                )}
-                                            </Flex>
-                                            <span className='text-[#625C68] text-[14px]'>
-                                                {__('This SMS will be sent to the attendee if phone number is provided during booking.', 'quillbooking')}
-                                            </span>
-                                        </Flex>
-                                    </Flex>
-                                </Card>
-                            </div>
-                        );
-                    })}
-            </Card>
-        </div>
-    );
+			setDisabled(false);
+
+
+			return updated;
+		});
+	};
+
+	const saveNotificationSettings = async () => {
+		if (!event || !notificationSettings)
+			return Promise.reject('No event or settings found');
+
+		console.log('before save method', notificationSettings);
+		return new Promise<void>((resolve, reject) => {
+			callApi({
+				path: `events/${event.id}`,
+				method: 'POST',
+				data: {
+					[`email_notifications`]: notificationSettings,
+				},
+				onSuccess() {
+					console.log('before success message', notificationSettings);
+
+					successNotice(
+						__(
+							'Notification settings saved successfully',
+							'quillbooking'
+						)
+					);
+
+					setDisabled(true);
+
+					setNotificationSettings(notificationSettings);
+					console.log(
+						'Notification settings saved successfully',
+						notificationSettings
+					);
+					resolve();
+				},
+				onError(error) {
+					errorNotice(error.message);
+					reject(error);
+				},
+			});
+		});
+	};
+
+	if (loading || !notificationSettings) {
+		return <Card title={__('Notifications', 'quillbooking')} loading />;
+	}
+
+	return (
+		<div className="grid grid-cols-2 gap-5 px-9">
+			<EmailTabs
+				isNoticeVisible={isNoticeVisible}
+				setNoticeVisible={setNoticeVisible}
+				notificationSettings={notificationSettings}
+				setEditingKey={setEditingKey}
+				editingKey={editingKey}
+			/>
+			<Card>
+				<Flex className="justify-between items-center border-b mb-4">
+					<CardHeader
+						title={__('Edit', 'quillbooking')}
+						description={__(
+							'Booking Confirmation Email to Attendee',
+							'quillbooking'
+						)}
+						icon={<EditNotificationIcon />}
+						border={false}
+					/>
+					{editingKey && (
+						<Switch
+							checked={
+								notificationSettings?.[editingKey]?.default ||
+								false
+							}
+							loading={loading}
+							onChange={(checked) =>
+								handleSwitchChange(checked, editingKey)
+							}
+							className={
+								notificationSettings?.[editingKey]?.default
+									? 'bg-color-primary'
+									: 'bg-gray-400'
+							}
+						/>
+					)}
+				</Flex>
+				{editingKey && notificationSettings[editingKey] && (
+					<EmailNotificationCard
+						key={editingKey}
+						notifications={notificationSettings}
+						notificationKey={editingKey}
+						setNotifications={(updatedNotifications) => {
+							setNotificationSettings(updatedNotifications);
+							setDisabled(false);
+						}}
+					/>
+				)}
+			</Card>
+			<OtherNotifications
+				notificationSettings={notificationSettings}
+				setEditingKey={setEditingKey}
+				editingKey={editingKey}
+			/>
+		</div>
+	);
 });
 
 export default EmailNotificationTab;

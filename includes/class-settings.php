@@ -61,7 +61,7 @@ class Settings {
 	public static function delete( $key ) {
 		$settings = self::get_all();
 		unset( $settings[ $key ] );
-		return self::update_all( $settings );
+		return update_option( self::OPTION_NAME, $settings );
 	}
 
 	/**
@@ -86,19 +86,6 @@ class Settings {
 	public static function update_many( $new_settings ) {
 		$old_settings = self::get_all();
 		$settings     = array_replace( $old_settings, $new_settings );
-		return self::update_all( $settings );
-	}
-
-	/**
-	 * Update all settings
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array $settings Settings.
-	 * @return boolean
-	 */
-	public static function update_all( $settings ) {
-		update_option( 'quillbooking-flush-rewrite-rules', 1 );
 		return update_option( self::OPTION_NAME, $settings );
 	}
 

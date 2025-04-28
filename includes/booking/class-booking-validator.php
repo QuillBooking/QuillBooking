@@ -35,6 +35,7 @@ class Booking_Validator {
 		}
 
 		$booking = Booking_Model::getByHashId( $id );
+
 		if ( ! $booking ) {
 			throw new \Exception( __( 'Invalid booking', 'quillbooking' ) );
 		}
@@ -82,6 +83,11 @@ class Booking_Validator {
 		$start = new DateTime( $start_date, new DateTimeZone( $timezone ) );
 		$now   = new DateTime( 'now', new DateTimeZone( $timezone ) );
 
+		ob_start();
+		var_dump( $start->getTimestamp() );
+		$output = ob_get_clean();
+		fwrite( STDERR, $output );
+
 		if ( $start->getTimestamp() < $now->getTimestamp() ) {
 			throw new \Exception( __( 'Invalid start date', 'quillbooking' ) );
 		}
@@ -99,11 +105,12 @@ class Booking_Validator {
 	 */
 	public static function validate_duration( $duration, $default_duration = null ) {
 		$duration = intval( $duration );
+
 		if ( ! $duration ) {
 			$duration = $default_duration;
 		}
 
-		if ( ! $duration ) {
+		if ( ! $duration || $duration <= 0 ) {
 			throw new \Exception( __( 'Invalid duration', 'quillbooking' ) );
 		}
 

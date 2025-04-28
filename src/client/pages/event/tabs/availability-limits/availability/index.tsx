@@ -7,38 +7,63 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card } from 'antd';
+import { Card, Flex, Switch } from 'antd';
 import dayjs from 'dayjs';
 
 /**
  * Internal dependencies
  */
-import type {
-	Availability,
-	AvailabilityRange,
-	DateOverrides,
-} from '@quillbooking/client';
+import {
+	CalendarTickIcon,
+	CardHeader,
+	Schedule,
+} from '@quillbooking/components';
+import { OverridesSection, RangeSection } from './sections';
 import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
+import { Availability, AvailabilityRange, DateOverrides } from 'client/types';
 import { useEventContext } from '../../../state/context';
-import { AvailabilitySection } from './sections';
+import AvailabilityType from './availability-type';
+import SelectSchedule from './select-schedule';
 
-
-const AvailabilityTab: React.FC = () => {
-	const [range, setRange] = useState<AvailabilityRange | null>(null);
-	const [availability, setAvailability] = useState<Availability | null>(null);
-	const [lastAvailability, setLastAvailability] = useState<Availability | null>(null);
+interface AvailabilitySectionProps {
+	availabilityType: 'existing' | 'custom';
+	setAvailabilityType: (type: 'existing' | 'custom') => void;
+	customAvailability: Availability;
+	setAvailability: (availability: Availability) => void;
+	setReservetimes: (value: boolean) => void;
+	setRange: (range: AvailabilityRange) => void;
+	setDateOverrides: (overrides: DateOverrides) => void;
+	availability: Availability;
+	range: AvailabilityRange;
+	dateOverrides: DateOverrides;
+	reservetimes: boolean;
+	setDisabled: (value: boolean) => void;
+}
+const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
+	availabilityType,
+	setAvailabilityType,
+	customAvailability,
+	setAvailability,
+	setReservetimes,
+	setRange,
+	setDateOverrides,
+	availability,
+	range,
+	dateOverrides,
+	reservetimes,
+	setDisabled,
+}) => {
+	const [lastAvailability, setLastAvailability] =
+		useState<Availability>(customAvailability);
 	const storedAvailabilities = ConfigAPI.getAvailabilities();
-	const [isCustomAvailability, setIsCustomAvailability] = useState(false);
-	const [dateOverrides, setDateOverrides] = useState<DateOverrides | null>(
-		null
-	);
-
 	const { state: event } = useEventContext();
 	const { callApi, loading } = useApi();
-	const { successNotice, errorNotice } = useNotice();
+	const { errorNotice } = useNotice();
+	const [commonSchedule, setCommonSchedule] = useState<boolean>(false);
+	// const [selectedCard, setSelectedCard] = useState(null);
+	// const [isCustomAvailability, setIsCustomAvailability] = useState(false);
 
-	// Fetch availability data
 	const fetchAvailability = () => {
 		if (!event) return;
 
@@ -49,6 +74,12 @@ const AvailabilityTab: React.FC = () => {
 				availability: Availability;
 				range: AvailabilityRange;
 			}) {
+				// TODO: update to handle team too
+				setAvailabilityType(
+					response.availability.type === 'custom'
+						? 'custom'
+						: 'existing'
+				);
 				setAvailability(response.availability);
 				setLastAvailability(response.availability);
 				setRange(response.range);
@@ -60,101 +91,169 @@ const AvailabilityTab: React.FC = () => {
 		});
 	};
 
-	useEffect(fetchAvailability, [event]);
-
-	// Handle saving changes
-	const handleSave = () => {
-		if (!event) return;
-
-		const updatedAvailability = {
-			...availability,
-			override: dateOverrides,
-		};
-		console.log(updatedAvailability);
-
-		callApi({
-			path: `events/${event.id}`,
-			method: 'POST',
-			data: {
-				availability: updatedAvailability,
-			},
-			onSuccess() {
-				successNotice(__('Settings saved successfully', 'quillbooking'));
-			},
-			onError(error) {
-				errorNotice(error.message);
-			},
-		});
-
+	const handleToggle = (value: boolean) => {
+		setReservetimes(value);
+		setDisabled(false);
 	};
 
+	const onRangeTypeChange = (type) => {
+		setDisabled(false);
+		setRange({
+			type,
+			days: type === 'days' ? (range.days ? range.days : 60) : undefined,
+			start_date:
+				type === 'date_range'
+					? range.start_date
+						? range.start_date
+						: dayjs().format('YYYY-MM-DD')
+					: undefined,
+			end_date:
+				type === 'date_range'
+					? range.end_date
+						? range.end_date
+						: dayjs().add(90, 'days').format('YYYY-MM-DD')
+					: undefined,
+		});
+	};
 
-	if (loading || !availability || !range) {
+	const onDaysChange = (days) => {
+		setDisabled(false);
+		setRange({ ...range, days });
+	};
+
+	const onDateRangeChange = (start_date, end_date) => {
+		setDisabled(false);
+		setRange({ ...range, start_date, end_date });
+	};
+
+	const onCustomAvailabilityChange = (day, field, value) => {
+		setDisabled(false);
+		const updatedAvailability = { ...availability };
+		if (field === 'off') {
+			updatedAvailability.weekly_hours[day].off = value;
+		} else {
+			updatedAvailability.weekly_hours[day].times = value;
+		}
+		setAvailability(updatedAvailability);
+	};
+
+	const onAvailabilityChange = (id) => {
+		setDisabled(false);
+		const selected = Object.values(storedAvailabilities).find(
+			(a) => a.id === id
+		);
+		if (selected) {
+			setAvailability(selected);
+			setDateOverrides(selected.override);
+			setLastAvailability(selected);
+		}
+	};
+	useEffect(fetchAvailability, [event]);
+
+	const onAvailabilityTypeChange = (value) => {
+		setAvailabilityType(value);
+		setAvailability(
+			value === 'custom'
+				? customAvailability
+				: (event?.hosts?.[0]?.availabilities
+					? Object.values(event.hosts[0].availabilities)[0]
+					: lastAvailability)
+		);
+		setDateOverrides({});
+		setDisabled(false);
+	};
+
+	if (loading) {
 		return <Card loading />;
 	}
-
 	return (
-		<>
-			<AvailabilitySection
-				isCustomAvailability={isCustomAvailability}
-				hosts={event?.hosts}
-				availability={availability}
-				storedAvailabilities={storedAvailabilities}
-				onAvailabilityChange={(id) => {
-					const selected = storedAvailabilities.find(
-						(a) => a.id === id
-					);
-					if (selected) {
-						setAvailability(selected);
-						setDateOverrides(selected.override);
-						setIsCustomAvailability(false);
-						setLastAvailability(selected);
-					}
-				}}
-				onCustomAvailabilityChange={(day, field, value) => {
-					const updatedAvailability = { ...availability };
-					if (field === 'off') {
-						updatedAvailability.weekly_hours[day].off =
-							value;
-					} else {
-						updatedAvailability.weekly_hours[day].times =
-							value;
-					}
-					setAvailability(updatedAvailability);
-				}}
-				onToggleCustomAvailability={() =>
-					setIsCustomAvailability(!isCustomAvailability)
-				}
-				range={range}
-				onRangeTypeChange={(type) => {
-					setRange({
-						type,
-						days: type === 'days' ? (range.days ? range.days : 60) : undefined,
-						start_date:
-							type === 'date_range'
-								?
-								(range.start_date ? range.start_date : dayjs().format('YYYY-MM-DD'))
-								: undefined,
-						end_date:
-							type === 'date_range'
-								?
-								(range.end_date ? range.end_date : dayjs()
-									.add(90, 'days')
-									.format('YYYY-MM-DD'))
-								: undefined,
-					});
-				}}
-				onDaysChange={(days) => setRange({ ...range, days })}
-				onDateRangeChange={(start_date, end_date) =>
-					setRange({ ...range, start_date, end_date })
-				}
-				dateOverrides={dateOverrides}
-				lastPickedAvailability={lastAvailability}
-				setAvailability={setAvailability}
-				setDateOverrides={setDateOverrides}
+		<Card className="rounded-lg">
+			<CardHeader
+				title={__('Availability', 'quillbooking')}
+				description={__(
+					'Control your availability nd Works time at different time of days',
+					'quillbooking'
+				)}
+				icon={<CalendarTickIcon />}
 			/>
-		</>
+
+			{(commonSchedule || event?.calendar.type === 'host') && (
+				<AvailabilityType
+					availabilityType={availabilityType}
+					handleAvailabilityTypeChange={onAvailabilityTypeChange}
+				/>
+			)}
+
+			{availabilityType === 'existing' && (
+				<>
+					<SelectSchedule
+						availability={availability}
+						hosts={event?.hosts || []}
+						onAvailabilityChange={onAvailabilityChange}
+						title={__(
+							'Which Schedule Do You Want to Use?',
+							'quillbooking'
+						)}
+					/>
+					<p className="text-[#71717A] text-[14px] py-2">
+						{__(
+							'Changing the availability here will affect the original availability settings. If you wish to set a separate schedule, please select the Custom Availability option.',
+							'quillbooking'
+						)}
+					</p>
+				</>
+			)}
+
+			<Card className="mt-4 pt-4">
+				<Schedule
+					availability={
+						availabilityType === 'custom'
+							? customAvailability
+							: availability
+					}
+					onCustomAvailabilityChange={onCustomAvailabilityChange}
+				/>
+			</Card>
+
+			<OverridesSection
+				dateOverrides={dateOverrides}
+				setDateOverrides={setDateOverrides}
+				setDisabled={setDisabled}
+			/>
+
+			<Card className="border-none">
+				<RangeSection
+					range={range}
+					onRangeTypeChange={onRangeTypeChange}
+					onDaysChange={onDaysChange}
+					onDateRangeChange={onDateRangeChange}
+				/>
+			</Card>
+
+			<Card className="mt-6">
+				<Flex className="items-center">
+					<Flex vertical gap={1}>
+						<div className="text-[#09090B] text-[20px]">
+							{__('Reserve Times', 'quillbooking')}
+						</div>
+						<div className="text-[#232325] text-[16px]">
+							{__(
+								'Enable to reserve selected times for this event only. When disabled, times remain available and may disappear if booked by others.',
+								'quillbooking'
+							)}
+						</div>
+					</Flex>
+					<Switch
+						checked={reservetimes}
+						onChange={handleToggle}
+						className={
+							reservetimes ? 'bg-color-primary' : 'bg-gray-400'
+						}
+					/>
+				</Flex>
+			</Card>
+		</Card>
 	);
 };
 
-export default AvailabilityTab;
+export default AvailabilitySection;

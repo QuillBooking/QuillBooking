@@ -751,7 +751,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			throw new Exception( __( 'Team members are required', 'quillbooking' ), 400 );
 		}
 
-		$valid_members = Calendar_Model::whereIn( 'ID', $members )
+		$valid_members = Calendar_Model::whereIn( 'user_id', $members )
 			->where( 'type', 'host' )
 			->pluck( 'ID' );
 

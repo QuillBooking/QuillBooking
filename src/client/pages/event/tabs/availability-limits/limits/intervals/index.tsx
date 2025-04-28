@@ -13,7 +13,7 @@ const timeOptions = [
   }),
 ];
 
-const TimeSlotIntervals: React.FC<TimeSlotIntervalsProps> = ({settings, handleChange}) => {
+const TimeSlotIntervals: React.FC<TimeSlotIntervalsProps> = ({limits, handleChange}) => {
   return (
     <Flex gap={10} vertical className='mt-4'>
     <div className="text-[#09090B] text-[16px]">
@@ -21,7 +21,7 @@ const TimeSlotIntervals: React.FC<TimeSlotIntervalsProps> = ({settings, handleCh
         <span className='text-red-500'>*</span>
     </div>
     <Select
-        value={settings.general.time_slot}
+        value={limits.general.time_slot}
         options={timeOptions}
         onChange={(value) => handleChange('general', 'time_slot', value)}
         getPopupContainer={(trigger) => trigger.parentElement}

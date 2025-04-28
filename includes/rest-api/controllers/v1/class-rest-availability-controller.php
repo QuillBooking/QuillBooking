@@ -498,12 +498,12 @@ class REST_Availability_Controller extends REST_Controller {
 
 		$availability = Availabilities::get_availability( $id );
 
-		if ( 'system' === $availability['user_id'] ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete the default availability.', 'quill-booking' ), array( 'status' => 400 ) );
-		}
-
 		if ( ! $availability ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 404 ) );
+		}
+
+		if ( 'system' === $availability['user_id'] ) {
+			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete the default availability.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
 
 		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {

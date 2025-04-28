@@ -22,14 +22,14 @@ interface BookingDurationProps extends LimitBaseProps {
   setBookingDuration: (val: any) => void;
 }
 
-const BookingDuration: React.FC<BookingDurationProps> = ({ settings, handleChange, addLimit, removeLimit, unitOptions, setBookingDuration }) => {
+const BookingDuration: React.FC<BookingDurationProps> = ({ limits, handleChange, addLimit, removeLimit, unitOptions, setBookingDuration }) => {
 
   return (
     <Card className='mt-4'>
       <Flex vertical gap={20}>
         <LimitCard
           handleChange={handleChange}
-          settings={settings}
+          limits={limits}
           title={__("Limit Booking Duration", "quillbooking")}
           description={__("Limit how long this event can be booked for.", "quillbooking")}
           type='duration'
@@ -38,7 +38,7 @@ const BookingDuration: React.FC<BookingDurationProps> = ({ settings, handleChang
         <LimitRow
           addLimit={addLimit}
           removeLimit={removeLimit}
-          settings={settings}
+          limits={limits}
           handleChange={handleChange}
           unitOptions={unitOptions}
           setBookingState={setBookingDuration}

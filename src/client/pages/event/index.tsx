@@ -212,7 +212,13 @@ const Event: React.FC = () => {
 		{
 			key: 'availability',
 			label: __('Availability & Limits', 'quillbooking'),
-			children: <AvailabilityLimits />,
+			children: (
+				<AvailabilityLimits
+					ref={childRef}
+					setDisabled={setSaveDisabled}
+					disabled={saveDisabled}
+				/>
+			),
 			icon: <AvailabilityIcon />,
 		},
 		{
@@ -230,23 +236,27 @@ const Event: React.FC = () => {
 		{
 			key: 'email-notifications',
 			label: __('Email Notification', 'quillbooking'),
-			children: <EmailNotificationTab
-				//notificationType="email"
-				ref={childRef}
-				disabled={saveDisabled}
-				setDisabled={setSaveDisabled}
-			/>,
+			children: (
+				<EmailNotificationTab
+					//notificationType="email"
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			),
 			icon: <EmailNotiIcon />,
 		},
 		{
 			key: 'sms-notifications',
 			label: __('SMS Notification', 'quillbooking'),
-			children: <Notifications
-				notificationType="sms"
-				ref={childRef}
-				disabled={saveDisabled}
-				setDisabled={setSaveDisabled}
-			/>,
+			children: (
+				<Notifications
+					notificationType="sms"
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			),
 			icon: <SmsNotiIcon />,
 		},
 		{
@@ -342,7 +352,7 @@ const Event: React.FC = () => {
 				open={open}
 				onClose={handleClose}
 				fullScreen
-				className='z-[1000000000000000000]'
+				className="z-[1000000000000000000]"
 			>
 				<DialogTitle className="border-b" sx={{ padding: '10px 16px' }}>
 					<Flex className="justify-between items-center">
@@ -401,10 +411,11 @@ const Event: React.FC = () => {
 								onClick={handleSave}
 								loading={loading}
 								disabled={saveDisabled}
-								className={`rounded-lg font-[500] text-white ${saveDisabled
-									? 'bg-gray-400 cursor-not-allowed'
-									: 'bg-color-primary '
-									}`}
+								className={`rounded-lg font-[500] text-white ${
+									saveDisabled
+										? 'bg-gray-400 cursor-not-allowed'
+										: 'bg-color-primary '
+								}`}
 							>
 								{__('Save Changes', 'quillbooking')}
 							</Button>

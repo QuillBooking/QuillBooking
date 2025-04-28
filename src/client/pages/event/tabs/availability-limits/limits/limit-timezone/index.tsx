@@ -17,7 +17,7 @@ import SelectTimezone from './select-timezone';
 interface SelectTimezoneProps extends LimitBaseProps {
 }
 
-const TimezoneSection: React.FC<SelectTimezoneProps> = ({ settings, handleChange }) => {
+const TimezoneSection: React.FC<SelectTimezoneProps> = ({ limits, handleChange }) => {
   return (
     <Card className='mt-4'>
       <Flex className='items-center justify-between px-[20px] mb-4'>
@@ -30,13 +30,13 @@ const TimezoneSection: React.FC<SelectTimezoneProps> = ({ settings, handleChange
           </div>
         </Flex>
         <Switch
-          checked={settings.timezone_lock.enable}
+          checked={limits.timezone_lock.enable}
           onChange={(checked) => handleChange('timezone_lock', 'enable', checked)}
-          className={settings.timezone_lock.enable ? "bg-color-primary" : "bg-gray-400"}
+          className={limits.timezone_lock.enable ? "bg-color-primary" : "bg-gray-400"}
         />
       </Flex>
-      {settings.timezone_lock.enable && (
-        <SelectTimezone settings={settings} handleChange={handleChange} />
+      {limits.timezone_lock.enable && (
+        <SelectTimezone limits={limits} handleChange={handleChange} />
       )}
     </Card>
   )

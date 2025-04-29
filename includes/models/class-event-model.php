@@ -248,6 +248,16 @@ class Event_Model extends Model {
 	}
 
 	/**
+	 * Set the event limits
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setLimitsAttribute( $value ) {
+		$this->update_meta( 'limits', $value );
+	}
+
+	/**
 	 * Get the event limits
 	 *
 	 * @return array
@@ -266,6 +276,7 @@ class Event_Model extends Model {
 		$this->update_meta( 'reserve_times', $value );
 	}
 
+
 	/**
 	 * Get the event reserve times
 	 *
@@ -275,15 +286,26 @@ class Event_Model extends Model {
 		return $this->get_meta( 'reserve_times', array() );
 	}
 
+
 	/**
-	 * Set the event limits
+	 * Get the event team members
+	 *
+	 * @return array
+	 */
+	public function getTeamMembersAttribute() {
+		return $this->get_meta( 'team_members', array() );
+	}
+
+	/**
+	 * Set the event team members
 	 *
 	 * @param array $value
 	 * @return void
 	 */
-	public function setLimitsAttribute( $value ) {
-		$this->update_meta( 'limits', $value );
+	public function setTeamMembersAttribute( $value ) {
+		$this->update_meta( 'team_members', $value );
 	}
+
 
 	/**
 	 * Get the event email notifications

@@ -129,10 +129,16 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
             return;
         }
 
+        // Transform event.hosts to an array of ids
+        const transformedEvent = {
+            ...event,
+            hosts: event.hosts?.map(host => host.id) || []
+        };
+
         callApi({
             path: 'events',
             method: 'POST',
-            data: event,
+            data: transformedEvent,
             onSuccess: (response: Event) => {
                 successNotice(__('Event created successfully', 'quillbooking'));
                 navigate(`calendars/${calendarId}/events/${response.id}`, {

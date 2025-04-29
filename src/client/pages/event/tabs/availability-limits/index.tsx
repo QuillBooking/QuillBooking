@@ -1,9 +1,17 @@
+/**
+ * WordPress dependencies
+ */
 import {
 	forwardRef,
 	useEffect,
 	useImperativeHandle,
 	useState,
 } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
+
+/**
+ * Internal dependencies
+ */
 import AvailabilitySection from './availability';
 import EventLimits from './limits';
 import {
@@ -15,8 +23,8 @@ import {
 	UnitOptions as UnitOptionsType,
 	EventLimits as EventLimitsType,
 	LimitUnit,
+	CustomAvailability,
 } from 'client/types';
-import { __ } from '@wordpress/i18n';
 import { getCurrentTimezone } from '@quillbooking/utils';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
 import { useEventContext } from '../../state/context';
@@ -25,8 +33,6 @@ import { useApi, useNotice } from '@quillbooking/hooks';
 const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 	(props, ref) => {
 		const customAvailability = {
-			id: 'custom',
-			user_id: 'custom',
 			name: __('Custom', 'quillbooking'),
 			timezone: getCurrentTimezone(),
 			weekly_hours: DEFAULT_WEEKLY_HOURS,
@@ -44,13 +50,16 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 			'existing' | 'custom'
 		>('existing');
 		const [reservetimes, setReservetimes] = useState<boolean>(false);
-		const [availability, setAvailability] =
-			useState<Availability>(customAvailability);
+		const [availability, setAvailability] = useState<
+			Availability | CustomAvailability
+		>(customAvailability);
 		const [range, setRange] = useState<AvailabilityRange>({
 			type: 'days',
 			days: 5,
 		});
 		const [dateOverrides, setDateOverrides] = useState<DateOverrides>({});
+		const [commonSchedule, setCommonSchedule] = useState<boolean>(false);
+		const [teamAvailability, setTeamAvailability] = useState();
 
 		// Limits state
 		const [bookingDurationOptions, setBookingDurationOptions] =
@@ -115,17 +124,27 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 				saveEventDetails();
 			},
 		}));
-
 		const saveEventDetails = () => {
+			const eventHostavailability = {
+				...availability,
+				type: availabilityType,
+				override: dateOverrides,
+				...(commonSchedule ? { is_common: commonSchedule } : {}),
+			};
+
+			const eventTeamAvailability = {
+				users_availability: teamAvailability,
+				type: availabilityType,
+				is_common: commonSchedule,
+			};
 			callApi({
 				path: `events/${event?.id}`,
 				method: 'PUT',
 				data: {
-					availability: {
-						...availability,
-						type: availabilityType,
-						override: dateOverrides,
-					},
+					availability:
+						event?.calendar?.type === 'team' && !commonSchedule
+							? { ...eventTeamAvailability }
+							: { ...eventHostavailability },
 					limits,
 					event_range: range,
 					reserve_times: reservetimes,
@@ -153,6 +172,10 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 					setReservetimes={setReservetimes}
 					reservetimes={reservetimes}
 					setDisabled={props.setDisabled}
+					setCommonSchedule={setCommonSchedule}
+					commonSchedule={commonSchedule}
+					teamAvailability={teamAvailability}
+					setTeamAvailability={setTeamAvailability}
 				/>
 				<EventLimits
 					bookingDurationOptions={bookingDurationOptions}

@@ -83,7 +83,7 @@ export type Event = {
 		outlook: ConnectedIntegrationsFields;
 		twilio: ConnectedIntegrationsFields;
 		zoom: ConnectedIntegrationsFields;
-	  };
+	};
 };
 
 export type AdditionalSettings = {
@@ -121,9 +121,7 @@ export type DateOverrides = {
 	[date: string]: TimeSlot[];
 };
 
-export type Availability = {
-	id: string;
-	user_id: string | number;
+export interface CustomAvailability {
 	name: string;
 	weekly_hours: WeeklyHours;
 	override: DateOverrides;
@@ -132,6 +130,11 @@ export type Availability = {
 	events_count?: number;
 	is_default?: boolean;
 	type?: 'custom' | 'existing';
+	is_common?: boolean;
+}
+export interface Availability extends CustomAvailability {
+	id: string;
+	user_id: string | number;
 };
 
 export type AvailabilityRange = {
@@ -291,6 +294,7 @@ export type User = {
 export type Host = {
 	id: number;
 	name: string;
+	image: string;
 	availabilities?: {
 		[key: string]: Availability;
 	};

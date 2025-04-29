@@ -25,7 +25,7 @@ import { get, isEmpty, map } from 'lodash';
  * Internal Dependencies
  */
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
-import { CardHeader, Header, PaymentIcon, ProductSelect } from '@quillbooking/components';
+import { AlertIcon, CardHeader, Header, PaymentIcon, ProductSelect } from '@quillbooking/components';
 import ConfigAPI from '@quillbooking/config';
 import { useEventContext } from '../../state/context';
 import './style.scss';
@@ -329,10 +329,10 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                             return (
                                 <>
                                     <Form.Item name="type">
-                                        <Flex vertical gap={2}>
-                                            <div className="text-[#09090B] font-semibold text-[16px]">
+                                        <Flex vertical gap={4}>
+                                            <div className="text-[#3F4254] font-semibold text-[16px]">
                                                 {__(
-                                                    'Discount Type',
+                                                    'Checkout Method',
                                                     'quillbooking'
                                                 )}
                                             </div>
@@ -361,9 +361,6 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                                                 </Radio>
                                                 <Radio
                                                     value="woocommerce"
-                                                    disabled={
-                                                        !isWooCommerceEnabled
-                                                    }
                                                     className={`custom-radio border w-1/2 rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
                                                 ${selectedValue === 'woocommerce'
                                                             ? 'bg-color-secondary border-color-primary'
@@ -378,14 +375,10 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                                             </Radio.Group>
                                         </Flex>
                                     </Form.Item>
-                                    {type === 'woocommerce' &&
-                                        isWooCommerceEnabled && (
+                                    {type === 'woocommerce' && (
+                                        true ? (
                                             <Form.Item
                                                 name="woo_product"
-                                                label={__(
-                                                    'WooCommerce Product',
-                                                    'quillbooking'
-                                                )}
                                                 rules={[
                                                     {
                                                         required: true,
@@ -395,10 +388,11 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                                                         ),
                                                     },
                                                 ]}
+                                                className='mt-6'
                                             >
-                                                <div className="text-[#09090B] text-[16px]">
+                                                <Flex vertical gap={4}>
+                                                <div className="text-[#3F4254] font-semibold text-[16px]">
                                                     {__("Select WooCommerce Product", "quillbooking")}
-                                                    <span className='text-red-500'>*</span>
                                                 </div>
                                                 <ProductSelect
                                                     placeholder={__(
@@ -420,9 +414,23 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                                                         ) || 0
                                                     }
                                                 />
+                                                <span className='text-[#71717A] text-[16px] font-medium'>{__("The selected product will be used for checkout in WooCommerce. The amount will be equal to the selected product pricing.","quillbooking")}</span>
+                                                </Flex>
                                             </Form.Item>
+                                        ) : (
+                                            <Flex gap={20} align='center' className='border-2 border-[#FF3B30] border-dashed bg-[#FBF9FC] rounded-lg py-4 pl-6 mt-5'>
+                                                <div className='text-[#FF3B30]'>
+                                                    <AlertIcon />
+                                                </div>
+                                                <Flex vertical gap={3}>
+                                                    <span className='text-[#3F4254] text-[15px] font-semibold'>{__("Need to Activate WooCommerce!", "quillbooking")}</span>
+                                                    <span className='text-[#71717A] text-[13px] font-medium'>{__("You Need to Activate WooCommerce Plugin, Please ", "quillbooking")}
+                                                        <a className='text-color-primary no-underline font-semibold'>{__('Click here to Activate.', 'quillbooking')}</a>
+                                                    </span>
+                                                </Flex>
+                                            </Flex>
                                         )
-                                    }
+                                    )}
                                     {type === 'native' && (
                                         <>
                                             <Form.Item name="payment_methods" className='mt-5'>

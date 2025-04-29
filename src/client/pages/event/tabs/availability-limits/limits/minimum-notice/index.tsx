@@ -23,7 +23,7 @@ const unitOptions = [
   { label: __('Days', 'quillbooking'), value: 'days' },
 ];
 
-const MinimunmNotice: React.FC<MinimumNoticeProps> = ({ settings, handleChange }) => {
+const MinimunmNotice: React.FC<MinimumNoticeProps> = ({ limits, handleChange }) => {
   return (
     <Flex gap={10} vertical className='mt-4'>
       <div className="text-[#09090B] text-[16px]">
@@ -33,12 +33,12 @@ const MinimunmNotice: React.FC<MinimumNoticeProps> = ({ settings, handleChange }
       <Flex gap={5} className='w-full'>
         <InputNumber
           controls={false}
-          value={settings.general.minimum_notices}
+          value={limits.general.minimum_notices}
           onChange={(value) => handleChange('general', 'minimum_notices', value)}
           className='h-[48px] rounded-lg w-3/4 pt-2'
         />
         <Select
-          value={settings.general.minimum_notice_unit}
+          value={limits.general.minimum_notice_unit}
           options={unitOptions}
           onChange={(value) => handleChange('general', 'minimum_notice_unit', value)}
           getPopupContainer={(trigger) => trigger.parentElement}

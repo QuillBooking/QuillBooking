@@ -22,15 +22,13 @@ interface BookingFrequencyProps extends LimitBaseProps {
     setBookingFrequency: (val: any) => void;
 }
 
-const BookingFrequency: React.FC<BookingFrequencyProps> = ({ settings, handleChange, addLimit, removeLimit, unitOptions, setBookingFrequency }) => {
-
-    console.log('settings,', settings);
+const BookingFrequency: React.FC<BookingFrequencyProps> = ({ limits, handleChange, addLimit, removeLimit, unitOptions, setBookingFrequency }) => {
     return (
         <Card className='mt-4'>
             <Flex vertical gap={20}>
                 <LimitCard
                     handleChange={handleChange}
-                    settings={settings}
+                    limits={limits}
                     title={__("Limit Booking Frequency", "quillbooking")}
                     description={__("Limit how many times this event can be booked.", "quillbooking")}
                     type='frequency'
@@ -38,7 +36,7 @@ const BookingFrequency: React.FC<BookingFrequencyProps> = ({ settings, handleCha
                 <LimitRow
                     addLimit={addLimit}
                     removeLimit={removeLimit}
-                    settings={settings}
+                    limits={limits}
                     handleChange={handleChange}
                     unitOptions={unitOptions}
                     setBookingState={setBookingFrequency}

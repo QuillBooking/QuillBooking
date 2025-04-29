@@ -39,11 +39,12 @@ import { Provider } from './state/context';
 import Calendar from '../calendar';
 import {
 	EventDetails,
-	Notifications,
+	Availability,
 	AdvancedSettings,
 	Payments,
 	WebhookFeeds,
 	EmailNotificationTab,
+	SmsNotificationTab,
 } from './tabs';
 import {
 	Box,
@@ -57,6 +58,12 @@ import { IoCloseSharp } from 'react-icons/io5';
 import ShareModal from '../calendars/share-modal';
 import EventFieldsTab from './tabs/fields';
 import AvailabilityLimits from './tabs/availability-limits';
+import { useLocation } from 'react-router-dom';
+
+interface NoticeType {
+	title: string;
+	message: string;
+  }
 
 const Event: React.FC = () => {
 	const {
@@ -77,6 +84,15 @@ const Event: React.FC = () => {
 	const [checked, setChecked] = useState(true);
 	const [modalShareId, setModalShareId] = useState<string | null>(null);
 	const [saveDisabled, setSaveDisabled] = useState(true);
+	const location = useLocation();
+	const [notice, setNotice] = useState<NoticeType | null>(null);
+
+	useEffect(() => {
+    if (location.state?.notice) {
+      setNotice(location.state.notice);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
 	const navigate = useNavigate();
 	const setBreadcrumbs = useBreadcrumbs();
@@ -205,6 +221,8 @@ const Event: React.FC = () => {
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
+					notice={notice} 
+					clearNotice={() => setNotice(null)}
 				/>
 			) : null,
 			icon: <CalendarsIcon />,
@@ -212,7 +230,13 @@ const Event: React.FC = () => {
 		{
 			key: 'availability',
 			label: __('Availability & Limits', 'quillbooking'),
-			children: <AvailabilityLimits />,
+			children: (
+				<AvailabilityLimits
+					ref={childRef}
+					setDisabled={setSaveDisabled}
+					disabled={saveDisabled}
+				/>
+			),
 			icon: <AvailabilityIcon />,
 		},
 		{
@@ -231,7 +255,6 @@ const Event: React.FC = () => {
 			key: 'email-notifications',
 			label: __('Email Notification', 'quillbooking'),
 			children: <EmailNotificationTab
-				//notificationType="email"
 				ref={childRef}
 				disabled={saveDisabled}
 				setDisabled={setSaveDisabled}
@@ -241,8 +264,7 @@ const Event: React.FC = () => {
 		{
 			key: 'sms-notifications',
 			label: __('SMS Notification', 'quillbooking'),
-			children: <Notifications
-				notificationType="sms"
+			children: <SmsNotificationTab
 				ref={childRef}
 				disabled={saveDisabled}
 				setDisabled={setSaveDisabled}
@@ -342,7 +364,7 @@ const Event: React.FC = () => {
 				open={open}
 				onClose={handleClose}
 				fullScreen
-				className='z-[1000000000000000000]'
+				className="z-[1000000000000000000]"
 			>
 				<DialogTitle className="border-b" sx={{ padding: '10px 16px' }}>
 					<Flex className="justify-between items-center">
@@ -401,10 +423,11 @@ const Event: React.FC = () => {
 								onClick={handleSave}
 								loading={loading}
 								disabled={saveDisabled}
-								className={`rounded-lg font-[500] text-white ${saveDisabled
-									? 'bg-gray-400 cursor-not-allowed'
-									: 'bg-color-primary '
-									}`}
+								className={`rounded-lg font-[500] text-white ${
+									saveDisabled
+										? 'bg-gray-400 cursor-not-allowed'
+										: 'bg-color-primary '
+								}`}
 							>
 								{__('Save Changes', 'quillbooking')}
 							</Button>

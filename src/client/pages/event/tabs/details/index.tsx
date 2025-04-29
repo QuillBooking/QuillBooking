@@ -7,7 +7,7 @@ import { forwardRef, Ref, useEffect, useImperativeHandle, useState } from '@word
 /**
  * External dependencies
  */
-import { Card, Flex, Skeleton } from 'antd';
+import { Button, Card, Flex, Skeleton } from 'antd';
 
 /**
  * Internal dependencies
@@ -21,18 +21,23 @@ import LivePreview from './live-preview';
 import Duration from './duration';
 import { CardHeader, EventLocIcon } from '@quillbooking/components';
 import { EventFieldsTabHandle } from 'client/types';
+import { IoClose } from 'react-icons/io5';
+import { FaCheckCircle } from "react-icons/fa";
+
 
 /**
  * Event General Settings Component.
  */
 interface EventDetailsProps {
     onKeepDialogOpen: () => void;
+    notice: { title: string; message: string } | null;
+    clearNotice: () => void;
     disabled: boolean;
     setDisabled: (disabled: boolean) => void;
 }
 
 const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
-    ({ onKeepDialogOpen, disabled, setDisabled }, ref) => {
+    ({ onKeepDialogOpen, notice, clearNotice, disabled, setDisabled }, ref) => {
         const { state: event, actions } = useEventContext();
         const { callApi, loading } = useApi();
         const { successNotice, errorNotice } = useNotice();
@@ -124,8 +129,23 @@ const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
         };
 
         return (
-            <>
-                <div className='px-9 grid grid-cols-2 gap-5'>
+            <div className='w-full px-9'>
+                {notice && (
+                    <Flex className='justify-between items-start border py-3 px-5 mb-4 bg-[#0EA4731A] border-[#0EA473] rounded-lg'>
+                        <Flex vertical>
+                            <Flex className='items-baseline gap-2'>
+                                <FaCheckCircle className='text-[#0EA473] text-[14px]' />
+                                <span className='text-[#0EA473] text-[16px] font-semibold'>{notice.title}</span>
+                            </Flex>
+                            <span className='text-[#0EA473]'>{notice.message}</span>
+                        </Flex>
+                        <IoClose
+                            onClick={clearNotice}
+                            className='text-[#0F5032] text-[18px] cursor-pointer pt-1'
+                        />
+                    </Flex>
+                )}
+                <div className='grid grid-cols-2 gap-5'>
                     <Flex vertical gap={20}>
                         <EventInfo
                             name={event.name}
@@ -170,17 +190,18 @@ const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
                                     </div>
                                 </Flex>
                                 <Flex vertical gap={15}>
-                                    <Locations 
-                                        locations={event.location} 
-                                        onChange={(updatedLocations) => handleChange('location', updatedLocations)} 
-                                        onKeepDialogOpen={onKeepDialogOpen} 
+                                    <Locations
+                                        locations={event.location}
+                                        connected_integrations={event.connected_integrations}
+                                        onChange={(updatedLocations) => handleChange('location', updatedLocations)}
+                                        onKeepDialogOpen={onKeepDialogOpen}
                                     />
                                 </Flex>
                             </Flex>
                         </Card>
                     </Flex>
                 </div>
-            </>
+            </div>
         );
     }
 );

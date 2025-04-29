@@ -19,7 +19,7 @@ interface EventBufferProps extends LimitBaseProps {
   type: 'buffer_before' | 'buffer_after';
   title: string;
 }
-const EventBuffer: React.FC<EventBufferProps> = ({ settings, handleChange, type, title }) => {
+const EventBuffer: React.FC<EventBufferProps> = ({ limits, handleChange, type, title }) => {
   const marks = [
     { value: 0, label: <span className='absolute left-0'>{__("0 Minutes", "quillbooking")}</span> },
     { value: 120, label: <span className='absolute right-0'>{__("120 Minutes", "quillbooking")}</span> },
@@ -34,7 +34,7 @@ const EventBuffer: React.FC<EventBufferProps> = ({ settings, handleChange, type,
       </div>
       <Card className='rounded-lg py-2'>
         <Slider
-          value={settings.general[type]}
+          value={limits.general[type]}
           onChange={(_, newValue) => handleChange("general", type, newValue)}
           step={5}
           min={0}

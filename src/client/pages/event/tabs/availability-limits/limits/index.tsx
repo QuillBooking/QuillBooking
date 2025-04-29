@@ -2,7 +2,6 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
 
 /**
  * External dependencies
@@ -12,10 +11,14 @@ import { Card, Skeleton } from 'antd';
 /**
  * Internal dependencies
  */
-import type { EventLimits as EventLimitsType, LimitUnit, UnitOption as UnitOptionType, UnitOptions as UnitOptionsType } from '@quillbooking/client';
+import { SetStateAction } from 'react';
+import type {
+	EventLimits as EventLimitsType,
+	LimitUnit,
+	UnitOption as UnitOptionType,
+	UnitOptions as UnitOptionsType,
+} from '@quillbooking/client';
 import { CardHeader, OutlinedClockIcon } from '@quillbooking/components';
-import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
-import { useEventContext } from '../../../state/context';
 import TimezoneSection from './limit-timezone';
 import BookingFrequency from './booking-frequency';
 import BookingDuration from './booking-duration';
@@ -23,222 +26,200 @@ import EventBuffer from './event-buffer';
 import MinimunmNotice from './minimum-notice';
 import TimeSlotIntervals from './intervals';
 
-
-const UnitOptions = {
-    days: { label: __('Day', 'quillbooking'), disabled: false },
-    weeks: { label: __('Week', 'quillbooking'), disabled: false },
-    months: { label: __('Month', 'quillbooking'), disabled: false },
-};
+interface EventLimitsProps {
+	limits: EventLimitsType | null;
+	setLimits: (limits: SetStateAction<EventLimitsType | null>) => void;
+	bookingDurationOptions: UnitOptionsType;
+	setBookingDurationOptions: (
+		options: SetStateAction<UnitOptionsType>
+	) => void;
+	bookingFrequencyOptions: UnitOptionsType;
+	setBookingFrequencyOptions: (
+		options: SetStateAction<UnitOptionsType>
+	) => void;
+	setDisabled: (value: boolean) => void;
+}
 /**
- * Event General Settings Component.
+ * Event limits Component.
  */
-const EventLimits: React.FC = () => {
-    const { state: event, actions } = useEventContext();
-    const { callApi, loading } = useApi();
-    const { successNotice, errorNotice } = useNotice();
-    const [settings, setSettings] = useState<EventLimitsType | null>(null);
-    const [bookingDuration, setBookingDuration] = useState<UnitOptionsType>(UnitOptions);
-    const [bookingFrequency, setBookingFrequency] = useState<UnitOptionsType>(UnitOptions);
-    const setBreadcrumbs = useBreadcrumbs();
+const EventLimits: React.FC<EventLimitsProps> = ({
+	limits,
+	setLimits,
+	bookingDurationOptions,
+	bookingFrequencyOptions,
+	setBookingDurationOptions,
+	setBookingFrequencyOptions,
+	setDisabled,
+}) => {
+	const handleChange = (
+		section: keyof EventLimitsType,
+		key: string,
+		value: any
+	) => {
+		setDisabled(false);
+		setLimits((prev) =>
+			prev
+				? { ...prev, [section]: { ...prev[section], [key]: value } }
+				: prev
+		);
+	};
 
-    const fetchSettings = () => {
-        if (!event) return;
+	const addLimit = (section: 'frequency' | 'duration') => {
+		// Choose which map to use
+		const bookingState =
+			section === 'duration'
+				? bookingDurationOptions
+				: bookingFrequencyOptions;
 
-        callApi({
-            path: `events/${event.id}/meta/limits`,
-            method: 'GET',
-            onSuccess(response: EventLimitsType) {
-                setSettings(response);
-                setBookingDuration(prev => {
-                    const updatedOptions = { ...prev };
-                    response.duration.limits.forEach((limit) => {
-                        if (updatedOptions[limit.unit as LimitUnit]) {
-                            updatedOptions[limit.unit as LimitUnit].disabled = true;
-                        }
-                    });
-                    return updatedOptions;
-                });
+		// Build an array of { value, label, disabled } for only the enabled ones
+		const available = (
+			Object.entries(bookingState) as [LimitUnit, UnitOptionType][]
+		)
+			.filter(([_, opt]) => !opt.disabled)
+			.map(([value, opt]) => ({ value, ...opt }));
 
-                setBookingFrequency(prev => {
-                    const updatedOptions = { ...prev };
-                    response.frequency.limits.forEach((limit) => {
-                        if (updatedOptions[limit.unit as LimitUnit]) {
-                            updatedOptions[limit.unit as LimitUnit].disabled = true;
-                        }
-                    });
-                    return updatedOptions;
-                });
-            },
-            onError(error) {
-                errorNotice(error.message);
-            },
-        });
-    };
+		// Guard: if we have no available options, bail out
+		if (available.length === 0) {
+			return;
+		}
 
-    useEffect(() => {
-        if (!event) {
-            return;
-        }
+		// Pick the next unit
+		const nextUnit = available[0].value;
 
-        fetchSettings();
-        setBreadcrumbs([
-            {
-                path: `calendars/${event.calendar_id}/events/${event.id}/limits`,
-                title: __('Limits', 'quillbooking'),
-            },
-        ]);
-    }, [event]);
+		// 1) Update your limits to add the new limit
+		setLimits((prev) => {
+			if (!prev) return prev;
+			return {
+				...prev,
+				[section]: {
+					...prev[section],
+					limits: [
+						...prev[section].limits,
+						{
+							limit: section === 'duration' ? 120 : 5,
+							unit: nextUnit,
+						},
+					],
+				},
+			};
+		});
 
-    const handleSave = () => {
-        if (!event) return;
+		// 2) Disable that unit in the corresponding booking map
+		if (section === 'duration') {
+			setBookingDurationOptions((prev) => ({
+				...prev,
+				[nextUnit]: {
+					...prev[nextUnit],
+					disabled: true,
+				},
+			}));
+		} else {
+			setBookingFrequencyOptions((prev) => ({
+				...prev,
+				[nextUnit]: {
+					...prev[nextUnit],
+					disabled: true,
+				},
+			}));
+		}
+	};
 
-    };
+	const removeLimit = (section: 'frequency' | 'duration', index: number) => {
+		// First, capture the unit we're removing so we can re-enable it
+		const unitBeingRemoved = limits?.[section].limits[index]?.unit;
 
-    const handleChange = (section: keyof EventLimitsType, key: string, value: any) => {
-        setSettings((prev) =>
-            prev ? { ...prev, [section]: { ...prev[section], [key]: value } } : prev
-        );
-    };
+		setLimits((prev) => {
+			if (!prev) return prev;
+			const updatedLimits = [...prev[section].limits];
+			updatedLimits.splice(index, 1);
+			return {
+				...prev,
+				[section]: {
+					...prev[section],
+					limits: updatedLimits.length
+						? updatedLimits
+						: [{ limit: 1, unit: 'days' }], // Ensure at least one limit
+				},
+			};
+		});
 
-    const addLimit = (section: 'frequency' | 'duration') => {
-        // Choose which map to use
-        const bookingState = section === 'duration'
-            ? bookingDuration
-            : bookingFrequency
+		// Re-enable the unit in the corresponding booking state
+		if (unitBeingRemoved) {
+			if (section === 'duration') {
+				setBookingDurationOptions((prev) => ({
+					...prev,
+					[unitBeingRemoved]: {
+						...prev[unitBeingRemoved],
+						disabled: false,
+					},
+				}));
+			} else {
+				setBookingFrequencyOptions((prev) => ({
+					...prev,
+					[unitBeingRemoved]: {
+						...prev[unitBeingRemoved],
+						disabled: false,
+					},
+				}));
+			}
+		}
+	};
 
-        // Build an array of { value, label, disabled } for only the enabled ones
-        const available = (Object.entries(bookingState) as [LimitUnit, UnitOptionType][])
-            .filter(([_, opt]) => !opt.disabled)
-            .map(([value, opt]) => ({ value, ...opt }))
+	if (!limits) {
+		return <Skeleton active />;
+	}
 
-        // Guard: if we have no available options, bail out
-        if (available.length === 0) {
-            return
-        }
+	return (
+		<Card className="rounded-lg">
+			<CardHeader
+				title={__('Limits', 'quillbooking')}
+				description={__(
+					'Manage you buffer time before and after events.',
+					'quillbooking'
+				)}
+				icon={<OutlinedClockIcon width={30} height={30} />}
+			/>
 
-        // Pick the next unit
-        const nextUnit = available[0].value;
+			<EventBuffer
+				handleChange={handleChange}
+				limits={limits}
+				type="buffer_before"
+				title={__('Before Event', 'quillbooking')}
+			/>
 
-        // 1) Update your settings to add the new limit
-        setSettings(prev => {
-            if (!prev) return prev
-            return {
-                ...prev,
-                [section]: {
-                    ...prev[section],
-                    limits: [
-                        ...prev[section].limits,
-                        { limit: section === 'duration' ? 120 : 5, unit: nextUnit },
-                    ],
-                },
-            }
-        })
+			<EventBuffer
+				handleChange={handleChange}
+				limits={limits}
+				type="buffer_after"
+				title={__('After Event', 'quillbooking')}
+			/>
 
-        // 2) Disable that unit in the corresponding booking map
-        if (section === 'duration') {
-            setBookingDuration(prev => ({
-                ...prev,
-                [nextUnit]: {
-                    ...prev[nextUnit],
-                    disabled: true,
-                },
-            }))
-        } else {
-            setBookingFrequency(prev => ({
-                ...prev,
-                [nextUnit]: {
-                    ...prev[nextUnit],
-                    disabled: true,
-                },
-            }))
-        }
-    }
+			<MinimunmNotice handleChange={handleChange} limits={limits} />
 
-    const removeLimit = (section: 'frequency' | 'duration', index: number) => {
-        // First, capture the unit we're removing so we can re-enable it
-        const unitBeingRemoved = settings?.[section].limits[index]?.unit;
+			<TimeSlotIntervals
+				handleChange={handleChange}
+				limits={limits}
+			/>
 
-        setSettings((prev) => {
-            if (!prev) return prev;
-            const updatedLimits = [...prev[section].limits];
-            updatedLimits.splice(index, 1);
-            return {
-                ...prev,
-                [section]: {
-                    ...prev[section],
-                    limits: updatedLimits.length ? updatedLimits : [{ limit: 1, unit: 'days' }], // Ensure at least one limit
-                },
-            };
-        });
-
-        // Re-enable the unit in the corresponding booking state
-        if (unitBeingRemoved) {
-            if (section === 'duration') {
-                setBookingDuration(prev => ({
-                    ...prev,
-                    [unitBeingRemoved]: {
-                        ...prev[unitBeingRemoved],
-                        disabled: false,
-                    },
-                }));
-            } else {
-                setBookingFrequency(prev => ({
-                    ...prev,
-                    [unitBeingRemoved]: {
-                        ...prev[unitBeingRemoved],
-                        disabled: false,
-                    },
-                }));
-            }
-        }
-    };
-
-    const saveSettings = () => {
-        console.log(settings);
-    };
-
-    if (!settings) {
-        return <Skeleton active />;
-    }
-
-
-    return (
-        <Card className='rounded-lg'>
-            <CardHeader
-                title={__('Limits', 'quillbooking')}
-                description={__(
-                    'Manage you buffer time before and after events.',
-                    'quillbooking'
-                )}
-                icon={<OutlinedClockIcon width={30} height={30} />}
-            />
-
-            <EventBuffer handleChange={handleChange} settings={settings} type="buffer_before" title={__("Before Event", "quillbooking")} />
-
-            <EventBuffer handleChange={handleChange} settings={settings} type="buffer_after" title={__("After Event", "quillbooking")} />
-
-            <MinimunmNotice handleChange={handleChange} settings={settings} />
-
-            <TimeSlotIntervals handleChange={handleChange} settings={settings} />
-
-            <BookingFrequency
-                settings={settings}
-                handleChange={handleChange}
-                addLimit={addLimit}
-                removeLimit={removeLimit}
-                unitOptions={bookingFrequency} setBookingFrequency={setBookingFrequency}
-            />
-            <BookingDuration
-                settings={settings}
-                handleChange={handleChange}
-                addLimit={addLimit}
-                removeLimit={removeLimit}
-                unitOptions={bookingDuration}
-                setBookingDuration={setBookingDuration}
-            />
-            <TimezoneSection settings={settings} handleChange={handleChange} />
-        </Card>
-    );
+			<BookingFrequency
+				limits={limits}
+				handleChange={handleChange}
+				addLimit={addLimit}
+				removeLimit={removeLimit}
+				unitOptions={bookingFrequencyOptions}
+				setBookingFrequency={setBookingFrequencyOptions}
+			/>
+			<BookingDuration
+				limits={limits}
+				handleChange={handleChange}
+				addLimit={addLimit}
+				removeLimit={removeLimit}
+				unitOptions={bookingDurationOptions}
+				setBookingDuration={setBookingDurationOptions}
+			/>
+			<TimezoneSection limits={limits} handleChange={handleChange} />
+		</Card>
+	);
 };
 
 export default EventLimits;

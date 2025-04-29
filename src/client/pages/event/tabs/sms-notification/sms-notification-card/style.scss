@@ -1,0 +1,116 @@
+/* Message display styles */
+.message-display {
+    background-color: #fff;
+    min-height: 100px;
+    width: 100%;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    padding: 8px;
+    line-height: 1.5;
+    overflow-y: auto;
+}
+
+/* Mention tag styling */
+.mention-tag {
+    color: #333333;
+    background-color: #E3DFF1;
+    padding: 2px 6px;
+    margin: 0 2px;
+    border-radius: 4px;
+    font-weight: 400;
+    border: 1px solid #333333;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mention-icon {
+    display: inline-flex;
+    align-items: center;
+}
+
+.mention-text {
+    display: inline-block;
+}
+
+/* Hidden textarea for form handling */
+.hidden-textarea {
+    display: none;
+}
+
+/* Merge tag button */
+.merge-tag-button {
+    background-color: #EEEEEE;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #D3D4D6;
+    cursor: pointer;
+}
+
+.merge-tag-button:hover {
+    background-color: #E5E5E5;
+}
+
+/* Required marker */
+.required-mark {
+    color: #ff4d4f;
+    margin-left: 4px;
+}
+
+/* Modal icon */
+.modal-icon {
+    background-color: #EDEDED;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+/* Message container */
+.message-container {
+    position: relative;
+    width: 100%;
+}
+
+.message-container {
+    position: relative;
+    
+    .editable-textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 120px;
+    }
+    
+    .message-preview {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px dashed #d9d9d9;
+      border-radius: 6px;
+      background-color: #fafafa;
+    }
+  }
+  
+  /* Styles for the mention tags in the display */
+  .message-display {
+    .mention-tag {
+      display: inline-flex;
+      align-items: center;
+      background-color: #e6f7ff;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin: 0 2px;
+      
+      .mention-icon {
+        display: inline-flex;
+        margin-right: 4px;
+      }
+      
+      .mention-text {
+        color: #1890ff;
+        font-weight: 500;
+      }
+    }
+  }

@@ -12,19 +12,19 @@ interface LimitRowProps extends LimitBaseProps {
   type: 'frequency' | 'duration';
 }
 
-const LimitRow: React.FC<LimitRowProps> = ({ settings, handleChange, addLimit, removeLimit, unitOptions, setBookingState, type }) => {
+const LimitRow: React.FC<LimitRowProps> = ({ limits, handleChange, addLimit, removeLimit, unitOptions, setBookingState, type }) => {
   return (
     <>
-      {settings[type].enable && (
+      {limits[type].enable && (
         <div className='border-t pt-4'>
-          {settings[type].limits.map((limit, index) => (
+          {limits[type].limits.map((limit, index) => (
             <Flex align="center" gap={10} className='w-full mb-4'>
               <InputNumber
                 controls={false}
                 value={limit.limit}
                 min={1}
                 onChange={(value) => {
-                  const updatedLimits = [...settings[type].limits];
+                  const updatedLimits = [...limits[type].limits];
                   updatedLimits[index].limit = Number(value) || (type == 'frequency' ? 1 : 120);
                   handleChange(type, 'limits', updatedLimits);
                 }}
@@ -37,9 +37,9 @@ const LimitRow: React.FC<LimitRowProps> = ({ settings, handleChange, addLimit, r
                 options={Object.entries(unitOptions).map(([key, option]) => ({ value: key, label: option.label, disabled: option.disabled }))}
                 getPopupContainer={(trigger) => trigger.parentElement}
                 onChange={(value) => {
-                  const previousUnit = settings[type].limits[index].unit;
+                  const previousUnit = limits[type].limits[index].unit;
                   const newUnit = value as LimitUnit;
-                  const updatedLimits = [...settings[type].limits];
+                  const updatedLimits = [...limits[type].limits];
                   updatedLimits[index].unit = newUnit;
 
                   handleChange(type, 'limits', updatedLimits);

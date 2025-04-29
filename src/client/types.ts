@@ -38,7 +38,7 @@ export type Calendar = {
 		slug: string;
 		location: Location[];
 		is_disabled: boolean;
-		booking_count:number;
+		booking_count: number;
 	}[];
 	created_at: string;
 	updated_at: string;
@@ -48,6 +48,11 @@ export type Calendar = {
 export type CalendarResponse = Response & {
 	data: Calendar[];
 };
+
+export type ConnectedIntegrationsFields = {
+	name: string;
+	connected: boolean;
+}
 
 export type Event = {
 	id: number;
@@ -70,6 +75,15 @@ export type Event = {
 	additional_settings: AdditionalSettings;
 	hosts?: Host[];
 	fields?: EventMetaData[];
+	availability_data?: Availability,
+	reserve: boolean;
+	connected_integrations: {
+		apple: ConnectedIntegrationsFields;
+		google: ConnectedIntegrationsFields;
+		outlook: ConnectedIntegrationsFields;
+		twilio: ConnectedIntegrationsFields;
+		zoom: ConnectedIntegrationsFields;
+	  };
 };
 
 export type AdditionalSettings = {
@@ -117,6 +131,7 @@ export type Availability = {
 	events?: EventMetaData[];
 	events_count?: number;
 	is_default?: boolean;
+	type?: 'custom' | 'existing';
 };
 
 export type AvailabilityRange = {
@@ -276,6 +291,9 @@ export type User = {
 export type Host = {
 	id: number;
 	name: string;
+	availabilities?: {
+		[key: string]: Availability;
+	};
 };
 
 export type IconProps = {
@@ -284,11 +302,11 @@ export type IconProps = {
 	rectFill?: boolean;
 };
 
-export interface EventFieldsTabHandle {
+export interface EventTabHandle {
 	saveSettings: () => Promise<void>;
 }
 
-export interface EventFieldsTabProps {
+export interface EventTabProps {
 	disabled: boolean;
 	setDisabled: (disabled: boolean) => void;
 }
@@ -327,6 +345,6 @@ export type FieldsGroup = {
 
 
 export interface LimitBaseProps {
-	settings: EventLimits;
-  handleChange: (section: keyof EventLimits, key: string, value: any) => void;
+	limits: EventLimits;
+	handleChange: (section: keyof EventLimits, key: string, value: any) => void;
 }

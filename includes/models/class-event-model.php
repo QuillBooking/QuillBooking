@@ -78,6 +78,7 @@ class Event_Model extends Model {
 		'user_id'     => 'integer',
 		'calendar_id' => 'integer',
 		'is_disabled' => 'boolean',
+		'reserve'     => 'boolean',
 	);
 
 	/**
@@ -253,6 +254,25 @@ class Event_Model extends Model {
 	 */
 	public function getLimitsAttribute() {
 		return $this->get_meta( 'limits', array() );
+	}
+
+	/**
+	 * Set the event reserve times
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setReserveTimesAttribute( $value ) {
+		$this->update_meta( 'reserve_times', $value );
+	}
+
+	/**
+	 * Get the event reserve times
+	 *
+	 * @return array
+	 */
+	public function getReserveTimesAttribute() {
+		return $this->get_meta( 'reserve_times', array() );
 	}
 
 	/**

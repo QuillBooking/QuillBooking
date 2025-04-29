@@ -14,7 +14,7 @@ interface LimitCardProps extends LimitBaseProps {
   type: 'frequency' | 'duration';
 }
 
-const LimitCard: React.FC<LimitCardProps> = ({ settings, handleChange, title, description, type }) => {
+const LimitCard: React.FC<LimitCardProps> = ({ limits, handleChange, title, description, type }) => {
 
   return (
     <Flex className='items-center justify-between px-[20px] mb-4'>
@@ -27,9 +27,9 @@ const LimitCard: React.FC<LimitCardProps> = ({ settings, handleChange, title, de
         </div>
       </Flex>
       <Switch
-        checked={settings[type].enable}
+        checked={limits[type].enable}
         onChange={(checked) => handleChange(type, 'enable', checked)}
-        className={settings[type].enable ? "bg-color-primary" : "bg-gray-400"}
+        className={limits[type].enable ? "bg-color-primary" : "bg-gray-400"}
       />
     </Flex>
   );

@@ -16,7 +16,7 @@ import type { LimitBaseProps } from '@quillbooking/client';
 
 interface SelectTimezoneProps extends LimitBaseProps {
 }
-const SelectTimezone: React.FC<SelectTimezoneProps> = ({ settings, handleChange }) => {
+const SelectTimezone: React.FC<SelectTimezoneProps> = ({ limits, handleChange }) => {
 
   return (
     <Flex vertical gap={10} className='px-[20px]'>
@@ -25,13 +25,13 @@ const SelectTimezone: React.FC<SelectTimezoneProps> = ({ settings, handleChange 
         <span className='text-red-500'>*</span>
       </div>
       <TimezoneSelect
-        value={settings.timezone_lock.timezone}
+        value={limits.timezone_lock.timezone}
         onChange={(value) => handleChange('timezone_lock', 'timezone', value)}
         getPopupContainer={(trigger) => trigger.parentElement}
         className='h-[48px] w-full rounded-lg'
       />
 
-      <CurrentTimeInTimezone className='text-[#71717A]' currentTimezone={settings.timezone_lock.timezone} />
+      <CurrentTimeInTimezone className='text-[#71717A]' currentTimezone={limits.timezone_lock.timezone} />
     </Flex>
   )
 };

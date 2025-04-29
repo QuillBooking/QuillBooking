@@ -120,7 +120,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
     };
 
     const handleSubmit = () => {
-        if (!event.name || !event.description || !event.location || event.location.length === 0) {
+        if (!event.name || !event.location || event.location.length === 0) {
             setValidationErrors({
                 name: !event.name,
                 location: !event.location || event.location.length === 0,
@@ -135,7 +135,14 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
             data: event,
             onSuccess: (response: Event) => {
                 successNotice(__('Event created successfully', 'quillbooking'));
-                navigate(`calendars/${calendarId}/events/${response.id}`);
+                navigate(`calendars/${calendarId}/events/${response.id}`, {
+                    state: {
+                        notice: {
+                            title: 'Complete Your Setup',
+                            message: 'The event has been created successfully. Please complete your event setup and settings to finish.'
+                        }
+                    }
+                });
             },
             onError: (error: string) => {
                 errorNotice(error);
@@ -469,7 +476,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ visible, setVisible, onClose,
                         <Button
                             type="primary"
                             onClick={next}
-                            disabled={current === 0 && !event.type || current === 1 && !event.name && !event.description || current === 2 && !event.location}
+                            disabled={current === 0 && !event.type || current === 1 && !event.name || current === 2 && !event.location}
                             className={`rounded-lg px-12 font-semibold text-[16px] text-white bg-color-primary border-none transition ${current === 0
                                 ? 'w-full' // custom style for step 0
                                 : ''      // other steps

@@ -306,7 +306,7 @@ const Mentions: React.FC<MentionsProps> = ({ onMentionClick }) => {
 
     return (
         <Flex gap={30}>
-            <Card className="w-[648px]">
+            <Card className="w-[450px]">
                 <Flex vertical gap={10}>
                     {DataOptions.map(({ key, icon, title, description }) => (
                         <Flex gap={10}
@@ -327,7 +327,7 @@ const Mentions: React.FC<MentionsProps> = ({ onMentionClick }) => {
                 </Flex>
             </Card>
 
-            <Card className="w-[648px]">
+            <Card className="w-[450px]">
                 {renderCardContent()}
             </Card>
         </Flex>

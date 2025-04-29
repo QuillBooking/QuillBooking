@@ -1,49 +1,46 @@
 <?php
 /**
- * PHPUnit bootstrap file
+ * PHPUnit Bootstrap File
  *
  * @package QuillBooking
  */
+
+/**
+ * Setup autoloader for tests
+ */
+require_once dirname( dirname( __FILE__ ) ) . '/vendor/autoload.php';
 
 // Define plugin-specific constants
 if ( ! defined( 'QUILLBOOKING_PLUGIN_FILE' ) ) {
 	define( 'QUILLBOOKING_PLUGIN_FILE', dirname( dirname( __FILE__ ) ) . '/class-quillbooking.php' );
 }
 
-if ( ! defined( 'QUILLBOOKING_VERSION' ) ) {
-	define( 'QUILLBOOKING_VERSION', '1.0.0' );
+// Make sure we're using the real validator class in tests by loading it first
+if (!class_exists('QuillBooking\Booking\Booking_Validator')) {
+    require_once dirname(dirname(__FILE__)) . '/includes/booking/class-booking-validator.php';
 }
 
-if ( ! defined( 'QUILLBOOKING_PLUGIN_DIR' ) ) {
-	define( 'QUILLBOOKING_PLUGIN_DIR', dirname( dirname( __FILE__ ) ) . '/' );
+// Make sure we're loading utility classes needed by the real BookingValidator
+if (!class_exists('QuillBooking\Utils')) {
+    require_once dirname(dirname(__FILE__)) . '/includes/class-utils.php';
 }
 
-// Get WordPress tests directory from environment variable
+// Ensure the WordPress test suite is available
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
 if ( ! $_tests_dir ) {
-	$_tests_dir = '/tmp/wordpress-tests-lib';
+	$_tests_dir = rtrim( sys_get_temp_dir(), '/\\' ) . '/wordpress-tests-lib';
 }
 
-// Get WordPress directory from environment variable
-$_core_dir = getenv( 'WP_CORE_DIR' );
-if ( ! $_core_dir ) {
-	$_core_dir = '/tmp/wordpress';
-}
-
-// Make sure WordPress test library exists
 if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
-	echo "Could not find $_tests_dir/includes/functions.php, have you run bin/install-wp-tests.sh ?" . PHP_EOL;
+	echo "Could not find $_tests_dir/includes/functions.php, have you run bin/install-wp-tests.sh ?" . PHP_EOL; 
 	exit( 1 );
 }
 
-// Load Composer's autoloader for PSR-4 class loading
-require_once dirname( dirname( __FILE__ ) ) . '/vendor/autoload.php';
-
-// Load the WordPress test functions
+// Include core WordPress files
 require_once $_tests_dir . '/includes/functions.php';
 
 /**
- * Manually load the plugin being tested.
+ * Manually loads the plugin being tested.
  */
 function _manually_load_plugin() {
 	require dirname( dirname( __FILE__ ) ) . '/class-quillbooking.php';

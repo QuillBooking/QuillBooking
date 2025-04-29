@@ -91,6 +91,11 @@ final class Merge_Tags_Manager extends Manager {
 	 * @return string
 	 */
 	public function process_merge_tags( $content, $booking ) {
+		// Return early if content is empty or null to avoid preg_replace_callback warnings
+		if ( empty( $content ) ) {
+			return '';
+		}
+		
 		return preg_replace_callback(
 			'/{{(.*?):(.*?)}}/',
 			function( $matches ) use ( $booking ) {

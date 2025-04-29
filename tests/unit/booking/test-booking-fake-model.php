@@ -232,26 +232,6 @@ class FakeEventModel extends FakeBaseModel {
 }
 
 
-/**
- * Booking Validator
- */
-class FakeBooking_Validator {
-
-
-	public static function validate_booking( $id ) {
-		return FakeBookingModel::getByHashId( $id );
-	}
-	public static function validate_event( $id ) {
-		return new FakeEventModel( array( 'id' => $id ) );
-	}
-	public static function validate_start_date( $start_date, $timezone ) {
-		return new DateTime( $start_date, new DateTimeZone( $timezone ) );
-	}
-	public static function validate_duration( $duration, $event_duration ) {
-		return $duration;
-	}
-}
-
 // Mock class for BookingService
 class FakeBookingService {
 

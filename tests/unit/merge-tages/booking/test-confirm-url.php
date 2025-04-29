@@ -51,7 +51,7 @@ class ConfirmURLTest extends QuillBooking_Base_Test_Case
     {
         $booking = $this->getMockBuilder(Booking_Model::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getConfirmUrl'])
+            ->addMethods(['getConfirmUrl'])
             ->getMock();
 
         $booking->method('getConfirmUrl')->willReturn($url);

@@ -58,6 +58,7 @@ class RescheduleUrlTest extends QuillBooking_Base_Test_Case
    
         $booking = $this->getMockBuilder(Booking_Model::class)
             ->disableOriginalConstructor()
+            ->addMethods($hasRescheduleUrl ? ['getRescheduleUrl'] : [])
             ->getMock();
 
         if ($hasRescheduleUrl) {

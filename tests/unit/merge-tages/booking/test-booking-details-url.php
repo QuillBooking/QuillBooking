@@ -51,7 +51,7 @@ class BookingDetailsUrlTest extends QuillBooking_Base_Test_Case
     {
         $booking = $this->getMockBuilder(Booking_Model::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getDetailsUrl'])
+            ->addMethods(['getDetailsUrl'])
             ->getMock();
 
         return $booking;

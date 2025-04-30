@@ -22,6 +22,7 @@ import InitialContentPlugin from './initial-content-plugin';
 import WordCountPlugin from './word-count';
 
 import "./style.scss";
+import { ImageNode } from './img-node';
 
 const theme = {
   paragraph: 'editor-paragraph',
@@ -68,6 +69,7 @@ export default function Editor({ message, onChange, type }: EditorProps) {
       TableRowNode,
       LinkNode,
       MentionNode,
+      ImageNode,
     ],
   };
 

@@ -223,27 +223,6 @@ const Calendars: React.FC = () => {
 							className="w-[280px]"
 						/>
 
-						{/* <MultiSelect
-							options={[
-								{
-									value: 'all',
-									label: __('Sort by : All', 'quillbooking'),
-								},
-								{
-									value: 'host',
-									label: __('Sort by : Name', 'quillbooking'),
-								},
-								{
-									value: 'team',
-									label: __('Sort by : Date', 'quillbooking'),
-								},
-							]}
-							title={__('sort-by', 'quillbooking')}
-							onChange={(value) => console.log(value)}
-							Icon={IoFilterOutline}
-							containerClassName="pl-2"
-						/> */}
-
 						<HostSelect
 							value={selectedUser}
 							onChange={handleUserChange}

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { debounce } from 'lodash';
-import { Card, Flex } from 'antd';
 import { __ } from '@wordpress/i18n';
+import { Card, Flex } from 'antd';
 
 interface Product {
     id: number;
     name: string;
+    price: number; // Added price field
 }
 
 interface ProductSelectProps {
@@ -76,49 +77,46 @@ const ProductSelect: React.FC<ProductSelectProps> = ({
         return value === productId;
     };
 
+    const formatPrice = (price: number) => {
+        return `${price}$`;
+    };
+
     return (
         <div className="space-y-4">
-            <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-
             {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[1, 2, 3].map((n) => (
-                        <div key={n} className="h-[72px] rounded-lg bg-gray-100 animate-pulse" />
+                        <div key={n} className="h-16 rounded-lg bg-gray-100 animate-pulse" />
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Flex gap={4}>
                     {products.map((product) => (
                         <Card
-                            onClick={() => handleSelect(product.id)}
-                            disabled={exclude.includes(product.id)}
+                            key={product.id}
+                            onClick={() => !exclude.includes(product.id) && handleSelect(product.id)}
                             className={`
-        relative w-fit p-4 rounded-lg border transition-all duration-200 cursor-pointer
-        ${isSelected(product.id)
-                                    ? 'border-color-primary bg-color-secondary'
-                                    : ''
-                                }
-        ${exclude.includes(product.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-      `}
+                                relative rounded-lg p-4 transition-all duration-200 border text-[#1E2125]
+                                ${isSelected(product.id) ? 'bg-color-secondary border-color-primary' : ''}
+                                ${exclude.includes(product.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                            `}
                         >
-                            <Flex align="start" vertical gap={10} className='text-[#1E2125]'>
-                                <span className={`font-bold ${isSelected(product.id) ? 'text-color-primary' : ''}`}>
+                            <Flex vertical gap={8}>
+                                <div
+                                    className={`font-bold
+                                    ${isSelected(product.id) ? 'text-color-primary' : ''}`}
+                                >
+                                    {formatPrice(product.price)}
+                                </div>
+                                <div>
                                     {product.name}
-                                </span>
-                                <span>{__('Event Booking', 'quillbooking')}</span>
+                                </div>
                             </Flex>
                         </Card>
                     ))}
-                </div>
-            )
-            }
-        </div >
+                </Flex>
+            )}
+        </div>
     );
 };
 

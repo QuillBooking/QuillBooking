@@ -2,7 +2,7 @@
 
 use QuillBooking\Booking\Booking_Validator;
 use phpmock\phpunit\PHPMock;
-class BookingValidatorTest extends WP_UnitTestCase {
+class Test_Booking_Validator extends WP_UnitTestCase {
 
 	use PHPMock;
 
@@ -11,13 +11,6 @@ class BookingValidatorTest extends WP_UnitTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
-
-		if ( ! class_exists( 'QuillBooking\Models\Booking_Model', false ) ) {
-			class_alias( FakeBookingModel::class, 'QuillBooking\Models\Booking_Model' );
-		}
-		if ( ! class_exists( 'QuillBooking\Models\Event_Model', false ) ) {
-			class_alias( FakeEventModel::class, 'QuillBooking\Models\Event_Model' );
-		}
 
 		$this->time_mock      = $this->getFunctionMock( 'QuillBooking\Booking', 'time' );
 		$this->translate_mock = $this->getFunctionMock( 'QuillBooking\Booking', '__' );
@@ -42,7 +35,7 @@ class BookingValidatorTest extends WP_UnitTestCase {
 		);
 
 		// --- Act ---
-		$result = Booking_Validator::validate_booking( $valid_hash_id );
+		$result = Booking_Validator::validate_booking( $valid_hash_id, FakeBookingModel::class );
 
 		// --- Assert ---
 		$this->assertSame( $fake_booking->hash_id, $result->hash_id );
@@ -90,7 +83,7 @@ class BookingValidatorTest extends WP_UnitTestCase {
 		$this->expectExceptionMessage( 'Booking is already completed' );
 
 		// --- Act ---
-		Booking_Validator::validate_booking( $completed_hash_id );
+		Booking_Validator::validate_booking( $completed_hash_id, FakeBookingModel::class );
 	}
 
 	public function test_validate_booking_already_cancelled() {
@@ -109,7 +102,7 @@ class BookingValidatorTest extends WP_UnitTestCase {
 		$this->expectExceptionMessage( 'Booking is already cancelled' );
 
 		// --- Act ---
-		Booking_Validator::validate_booking( $cancelled_hash_id );
+		Booking_Validator::validate_booking( $cancelled_hash_id, FakeBookingModel::class );
 	}
 
 
@@ -128,7 +121,7 @@ class BookingValidatorTest extends WP_UnitTestCase {
 		);
 
 		// --- Act ---
-		$result = Booking_Validator::validate_event( $valid_event_id );
+		$result = Booking_Validator::validate_event( $valid_event_id, FakeEventModel::class );
 
 		// --- Assert ---
 		$this->assertSame( $fake_event->id, $result->id );
@@ -144,7 +137,7 @@ class BookingValidatorTest extends WP_UnitTestCase {
 		// Assuming 0 is invalid
 		$this->expectException( \Exception::class );
 		$this->expectExceptionMessage( 'Invalid event' );
-		Booking_Validator::validate_event( 0 );
+		Booking_Validator::validate_event( 0, FakeEventModel::class );
 	}
 
 	public function test_validate_event_not_found() {
@@ -155,7 +148,7 @@ class BookingValidatorTest extends WP_UnitTestCase {
 		$this->expectExceptionMessage( 'Invalid event' );
 
 		// --- Act ---
-		Booking_Validator::validate_event( 12345 );
+		Booking_Validator::validate_event( 12345, FakeEventModel::class );
 	}
 
 

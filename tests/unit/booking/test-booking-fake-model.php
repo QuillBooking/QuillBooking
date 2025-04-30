@@ -157,7 +157,7 @@ class FakeBookingModel extends FakeBaseModel {
  * Calendar Model
  */
 class FakeCalendarModel extends FakeBaseModel {
-
+	public static $instances = array();
 
 	public function __construct( array $attributes = array() ) {
 		$this->id   = $attributes['id'] ?? 1;
@@ -167,6 +167,29 @@ class FakeCalendarModel extends FakeBaseModel {
 
 		parent::__construct( $attributes );
 
+		if ( $this->id ) {
+			self::$instances[ $this->id ] = $this;
+		}
+	}
+
+
+	public function first() {
+		// Check if this instance matches its own where conditions
+		foreach ( $this->whereConditions as $column => $value ) {
+			if ( $this->$column != $value ) {
+				return null; // Simulate no match found
+			}
+		}
+		return $this; // Return self if all conditions match
+	}
+	public function toArray() {
+		return $this->attributes;
+	}
+	public function update( array $data ) {
+		return $this->fill( $data );
+	}
+	public function save() {
+		return true;
 	}
 }
 
@@ -244,5 +267,26 @@ class FakeBookingService {
 	public function validate_invitee( $event, $invitee ) {
 		// Mock implementation
 		return $invitee;
+	}
+}
+
+/**
+ * Booking Validator
+ */
+class FakeBooking_Validator {
+
+
+
+	public static function validate_booking( $id ) {
+		return FakeBookingModel::getByHashId( $id );
+	}
+	public static function validate_event( $id ) {
+		return new FakeEventModel( array( 'id' => $id ) );
+	}
+	public static function validate_start_date( $start_date, $timezone ) {
+		return new DateTime( $start_date, new DateTimeZone( $timezone ) );
+	}
+	public static function validate_duration( $duration, $event_duration ) {
+		return $duration;
 	}
 }

@@ -4,7 +4,7 @@ use phpmock\phpunit\PHPMock;
 use QuillBooking\Booking\Email_Notifications;
 
 
-class EmailNotificationsTest extends WP_UnitTestCase {
+class Test_Email_Notifications extends WP_UnitTestCase {
 
 
 	use PHPMock;
@@ -14,10 +14,6 @@ class EmailNotificationsTest extends WP_UnitTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
-
-		if ( ! class_exists( 'QuillBooking\Models\Booking_Model', false ) ) {
-			class_alias( FakeBookingModel::class, 'QuillBooking\Models\Booking_Model' );
-		}
 
 		$this->booking = new  FakeBookingModel(
 			array(

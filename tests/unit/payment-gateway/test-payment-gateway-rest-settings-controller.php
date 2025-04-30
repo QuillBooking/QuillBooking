@@ -7,11 +7,6 @@
 
 use QuillBooking\Payment_Gateway\REST_API\REST_Settings_Controller;
 use QuillBooking\Tests\Mocks\Mock_Payment_Gateway;
-use Exception;
-use WP_Error;
-use WP_REST_Request;
-use WP_REST_Response;
-use WP_REST_Server;
 
 /**
  * Test implementation of the abstract REST_Settings_Controller

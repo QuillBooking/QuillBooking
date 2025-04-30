@@ -6,6 +6,7 @@ interface CardHeaderProps {
 	icon: React.ReactNode;
 	inviteeNumber?: number;
 	border?: boolean;
+	[key: string]: any;
 }
 
 // TODO: add inviteeNumber prop to display the number of invitees
@@ -15,12 +16,14 @@ const CardHeader: React.FC<CardHeaderProps> = ({
 	icon,
 	inviteeNumber,
 	border = true,
+	...rest
 }) => {
 	return (
 		<div
 			className={`flex items-center gap-4 p-0 text-color-primary-text ${border ? 'border-b' : ''} pb-5`}
+			{...rest}
 		>
-			<span className="bg-[#EDEDED] p-2 rounded">{icon}</span>
+			{icon && <span className="bg-[#EDEDED] p-2 rounded">{icon}</span>}
 
 			<div>
 				<p className="text-[#09090B] font-bold text-2xl">{title}</p>

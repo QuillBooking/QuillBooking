@@ -22,3 +22,4 @@ export { default as MergeTagModal } from './merge-tag-modal';
 export { default as Editor } from './editor';
 export { default as NoticeComponent } from './notice';
 export { default as NotificationRow } from './notification-row';
+export { default as TagComponent } from './tag';

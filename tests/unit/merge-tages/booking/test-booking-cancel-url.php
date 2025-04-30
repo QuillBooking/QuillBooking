@@ -52,7 +52,7 @@ class BookingCancelUrlTest extends QuillBooking_Base_Test_Case
     {
         $booking = $this->getMockBuilder(Booking_Model::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getCancelUrl'])
+            ->addMethods(['getCancelUrl'])
             ->getMock();
 
         return $booking;

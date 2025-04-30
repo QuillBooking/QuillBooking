@@ -74,9 +74,6 @@ class REST_Availability_Controller_Test extends QuillBooking_Base_Test_Case {
 			define( 'DOING_TESTS', true );
 		}
 
-		// Set up Illuminate\Support\Arr mock if needed
-		$this->setUp_illuminate_arr();
-
 		// Delete option to ensure clean state
 		delete_option( Availabilities::$option_name );
 
@@ -115,9 +112,6 @@ class REST_Availability_Controller_Test extends QuillBooking_Base_Test_Case {
 
 		// Initialize controller
 		$this->controller = new REST_Availability_Controller();
-
-		// Set up mock for Event_Meta_Model
-		$this->setUp_event_meta_model();
 
 		// Initialize availability service
 		$this->availability_service = new Availability_service();
@@ -325,6 +319,11 @@ class REST_Availability_Controller_Test extends QuillBooking_Base_Test_Case {
 		// Verify both IDs are in the response
 		$this->assertContains( $availability1['id'], $response_ids );
 		$this->assertContains( $availability2['id'], $response_ids );
+
+		// Verify events_count key exists (even if 0 due to lack of deep mocking)
+		foreach ( $data as $item ) {
+			$this->assertArrayHasKey( 'events_count', $item );
+		}
 	}
 
 	/**
@@ -422,6 +421,9 @@ class REST_Availability_Controller_Test extends QuillBooking_Base_Test_Case {
 		$this->assertEquals( $availability['id'], $data['id'] );
 		$this->assertEquals( $availability['name'], $data['name'] );
 		$this->assertEquals( $availability['user_id'], $data['user_id'] );
+
+		// Verify events_count key exists (even if 0 due to lack of deep mocking)
+		$this->assertArrayHasKey( 'events_count', $data );
 	}
 
 	/**
@@ -437,9 +439,6 @@ class REST_Availability_Controller_Test extends QuillBooking_Base_Test_Case {
 		// Check response is an error
 		$this->assertEquals( 404, $response->get_status() );
 	}
-
-
-
 
 	/**
 	 * Test create_item method
@@ -629,82 +628,80 @@ class REST_Availability_Controller_Test extends QuillBooking_Base_Test_Case {
 	}
 
 	/**
-	 * Set up the mock Event_Meta_Model
+	 * Test clone_item method
 	 */
-	protected function setUp_event_meta_model() {
-		// Create a mock for the Event_Meta_Model with a static method 'where'
-		if ( ! class_exists( 'QuillBooking\Models\Event_Meta_Model' ) ) {
-			// Define a mock class for Event_Meta_Model
-			eval(
-				'
-				namespace QuillBooking\Models;
-				
-				class Event_Meta_Model {
-					public static function where($key, $value) {
-						return new self();
-					}
-					
-					public function where($key, $value) {
-						return $this;
-					}
-					
-					public function with($relation) {
-						return $this;
-					}
-					
-					public function get() {
-						// Return an empty collection with a count method
-						return new class {
-							public function count() {
-								return 0;
-							}
-						};
-					}
-				}
-			'
-			);
-		}
+	public function test_clone_item() {
+		wp_set_current_user( $this->admin_user );
+
+		// Create an original availability
+		$original_availability = $this->create_test_availability( $this->admin_user, 'Original for Clone' );
+		$original_id           = $original_availability['id'];
+
+		// Make the clone request
+		$request  = new WP_REST_Request( 'POST', '/' . $this->namespace . '/' . $this->rest_base . '/' . $original_id . '/clone' );
+		$response = $this->server->dispatch( $request );
+
+		// Check response status
+		$this->assertEquals( 201, $response->get_status() );
+
+		// Check response data
+		$cloned_data = $response->get_data();
+		$this->assertIsArray( $cloned_data );
+		$this->assertArrayHasKey( 'id', $cloned_data );
+		$this->assertNotEquals( $original_id, $cloned_data['id'] );
+		$this->assertEquals( $original_availability['name'] . ' (clone)', $cloned_data['name'] );
+		$this->assertEquals( $original_availability['user_id'], $cloned_data['user_id'] );
+		$this->assertEquals( $original_availability['weekly_hours'], $cloned_data['weekly_hours'] );
+		$this->assertFalse( $cloned_data['is_default'] );
+
+		// Verify the cloned availability exists in storage
+		$stored_cloned = Availabilities::get_availability( $cloned_data['id'] );
+		$this->assertNotNull( $stored_cloned );
+		$this->assertEquals( $cloned_data['name'], $stored_cloned['name'] );
+
+		// Verify original availability still exists and is unchanged
+		$stored_original = Availabilities::get_availability( $original_id );
+		$this->assertNotNull( $stored_original );
+		$this->assertEquals( 'Original for Clone', $stored_original['name'] ); // Name shouldn't change
 	}
 
 	/**
-	 * Set up Illuminate\Support\Arr mock
+	 * Test set_default method
 	 */
-	protected function setUp_illuminate_arr() {
-		if ( ! class_exists( 'Illuminate\Support\Arr' ) ) {
-			// Create a namespace for Illuminate
-			eval(
-				'
-				namespace Illuminate\Support;
-				
-				class Arr {
-					public static function get($array, $key, $default = null) {
-						if (is_array($array) && array_key_exists($key, $array)) {
-							return $array[$key];
-						}
-						return $default;
-					}
-					
-					public static function first($array, $callback = null, $default = null) {
-						if (is_null($callback)) {
-							if (empty($array)) {
-								return $default;
-							}
-							foreach ($array as $item) {
-								return $item;
-							}
-						}
-						
-						foreach ($array as $key => $value) {
-							if (call_user_func($callback, $value, $key)) {
-								return $value;
-							}
-						}
-						
-						return $default;
-					}
-				}
-				'
-			);
-		}
+	public function test_set_default() {
+		wp_set_current_user( $this->admin_user );
+
+		// Create two availabilities for the same user
+		$availability1 = $this->create_test_availability( $this->admin_user, 'Default Candidate 1' );
+		$availability2 = $this->create_test_availability( $this->admin_user, 'Default Candidate 2' );
+
+		// Manually set availability1 as default initially to test the switch
+		$availability1['is_default'] = true;
+		Availabilities::update_availability( $availability1 );
+		$availability2['is_default'] = false; // Ensure this one is not default
+		Availabilities::update_availability( $availability2 );
+
+		// Make the set_default request for availability2
+		$request  = new WP_REST_Request( 'PUT', '/' . $this->namespace . '/' . $this->rest_base . '/' . $availability2['id'] . '/set-default' );
+		$response = $this->server->dispatch( $request );
+
+		// Check response status
+		$this->assertEquals( 200, $response->get_status() );
+
+		// Check response data
+		$response_data = $response->get_data();
+		$this->assertIsArray( $response_data );
+		$this->assertEquals( $availability2['id'], $response_data['id'] );
+		$this->assertTrue( $response_data['is_default'] );
+
+		// Verify in storage
+		$stored1 = Availabilities::get_availability( $availability1['id'] );
+		$stored2 = Availabilities::get_availability( $availability2['id'] );
+
+		$this->assertNotNull( $stored1 );
+		$this->assertNotNull( $stored2 );
+		$this->assertFalse( $stored1['is_default'], 'Old default should now be false' );
+		$this->assertTrue( $stored2['is_default'], 'Target availability should now be true' );
 	}
+
 }

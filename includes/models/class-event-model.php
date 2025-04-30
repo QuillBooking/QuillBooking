@@ -1201,7 +1201,7 @@ class Event_Model extends Model {
 		$end_time = clone $start_time;
 		$end_time->modify( "+{$duration} minutes" );
 
-		return $this->is_slot_available( $start_time, $end_time, $calendar_id );
+		return $this->get_slot_availability_count( $start_time, $end_time, $calendar_id );
 	}
 
 	/**
@@ -1212,7 +1212,7 @@ class Event_Model extends Model {
 	 *
 	 * @return bool
 	 */
-	public function is_slot_available( $start_time, $end_time, $calendar_id ) {
+	public function get_slot_availability_count( $start_time, $end_time, $calendar_id ) {
 		$availability = $this->availability;
 		$weekly_hours = $availability['weekly_hours'] ?? array();
 		$day_of_week  = strtolower( date( 'l', $start_time->getTimestamp() ) ); // Get the day of the week (e.g., Monday, Tuesday)

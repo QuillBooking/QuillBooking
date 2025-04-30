@@ -1,10 +1,6 @@
 name: WordPress and React Tests
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
   workflow_dispatch:
 

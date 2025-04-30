@@ -28,13 +28,15 @@ class Booking_Validator {
 	 * @param string $id Booking ID.
 	 *
 	 * @return Booking_Model
+	 * @throws \Exception If the booking is invalid.
 	 */
 	public static function validate_booking( $id ) {
-		if ( ! $id ) {
+		if ( empty( $id ) ) {
 			throw new \Exception( __( 'Invalid booking', 'quillbooking' ) );
 		}
 
 		$booking = Booking_Model::getByHashId( $id );
+
 		if ( ! $booking ) {
 			throw new \Exception( __( 'Invalid booking', 'quillbooking' ) );
 		}
@@ -53,12 +55,13 @@ class Booking_Validator {
 	/**
 	 * Validate event ID.
 	 *
-	 * @param string $id Event ID.
+	 * @param string|int $id Event ID.
 	 *
 	 * @return Event_Model
+	 * @throws \Exception If the event is invalid.
 	 */
 	public static function validate_event( $id ) {
-		if ( ! $id ) {
+		if ( empty( $id ) || $id === 0 ) {
 			throw new \Exception( __( 'Invalid event', 'quillbooking' ) );
 		}
 
@@ -77,12 +80,13 @@ class Booking_Validator {
 	 * @param string $timezone Timezone.
 	 *
 	 * @return DateTime
+	 * @throws \Exception If the start date is invalid.
 	 */
 	public static function validate_start_date( $start_date, $timezone ) {
 		$start = new DateTime( $start_date, new DateTimeZone( $timezone ) );
 		$now   = new DateTime( 'now', new DateTimeZone( $timezone ) );
 
-		if ( $start->getTimestamp() < $now->getTimestamp() ) {
+		if ( $start->getTimestamp() <= $now->getTimestamp() ) {
 			throw new \Exception( __( 'Invalid start date', 'quillbooking' ) );
 		}
 
@@ -92,21 +96,24 @@ class Booking_Validator {
 	/**
 	 * Validate booking duration.
 	 *
-	 * @param int $duration Duration.
-	 * @param int $default_duration Default duration.
+	 * @param mixed $duration Duration.
+	 * @param mixed $default_duration Default duration.
 	 *
 	 * @return int
+	 * @throws \Exception If the duration is invalid.
 	 */
 	public static function validate_duration( $duration, $default_duration = null ) {
-		$duration = intval( $duration );
-		if ( ! $duration ) {
-			$duration = $default_duration;
+		if ( $duration === null || $duration === '' || $duration === 0 ) {
+			if ( $default_duration === null ) {
+				throw new \Exception( __( 'Invalid duration', 'quillbooking' ) );
+			}
+			return (int) $default_duration;
 		}
 
-		if ( ! $duration ) {
+		if ( ! is_numeric( $duration ) || (float) $duration <= 0 ) {
 			throw new \Exception( __( 'Invalid duration', 'quillbooking' ) );
 		}
 
-		return $duration;
+		return (int) $duration;
 	}
 }

@@ -24,3 +24,4 @@ export { default as NoticeComponent } from './notice';
 export { default as NotificationRow } from './notification-row';
 export { default as TagComponent } from './tag';
 export { default as SelectTimezone } from './select-timezone';
+export { default as ConfirmationModal } from './confirmation-modal';

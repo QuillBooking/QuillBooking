@@ -16,10 +16,12 @@ import { Availability } from 'client/types';
 import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import { NavLink as Link } from '@quillbooking/navigation';
 import {
+	ConfirmationModal,
 	CopyWhiteIcon,
 	EditAvailabilityIcon,
 	TrashIcon,
 } from '@quillbooking/components';
+import { useState } from '@wordpress/element';
 
 interface AvailabilityActionsProps {
 	availabilityId: string;
@@ -34,7 +36,7 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 	const navigate = useNavigate();
 	const { successNotice, errorNotice } = useNotice();
 	const { callApi } = useApi();
-
+	const [showConfirmation, setShowConfirmation] = useState(false);
 	const deleteAvailability = async (availabilityId: string) => {
 		await callApi({
 			path: `availabilities/${availabilityId}`,
@@ -82,19 +84,26 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 				<CopyWhiteIcon width={21} height={21} />
 			</div>
 
-			<Popconfirm
+			<div
+				className="border border-[#EDEBEB] p-2 rounded-lg cursor-pointer text-[#B3261E]"
+				onClick={() => setShowConfirmation(true)}
+			>
+				<TrashIcon width={20} height={22} />
+			</div>
+
+			<ConfirmationModal
 				title={__(
-					'Are you sure to delete this calendar?',
+					'Are you sure you want to delete this availability?',
 					'quillbooking'
 				)}
-				onConfirm={() => deleteAvailability(availabilityId)}
-				okText={__('Yes', 'quillbooking')}
-				cancelText={__('No', 'quillbooking')}
-			>
-				<div className="border border-[#EDEBEB] p-2 rounded-lg cursor-pointer text-[#B3261E]">
-					<TrashIcon width={20} height={22} />
-				</div>
-			</Popconfirm>
+				description={__(
+					"by Delete this booking you won't be able to restore it again!",
+					'quillbooking'
+				)}
+				onSave={() => deleteAvailability(availabilityId)}
+				showModal={showConfirmation}
+				setShowModal={setShowConfirmation}
+			/>
 		</Flex>
 	);
 };

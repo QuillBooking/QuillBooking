@@ -816,8 +816,6 @@ class Rest_Booking_Controller_Test extends QuillBooking_Base_Test_Case {
 	 * @covers ::create_item
 	 * @covers ::create_item_permissions_check
 	 */
-	// Inside test_create_item_success()
-
 	public function test_create_item_success() {
 		wp_set_current_user( $this->admin_user_id ); // User needs 'quillbooking_manage_event'
 
@@ -825,36 +823,64 @@ class Rest_Booking_Controller_Test extends QuillBooking_Base_Test_Case {
 		$event       = $this->create_test_event( $this->admin_user_id, $calendar->id );
 		$guest_email = 'new_integration_guest@test.com';
 		$guest_name  = 'New Integration Guest';
-		// Use a fixed date known to be available or ignore availability if possible
-		$start_date = gmdate( 'Y-m-d H:i:s', strtotime( '+10 days 10:00:00' ) );
-		$timezone   = 'America/New_York';
+		$start_date  = gmdate( 'Y-m-d H:i:s', strtotime( '+10 days 10:00:00' ) );
+		$timezone    = 'America/New_York';
 
-		// *** REMOVE Booking_Service MOCKING ***
-		// $mock_booking_service = $this->createMock( Booking_Service::class );
-		// ... (remove method expectations) ...
-		// ... (remove add_filter / remove_filter) ...
+		// Create a mock for Booking_Service
+		$mock_booking_service = $this->createMock( Booking_Service::class );
+
+		// Create a Guest model to return from validate_invitee
+		$guest                         = Guest_Model::firstOrCreate(
+			array( 'email' => $guest_email ),
+			array( 'name' => $guest_name )
+		);
+		$this->created_ids['guests'][] = $guest->id;
+
+		// Create a Booking model to return from book_event_slot
+		$booking              = new Booking_Model();
+		$booking->id          = 12345; // Use a predictable ID for testing
+		$booking->event_id    = $event->id;
+		$booking->calendar_id = $calendar->id;
+		$booking->guest_id    = $guest->id;
+		$booking->status      = 'pending';
+		$booking->slot_time   = $event->duration;
+
+		// Set up method expectations
+		$mock_booking_service->expects( $this->once() )
+			->method( 'validate_invitee' )
+			->willReturn( $guest );
+
+		$mock_booking_service->expects( $this->once() )
+			->method( 'book_event_slot' )
+			->willReturn( $booking );
+
+		// Use add_filter to replace the Booking_Service instance
+		add_filter(
+			'quillbooking_booking_service_instance',
+			function() use ( $mock_booking_service ) {
+				return $mock_booking_service;
+			}
+		);
 
 		$request_data = array(
-			'event_id'   => $event->id,
-			'start_date' => $start_date,
-			'slot_time'  => $event->duration,
-			'timezone'   => $timezone,
-			'name'       => $guest_name,
-			'email'      => $guest_email,
-			'status'     => 'pending',
-			// 'ignore_availability' => true, // Optional: Add this if service fails on availability checks in test env
-			// Add other required fields from schema if any
+			'event_id'            => $event->id,
+			'start_date'          => $start_date,
+			'slot_time'           => $event->duration,
+			'timezone'            => $timezone,
+			'name'                => $guest_name,
+			'email'               => $guest_email,
+			'status'              => 'pending',
+			'ignore_availability' => true, // Bypass availability checks
 		);
 
 		$request = new WP_REST_Request( 'POST', '/' . $this->namespace . '/' . $this->rest_base );
 		$request->set_body_params( $request_data );
 
-		// --- Make the request (Real Booking_Service will be used) ---
+		// Make the request with mocked Booking_Service
 		$response = $this->server->dispatch( $request );
-		// --- ---
 
-		// skip this test
-		$this->markTestSkipped( 'Skipping test_create_item_success() for now. Booking_Service is not mocked.' );
+		// Cleanup the filter
+		remove_filter( 'quillbooking_booking_service_instance', '__return_true' );
 
 		// Assertions
 		$this->assertContains(
@@ -863,37 +889,11 @@ class Rest_Booking_Controller_Test extends QuillBooking_Base_Test_Case {
 			'Expected 200 or 201 status. Error: ' . ( is_wp_error( $response ) ? $response->get_error_message() : 'None' )
 		);
 
-		// If successful, verify booking in DB
-		if ( ! is_wp_error( $response ) && in_array( $response->get_status(), array( 200, 201 ) ) ) {
-			$created_booking = Booking_Model::where( 'event_id', $event->id )
-				->whereHas(
-					'guest',
-					function ( $q ) use ( $guest_email ) {
-						$q->where( 'email', $guest_email );
-					}
-				)
-				->orderBy( 'id', 'desc' )
-				->first();
-
-			$this->assertNotNull( $created_booking, 'Booking was not found in database after successful API call.' );
-			if ( $created_booking ) {
-				$this->assertEquals( 'pending', $created_booking->status );
-				$this->assertEquals( $event->duration, $created_booking->slot_time );
-				// Add other DB checks as needed
-
-				// Add to cleanup array if created successfully
-				$this->created_ids['bookings'][] = $created_booking->id;
-			}
-
-			// Optional: Check structure of response data if needed
-			// $data = $response->get_data();
-			// $this->assertIsArray($data);
-			// $this->assertCount(1, $data);
-			// $this->assertEquals($created_booking->id, $data[0]['id']); // Assuming response returns array of booking data
-		} else {
-			// Fail test explicitly if status was not successful
-			$this->fail( 'Booking creation failed with status: ' . $response->get_status() . ' Error: ' . ( is_wp_error( $response ) ? $response->get_error_message() : 'N/A' ) );
-		}
+		// Check the response data
+		$data = $response->get_data();
+		$this->assertIsArray( $data );
+		$this->assertCount( 1, $data );
+		$this->assertEquals( $booking->id, $data[0]->id );
 	}
 
 	/**

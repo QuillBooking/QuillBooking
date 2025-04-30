@@ -23,3 +23,4 @@ export { default as Editor } from './editor';
 export { default as NoticeComponent } from './notice';
 export { default as NotificationRow } from './notification-row';
 export { default as TagComponent } from './tag';
+export { default as SelectTimezone } from './select-timezone';

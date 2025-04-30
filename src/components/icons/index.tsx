@@ -93,3 +93,4 @@ export { default as UpcomingCalendarOutlinedIcon } from './upcoming-calendar-out
 export { default as GlobalIcon } from './global-icon';
 export { default as EditAvailabilityIcon } from './edit-availability-icon';
 export { default as InfoIcon } from './info-icon';
+export { default as LeftArrowIcon } from './left-arrow-icon';

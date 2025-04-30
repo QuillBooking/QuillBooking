@@ -123,4 +123,60 @@ class Mock_Payment_Gateway extends Payment_Gateway {
 			),
 		);
 	}
+
+	/**
+	 * Get settings
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_settings() {
+		$option_name = $this->get_option_name();
+		$settings    = get_option( $option_name, array() );
+
+		if ( empty( $settings ) || ! is_array( $settings ) ) {
+			return array();
+		}
+
+		return $settings;
+	}
+
+	/**
+	 * Update settings
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $settings
+	 * @return bool
+	 */
+	public function update_settings( $settings ) {
+		$option_name = $this->get_option_name();
+		return update_option( $option_name, $settings );
+	}
+
+	/**
+	 * Validate settings
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $settings
+	 * @return bool|WP_Error
+	 */
+	public function validate( $settings ) {
+		// Validate settings here
+		// For testing, just return true
+		return true;
+	}
+
+	/**
+	 * Get option name
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string
+	 */
+	private function get_option_name() {
+		return $this->option_name ?? 'quillbooking_' . $this->slug . '_settings';
+	}
 }

@@ -20,7 +20,7 @@ import EventInfo from './event-info';
 import LivePreview from './live-preview';
 import Duration from './duration';
 import { CardHeader, EventLocIcon } from '@quillbooking/components';
-import { EventFieldsTabHandle } from 'client/types';
+import { EventTabHandle } from 'client/types';
 import { IoClose } from 'react-icons/io5';
 import { FaCheckCircle } from "react-icons/fa";
 
@@ -36,7 +36,7 @@ interface EventDetailsProps {
     setDisabled: (disabled: boolean) => void;
 }
 
-const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
+const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
     ({ onKeepDialogOpen, notice, clearNotice, disabled, setDisabled }, ref) => {
         const { state: event, actions } = useEventContext();
         const { callApi, loading } = useApi();
@@ -50,6 +50,7 @@ const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
                 if (event) {
                     saveSettings();
                 }
+                return Promise.resolve();
             },
         }));
 

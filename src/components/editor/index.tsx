@@ -15,14 +15,14 @@ import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
 import { TextNode } from 'lexical';
 import { MentionNode } from './mention-node';
-
+import { ImageNode } from './img-node';
 import AutoLinkMatchers from './autolink-plugin';
 import HtmlSerializer from './html-serializer';
 import InitialContentPlugin from './initial-content-plugin';
 import WordCountPlugin from './word-count';
 
 import "./style.scss";
-import { ImageNode } from './img-node';
+import { Flex } from 'antd';
 
 const theme = {
   paragraph: 'editor-paragraph',
@@ -31,6 +31,8 @@ const theme = {
     italic: 'editor-text-italic',
     underline: 'editor-text-underline',
     strikethrough: 'editor-text-linethrough',
+    fontFamily: 'editor-text-font-family',
+    lineHeight: 'editor-text-line-height',
   },
   list: {
     ul: 'editor-list-ul',
@@ -120,8 +122,10 @@ export default function Editor({ message, onChange, type }: EditorProps) {
   return (
     <div className="email-body-editor">
       <LexicalComposer initialConfig={initialConfig}>
-        <div className="editor-container">
-          <ToolbarPlugin type={type}/>
+        <div className='editor-container'>
+          {type == 'email' && (
+            <ToolbarPlugin type={type} />
+          )}
           <div className="editor-inner">
             <RichTextPlugin
               contentEditable={
@@ -132,6 +136,11 @@ export default function Editor({ message, onChange, type }: EditorProps) {
                 />
               }
               placeholder={<div className="editor-placeholder">Enter content here...</div>}
+              ErrorBoundary={({ children }) => (
+                <div className="editor-error">
+                  {children}
+                </div>
+              )}
             />
             <OnChangePlugin onChange={handleEditorChange} />
             <HtmlSerializer onChange={handleHtmlChange} />
@@ -147,7 +156,12 @@ export default function Editor({ message, onChange, type }: EditorProps) {
             {/* Only load initial content once when the component mounts */}
             {initialLoadRef.current && <InitialContentPlugin initialContent={initialMessageRef.current} />}
           </div>
-          <WordCountPlugin wordCount={wordCount} />
+          <Flex justify="space-between" align='center' className="bg-[#FCFCFC] border-t py-2 px-5 text-[#1A1A1AB2]">
+            <WordCountPlugin wordCount={wordCount} />
+            {type == 'sms' && (
+              <ToolbarPlugin type={type} />
+            )}
+          </Flex>
         </div>
       </LexicalComposer>
     </div>

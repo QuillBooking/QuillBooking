@@ -382,14 +382,14 @@ const Locations: React.FC<{
                                     </div>
                                 </Flex>
                             </Flex>
-                            {!connected_integrations.google && (
+                            {/* {!connected_integrations.google && (
                                 <Button
                                     onClick={() => navigate('home')}
                                     className='bg-transparent shadow-none border border-color-primary text-color-primary'
                                 >
                                     {__('Connect', 'quillbooking')}
                                 </Button>
-                            )}
+                            )} */}
                         </Flex>
                     </Checkbox>
                     <Checkbox

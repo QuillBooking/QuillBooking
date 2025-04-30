@@ -16,9 +16,10 @@ import dayjs from 'dayjs';
 import {
 	CalendarTickIcon,
 	CardHeader,
+	OverrideSection,
 	Schedule,
 } from '@quillbooking/components';
-import { OverridesSection, RangeSection } from './sections';
+import { RangeSection } from './sections';
 import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import {
@@ -27,6 +28,7 @@ import {
 	CustomAvailability,
 	DateOverrides,
 	Host,
+	TimeSlot,
 } from 'client/types';
 import { useEventContext } from '../../../state/context';
 import AvailabilityType from './availability-type';
@@ -133,7 +135,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 				} else {
 					setAvailability(response.availability);
 					setLastAvailability(response.availability);
-					setDateOverrides(response.availability.override);
+					setDateOverrides(response.availability.override ?? {});
 				}
 				setRange(response.range);
 			},
@@ -398,7 +400,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 				</Card>
 			)}
 
-			<OverridesSection
+			<OverrideSection
 				dateOverrides={dateOverrides}
 				setDateOverrides={setDateOverrides}
 				setDisabled={setDisabled}

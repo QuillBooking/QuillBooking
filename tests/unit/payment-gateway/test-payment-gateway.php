@@ -34,6 +34,33 @@ class Test_Mock_Payment_Gateway extends Payment_Gateway {
 	public $description = 'Test Payment Gateway';
 
 	/**
+	 * Configuration state
+	 *
+	 * @var boolean
+	 */
+	private $configured = true;
+
+	/**
+	 * Mode settings
+	 *
+	 * @var array
+	 */
+	private $mode_settings = array(
+		'mode'    => 'test',
+		'api_key' => 'test_api_key',
+	);
+
+	/**
+	 * Constructor
+	 *
+	 * @param boolean $configured Optional. Whether the gateway is configured. Default true.
+	 */
+	public function __construct( $configured = true ) {
+		parent::__construct();
+		$this->configured = $configured;
+	}
+
+	/**
 	 * Is gateway and method configured
 	 *
 	 * @since 1.0.0
@@ -41,7 +68,45 @@ class Test_Mock_Payment_Gateway extends Payment_Gateway {
 	 * @return boolean
 	 */
 	public function is_configured() {
-		return true;
+		return $this->configured;
+	}
+
+	/**
+	 * Set configured state
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param boolean $configured Whether the gateway is configured.
+	 * @return void
+	 */
+	public function set_configured( $configured ) {
+		$this->configured = $configured;
+	}
+
+	/**
+	 * Get mode settings
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array|false
+	 */
+	public function get_mode_settings() {
+		if ( ! $this->is_configured() ) {
+			return false;
+		}
+		return $this->mode_settings;
+	}
+
+	/**
+	 * Set mode settings
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $settings Mode settings.
+	 * @return void
+	 */
+	public function set_mode_settings( $settings ) {
+		$this->mode_settings = $settings;
 	}
 
 	/**
@@ -108,6 +173,14 @@ class Test_Payment_Gateway extends WP_UnitTestCase {
 	public function setUp(): void {
 		parent::setUp();
 		$this->gateway = new Test_Mock_Payment_Gateway();
+	}
+
+	/**
+	 * Clean up after each test
+	 */
+	public function tearDown(): void {
+		parent::tearDown();
+		delete_option( $this->gateway->option_name );
 	}
 
 	/**
@@ -248,5 +321,45 @@ class Test_Payment_Gateway extends WP_UnitTestCase {
 	 */
 	public function test_is_configured() {
 		$this->assertTrue( $this->gateway->is_configured() );
+	}
+
+	/**
+	 * Test configuration state
+	 */
+	public function test_configuration_state() {
+		// Default state
+		$this->assertTrue( $this->gateway->is_configured() );
+
+		// Test unconfigured state
+		$unconfigured_gateway = new Test_Mock_Payment_Gateway( false );
+		$this->assertFalse( $unconfigured_gateway->is_configured() );
+
+		// Test setting configured state
+		$unconfigured_gateway->set_configured( true );
+		$this->assertTrue( $unconfigured_gateway->is_configured() );
+	}
+
+	/**
+	 * Test mode settings
+	 */
+	public function test_mode_settings() {
+		// Default mode settings
+		$expected_settings = array(
+			'mode'    => 'test',
+			'api_key' => 'test_api_key',
+		);
+		$this->assertEquals( $expected_settings, $this->gateway->get_mode_settings() );
+
+		// Test unconfigured gateway
+		$unconfigured_gateway = new Test_Mock_Payment_Gateway( false );
+		$this->assertFalse( $unconfigured_gateway->get_mode_settings() );
+
+		// Test custom mode settings
+		$custom_settings = array(
+			'mode'    => 'live',
+			'api_key' => 'live_key',
+		);
+		$this->gateway->set_mode_settings( $custom_settings );
+		$this->assertEquals( $custom_settings, $this->gateway->get_mode_settings() );
 	}
 }

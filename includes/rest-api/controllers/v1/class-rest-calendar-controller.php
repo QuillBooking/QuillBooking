@@ -22,6 +22,7 @@ use QuillBooking\Availability_service;
 use QuillBooking\Models\Calendar_Model;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Capabilities;
+use QuillBooking\Models\User_Model;
 
 /**
  * Calendar Controller class
@@ -147,6 +148,24 @@ class REST_Calendar_Controller extends REST_Controller {
 							'items'       => array(
 								'type' => 'integer',
 							),
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)' . '/team',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item_team' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
+							'type'        => 'integer',
 						),
 					),
 				),
@@ -503,6 +522,36 @@ class REST_Calendar_Controller extends REST_Controller {
 		$id = $request->get_param( 'id' );
 		return Capabilities::can_read_calendar( $id );
 	}
+
+		/**
+		 * Get item team
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param WP_REST_Request $request Full data about the request.
+		 * @return WP_REST_Response|WP_Error
+		 */
+	public function get_item_team( $request ) {
+		try {
+			$id       = $request->get_param( 'id' );
+			$calendar = Calendar_Model::select( 'id' )->find( $id );
+
+			$calendar_team = $calendar->getTeamMembers();
+
+			$users = array();
+			foreach ( $calendar_team as $teamId ) {
+				$user = User_Model::where( 'ID', $teamId )->first();
+				if ( $user ) {
+					$users[] = $user;
+				}
+			}
+
+			return new WP_REST_Response( $users, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_team_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
 
 	/**
 	 * Update a calendar

@@ -31,7 +31,7 @@ use QuillBooking_Base_Test_Case;
  * @package QuillBooking\Tests\REST_API\Controllers\V1
  * @coversDefaultClass \QuillBooking\REST_API\Controllers\V1\REST_Booking_Controller
  */
-class Rest_Booking_Controller_Test extends QuillBooking_Base_Test_Case {
+class Test_Rest_Booking_Controller extends QuillBooking_Base_Test_Case {
 
 	// <--- Use your base test class
 

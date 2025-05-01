@@ -39,6 +39,7 @@ export const ToolbarPlugin = ({ type }: ToolbarProps) => {
   const [fontFamily, setFontFamily] = useState('Arial');
   const [paragraphFormat, setParagraphFormat] = useState('paragraph');
 
+  console.log(fontFamily);
   // Register image insertion command
   useEffect(() => {
     if (!activeEditor) {
@@ -164,7 +165,7 @@ export const ToolbarPlugin = ({ type }: ToolbarProps) => {
           $patchStyleText(selection, {
             'font-family': value,
           });
-
+          console.log('font-family',fontFamily);
         }
       });
     },

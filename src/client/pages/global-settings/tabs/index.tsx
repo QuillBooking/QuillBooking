@@ -1,4 +1,5 @@
 export { default as GeneralSettingsTab } from './general-settings';
 export { default as TeamTab } from './team';
-export { default as IntegrationsTab } from './integrations';
+export { default as LicenseTab } from './license';
+export { default as AdvancedModulesTab } from './advanced-modules';
 export { default as PaymentsTab } from './payments';

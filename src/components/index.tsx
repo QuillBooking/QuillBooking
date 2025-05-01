@@ -26,3 +26,4 @@ export { default as TagComponent } from './tag';
 export { default as SelectTimezone } from './select-timezone';
 export { default as ConfirmationModal } from './confirmation-modal';
 export { default as NoDataComponent } from './no-data';
+export { default as NoticeBanner } from './notice-banner';

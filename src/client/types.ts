@@ -352,3 +352,9 @@ export interface LimitBaseProps {
 	limits: EventLimits;
 	handleChange: (section: keyof EventLimits, key: string, value: any) => void;
 }
+
+export type NoticeMessage = {
+	type: 'success' | 'error';
+	title: string;
+	message: string;
+};

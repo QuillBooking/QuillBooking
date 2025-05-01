@@ -8,16 +8,27 @@ import { useState, useEffect } from '@wordpress/element';
  * External dependencies
  */
 import { Flex, Card, Input, Switch, Button } from 'antd';
+import { Dialog, DialogActions, DialogTitle } from '@mui/material';
+import { IoCloseSharp } from 'react-icons/io5';
 
 /**
  * Internal dependencies
  */
 import { useParams } from '@quillbooking/navigation';
-import { useApi, useNotice } from '@quillbooking/hooks';
-import type { Availability, DateOverrides } from '@quillbooking/client';
-import { Schedule, SelectTimezone } from '@quillbooking/components';
+import { useApi, useNavigate } from '@quillbooking/hooks';
+import type {
+	Availability,
+	DateOverrides,
+	NoticeMessage,
+} from '@quillbooking/client';
+import {
+	NoticeBanner,
+	Schedule,
+	SelectTimezone,
+} from '@quillbooking/components';
 import { OverrideSection } from '@quillbooking/components';
 import InfoComponent from './info';
+import { isValidDateOverrides } from '@quillbooking/utils';
 
 /**
  * Main Calendars Component.
@@ -35,9 +46,17 @@ const AvailabilityDetails: React.FC = () => {
 		useState<string>('');
 	const [isDefault, setIsDefault] = useState<boolean>(false);
 	const [dateOverrides, setDateOverrides] = useState<DateOverrides | {}>({});
+	const [loading, setLoading] = useState<boolean>(false);
+	const [isSaveBtnDisabled, setIsSaveBtnDisabled] = useState<boolean>(true);
+	const [showNotice, setShowNotice] = useState<boolean>(false);
+	const [noticeMessage, setNoticeMessage] = useState<NoticeMessage>({
+		type: 'success',
+		title: __('Success', 'quillbooking'),
+		message: __('Availability updated successfully', 'quillbooking'),
+	});
 
 	const { callApi } = useApi();
-	const { errorNotice, successNotice } = useNotice();
+	const navigate = useNavigate();
 
 	const fetchAvailabilityDetails = () => {
 		callApi({
@@ -51,9 +70,15 @@ const AvailabilityDetails: React.FC = () => {
 				setIsDefault(data.is_default ?? false);
 			},
 			onError: () => {
-				errorNotice(
-					__('Failed to load availabilities', 'quillbooking')
-				);
+				setNoticeMessage({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message: __(
+						'Failed to load availabilities',
+						'quillbooking'
+					),
+				});
+				setShowNotice(true);
 			},
 		});
 	};
@@ -62,50 +87,92 @@ const AvailabilityDetails: React.FC = () => {
 	const { id: availabilityId } = useParams<{ id: string }>();
 	if (!availabilityId) return null;
 
-	const handleNameUpdate = (availabilityName: string) => {
-		if (availabilityName === availabilityDetails.name) return;
-		if (!availabilityName) {
-			errorNotice(
-				__('Please enter a name for the availability', 'quillbooking')
-			);
-			return;
+	const setDefault = async (availability: Availability) => {
+		try {
+			await callApi({
+				path: `availabilities/${availability.id}/set-default`,
+				method: 'POST',
+			});
+		} catch (error) {
+			console.log('Error setting default availability:', error);
 		}
-		callApi({
-			path: `availabilities/${availabilityId}`,
-			method: 'PUT',
-			data: {
-				name: availabilityName,
-			},
-			onSuccess: () => {
-				setAvailabilityName(availabilityName);
-				successNotice(
-					__('Availability name updated successfully', 'quillbooking')
-				);
-			},
-			onError: () => {
-				errorNotice(
-					__('Failed to update availability name', 'quillbooking')
-				);
-			},
-		});
 	};
 
-	const handleAvailabilitySave = () => {
-		callApi({
-			path: `availabilities/${availabilityId}`,
-			method: 'PUT',
-			data: {
-				name: availabilityName,
-				weekly_hours: availabilityDetails.weekly_hours,
-				override: dateOverrides,
-				timezone: availabilityTimezone,
-			},
-			onSuccess: () => {
-				successNotice(
-					__('Availability updated successfully', 'quillbooking')
-				);
-			},
-		});
+	const handleAvailabilitySave = async () => {
+		if (!availabilityName) {
+			setNoticeMessage({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message: __(
+					'Please enter a name for the availability',
+					'quillbooking'
+				),
+			});
+			setShowNotice(true);
+			return;
+		}
+
+		if (!isValidDateOverrides(dateOverrides)) {
+			setNoticeMessage({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message: __(
+					'Please enter valid date overrides',
+					'quillbooking'
+				),
+			});
+			setShowNotice(true);
+			return;
+		}
+		setLoading(true);
+		try {
+			if (isDefault) {
+				await setDefault(availabilityDetails as Availability);
+			}
+
+			await callApi({
+				path: `availabilities/${availabilityId}`,
+				method: 'PUT',
+				data: {
+					name: availabilityName,
+					weekly_hours: availabilityDetails.weekly_hours,
+					override: dateOverrides,
+					timezone: availabilityTimezone,
+				},
+				onSuccess: () => {
+					setNoticeMessage({
+						type: 'success',
+						title: __('Success', 'quillbooking'),
+						message: __(
+							'Availability updated successfully',
+							'quillbooking'
+						),
+					});
+					setShowNotice(true);
+				},
+				onError: () => {
+					setNoticeMessage({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message: __(
+							'Failed to update availability',
+							'quillbooking'
+						),
+					});
+					setShowNotice(true);
+				},
+			});
+		} catch (error) {
+			setNoticeMessage({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message: __('Failed to update availability', 'quillbooking'),
+			});
+			setShowNotice(true);
+		} finally {
+			setLoading(false);
+			setIsSaveBtnDisabled(true);
+		}
 	};
 
 	const onCustomAvailabilityChange = (
@@ -124,25 +191,61 @@ const AvailabilityDetails: React.FC = () => {
 			}
 		}
 		setAvailabilityDetails(updatedAvailability);
+		setIsSaveBtnDisabled(false);
 	};
 
-	const setDefault = async (availability: Availability) => {
-		await callApi({
-			path: `availabilities/${availability.id}/set-default`,
-			method: 'POST',
-			onSuccess: () => {
-				successNotice(__('Default calendar updated', 'quillbooking'));
-			},
-			onError: () => {
-				errorNotice(
-					__('Failed to update default calendar', 'quillbooking')
-				);
-			},
-		});
+	const handleClose = () => {
+		navigate('availability');
 	};
 
 	return (
-		<>
+		<Dialog open={true} fullScreen className="z-[1000000000000000000]">
+			<DialogTitle
+				className="border-b mb-4"
+				sx={{ padding: '10px 16px' }}
+			>
+				<Flex className="justify-between items-center">
+					<Flex gap={10}>
+						<DialogActions>
+							<DialogActions
+								className="cursor-pointer"
+								onClick={handleClose}
+								color="primary"
+							>
+								<IoCloseSharp />
+							</DialogActions>
+							<div className="text-[#09090B] text-[24px] font-[500]">
+								{__('Working hours', 'quillbooking')}
+							</div>
+						</DialogActions>
+					</Flex>
+					<Flex gap={24} className="items-center">
+						<Button
+							type="primary"
+							size="middle"
+							onClick={handleAvailabilitySave}
+							loading={loading}
+							disabled={isSaveBtnDisabled}
+							className={`rounded-lg font-[500] text-white ${
+								isSaveBtnDisabled
+									? 'bg-gray-400 cursor-not-allowed'
+									: 'bg-color-primary '
+							}`}
+						>
+							{__('Save Changes', 'quillbooking')}
+						</Button>
+					</Flex>
+				</Flex>
+			</DialogTitle>
+
+			{showNotice && (
+				<div className="p-4">
+					<NoticeBanner
+						closeNotice={() => setShowNotice(false)}
+						notice={noticeMessage}
+					/>
+				</div>
+			)}
 			<Flex gap={20}>
 				<Card className="w-2/3">
 					<Flex gap={20} vertical>
@@ -162,12 +265,10 @@ const AvailabilityDetails: React.FC = () => {
 								<Input
 									size="large"
 									value={availabilityName}
-									onChange={(e) =>
-										setAvailabilityName(e.target.value)
-									}
-									onBlur={() =>
-										handleNameUpdate(availabilityName)
-									}
+									onChange={(e) => {
+										setAvailabilityName(e.target.value);
+										setIsSaveBtnDisabled(false);
+									}}
 									placeholder={__(
 										'Enter a name for the availability',
 										'quillbooking'
@@ -181,9 +282,7 @@ const AvailabilityDetails: React.FC = () => {
 										checked={isDefault}
 										onChange={async () => {
 											setIsDefault(!isDefault);
-											await setDefault(
-												availabilityDetails as Availability
-											);
+											setIsSaveBtnDisabled(false);
 										}}
 										className={
 											isDefault
@@ -212,9 +311,10 @@ const AvailabilityDetails: React.FC = () => {
 						<Card>
 							<SelectTimezone
 								timezone={availabilityTimezone}
-								handleChange={(value) =>
-									setAvailabilityTimezone(value)
-								}
+								handleChange={(value) => {
+									setAvailabilityTimezone(value);
+									setIsSaveBtnDisabled(false);
+								}}
 							/>
 						</Card>
 					</Flex>
@@ -223,15 +323,11 @@ const AvailabilityDetails: React.FC = () => {
 					<OverrideSection
 						dateOverrides={dateOverrides || {}}
 						setDateOverrides={setDateOverrides}
-						setDisabled={() => {}}
+						setDisabled={() => setIsSaveBtnDisabled(false)}
 					/>
 				</div>
 			</Flex>
-
-			<Button onClick={handleAvailabilitySave} className="mt-4">
-				{__('Save Availability', 'quillbooking')}
-			</Button>
-		</>
+		</Dialog>
 	);
 };
 

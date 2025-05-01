@@ -35,8 +35,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install SVN
-          command: sudo apt-get update && sudo apt-get install -y subversion
+          name: Install SVN and MySQL client
+          command: sudo apt-get update && sudo apt-get install -y subversion mysql-client
       - install-php-extensions
       - run:
           name: Remove incompatible dependencies for PHP < 8.1
@@ -84,6 +84,9 @@ jobs:
     steps:
       - checkout
       - install-php-extensions
+      - run:
+          name: Install MySQL client
+          command: sudo apt-get update && sudo apt-get install -y mysql-client
       - run:
           name: Install WordPress CLI
           command: |

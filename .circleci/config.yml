@@ -13,8 +13,6 @@ commands:
             sudo apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev
             sudo docker-php-ext-configure gd --with-freetype --with-jpeg
             sudo docker-php-ext-install -j$(nproc) gd exif mysqli pdo_mysql zip bcmath soap intl
-            sudo pecl install imagick
-            sudo docker-php-ext-enable imagick
 
 jobs:
   php-test:

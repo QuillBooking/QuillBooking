@@ -64,9 +64,9 @@ const AddAvailabilityScheduleModal: React.FC<AddAvailabilityModalProps> = ({
 			path: 'availabilities',
 			method: 'POST',
 			data: formData,
-			onSuccess: (data) => {
+			onSuccess: (respone) => {
 				closeHandler();
-				navigate(`availability/${data.id}`);
+				navigate(`availability/${respone.data.id}`);
 			},
 			onError: () => {
 				errorNotice(

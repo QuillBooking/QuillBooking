@@ -15,15 +15,22 @@ import { Card, List, Space, Typography } from 'antd';
  */
 import { Availability } from 'client/types';
 import { useApi, useNotice } from '@quillbooking/hooks';
-import { ClockIcon, GlobalIcon, TagComponent } from '@quillbooking/components';
+import {
+	ClockIcon,
+	GlobalIcon,
+	NoDataComponent,
+	TagComponent,
+} from '@quillbooking/components';
 import AvailabilityActions from './availability-actions';
 
 interface AvailabilityListProps {
 	showAllSchedules: boolean;
+	openAvailabilityModal: (open: boolean) => void;
 }
 const { Title } = Typography;
 const AvailabilityList: React.FC<AvailabilityListProps> = ({
 	showAllSchedules,
+	openAvailabilityModal
 }) => {
 	const { callApi } = useApi();
 	const [availabilities, setAvailabilities] = useState<
@@ -53,6 +60,21 @@ const AvailabilityList: React.FC<AvailabilityListProps> = ({
 	useEffect(() => {
 		fetchAvailabilities();
 	}, [showAllSchedules]);
+
+	if (availabilities.length === 0) {
+		return (
+			<NoDataComponent
+				setOpen={() => openAvailabilityModal(true)}
+				header={__('No availabilities found', 'quillbooking')}
+				description={__(
+					'You have not created any availabilities yet.',
+					'quillbooking'
+				)}
+				buttonText={__('Create Availability', 'quillbooking')}
+				icon={<ClockIcon width={80} height={80} />}
+			/>
+		);
+	}
 
 	return (
 		<List
@@ -95,6 +117,9 @@ const AvailabilityList: React.FC<AvailabilityListProps> = ({
 							availabilityId={availability.id || ''}
 							availabilities={availabilities}
 							setAvailabilities={setAvailabilities}
+							isAvailabilityDefault={
+								availability.is_default || false
+							}
 						/>
 					</List.Item>
 				</Card>

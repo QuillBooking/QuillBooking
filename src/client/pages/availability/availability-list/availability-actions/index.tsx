@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Flex, Popconfirm } from 'antd';
+import { Flex } from 'antd';
 import { filter } from 'lodash';
 
 /**
@@ -27,17 +27,28 @@ interface AvailabilityActionsProps {
 	availabilityId: string;
 	availabilities: Partial<Availability>[];
 	setAvailabilities: (availabilities: Partial<Availability>[]) => void;
+	isAvailabilityDefault: boolean;
 }
 const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 	availabilityId,
 	availabilities,
 	setAvailabilities,
+	isAvailabilityDefault
 }) => {
 	const navigate = useNavigate();
 	const { successNotice, errorNotice } = useNotice();
 	const { callApi } = useApi();
 	const [showConfirmation, setShowConfirmation] = useState(false);
 	const deleteAvailability = async (availabilityId: string) => {
+		if (isAvailabilityDefault) {
+			errorNotice(
+				__(
+					'You cannot delete the default availability. Please set another availability as default first.',
+					'quillbooking'
+				)
+			);
+			return;
+		}
 		await callApi({
 			path: `availabilities/${availabilityId}`,
 			method: 'DELETE',

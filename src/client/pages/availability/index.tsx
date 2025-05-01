@@ -58,7 +58,7 @@ const Availability: React.FC = () => {
 				setShowAllSchedules={setShowAllSchedules}
 			/>
 
-			<AvailabilityList showAllSchedules={showAllSchedules} />
+			<AvailabilityList showAllSchedules={showAllSchedules} openAvailabilityModal={setOpen} />
 
 			<AddAvailabilityScheduleModal open={open} setOpen={setOpen} />
 		</>

@@ -502,7 +502,7 @@ class REST_Availability_Controller extends REST_Controller {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 404 ) );
 		}
 
-		if ( 'system' === $availability['user_id'] ) {
+		if ( true === $availability['is_default'] ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete the default availability.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
 

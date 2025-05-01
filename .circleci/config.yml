@@ -1,0 +1,85 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.1.0
+
+executors:
+  php-mysql:
+    docker:
+      - image: cimg/php:<< parameters.php-version >>
+        environment:
+          WP_TESTS_DB_NAME: wordpress_test
+          WP_TESTS_DB_USER: root
+          WP_TESTS_DB_PASSWORD: password
+          WP_TESTS_DB_HOST: 127.0.0.1
+      - image: cimg/mysql:5.7
+        environment:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: wordpress_test
+    parameters:
+      php-version:
+        type: string
+        default: "8.2"
+
+jobs:
+  php-test:
+    parameters:
+      php-version:
+        type: string
+      wordpress-version:
+        type: string
+    executor:
+      name: php-mysql
+      php-version: << parameters.php-version >>
+    steps:
+      - checkout
+      - run:
+          name: Install SVN
+          command: sudo apt-get update && sudo apt-get install -y subversion
+      - run:
+          name: Remove incompatible dependencies for PHP < 8.1
+          command: |
+            if [ $(echo "<< parameters.php-version >> < 8.1" | bc) -eq 1 ]; then
+              composer remove --dev spatie/phpunit-watcher --no-update --no-interaction
+            fi
+      - run:
+          name: Update Composer dependencies
+          command: composer update --no-progress --no-ansi --no-interaction
+      - run:
+          name: Set up WordPress test environment
+          command: bash bin/install-wp-tests.sh
+          environment:
+            WP_VERSION: << parameters.wordpress-version >>
+      - run:
+          name: Run PHPUnit tests
+          command: composer test
+
+  react-test:
+    docker:
+      - image: cimg/node:18.0
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          name: Run React tests
+          command: npm test
+
+workflows:
+  wordpress-react-tests:
+    jobs:
+      - php-test:
+          matrix:
+            parameters:
+              php-version: ["7.4", "8.0", "8.1", "8.2"]
+              wordpress-version: ["latest", "6.4", "6.3", "6.2", "6.1", "6.0", "5.9"]
+            exclude:
+              - php-version: "8.1"
+                wordpress-version: "5.9"
+              - php-version: "8.2"
+                wordpress-version: "5.9"
+              - php-version: "8.2"
+                wordpress-version: "6.0"
+              - php-version: "8.2"
+                wordpress-version: "6.1"
+      - react-test 

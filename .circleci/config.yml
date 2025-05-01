@@ -3,8 +3,26 @@ version: 2.1
 orbs:
   node: circleci/node@5.1.0
 
-executors:
-  php-mysql:
+commands:
+  install-php-extensions:
+    steps:
+      - run:
+          name: Install PHP extensions
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev
+            sudo docker-php-ext-configure gd --with-freetype --with-jpeg
+            sudo docker-php-ext-install -j$(nproc) gd exif mysqli pdo_mysql zip bcmath soap intl
+            sudo pecl install imagick
+            sudo docker-php-ext-enable imagick
+
+jobs:
+  php-test:
+    parameters:
+      php-version:
+        type: string
+      wordpress-version:
+        type: string
     docker:
       - image: cimg/php:<< parameters.php-version >>
         environment:
@@ -16,30 +34,16 @@ executors:
         environment:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: wordpress_test
-    parameters:
-      php-version:
-        type: string
-        default: "8.2"
-
-jobs:
-  php-test:
-    parameters:
-      php-version:
-        type: string
-      wordpress-version:
-        type: string
-    executor:
-      name: php-mysql
-      php-version: << parameters.php-version >>
     steps:
       - checkout
       - run:
           name: Install SVN
           command: sudo apt-get update && sudo apt-get install -y subversion
+      - install-php-extensions
       - run:
           name: Remove incompatible dependencies for PHP < 8.1
           command: |
-            if [ $(echo "<< parameters.php-version >> < 8.1" | bc) -eq 1 ]; then
+            if [[ "<< parameters.php-version >>" == "7.4" || "<< parameters.php-version >>" == "8.0" ]]; then
               composer remove --dev spatie/phpunit-watcher --no-update --no-interaction
             fi
       - run:
@@ -47,9 +51,7 @@ jobs:
           command: composer update --no-progress --no-ansi --no-interaction
       - run:
           name: Set up WordPress test environment
-          command: bash bin/install-wp-tests.sh
-          environment:
-            WP_VERSION: << parameters.wordpress-version >>
+          command: bash bin/install-wp-tests.sh wordpress_test root password 127.0.0.1 << parameters.wordpress-version >>
       - run:
           name: Run PHPUnit tests
           command: composer test
@@ -64,6 +66,61 @@ jobs:
       - run:
           name: Run React tests
           command: npm test
+          
+  integration-test:
+    docker:
+      - image: cimg/php:8.1
+        environment:
+          WP_CLI_ALLOW_ROOT: 1
+      - image: cimg/mysql:5.7
+        environment:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: wordpress
+      - image: wordpress:latest
+        environment:
+          WORDPRESS_DB_HOST: 127.0.0.1
+          WORDPRESS_DB_USER: root
+          WORDPRESS_DB_PASSWORD: password
+          WORDPRESS_DB_NAME: wordpress
+          WORDPRESS_DEBUG: 1
+    steps:
+      - checkout
+      - install-php-extensions
+      - run:
+          name: Install WordPress CLI
+          command: |
+            curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+            chmod +x wp-cli.phar
+            sudo mv wp-cli.phar /usr/local/bin/wp
+      - run:
+          name: Install dependencies
+          command: composer install --no-ansi --no-interaction
+      - run:
+          name: Wait for WordPress to be ready
+          command: |
+            # Simple healthcheck to wait for WordPress
+            for i in $(seq 1 30); do
+              if curl -s http://localhost:80 > /dev/null; then
+                echo "WordPress is up and running"
+                break
+              fi
+              echo "Waiting for WordPress..."
+              sleep 2
+            done
+      - run:
+          name: Install plugin into WordPress
+          command: |
+            # Create plugin directory
+            mkdir -p /tmp/wordpress/wp-content/plugins/quill-booking
+            
+            # Copy plugin files
+            cp -r ./* /tmp/wordpress/wp-content/plugins/quill-booking/
+            
+            # Install and activate plugin using WP-CLI
+            wp plugin activate quill-booking --path=/var/www/html
+      - run:
+          name: Run integration tests
+          command: composer run integration-test
 
 workflows:
   wordpress-react-tests:
@@ -74,12 +131,18 @@ workflows:
               php-version: ["7.4", "8.0", "8.1", "8.2"]
               wordpress-version: ["latest", "6.4", "6.3", "6.2", "6.1", "6.0", "5.9"]
             exclude:
+              # WordPress 5.9 doesn't fully support PHP 8.1 and 8.2
               - php-version: "8.1"
                 wordpress-version: "5.9"
               - php-version: "8.2"
                 wordpress-version: "5.9"
+              # PHP 8.2 compatibility is only fully supported in WP 6.2+
               - php-version: "8.2"
                 wordpress-version: "6.0"
               - php-version: "8.2"
                 wordpress-version: "6.1"
-      - react-test 
+      - react-test
+      - integration-test:
+          requires:
+            - php-test
+            - react-test 

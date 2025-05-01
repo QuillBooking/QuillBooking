@@ -189,32 +189,32 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                 ...values,
                 payment_methods: selectedMethod,
             };
+            return new Promise<void>((resolve, reject) => {
 
-            callApi({
-                path: `events/${event.id}`,
-                method: 'POST',
-                data: {
-                    payments_settings: updatedSettings,
-                },
-                onSuccess() {
-                    successNotice(
-                        __('Settings saved successfully', 'quillbooking')
-                    );
-                    if (props.setDisabled) {
+               return callApi({
+                    path: `events/${event.id}`,
+                    method: 'POST',
+                    data: {
+                        payments_settings: updatedSettings,
+                    },
+                    onSuccess() {
+                        successNotice(
+                            __('Settings saved successfully', 'quillbooking')
+                        );
                         props.setDisabled(true);
-                    }
-                },
-                onError(error) {
-                    errorNotice(error.message);
-                },
+                        resolve();
+                    },
+                    onError(error) {
+                        errorNotice(error.message);
+                        reject(error);
+                    },
+                });
             });
         });
     };
 
     const handleFormChange = () => {
-        if (props.setDisabled) {
             props.setDisabled(false);
-        }
     };
 
     if (!settings || !event) {
@@ -341,9 +341,7 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                                                 value={selectedValue}
                                                 onChange={(e) => {
                                                     setSelectedValue(e.target.value);
-                                                    if (props.setDisabled) {
                                                         props.setDisabled(false);
-                                                    }
                                                 }}
                                             >
                                                 <Radio
@@ -376,7 +374,7 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                                         </Flex>
                                     </Form.Item>
                                     {type === 'woocommerce' && (
-                                        true ? (
+                                        isWooCommerceEnabled ? (
                                             <Form.Item
                                                 name="woo_product"
                                                 rules={[
@@ -391,30 +389,28 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                                                 className='mt-6'
                                             >
                                                 <Flex vertical gap={4}>
-                                                <div className="text-[#3F4254] font-semibold text-[16px]">
-                                                    {__("Select WooCommerce Product", "quillbooking")}
-                                                </div>
-                                                <ProductSelect
-                                                    placeholder={__(
-                                                        'Select a WooCommerce product...',
-                                                        'quillbooking'
-                                                    )}
-                                                    onChange={(value) => {
-                                                        form.setFieldsValue({
-                                                            woo_product: value,
-                                                        });
-                                                        if (props.setDisabled) {
-                                                            props.setDisabled(false);
+                                                    <div className="text-[#3F4254] font-semibold text-[16px]">
+                                                        {__("Select WooCommerce Product", "quillbooking")}
+                                                    </div>
+                                                    <ProductSelect
+                                                        placeholder={__(
+                                                            'Select a WooCommerce product...',
+                                                            'quillbooking'
+                                                        )}
+                                                        onChange={(value) => {
+                                                            form.setFieldsValue({
+                                                                woo_product: value,
+                                                            });
+                                                                props.setDisabled(false);
+                                                        }}
+                                                        value={
+                                                            get(
+                                                                settings,
+                                                                'woo_product'
+                                                            ) || 0
                                                         }
-                                                    }}
-                                                    value={
-                                                        get(
-                                                            settings,
-                                                            'woo_product'
-                                                        ) || 0
-                                                    }
-                                                />
-                                                <span className='text-[#71717A] text-[16px] font-medium'>{__("The selected product will be used for checkout in WooCommerce. The amount will be equal to the selected product pricing.","quillbooking")}</span>
+                                                    />
+                                                    <span className='text-[#71717A] text-[16px] font-medium'>{__("The selected product will be used for checkout in WooCommerce. The amount will be equal to the selected product pricing.", "quillbooking")}</span>
                                                 </Flex>
                                             </Form.Item>
                                         ) : (

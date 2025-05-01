@@ -55,38 +55,6 @@ const EventInfo: React.FC<EventInfoProps> = ({ name, description, hosts, color, 
                 </Flex>
             </Flex>
             <Flex vertical>
-                {/* <Flex gap={1} vertical className='mt-4'>
-                    {hosts && <>
-                        <div className="text-[#09090B] text-[16px]">
-                            {__("Select Event Host", "quillbooking")}
-                            <span className='text-red-500'>*</span>
-                        </div>
-                        <Select
-                            defaultValue={hosts[0]?.id}
-                            className="h-[48px] rounded-lg"
-                            onChange={(selectedId) => {
-                                const selectedHost = hosts.find((host) => host.id === selectedId);
-                                onChange("hosts", selectedHost ? [selectedHost] : []);
-                            }}
-                            getPopupContainer={(trigger) => trigger.parentElement}
-                            options={hosts.map((host) => ({ value: host.id, label: host.name }))}
-                        />
-                    </>}
-                </Flex> */}
-
-                {/* static */}
-                {/* <Flex gap={1} vertical className='mt-4'>
-                    <div className="text-[#09090B] text-[16px]">
-                        {__("Event Host", "quillbooking")}
-                    </div>
-                    <Input
-                        value={name}
-                        onChange={(e) => onChange("host", e.target.value)}
-                        placeholder={__('host', 'quillbooking')}
-                        className='h-[48px] rounded-lg flex items-center'
-                        suffix={<FaRegEdit className='text-[#09090B] text-[16px]' />}
-                    />
-                </Flex> */}
                 <Flex gap={1} vertical className='mt-4'>
                     <div className="text-[#09090B] text-[16px]">
                         {__("Event Color", "quillbooking")}

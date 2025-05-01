@@ -35,9 +35,15 @@ const LivePreview: React.FC<LivePreviewProps> = ({ name, hosts, duration, locati
                         <Flex vertical gap={4}>
                             {/* static */}
                             <div>
-                                <img src={user} alt='user.png' className='size-16 rounded-full'/>
+                                <img src={user} alt='user.png' className='size-16 rounded-full' />
                             </div>
-                            <div className='text-[#1A1A1A99] text-[16px]'>host name</div>
+                            <div className='text-[#1A1A1A99] text-[16px]'>
+                                {hosts.map((host, index) => (
+                                    <span key={index}>
+                                        {host.name}{index !== locations.length - 1 && ", "}
+                                    </span>
+                                ))}
+                            </div>
                             <div className='text-[#1A1A1A] text-[24px]'>{name}</div>
                         </Flex>
                         <Flex gap={4} className='text-color-primary text-[16px] font-semibold items-center'>

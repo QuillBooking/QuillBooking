@@ -63,7 +63,7 @@ import { useLocation } from 'react-router-dom';
 interface NoticeType {
 	title: string;
 	message: string;
-  }
+}
 
 const Event: React.FC = () => {
 	const {
@@ -84,15 +84,16 @@ const Event: React.FC = () => {
 	const [checked, setChecked] = useState(true);
 	const [modalShareId, setModalShareId] = useState<string | null>(null);
 	const [saveDisabled, setSaveDisabled] = useState(true);
+	const [isSaving, setIsSaving] = useState(false);
 	const location = useLocation();
 	const [notice, setNotice] = useState<NoticeType | null>(null);
 
 	useEffect(() => {
-    if (location.state?.notice) {
-      setNotice(location.state.notice);
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
+		if (location.state?.notice) {
+			setNotice(location.state.notice);
+			window.history.replaceState({}, document.title);
+		}
+	}, [location.state]);
 
 	const navigate = useNavigate();
 	const setBreadcrumbs = useBreadcrumbs();
@@ -205,9 +206,16 @@ const Event: React.FC = () => {
 		setChecked(checked);
 	};
 
-	const handleSave = () => {
-		if (childRef.current) {
-			childRef.current.saveSettings();
+	const handleSave = async () => {
+		if (!childRef.current || isSaving) return; // Prevent multiple clicks
+
+		setIsSaving(true); // Disable button immediately
+
+		try {
+			await childRef.current.saveSettings(); // Wait for save to complete
+		}
+		finally {
+			setIsSaving(false); // Re-enable button
 		}
 	};
 
@@ -215,16 +223,16 @@ const Event: React.FC = () => {
 		{
 			key: 'details',
 			label: __('Event Details', 'quillbooking'),
-			children: event ? (
+			children:
 				<EventDetails
 					onKeepDialogOpen={() => setOpen(true)}
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
-					notice={notice} 
+					notice={notice}
 					clearNotice={() => setNotice(null)}
 				/>
-			) : null,
+			,
 			icon: <CalendarsIcon />,
 		},
 		{
@@ -242,13 +250,12 @@ const Event: React.FC = () => {
 		{
 			key: 'question',
 			label: __('Question Settings', 'quillbooking'),
-			children: event ? (
+			children:
 				<EventFieldsTab
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
-				/>
-			) : null,
+				/>,
 			icon: <QuestionIcon />,
 		},
 		{
@@ -274,31 +281,33 @@ const Event: React.FC = () => {
 		{
 			key: 'advanced-settings',
 			label: __('Advanced Settings', 'quillbooking'),
-			children: event ? (
+			children:
 				<AdvancedSettings
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
-				/>
-			) : null,
+				/>,
 			icon: <SettingsIcon />,
 		},
 		{
 			key: 'payment-settings',
 			label: __('Payments Settings', 'quillbooking'),
-			children: event ? (
+			children:
 				<Payments
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
-				/>
-			) : null,
+				/>,
 			icon: <PaymentSettingsIcon />,
 		},
 		{
 			key: 'webhooks-feeds',
 			label: __('Webhooks Feeds', 'quillbooking'),
-			children: <WebhookFeeds />,
+			children: <WebhookFeeds
+				ref={childRef}
+				disabled={saveDisabled}
+				setDisabled={setSaveDisabled}
+			/>,
 			icon: <WebhookIcon />,
 		},
 		// {
@@ -419,15 +428,13 @@ const Event: React.FC = () => {
 							<Button
 								type="primary"
 								size="middle"
-								// onClick={saveSettings}
 								onClick={handleSave}
-								loading={loading}
-								disabled={saveDisabled}
-								className={`rounded-lg font-[500] text-white ${
-									saveDisabled
-										? 'bg-gray-400 cursor-not-allowed'
-										: 'bg-color-primary '
-								}`}
+								loading={isSaving}
+								disabled={saveDisabled || isSaving}
+								className={`rounded-lg font-[500] text-white ${saveDisabled || isSaving
+									? 'bg-gray-400 cursor-not-allowed'
+									: 'bg-color-primary '
+									}`}
 							>
 								{__('Save Changes', 'quillbooking')}
 							</Button>

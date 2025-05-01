@@ -159,9 +159,15 @@ workflows:
 
   # Manual workflow that can be triggered via the CircleCI UI
   manual-workflow:
-    when: on_demand
     jobs:
+      - hold:
+          type: approval
+          filters:
+            branches:
+              only: main
       - php-test:
+          requires:
+            - hold
           matrix:
             parameters:
               php-version: ["7.4", "8.0", "8.1", "8.2"]
@@ -177,7 +183,9 @@ workflows:
                 wordpress-version: "6.0"
               - php-version: "8.2"
                 wordpress-version: "6.1"
-      - react-test
+      - react-test:
+          requires:
+            - hold
       - integration-test:
           requires:
             - php-test

@@ -142,6 +142,41 @@ workflows:
                 wordpress-version: "6.0"
               - php-version: "8.2"
                 wordpress-version: "6.1"
+          filters:
+            branches:
+              only: manual-trigger
+      - react-test:
+          filters:
+            branches:
+              only: manual-trigger
+      - integration-test:
+          requires:
+            - php-test
+            - react-test
+          filters:
+            branches:
+              only: manual-trigger
+
+  # Manual workflow that can be triggered via the CircleCI UI
+  manual-workflow:
+    when: on_demand
+    jobs:
+      - php-test:
+          matrix:
+            parameters:
+              php-version: ["7.4", "8.0", "8.1", "8.2"]
+              wordpress-version: ["latest", "6.4", "6.3", "6.2", "6.1", "6.0", "5.9"]
+            exclude:
+              # WordPress 5.9 doesn't fully support PHP 8.1 and 8.2
+              - php-version: "8.1"
+                wordpress-version: "5.9"
+              - php-version: "8.2"
+                wordpress-version: "5.9"
+              # PHP 8.2 compatibility is only fully supported in WP 6.2+
+              - php-version: "8.2"
+                wordpress-version: "6.0"
+              - php-version: "8.2"
+                wordpress-version: "6.1"
       - react-test
       - integration-test:
           requires:

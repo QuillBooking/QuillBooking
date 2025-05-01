@@ -38,6 +38,11 @@
         ],
         "format": "phpcbf --standard=phpcs.xml.dist --report-summary --report-source",
         "lint": "phpcs --standard=phpcs.xml.dist",
-         "test": "phpunit --testdox"
+        "test": "phpunit --testdox",
+        "test:unit": "phpunit --testdox --testsuite unit",
+        "test:integration": "phpunit --testdox --testsuite integration",
+        "test:booking": "phpunit --testdox tests/integration/test-booking-flow.php",
+        "test:payment": "phpunit --testdox tests/integration/test-payment-processing.php",
+        "test:api": "phpunit --testdox tests/integration/test-api-endpoints.php"
     }
 }

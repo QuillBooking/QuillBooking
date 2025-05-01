@@ -85,7 +85,7 @@ const OverrideSection: React.FC<OverrideSectionProps> = ({
 	);
 
 	return (
-		<Card className="mt-4 w-full">
+		<Card className="w-full">
 			<Flex vertical gap={20}>
 				<Flex vertical>
 					<Text className="text-[#09090B] font-bold text-[20px]">

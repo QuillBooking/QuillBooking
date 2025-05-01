@@ -399,12 +399,13 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 					/>
 				</Card>
 			)}
-
-			<OverrideSection
-				dateOverrides={dateOverrides}
-				setDateOverrides={setDateOverrides}
-				setDisabled={setDisabled}
-			/>
+			<div className='mt-4'>
+				<OverrideSection
+					dateOverrides={dateOverrides}
+					setDateOverrides={setDateOverrides}
+					setDisabled={setDisabled}
+				/>
+			</div>
 
 			<Card className="border-none">
 				<RangeSection

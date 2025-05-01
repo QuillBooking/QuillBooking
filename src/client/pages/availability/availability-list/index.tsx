@@ -30,7 +30,7 @@ interface AvailabilityListProps {
 const { Title } = Typography;
 const AvailabilityList: React.FC<AvailabilityListProps> = ({
 	showAllSchedules,
-	openAvailabilityModal
+	openAvailabilityModal,
 }) => {
 	const { callApi } = useApi();
 	const [availabilities, setAvailabilities] = useState<
@@ -120,6 +120,7 @@ const AvailabilityList: React.FC<AvailabilityListProps> = ({
 							isAvailabilityDefault={
 								availability.is_default || false
 							}
+							eventsCount={availability.events_count || 0}
 						/>
 					</List.Item>
 				</Card>

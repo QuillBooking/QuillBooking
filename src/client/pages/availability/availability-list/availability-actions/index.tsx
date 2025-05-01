@@ -28,12 +28,14 @@ interface AvailabilityActionsProps {
 	availabilities: Partial<Availability>[];
 	setAvailabilities: (availabilities: Partial<Availability>[]) => void;
 	isAvailabilityDefault: boolean;
+	eventsCount: number;
 }
 const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 	availabilityId,
 	availabilities,
 	setAvailabilities,
-	isAvailabilityDefault
+	isAvailabilityDefault,
+	eventsCount,
 }) => {
 	const navigate = useNavigate();
 	const { successNotice, errorNotice } = useNotice();
@@ -80,6 +82,38 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 		});
 	};
 
+	const getTitle = () => {
+		if (eventsCount > 0) {
+			return __(
+				'This availability is used by some events and can not be deleted',
+				'quillbooking'
+			);
+		}
+
+		if (isAvailabilityDefault) {
+			return __(
+				'You cannot delete the default availability. Please set another availability as default first.',
+				'quillbooking'
+			);
+		}
+
+		return __(
+			'Are you sure you want to delete this availability?',
+			'quillbooking'
+		);
+	};
+
+	const getDescription = () => {
+		if (eventsCount > 0 || isAvailabilityDefault) {
+			return '';
+		}
+
+		return __(
+			"By deleting this availability you won't be able to restore it again!",
+			'quillbooking'
+		);
+	};
+
 	return (
 		<Flex gap={10} align="center">
 			<Link to={`availability/${availabilityId}`}>
@@ -103,17 +137,12 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 			</div>
 
 			<ConfirmationModal
-				title={__(
-					'Are you sure you want to delete this availability?',
-					'quillbooking'
-				)}
-				description={__(
-					"by Delete this booking you won't be able to restore it again!",
-					'quillbooking'
-				)}
+				title={getTitle()}
+				description={getDescription()}
 				onSave={() => deleteAvailability(availabilityId)}
 				showModal={showConfirmation}
 				setShowModal={setShowConfirmation}
+				isSaveBtnDisabled={eventsCount > 0 || isAvailabilityDefault}
 			/>
 		</Flex>
 	);

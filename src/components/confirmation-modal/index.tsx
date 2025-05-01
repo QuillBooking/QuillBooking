@@ -19,6 +19,7 @@ interface ConfirmationModalProps {
 	showModal: boolean;
 	setShowModal: (showModal: boolean) => void;
 	onSave: () => void;
+	isSaveBtnDisabled: boolean;
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -27,6 +28,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 	showModal,
 	setShowModal,
 	onSave,
+	isSaveBtnDisabled = false,
 }) => {
 	return (
 		<Modal
@@ -49,27 +51,41 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 			}
 			open={showModal}
 		>
-			<div className="flex justify-between gap-2 mt-4">
-				<Button
-					size="large"
-					className="border border-[#71717A] text-[#71717A] w-1/2"
-					onClick={() => {
-						setShowModal(false);
-					}}
-				>
-					{__('Back', 'quillbooking')}
-				</Button>
-				<Button
-					size="large"
-					className="text-white bg-[#EF4444] w-1/2"
-					onClick={() => {
-						onSave();
-						setShowModal(false);
-					}}
-				>
-					{__('Yes, Delete', 'quillbooking')}
-				</Button>
-			</div>
+			{isSaveBtnDisabled ? (
+				<div className="flex justify-center mt-4">
+					<Button
+						size="large"
+						className="border border-[#71717A] text-[#71717A] w-1/2"
+						onClick={() => {
+							setShowModal(false);
+						}}
+					>
+						{__('Back', 'quillbooking')}
+					</Button>
+				</div>
+			) : (
+				<div className="flex justify-between gap-2 mt-4">
+					<Button
+						size="large"
+						className="border border-[#71717A] text-[#71717A] w-1/2"
+						onClick={() => {
+							setShowModal(false);
+						}}
+					>
+						{__('Back', 'quillbooking')}
+					</Button>
+					<Button
+						size="large"
+						className="text-white bg-[#EF4444] w-1/2"
+						onClick={() => {
+							onSave();
+							setShowModal(false);
+						}}
+					>
+						{__('Yes, Delete', 'quillbooking')}
+					</Button>
+				</div>
+			)}
 		</Modal>
 	);
 };

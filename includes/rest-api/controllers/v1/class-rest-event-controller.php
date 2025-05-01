@@ -572,28 +572,50 @@ class REST_Event_Controller extends REST_Controller {
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error
 	 */
+	// Inside REST_Event_Controller::get_item method in class-rest-event-controller.php
+
 	public function get_item( $request ) {
 		try {
-			$id    = $request->get_param( 'id' );
-			$event = Event_Model::with( 'calendar' )->find( $id );
+			$id = $request->get_param( 'id' );
 
-			$usersId = $event->calendar->getTeamMembers() ?: array( $event->user->ID );
-			$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
+			$event = Event_Model::with( 'calendar' )->find( $id ); // Eager load calendar
 
+			// *** ADD THIS CHECK ***
+			if ( ! $event ) {
+				return new WP_Error(
+					'rest_event_not_found',
+					__( 'Event not found', 'quillbooking' ),
+					array( 'status' => 404 )
+				);
+			}
+
+			$calendar = $event->calendar;
+			$owner_id = $event->user_id ?? ( $calendar->user_id ?? null ); // Get owner ID safely
+
+			$usersId = array();
+			if ( $calendar ) {
+				if ( $calendar->type === 'team' ) {
+					$usersId = $calendar->getTeamMembers() ?: array(); // Use team members if team cal
+				} elseif ( $owner_id ) {
+					$usersId = array( $owner_id ); // Use event owner if host cal and owner exists
+				}
+			}
+
+			// Ensure it's an array
 			$users = array();
 			foreach ( $usersId as $userId ) {
-					$user = User_Model::find( $userId );
+				$user = User_Model::find( $userId );
 
 				if ( $user ) {
-						$user_avatar_url = get_avatar_url( $user->ID );
-						$availabilities  = Availabilities::get_user_availabilities( $user->ID );
+					$user_avatar_url = get_avatar_url( $user->ID );
+					$availabilities  = Availabilities::get_user_availabilities( $user->ID );
 
-						$users[] = array(
-							'id'             => $user->ID,
-							'name'           => $user->display_name,
-							'image'          => $user_avatar_url,
-							'availabilities' => $availabilities,
-						);
+					$users[] = array(
+						'id'             => $user->ID,
+						'name'           => $user->display_name,
+						'image'          => $user_avatar_url,
+						'availabilities' => $availabilities,
+					);
 				}
 			}
 
@@ -602,7 +624,7 @@ class REST_Event_Controller extends REST_Controller {
 			$event->reserve           = $event->getReserveTimesAttribute();
 
 			return new WP_REST_Response( $event, 200 );
-		} catch ( Exception $e ) {
+		} catch ( \Throwable $e ) { // Catch Throwable
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}

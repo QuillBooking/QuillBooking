@@ -16,13 +16,13 @@ if ( ! defined( 'QUILLBOOKING_PLUGIN_FILE' ) ) {
 }
 
 // Make sure we're using the real validator class in tests by loading it first
-if (!class_exists('QuillBooking\Booking\Booking_Validator')) {
-    require_once dirname(dirname(__FILE__)) . '/includes/booking/class-booking-validator.php';
+if ( ! class_exists( 'QuillBooking\Booking\Booking_Validator' ) ) {
+	require_once dirname( dirname( __FILE__ ) ) . '/includes/booking/class-booking-validator.php';
 }
 
 // Make sure we're loading utility classes needed by the real BookingValidator
-if (!class_exists('QuillBooking\Utils')) {
-    require_once dirname(dirname(__FILE__)) . '/includes/class-utils.php';
+if ( ! class_exists( 'QuillBooking\Utils' ) ) {
+	require_once dirname( dirname( __FILE__ ) ) . '/includes/class-utils.php';
 }
 
 // Ensure the WordPress test suite is available
@@ -32,7 +32,7 @@ if ( ! $_tests_dir ) {
 }
 
 if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
-	echo "Could not find $_tests_dir/includes/functions.php, have you run bin/install-wp-tests.sh ?" . PHP_EOL; 
+	echo "Could not find $_tests_dir/includes/functions.php, have you run bin/install-wp-tests.sh ?" . PHP_EOL;
 	exit( 1 );
 }
 
@@ -59,6 +59,10 @@ require_once dirname( __FILE__ ) . '/test-setup.php';
 // Load the Base Test Case abstract class
 require_once dirname( __FILE__ ) . '/class-quillbooking-base-test-case.php';
 
+// Load Integration Test base class and setup files
+require_once dirname( __FILE__ ) . '/class-quillbooking-integration-test-case.php';
+require_once dirname( __FILE__ ) . '/integration/integration-setup.php';
+
 // Define the WP_TESTS_TABLE_PREFIX constant if not already defined
 if ( ! defined( 'WP_TESTS_TABLE_PREFIX' ) ) {
 	global $wpdb;
@@ -66,4 +70,4 @@ if ( ! defined( 'WP_TESTS_TABLE_PREFIX' ) ) {
 }
 
 // Initialize QuillBooking tables in the test database
-QuillBooking\Tests\initialize_test_database(); 
+QuillBooking\Tests\initialize_test_database();

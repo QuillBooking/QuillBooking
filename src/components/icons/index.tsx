@@ -98,6 +98,8 @@ export {default as AddWebhookIcon} from "./add-webhook-icon";
 export { default as GlobalIcon } from './global-icon';
 export { default as EditAvailabilityIcon } from './edit-availability-icon';
 export { default as InfoIcon } from './info-icon';
+export { default as LeftArrowIcon } from './left-arrow-icon';
+
 export {default as AdvancedModulesIcon} from './advanced-modules-icon';
 export {default as LicenseIcon} from './license-icon';  
 export {default as SettingsPaymentIcon} from './settings-payment-icon';

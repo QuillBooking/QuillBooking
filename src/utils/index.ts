@@ -1,7 +1,7 @@
 import { isToday, isTomorrow } from 'date-fns';
 import { format, fromZonedTime, toZonedTime } from 'date-fns-tz';
 
-import { Booking } from '../client';
+import { Booking, DateOverrides } from '@quillbooking/client';
 
 export const getCurrentTimeInTimezone = (timezone: string): string => {
 	const options: Intl.DateTimeFormatOptions = {
@@ -111,3 +111,32 @@ export const getFields = (formData: Record<string, any>) => {
 
 	return groupedFields;
 };
+
+
+export function isValidDateOverrides(dateOverrides: DateOverrides) {
+	return Object.entries(dateOverrides).every(([key, value]) => {
+		// Check if the key is empty
+		if (!key || key.trim() === "") {
+			return false;
+		}
+
+		// Check if the value is a non-empty array
+		if (!Array.isArray(value) || value.length === 0) {
+			return false;
+		}
+
+		return value.every(entry => {
+			// Ensure each entry is a valid object
+			if (typeof entry !== "object" || entry === null) {
+				return false;
+			}
+
+			// Ensure all fields are non-empty
+			return Object.values(entry).every(fieldValue =>
+				fieldValue !== undefined &&
+				fieldValue !== null &&
+				!(typeof fieldValue === "string" && fieldValue.trim() === "")
+			);
+		});
+	});
+}

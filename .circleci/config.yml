@@ -87,27 +87,24 @@ jobs:
           command: npm test
           
   integration-test:
-    docker:
-      - image: cimg/php:8.2
-        environment:
-          WP_CLI_ALLOW_ROOT: 1
-      - image: cimg/mysql:5.7
-        environment:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: wordpress
-      - image: wordpress:latest
-        environment:
-          WORDPRESS_DB_HOST: 127.0.0.1
-          WORDPRESS_DB_USER: root
-          WORDPRESS_DB_PASSWORD: password
-          WORDPRESS_DB_NAME: wordpress
-          WORDPRESS_DEBUG: 1
+    machine:
+      image: ubuntu-2204:current
     steps:
       - checkout
-      - install-php-extensions
       - run:
-          name: Install MySQL client
-          command: sudo apt-get update && sudo apt-get install -y mysql-client
+          name: Set up MySQL
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y mysql-server
+            sudo systemctl start mysql
+            sudo mysql -e "CREATE DATABASE wordpress;"
+            sudo mysql -e "CREATE USER 'wordpress'@'localhost' IDENTIFIED BY 'password';"
+            sudo mysql -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'localhost';"
+            sudo mysql -e "FLUSH PRIVILEGES;"
+      - run:
+          name: Install PHP and extensions
+          command: |
+            sudo apt-get install -y php php-mysql php-gd php-xml php-mbstring php-zip php-curl php-intl
       - run:
           name: Install WordPress CLI
           command: |
@@ -115,34 +112,42 @@ jobs:
             chmod +x wp-cli.phar
             sudo mv wp-cli.phar /usr/local/bin/wp
       - run:
-          name: Install dependencies
-          command: composer install --no-ansi --no-interaction
-      - run:
-          name: Wait for WordPress to be ready
+          name: Install and configure WordPress
           command: |
-            # Simple healthcheck to wait for WordPress
-            for i in $(seq 1 30); do
-              if curl -s http://localhost:80 > /dev/null; then
-                echo "WordPress is up and running"
-                break
-              fi
-              echo "Waiting for WordPress..."
-              sleep 2
-            done
+            # Create WordPress directory
+            sudo mkdir -p /var/www/html
+            sudo chown -R $USER:$USER /var/www/html
+            
+            # Download and configure WordPress
+            cd /var/www/html
+            wp core download
+            wp config create --dbname=wordpress --dbuser=wordpress --dbpass=password --dbhost=localhost
+            wp core install --url=localhost --title="Test Site" --admin_user=admin --admin_password=password --admin_email=test@example.com --skip-email
+            
+            # Make sure wp-content is writable
+            sudo chmod -R 755 wp-content
       - run:
-          name: Install plugin into WordPress
+          name: Install Composer dependencies
+          command: |
+            # Install Composer
+            cd $CIRCLE_WORKING_DIRECTORY
+            sudo apt-get install -y composer
+            composer install --no-ansi --no-interaction
+      - run:
+          name: Install and activate plugin
           command: |
             # Create plugin directory
-            mkdir -p /tmp/wordpress/wp-content/plugins/quill-booking
+            mkdir -p /var/www/html/wp-content/plugins/quill-booking
             
             # Copy plugin files
-            cp -r ./* /tmp/wordpress/wp-content/plugins/quill-booking/
+            cp -r ./* /var/www/html/wp-content/plugins/quill-booking/
             
-            # Install and activate plugin using WP-CLI
-            wp plugin activate quill-booking --path=/var/www/html
+            # Activate the plugin
+            cd /var/www/html
+            wp plugin activate quill-booking
       - run:
           name: Run integration tests
-          command: composer run integration-test
+          command: cd $CIRCLE_WORKING_DIRECTORY && composer run integration-test
 
 workflows:
   wordpress-react-tests:

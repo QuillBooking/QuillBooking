@@ -252,9 +252,10 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 	const handleCardChange = (id: number) => {
 		setDisabled(false);
 		setSelectedCard(id);
-		const selected = Object.values(storedAvailabilities).find(
-			(a) => a.user_id === id && a.is_default
+		const selected = Object.values(event?.availability_data.users_availability).find(
+			(a) => a.user_id === id
 		);
+		console.log('selected', selected);
 		if (selected) {
 			setAvailability(selected);
 			setDateOverrides(selected.override);
@@ -262,7 +263,6 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 		}
 	};
 
-	console.log('event', event);
 	if (loading) {
 		return <Card loading />;
 	}
@@ -306,7 +306,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 			{event?.calendar.type === 'team' && !commonSchedule && (
 				<Flex vertical gap={10} className="mt-4">
 					<div className="text-[#09090B] text-[16px]">
-						{__('Add Availability Per Users*', 'quillbooking')}
+						{__('Add Availability Per Users', 'quillbooking')}
 						<span className="text-red-500">*</span>
 					</div>
 					<Flex gap={20} wrap>

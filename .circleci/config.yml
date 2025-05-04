@@ -156,6 +156,18 @@ jobs:
             cd /var/www/html
             wp plugin activate quill-booking
       - run:
+          name: Set up WordPress test environment
+          command: |
+            # Set up environment variables needed for tests
+            export WP_TESTS_DB_NAME=wordpress
+            export WP_TESTS_DB_USER=wordpress
+            export WP_TESTS_DB_PASSWORD=password
+            export WP_TESTS_DB_HOST=localhost
+            
+            # Run the WordPress test setup script
+            cd $CIRCLE_WORKING_DIRECTORY
+            bash bin/install-wp-tests.sh wordpress wordpress password localhost latest
+      - run:
           name: Run integration tests
           command: cd $CIRCLE_WORKING_DIRECTORY && composer run test:integration
 

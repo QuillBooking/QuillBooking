@@ -586,28 +586,38 @@ class REST_Event_Controller extends REST_Controller {
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error
 	 */
+	// Inside REST_Event_Controller::get_item method in class-rest-event-controller.php
+
 	public function get_item( $request ) {
 		try {
 			$id    = $request->get_param( 'id' );
 			$event = Event_Model::with( 'calendar' )->find( $id );
 
-			$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
-			$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
+			if (! $event) {
+				return new WP_Error(
+					'rest_event_not_found',
+					__('Event not found', 'quillbooking'),
+					array('status' => 404)
+				);
+			}
+
+			$usersId = $event->getTeamMembersAttribute() ?: array($event->user->ID);
+			$usersId = is_array($usersId) ? $usersId : array($usersId);
 
 			$users = array();
 			foreach ( $usersId as $userId ) {
-					$user = User_Model::find( $userId );
+				$user = User_Model::find( $userId );
 
 				if ( $user ) {
-						$user_avatar_url = get_avatar_url( $user->ID );
-						$availabilities  = Availabilities::get_user_availabilities( $user->ID );
+					$user_avatar_url = get_avatar_url( $user->ID );
+					$availabilities  = Availabilities::get_user_availabilities( $user->ID );
 
-						$users[] = array(
-							'id'             => $user->ID,
-							'name'           => $user->display_name,
-							'image'          => $user_avatar_url,
-							'availabilities' => $availabilities,
-						);
+					$users[] = array(
+						'id'             => $user->ID,
+						'name'           => $user->display_name,
+						'image'          => $user_avatar_url,
+						'availabilities' => $availabilities,
+					);
 				}
 			}
 
@@ -616,7 +626,7 @@ class REST_Event_Controller extends REST_Controller {
 			$event->reserve           = $event->getReserveTimesAttribute();
 
 			return new WP_REST_Response( $event, 200 );
-		} catch ( Exception $e ) {
+		} catch ( \Throwable $e ) { // Catch Throwable
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}

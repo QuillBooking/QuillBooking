@@ -86,6 +86,7 @@ export default function Editor({ message, onChange, type }: EditorProps) {
 
   const handleHtmlChange = (html: string) => {
     if (onChange) onChange(html);
+    console.log(html)
   };
 
   const countWordsInHtml = (html: string) => {

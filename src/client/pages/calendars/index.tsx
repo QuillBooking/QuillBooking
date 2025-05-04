@@ -35,6 +35,7 @@ import {
 	SearchInput,
 	UserSelect,
 	HostSelect,
+	TabButtons,
 } from '@quillbooking/components';
 import { SlOptions } from 'react-icons/sl';
 import CalendarActions from './calendar-actions';
@@ -196,22 +197,24 @@ const Calendars: React.FC = () => {
 							}
 							className={`${filters.type === 'host' ? 'bg-color-tertiary text-color-primary' : 'text-[#A1A5B7]'} pt-2 pb-7 px-4 flex items-start`}
 						>
-							<ProfileIcon />
-							<span className="text-[14px] font-[500]">
-								{__('Single Events', 'quillbooking')}
-							</span>
+							<TabButtons 
+							label={__('Single Events', 'quillbooking')} 
+							icon={<ProfileIcon />}
+							isActive={filters.type === 'host'} 
+							/>
 						</Button>
 						<Button
 							type="text"
 							onClick={() =>
 								setFilters({ ...filters, type: 'team' })
 							}
-							className={`${filters.type === 'team' ? 'bg-color-tertiary text-color-primary' : 'text-[#A1A5B7]'} pt-2 pb-7 px-4 flex items-start`}
+							className={`pt-2 pb-7 px-4 flex items-start ${filters.type === 'team' ? 'bg-color-tertiary' : ''}`}
 						>
-							<PeopleFillIcon />
-							<span className="text-[14px] font-[500]">
-								{__('Team Events', 'quillbooking')}
-							</span>
+							<TabButtons 
+							label={__('Team Events', 'quillbooking')} 
+							icon={<PeopleFillIcon />}
+							isActive={filters.type === 'team'} 
+							/>
 						</Button>
 					</Flex>
 					<Flex gap={12}>

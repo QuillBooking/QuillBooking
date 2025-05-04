@@ -25,6 +25,7 @@ export default function AlignmentStyles({ activeEditor }: AlignmentStylesProps) 
           'line-height': `${spacing} !important`,
         });
       }
+      console.log('line-height',spacing)
     });
   }, [activeEditor]);
 

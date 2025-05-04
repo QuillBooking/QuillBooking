@@ -13,8 +13,6 @@ commands:
             sudo apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev
             sudo docker-php-ext-configure gd --with-freetype --with-jpeg
             sudo docker-php-ext-install -j$(nproc) gd exif mysqli pdo_mysql zip bcmath soap intl
-            sudo pecl install imagick
-            sudo docker-php-ext-enable imagick
 
 jobs:
   php-test:
@@ -37,8 +35,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install SVN
-          command: sudo apt-get update && sudo apt-get install -y subversion
+          name: Install SVN and MySQL client
+          command: sudo apt-get update && sudo apt-get install -y subversion mysql-client
       - install-php-extensions
       - run:
           name: Remove incompatible dependencies for PHP < 8.1
@@ -86,6 +84,9 @@ jobs:
     steps:
       - checkout
       - install-php-extensions
+      - run:
+          name: Install MySQL client
+          command: sudo apt-get update && sudo apt-get install -y mysql-client
       - run:
           name: Install WordPress CLI
           command: |
@@ -141,7 +142,50 @@ workflows:
                 wordpress-version: "6.0"
               - php-version: "8.2"
                 wordpress-version: "6.1"
-      - react-test
+          filters:
+            branches:
+              only: manual-trigger
+      - react-test:
+          filters:
+            branches:
+              only: manual-trigger
+      - integration-test:
+          requires:
+            - php-test
+            - react-test
+          filters:
+            branches:
+              only: manual-trigger
+
+  # Manual workflow that can be triggered via the CircleCI UI
+  manual-workflow:
+    jobs:
+      - hold:
+          type: approval
+          filters:
+            branches:
+              only: main
+      - php-test:
+          requires:
+            - hold
+          matrix:
+            parameters:
+              php-version: ["7.4", "8.0", "8.1", "8.2"]
+              wordpress-version: ["latest", "6.4", "6.3", "6.2", "6.1", "6.0", "5.9"]
+            exclude:
+              # WordPress 5.9 doesn't fully support PHP 8.1 and 8.2
+              - php-version: "8.1"
+                wordpress-version: "5.9"
+              - php-version: "8.2"
+                wordpress-version: "5.9"
+              # PHP 8.2 compatibility is only fully supported in WP 6.2+
+              - php-version: "8.2"
+                wordpress-version: "6.0"
+              - php-version: "8.2"
+                wordpress-version: "6.1"
+      - react-test:
+          requires:
+            - hold
       - integration-test:
           requires:
             - php-test

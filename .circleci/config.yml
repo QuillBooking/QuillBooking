@@ -131,9 +131,12 @@ jobs:
       - run:
           name: Install Composer dependencies
           command: |
-            # Install Composer
+            # Install Composer 2.2 (last version with PHP 7.4 compatibility)
             cd $CIRCLE_WORKING_DIRECTORY
-            sudo apt-get install -y composer
+            php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+            php composer-setup.php --version=2.2.18
+            php -r "unlink('composer-setup.php');"
+            sudo mv composer.phar /usr/local/bin/composer
             
             # Install dependencies
             composer update --no-progress --no-ansi --no-interaction

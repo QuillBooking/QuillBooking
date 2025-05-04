@@ -6,6 +6,7 @@ use QuillBooking\Booking\Booking_Validator;
 use QuillBooking\Models\Calendar_Model;
 use QuillBooking\Models\Event_Model;
 use Illuminate\Support\Arr;
+use QuillBooking\Models\User_Model;
 
 class Booking_Actions {
 
@@ -76,6 +77,30 @@ class Booking_Actions {
 		$event      = Event_Model::where( 'slug', $event_slug )
 			->where( 'calendar_id', $calendar->id )
 			->first();
+
+		$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
+		$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
+
+		$users = array();
+
+		foreach ( $usersId as $userId ) {
+				$user = User_Model::find( $userId );
+
+			if ( $user ) {
+					$user_avatar_url = get_avatar_url( $user->ID );
+
+					$users[] = array(
+						'id'    => $user->ID,
+						'name'  => $user->display_name,
+						'image' => $user_avatar_url,
+					);
+			}
+		}
+
+		$event->hosts             = $users;
+		$event->availability_data = $event->getAvailabilityAttribute();
+		$event->reserve           = $event->getReserveTimesAttribute();
+
 		if ( ! $event && $event_slug ) {
 			return;
 		}

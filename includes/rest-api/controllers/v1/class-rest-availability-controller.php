@@ -498,17 +498,20 @@ class REST_Availability_Controller extends REST_Controller {
 
 		$availability = Availabilities::get_availability( $id );
 
-		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to delete this availability.', 'quill-booking' ), array( 'status' => 403 ) );
-		}
-
 		if ( ! $availability ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 404 ) );
+		}
+
+		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {
+			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to delete this availability.', 'quill-booking' ), array( 'status' => 403 ) );
 		}
 
 		if ( true === $availability['is_default'] ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete the default availability.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
+
+		// Get the availability with events count added
+		$availability = $this->events_details_for_availability( $availability );
 
 		if ( 0 > $availability['events_count'] ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete an availability with events.', 'quill-booking' ), array( 'status' => 400 ) );

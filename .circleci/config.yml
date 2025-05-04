@@ -88,7 +88,7 @@ jobs:
           
   integration-test:
     docker:
-      - image: cimg/php:8.1
+      - image: cimg/php:8.2
         environment:
           WP_CLI_ALLOW_ROOT: 1
       - image: cimg/mysql:5.7
@@ -210,4 +210,42 @@ workflows:
       - integration-test:
           requires:
             - php-test
-            - react-test 
+            - react-test
+
+  # Pull request workflow with approval
+  pull-request-workflow:
+    jobs:
+      - hold:
+          type: approval
+          filters:
+            branches:
+              ignore: main
+      - php-test:
+          requires:
+            - hold
+          matrix:
+            parameters:
+              php-version: ["7.4", "8.0", "8.1", "8.2"]
+              wordpress-version: ["latest", "6.4", "6.3"]
+            exclude:
+              # PHP 8.2 compatibility exclusions
+              - php-version: "8.2"
+                wordpress-version: "6.0"
+              - php-version: "8.2"
+                wordpress-version: "6.1"
+          filters:
+            branches:
+              ignore: main
+      - react-test:
+          requires:
+            - hold
+          filters:
+            branches:
+              ignore: main
+      - integration-test:
+          requires:
+            - php-test
+            - react-test
+          filters:
+            branches:
+              ignore: main 

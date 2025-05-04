@@ -12,38 +12,46 @@ import { Button, Flex, Input, Modal } from 'antd';
 /**
  * Internal dependencies
  */
-import { FieldWrapper, TimezoneSelect } from '@quillbooking/components';
+import {
+	CardHeader,
+	CurrentTimeInTimezone,
+	FieldWrapper,
+	TimezoneSelect,
+} from '@quillbooking/components';
 import { Availability } from 'client/types';
 import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
+import { getCurrentTimezone } from '@quillbooking/utils';
 
 interface AddAvailabilityModalProps {
 	open: boolean;
-	onClose: () => void;
-	onSaved: () => void;
+	setOpen: (value: boolean) => void;
 }
 
 /**
  * Availability Events Component.
  */
 
-const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
+const AddAvailabilityScheduleModal: React.FC<AddAvailabilityModalProps> = ({
 	open,
-	onClose,
-	onSaved,
+	setOpen,
 }) => {
 	const { callApi, loading } = useApi();
 	const [formData, setFormData] = useState<Partial<Availability>>({
 		name: '',
-		timezone: '',
+		timezone: getCurrentTimezone(),
 		weekly_hours: DEFAULT_WEEKLY_HOURS,
 		override: {},
 	});
+	const [isDisabled, setIsDisabled] = useState(true);
 
 	const updateFormData = (
 		key: keyof typeof formData,
 		value: Partial<Availability>[keyof Availability]
 	) => {
+		if (formData.name && formData.timezone) {
+			setIsDisabled(false);
+		}
 		setFormData((prev) => ({ ...prev, [key]: value }));
 	};
 	const { errorNotice } = useNotice();
@@ -56,10 +64,9 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 			path: 'availabilities',
 			method: 'POST',
 			data: formData,
-			onSuccess: (data) => {
+			onSuccess: (respone) => {
 				closeHandler();
-				onSaved();
-				navigate(`availability/${data.id}`);
+				navigate(`availability/${respone.data.id}`);
 			},
 			onError: () => {
 				errorNotice(
@@ -70,8 +77,9 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 	};
 
 	const closeHandler = () => {
-		onClose();
-		setFormData({ name: '', timezone: '' });
+		setOpen(false);
+		setFormData({ name: '', timezone: getCurrentTimezone() });
+		setIsDisabled(true);
 	};
 
 	const validate = () => {
@@ -92,51 +100,60 @@ const AddAvailabilitySechduleModal: React.FC<AddAvailabilityModalProps> = ({
 
 	return (
 		<Modal
-			title={__('Add New Availability Schedule', 'quillbooking')}
+			title={
+				<CardHeader
+					className="pb-2"
+					title={__('Add New Availability', 'quillbooking')}
+					description={__('Add the following data.', 'quillbooking')}
+					icon={null}
+					border={false}
+				/>
+			}
 			open={open}
 			onCancel={closeHandler}
 			footer={[
-				<Button key="cancel" onClick={onClose}>
-					{__('Cancel', 'quillbooking')}
-				</Button>,
 				<Button
+					className={`${isDisabled ? 'bg-color-secondary border-0 text-white' : 'bg-color-primary'} w-full`}
+					disabled={isDisabled}
+					size="large"
 					key="save"
 					type="primary"
 					onClick={saveAvailabilitySchedule}
 				>
-					{__('Save', 'quillbooking')}
+					{__('Add New Schedule', 'quillbooking')}
 				</Button>,
 			]}
 		>
 			<Flex vertical gap={20}>
 				<FieldWrapper
-					label={__('Title', 'quillbooking')}
-					description={__(
-						'Enter the title of the schedule.',
-						'quillbooking'
-					)}
+					label={__('Schedule Title', 'quillbooking')}
+					required={true}
 				>
 					<Input
+						size="large"
+						className="rounded-lg"
 						value={formData.name}
 						onChange={(e) => updateFormData('name', e.target.value)}
+						placeholder={__(
+							'Enter a title for the availability',
+							'quillbooking'
+						)}
 					/>
 				</FieldWrapper>
 
 				<FieldWrapper
-					label={__('Timezone', 'quillbooking')}
-					description={__(
-						'Select the timezone for the calendar.',
-						'quillbooking'
-					)}
+					label={__('Select Your Timezone', 'quillbooking')}
+					required={true}
 				>
 					<TimezoneSelect
 						value={formData.timezone || null}
 						onChange={(value) => updateFormData('timezone', value)}
 					/>
+					<CurrentTimeInTimezone className="text-[#818181] text-xs" />
 				</FieldWrapper>
 			</Flex>
 		</Modal>
 	);
 };
 
-export default AddAvailabilitySechduleModal;
+export default AddAvailabilityScheduleModal;

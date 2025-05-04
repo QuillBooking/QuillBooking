@@ -489,10 +489,10 @@ class Test_Rest_Calendar_Controller extends QuillBooking_Base_Test_Case {
 		wp_set_current_user( $this->admin_user_id );
 
 		// --- Add Cleanup Specific to This Test ---
-		error_log( '>>> DEBUG TEAM TEST: Cleaning up pre-existing host calendars for members...' );
+
 		Calendar_Model::where( 'user_id', $this->host_user_id_1 )->where( 'type', 'host' )->delete();
 		Calendar_Model::where( 'user_id', $this->host_user_id_2 )->where( 'type', 'host' )->delete();
-		error_log( '>>> DEBUG TEAM TEST: Cleanup finished.' );
+
 		// --- End Cleanup ---
 
 		// ... (Setup: cleanup, create host cals) ...

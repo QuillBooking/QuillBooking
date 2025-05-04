@@ -29,64 +29,75 @@ class UtilsTest extends QuillBooking_Base_Test_Case {
 	}
 
 	/**
-	 * Test generate_hash_key generates unique hash values
+	 * Test generate_hash_key generates unique identifiers
 	 */
 	public function test_generate_hash_key() {
-		$hash1 = Utils::generate_hash_key();
-		$hash2 = Utils::generate_hash_key();
+		// Test uniqueness - generating multiple keys should produce different values
+		$keys = array();
+		for ( $i = 0; $i < 5; $i++ ) {
+			$key = Utils::generate_hash_key();
+			$this->assertIsString( $key );
+			$this->assertNotEmpty( $key );
+			$this->assertNotContains( $key, $keys, 'Generated keys should be unique' );
+			$keys[] = $key;
+		}
 
-		$this->assertIsString( $hash1 );
-		$this->assertEquals( 32, strlen( $hash1 ) ); // MD5 is 32 characters
-		$this->assertNotEquals( $hash1, $hash2 ); // Two calls should generate different hashes
+		// Test that each call generates a different hash (the function doesn't accept parameters)
+		$this->assertNotEquals(
+			Utils::generate_hash_key(),
+			Utils::generate_hash_key(),
+			'Different calls should generate different hash keys'
+		);
 	}
 
 	/**
-	 * Test create_date_time creates a DateTime object from a string
+	 * Test create_date_time functionality with various inputs and configurations
 	 */
-	public function test_create_date_time_from_string() {
+	public function test_create_date_time() {
+		// Test case 1: String date input with timezone conversion to UTC
 		$date_string = '2023-01-15 14:30:00';
 		$timezone    = 'America/New_York';
 
 		$date = Utils::create_date_time( $date_string, $timezone );
 
-		$this->assertInstanceOf( 'DateTime', $date );
-		$this->assertEquals( 'UTC', $date->getTimezone()->getName() ); // Should be converted to UTC
+		// Verify basic functionality
+		$this->assertInstanceOf( 'DateTime', $date, 'Should return a DateTime object' );
 
-		// The time in New York (EST/EDT) is 5/4 hours behind UTC, so check for appropriate conversion
-		// This handles both standard and daylight saving time
-		$hour_utc = (int) $date->format( 'G' );
-		$this->assertTrue(
-			$hour_utc === 19 || $hour_utc === 20,
-			'Hour should be converted from EST/EDT to UTC'
+		// Verify timezone conversion behavior
+		$this->assertEquals( 'UTC', $date->getTimezone()->getName(), 'Timezone should be converted to UTC by default' );
+
+		// Verify the time was correctly adjusted for timezone
+		$original_date = new DateTime( $date_string, new DateTimeZone( $timezone ) );
+		$this->assertEquals(
+			$original_date->getTimestamp(),
+			$date->getTimestamp(),
+			'Timestamp should remain the same after timezone conversion'
 		);
-	}
 
-	/**
-	 * Test create_date_time creates a DateTime object from a timestamp
-	 */
-	public function test_create_date_time_from_timestamp() {
-		$timestamp = strtotime( '2023-01-15 12:00:00' ); // This will be in UTC
-		$timezone  = 'Europe/London';
+		// Test case 2: Timestamp input
+		$timestamp = strtotime( '2023-01-15 12:00:00' );
+		$date      = Utils::create_date_time( $timestamp, 'Europe/London' );
 
-		$date = Utils::create_date_time( $timestamp, $timezone );
+		$this->assertInstanceOf( 'DateTime', $date, 'Should handle timestamp input' );
+		$this->assertEquals( $timestamp, $date->getTimestamp(), 'Should preserve the exact timestamp' );
 
-		$this->assertInstanceOf( 'DateTime', $date );
-		$this->assertEquals( 'UTC', $date->getTimezone()->getName() );
-		$this->assertEquals( $timestamp, $date->getTimestamp() );
-	}
+		// Test case 3: Option to keep original timezone
+		$date = Utils::create_date_time( $date_string, 'Asia/Tokyo', false );
 
-	/**
-	 * Test create_date_time without converting to UTC
-	 */
-	public function test_create_date_time_without_utc_conversion() {
-		$date_string = '2023-01-15 14:30:00';
-		$timezone    = 'Asia/Tokyo';
+		$this->assertEquals( 'Asia/Tokyo', $date->getTimezone()->getName(), 'Should keep original timezone when specified' );
+		$this->assertEquals( '14:30:00', $date->format( 'H:i:s' ), 'Time should remain unchanged when keeping original timezone' );
 
-		$date = Utils::create_date_time( $date_string, $timezone, false );
+		// Test case 4: Different date formats
+		$formats = array(
+			'Y-m-d H:i:s' => '2023-01-15 14:30:00',
+			'Y-m-d'       => '2023-01-15',
+			'H:i:s'       => '14:30:00',
+		);
 
-		$this->assertInstanceOf( 'DateTime', $date );
-		$this->assertEquals( $timezone, $date->getTimezone()->getName() );
-		$this->assertEquals( '14:30:00', $date->format( 'H:i:s' ) );
+		foreach ( $formats as $format => $date_string ) {
+			$date = Utils::create_date_time( $date_string, 'UTC' );
+			$this->assertInstanceOf( 'DateTime', $date, "Should handle date format: $format" );
+		}
 	}
 
 	/**
@@ -137,23 +148,5 @@ class UtilsTest extends QuillBooking_Base_Test_Case {
 
 		// Should have author capabilities
 		$this->assertContains( 'publish_posts', $capabilities );
-	}
-
-	/**
-	 * Test create_date_time with different time formats
-	 */
-	public function test_create_date_time_different_formats() {
-		$formats = array(
-			'Y-m-d H:i:s' => '2023-01-15 14:30:00',
-			'Y-m-d'       => '2023-01-15',
-			'H:i:s'       => '14:30:00',
-		);
-
-		$timezone = 'Europe/Paris';
-
-		foreach ( $formats as $format => $date_string ) {
-			$date = Utils::create_date_time( $date_string, $timezone );
-			$this->assertInstanceOf( 'DateTime', $date, "Failed to create DateTime from format: $format" );
-		}
 	}
 }

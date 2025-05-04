@@ -91,7 +91,7 @@ class Booking_Ajax {
 			if ( ! $available_slots ) {
 				throw new \Exception( __( 'Sorry, This booking is not available', 'quillbooking' ) );
 			}
-
+			// check type === group
 			if ( $available_slots < count( $validate_invitee ) ) {
 				throw new \Exception( __( 'You have selected an invalid slot', 'quillbooking' ) );
 			}
@@ -123,7 +123,7 @@ class Booking_Ajax {
 
 		try {
 			$id          = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
-			$calendar_id = isset( $_POST['calendar'] ) ? intval( $_POST['calendar_id'] ) : null;
+			$calendar_id = isset( $_POST['calendar_id'] ) ? intval( $_POST['calendar_id'] ) : null;
 
 			if ( ! $id ) {
 				throw new \Exception( __( 'Invalid event', 'quillbooking' ) );

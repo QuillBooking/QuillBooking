@@ -25,11 +25,11 @@ import Attachments from "./attachments";
 import AddingShortCode from "./adding-shortcode";
 import { Flex } from 'antd';
 
-interface ToolbarProps{
-  type:string;
+interface ToolbarProps {
+  type: string;
 }
 
-export const ToolbarPlugin = ({type}:ToolbarProps) => {
+export const ToolbarPlugin = ({ type }: ToolbarProps) => {
   const [editor] = useLexicalComposerContext();
   const [activeEditor, setActiveEditor] = useState(editor);
   const [isBold, setIsBold] = useState(false);
@@ -39,6 +39,7 @@ export const ToolbarPlugin = ({type}:ToolbarProps) => {
   const [fontFamily, setFontFamily] = useState('Arial');
   const [paragraphFormat, setParagraphFormat] = useState('paragraph');
 
+  console.log(fontFamily);
   // Register image insertion command
   useEffect(() => {
     if (!activeEditor) {
@@ -164,7 +165,7 @@ export const ToolbarPlugin = ({type}:ToolbarProps) => {
           $patchStyleText(selection, {
             'font-family': value,
           });
-
+          console.log('font-family',fontFamily);
         }
       });
     },
@@ -197,10 +198,9 @@ export const ToolbarPlugin = ({type}:ToolbarProps) => {
   return (
     <Flex
       gap={15}
-      justify='center'
       align='center'
       wrap
-      className="toolbar p-5 bg-white border-b border-b-[#e0e0e0] text-[#52525B]"
+      className={`toolbar bg-white text-[#52525B] ${type == 'email' ? 'border-b border-b-[#e0e0e0] p-5 justify-center' : ''}`}
     >
       {type == 'email' && (
         <>

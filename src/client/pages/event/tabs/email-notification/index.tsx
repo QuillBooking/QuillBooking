@@ -12,43 +12,34 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Flex, Radio, Switch, Typography } from 'antd';
-import { map, set } from 'lodash';
+import { Card, Flex, Switch } from 'antd';
 
 /**
  * Internal dependencies
  */
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
-import NotificationCard from './email-notification-card';
 import { NotificationType } from '@quillbooking/client';
 import {
 	CardHeader,
 	EditNotificationIcon,
-	EmailNotificationIcon,
-	Header,
-	SmsNotificationIcon,
 } from '@quillbooking/components';
-import { BsInfoCircleFill } from 'react-icons/bs';
-import { IoClose } from 'react-icons/io5';
 import EmailNotificationCard from './email-notification-card';
-import EmatilTabs from './email-tabs';
 import EmailTabs from './email-tabs';
 import OtherNotifications from './other-notifications';
 
-export interface NotificationsTabHandle {
+export interface EmailNotificationsTabHandle {
 	saveSettings: () => Promise<void>;
 }
 
-interface NotificationsTabProps {
-	//notificationType: 'email' | 'sms';
+interface EmailNotificationsTabProps {
 	disabled: boolean;
 	setDisabled: (disabled: boolean) => void;
 }
 
 const EmailNotificationTab = forwardRef<
-	NotificationsTabHandle,
-	NotificationsTabProps
+	EmailNotificationsTabHandle,
+	EmailNotificationsTabProps
 >(({ disabled, setDisabled }, ref) => {
 	const { state: event } = useEventContext();
 	const { callApi, loading } = useApi();
@@ -57,21 +48,22 @@ const EmailNotificationTab = forwardRef<
 		string,
 		NotificationType
 	> | null>(null);
-	// const [notificationSettings, setNotificationSettings] =
-	// 	useState<any>(null);
 	const [editingKey, setEditingKey] = useState<string | null>(null);
 	const [isNoticeVisible, setNoticeVisible] = useState(true);
+	const [notificationsLoaded, setNotificationsLoaded] = useState(false);
 
 	useEffect(() => {
 		fetchNotificationSettings();
 	}, [event]);
 
-	// Add this useEffect to ensure notificationSettings gets updated when notificationSettings changes
-	// useEffect(() => {
-	// 	if (notificationSettings) {
-	// 		setNotificationSettings(notificationSettings);
-	// 	}
-	// }, [notificationSettings]);
+	useEffect(() => {
+        if (notificationsLoaded && notificationSettings && !editingKey) {
+            const firstKey = Object.keys(notificationSettings)[0];
+            if (firstKey) {
+                setEditingKey(firstKey);
+            }
+        }
+    }, [notificationsLoaded]);
 
 	// Expose the saveSettings method through the ref
 	useImperativeHandle(ref, () => ({
@@ -92,6 +84,7 @@ const EmailNotificationTab = forwardRef<
 			method: 'GET',
 			onSuccess(response: Record<string, NotificationType>) {
 				setNotificationSettings(response);
+				setNotificationsLoaded(true);
 			},
 			onError(error) {
 				errorNotice(error.message);
@@ -116,22 +109,25 @@ const EmailNotificationTab = forwardRef<
 
 			console.log('Updated notification settings:', updated);
 
-			// Mark as needing to save if setDisabled is provided
-
 			setDisabled(false);
-
 
 			return updated;
 		});
 	};
 
+	const handleNotificationSelect = (key: string) => {
+        // Only update if selecting a different notification
+        if (editingKey !== key) {
+            setEditingKey(key);
+        }
+    };
+
 	const saveNotificationSettings = async () => {
 		if (!event || !notificationSettings)
-			return Promise.reject('No event or settings found');
+			return;
 
 		console.log('before save method', notificationSettings);
-		return new Promise<void>((resolve, reject) => {
-			callApi({
+		return callApi({
 				path: `events/${event.id}`,
 				method: 'POST',
 				data: {
@@ -154,14 +150,11 @@ const EmailNotificationTab = forwardRef<
 						'Notification settings saved successfully',
 						notificationSettings
 					);
-					resolve();
 				},
 				onError(error) {
 					errorNotice(error.message);
-					reject(error);
 				},
 			});
-		});
 	};
 
 	if (loading || !notificationSettings) {
@@ -174,8 +167,8 @@ const EmailNotificationTab = forwardRef<
 				isNoticeVisible={isNoticeVisible}
 				setNoticeVisible={setNoticeVisible}
 				notificationSettings={notificationSettings}
-				setEditingKey={setEditingKey}
 				editingKey={editingKey}
+				onSelect={handleNotificationSelect}
 			/>
 			<Card>
 				<Flex className="justify-between items-center border-b mb-4">
@@ -213,8 +206,8 @@ const EmailNotificationTab = forwardRef<
 						notificationKey={editingKey}
 						setNotifications={(updatedNotifications) => {
 							setNotificationSettings(updatedNotifications);
-							setDisabled(false);
 						}}
+						setDisabled={setDisabled}
 					/>
 				)}
 			</Card>

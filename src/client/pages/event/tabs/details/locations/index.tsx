@@ -1,18 +1,7 @@
-/**
- * WordPress dependencies
- */
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-
-/**
- * External dependencies
- */
 import { Card, Flex, Button, Input, Modal, Form, Switch, Checkbox } from 'antd';
 import { map, isEmpty, get, uniqueId } from 'lodash';
-
-/**
- * Internal dependencies
- */
 import ConfigAPI from '@quillbooking/config';
 import type { LocationField } from '@quillbooking/config';
 import type { Location } from '@quillbooking/client';
@@ -62,26 +51,23 @@ const Locations: React.FC<{
     const [cachedLocationData, setCachedLocationData] = useState<Record<string, any>>({});
     const [form] = Form.useForm();
     const navigate = useNavigate();
-    // const { callApi, loading } = useApi();
     const locationTypes = ConfigAPI.getLocations();
     const integrations = ConfigAPI.getIntegrations();
-    console.log(integrations);
 
-    // const fetchIntegrations = async () => {
-    //         callApi({
-    //             path: `integrations`,
-    //             method: 'GET',
-    //             onSuccess(response) {
-    //                 console.log(response)
-    //             },
-    //         });
-    //     };
+    // Check if an integration is connected
+    const isIntegrationConnected = (type: string): boolean => {
+        switch (type) {
+            case "google-meet":
+                return connected_integrations.google.connected;
+            case "zoom":
+                return connected_integrations.zoom.connected;
+            case "ms-teams":
+                return connected_integrations.outlook.connected;
+            default:
+                return true; // For non-integration locations
+        }
+    };
 
-    //     useEffect(() => {
-    //         fetchIntegrations();
-    //     }, []);
-
-    console.log(locationTypes)
     // Handle regular location type changes
     const handleLocationTypeChange = (index: number, newType: string) => {
         const locationType = get(locationTypes, newType);
@@ -101,6 +87,68 @@ const Locations: React.FC<{
         setEditingLocationIndex(index);
         setNewLocationType(newType);
         setIsModalVisible(true);
+    };
+
+    // Modified handleCheckboxChange to prevent checking if integration isn't connected
+    const handleCheckboxChange = (type: string, checked: boolean) => {
+        // First check if this is an integration-dependent location that requires connection
+        if (checked && !isIntegrationConnected(type)) {
+            // If trying to check but integration isn't connected, navigate to integration page
+            switch (type) {
+                case "google-meet":
+                    navigateToIntegrations('google');
+                    break;
+                case "zoom":
+                    navigateToIntegrations('zoom');
+                    break;
+                case "ms-teams":
+                    navigateToIntegrations('outlook');
+                    break;
+            }
+            // Prevent checking the checkbox
+            return;
+        }
+
+        // If not custom and integration is connected (or not required), handle regular location toggle
+        const existingIndex = locations.findIndex(loc => loc.type === type);
+
+        if (checked) {
+            // If the location was previously saved, restore its data
+            const savedFields = cachedLocationData[type] || {};
+
+            if (existingIndex !== -1) {
+                const updatedLocations = [...locations];
+                updatedLocations[existingIndex] = {
+                    type,
+                    fields: Object.keys(savedFields).length > 0 ? savedFields : {},
+                };
+                onChange(updatedLocations);
+            } else {
+                const updatedLocations = [...locations];
+                updatedLocations.push({
+                    type,
+                    fields: Object.keys(savedFields).length > 0 ? savedFields : {},
+                });
+                onChange(updatedLocations);
+
+                // If there are saved fields but the location needs configuration, open modal
+                if (Object.keys(savedFields).length === 0 && !isEmpty(get(locationTypes, `${type}.fields`))) {
+                    handleLocationTypeChange(updatedLocations.length - 1, type);
+                }
+            }
+        } else {
+            // When unchecking, save the current location data before removing
+            const locationToRemove = locations.find(loc => loc.type === type);
+            if (locationToRemove && locationToRemove.fields) {
+                setCachedLocationData(prev => ({
+                    ...prev,
+                    [type]: locationToRemove.fields
+                }));
+            }
+
+            const updatedLocations = locations.filter(loc => loc.type !== type);
+            onChange(updatedLocations);
+        }
     };
 
     // Handle modal submission
@@ -241,77 +289,6 @@ const Locations: React.FC<{
         }
     };
 
-    // Add custom location
-    const addCustomLocation = () => {
-        const newCustomId = uniqueId('custom-');
-
-        // Don't add to customLocations array yet, just prepare the ID for editing
-        // We'll add it only after successful submission
-
-        // Open modal to edit the new custom location
-        setNewLocationType("custom");
-        setEditingCustomId(newCustomId);
-        form.resetFields();
-        setIsModalVisible(true);
-    };
-
-    // Remove custom location completely
-    const removeCustomLocation = (customId: string) => {
-        // Remove from customLocations state
-        setCustomLocations(prev => prev.filter(custom => custom.id !== customId));
-
-        // Remove from locations array
-        const updatedLocations = locations.filter(
-            loc => !(loc.type === "custom" && loc.id === customId)
-        );
-
-        onChange(updatedLocations);
-    };
-
-    // Toggle checkbox for regular locations
-    const handleCheckboxChange = (type: string, checked: boolean) => {
-        // If not custom, handle regular location toggle
-        const existingIndex = locations.findIndex(loc => loc.type === type);
-
-        if (checked) {
-            // If the location was previously saved, restore its data
-            const savedFields = cachedLocationData[type] || {};
-
-            if (existingIndex !== -1) {
-                const updatedLocations = [...locations];
-                updatedLocations[existingIndex] = {
-                    type,
-                    fields: Object.keys(savedFields).length > 0 ? savedFields : {},
-                };
-                onChange(updatedLocations);
-            } else {
-                const updatedLocations = [...locations];
-                updatedLocations.push({
-                    type,
-                    fields: Object.keys(savedFields).length > 0 ? savedFields : {},
-                });
-                onChange(updatedLocations);
-
-                // If there are saved fields but the location needs configuration, open modal
-                if (Object.keys(savedFields).length === 0 && !isEmpty(get(locationTypes, `${type}.fields`))) {
-                    handleLocationTypeChange(updatedLocations.length - 1, type);
-                }
-            }
-        } else {
-            // When unchecking, save the current location data before removing
-            const locationToRemove = locations.find(loc => loc.type === type);
-            if (locationToRemove && locationToRemove.fields) {
-                setCachedLocationData(prev => ({
-                    ...prev,
-                    [type]: locationToRemove.fields
-                }));
-            }
-
-            const updatedLocations = locations.filter(loc => loc.type !== type);
-            onChange(updatedLocations);
-        }
-    };
-
     // Toggle custom location checkbox
     const handleCustomCheckboxChange = (customId: string, checked: boolean) => {
         // Update the customLocations visibility state
@@ -355,6 +332,35 @@ const Locations: React.FC<{
         }
     };
 
+    // Add custom location
+    const addCustomLocation = () => {
+        const newCustomId = uniqueId('custom-');
+
+        // Open modal to edit the new custom location
+        setNewLocationType("custom");
+        setEditingCustomId(newCustomId);
+        form.resetFields();
+        setIsModalVisible(true);
+    };
+
+    // Remove custom location completely
+    const removeCustomLocation = (customId: string) => {
+        // Remove from customLocations state
+        setCustomLocations(prev => prev.filter(custom => custom.id !== customId));
+
+        // Remove from locations array
+        const updatedLocations = locations.filter(
+            loc => !(loc.type === "custom" && loc.id === customId)
+        );
+
+        onChange(updatedLocations);
+    };
+
+    // Navigate to integration settings page
+    const navigateToIntegrations = (integrationType: string) => {
+        navigate(`/settings/integrations/${integrationType}`);
+    };
+
     return (
         <>
             <Flex vertical gap={15}>
@@ -369,25 +375,36 @@ const Locations: React.FC<{
                             }`}
                         checked={locations.some(loc => loc.type === "google-meet")}
                         onChange={(e) => handleCheckboxChange("google-meet", e.target.checked)}
+                        disabled={!connected_integrations.google.connected && !locations.some(loc => loc.type === "google-meet")}
                     >
-                        <Flex>
+                        <Flex justify="space-between" align="center" className="w-full">
                             <Flex gap={12} className='items-center ml-2'>
                                 <img src={meet} alt='google_meet.png' className='size-7' />
-                                <Flex vertical>
+                                <Flex vertical className={`${connected_integrations.google.connected?'w-[415px]':'w-[480px]'}`}>
                                     <div className="text-[#3F4254] text-[16px] font-semibold">
                                         {__("Google Meet", "quillbooking")}
                                     </div>
                                     <div className="text-[#9197A4] text-[12px] italic">
-                                        {__("Need to be Connect First - Visit the Google Meet integration page from Settings.", "quillbooking")}
+                                        {connected_integrations.google.connected
+                                            ? __("Connected", "quillbooking")
+                                            : __("Need to be Connect First - Visit the Google Meet integration page from Settings.", "quillbooking")}
                                     </div>
                                 </Flex>
                             </Flex>
-                            {!connected_integrations.google && (
+                            {!connected_integrations.google.connected ? (
                                 <Button
-                                    onClick={() => navigate('home')}
+                                    onClick={() => navigateToIntegrations('google')}
                                     className='bg-transparent shadow-none border border-color-primary text-color-primary'
                                 >
                                     {__('Connect', 'quillbooking')}
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={() => handleEditLocation("google-meet")}
+                                    className='bg-transparent border-none text-[#3F4254] shadow-none'
+                                >
+                                    <EditIcon />
+                                    {__('Edit Connection', 'quillbooking')}
                                 </Button>
                             )}
                         </Flex>
@@ -399,17 +416,38 @@ const Locations: React.FC<{
                             }`}
                         checked={locations.some(loc => loc.type === "zoom")}
                         onChange={(e) => handleCheckboxChange("zoom", e.target.checked)}
+                        disabled={!connected_integrations.zoom.connected && !locations.some(loc => loc.type === "zoom")}
                     >
-                        <Flex gap={12} className='items-center ml-2'>
-                            <img src={zoom} alt='zoom.png' className='size-7' />
-                            <Flex vertical>
-                                <div className="text-[#3F4254] text-[16px] font-semibold">
-                                    {__("Zoom Video", "quillbooking")}
-                                </div>
-                                <div className="text-[#9197A4] text-[12px] italic">
-                                    {__("Need to be Connect First - Visit the Google Meet integration page from Settings.", "quillbooking")}
-                                </div>
+                        <Flex justify="space-between" align="center" className="w-full">
+                            <Flex gap={12} className='items-center ml-2'>
+                                <img src={zoom} alt='zoom.png' className='size-7' />
+                                <Flex vertical className={`${connected_integrations.zoom.connected?'w-[415px]':'w-[480px]'}`}>
+                                    <div className="text-[#3F4254] text-[16px] font-semibold">
+                                        {__("Zoom Video", "quillbooking")}
+                                    </div>
+                                    <div className="text-[#9197A4] text-[12px] italic">
+                                        {connected_integrations.zoom.connected
+                                            ? __("Connected", "quillbooking")
+                                            : __("Need to be Connect First - Visit the Zoom integration page from Settings.", "quillbooking")}
+                                    </div>
+                                </Flex>
                             </Flex>
+                            {!connected_integrations.zoom.connected ? (
+                                <Button
+                                    onClick={() => navigateToIntegrations('zoom')}
+                                    className='bg-transparent shadow-none border border-color-primary text-color-primary'
+                                >
+                                    {__('Connect', 'quillbooking')}
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={() => handleEditLocation("zoom")}
+                                    className='bg-transparent border-none text-[#3F4254] shadow-none'
+                                >
+                                    <EditIcon />
+                                    {__('Edit Connection', 'quillbooking')}
+                                </Button>
+                            )}
                         </Flex>
                     </Checkbox>
                     <Checkbox
@@ -419,20 +457,42 @@ const Locations: React.FC<{
                             }`}
                         checked={locations.some(loc => loc.type === "ms-teams")}
                         onChange={(e) => handleCheckboxChange("ms-teams", e.target.checked)}
+                        disabled={!connected_integrations.outlook.connected && !locations.some(loc => loc.type === "ms-teams")}
                     >
-                        <Flex gap={12} className='items-center ml-2'>
-                            <img src={teams} alt='teams.png' className='size-7' />
-                            <Flex vertical>
-                                <div className="text-[#3F4254] text-[16px] font-semibold">
-                                    {__("MS Teams", "quillbooking")}
-                                </div>
-                                <div className="text-[#9197A4] text-[12px] italic">
-                                    {__("Need to be Connect First - Visit the Google Meet integration page from Settings.", "quillbooking")}
-                                </div>
+                        <Flex justify="space-between" align="center" className="w-full">
+                            <Flex gap={12} className='items-center ml-2'>
+                                <img src={teams} alt='teams.png' className='size-7' />
+                                <Flex vertical className={`${connected_integrations.outlook.connected?'w-[415px]':'w-[480px]'}`}>
+                                    <div className="text-[#3F4254] text-[16px] font-semibold">
+                                        {__("MS Teams", "quillbooking")}
+                                    </div>
+                                    <div className="text-[#9197A4] text-[12px] italic">
+                                        {connected_integrations.outlook.connected
+                                            ? __("Connected", "quillbooking")
+                                            : __("Need to be Connect First - Visit the MS Teams integration page from Settings.", "quillbooking")}
+                                    </div>
+                                </Flex>
                             </Flex>
+                            {!connected_integrations.outlook.connected ? (
+                                <Button
+                                    onClick={() => navigateToIntegrations('outlook')}
+                                    className='bg-transparent shadow-none border border-color-primary text-color-primary'
+                                >
+                                    {__('Connect', 'quillbooking')}
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={() => handleEditLocation("ms-teams")}
+                                    className='bg-transparent border-none text-[#3F4254] shadow-none'
+                                >
+                                    <EditIcon />
+                                    {__('Edit Connection', 'quillbooking')}
+                                </Button>
+                            )}
                         </Flex>
                     </Checkbox>
                 </Flex>
+
                 <Flex vertical gap={10} className='justify-start items-start'>
                     <div className="text-[#09090B] text-[16px]">
                         {__("In Person", "quillbooking")}
@@ -499,6 +559,7 @@ const Locations: React.FC<{
                     </Checkbox>
                 </Flex>
             </Flex>
+
             <Flex vertical gap={15}>
                 <Flex vertical gap={10} className='justify-start items-start'>
                     <div className="text-[#09090B] text-[16px]">
@@ -614,7 +675,6 @@ const Locations: React.FC<{
                         {__("Other", "quillbooking")}
                     </div>
 
-                    {/* Custom Locations - Render each custom location */}
                     {customLocations.map((customLoc) => {
                         const customLocation = locations.find(
                             loc => loc.type === "custom" && loc.id === customLoc.id
@@ -624,8 +684,8 @@ const Locations: React.FC<{
                             <Checkbox
                                 key={customLoc.id}
                                 className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${customLocation
-                                        ? "border-color-primary bg-color-secondary"
-                                        : "border-[#D3D4D6] bg-white"
+                                    ? "border-color-primary bg-color-secondary"
+                                    : "border-[#D3D4D6] bg-white"
                                     }`}
                                 checked={!!customLocation}
                                 onChange={(e) => handleCustomCheckboxChange(customLoc.id, e.target.checked)}
@@ -679,7 +739,6 @@ const Locations: React.FC<{
                 </Flex>
             </Flex>
 
-            {/* Modal for Location Fields */}
             <Modal
                 title={
                     <div>
@@ -700,7 +759,6 @@ const Locations: React.FC<{
             >
                 <Form form={form} layout="vertical">
                     {newLocationType === "custom" ? (
-                        // Custom location form fields
                         <>
                             <Form.Item
                                 name="location"
@@ -754,7 +812,6 @@ const Locations: React.FC<{
                             </Form.Item>
                         </>
                     ) : (
-                        // Standard location form fields
                         newLocationType && map(get(locationTypes, `${newLocationType}.fields`, {}), (field: LocationField, fieldKey) => (
                             <Form.Item
                                 key={fieldKey}

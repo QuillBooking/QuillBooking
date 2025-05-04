@@ -20,7 +20,7 @@ import EventInfo from './event-info';
 import LivePreview from './live-preview';
 import Duration from './duration';
 import { CardHeader, EventLocIcon } from '@quillbooking/components';
-import { EventFieldsTabHandle } from 'client/types';
+import { EventTabHandle } from 'client/types';
 import { IoClose } from 'react-icons/io5';
 import { FaCheckCircle } from "react-icons/fa";
 
@@ -36,7 +36,7 @@ interface EventDetailsProps {
     setDisabled: (disabled: boolean) => void;
 }
 
-const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
+const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
     ({ onKeepDialogOpen, notice, clearNotice, disabled, setDisabled }, ref) => {
         const { state: event, actions } = useEventContext();
         const { callApi, loading } = useApi();
@@ -50,6 +50,7 @@ const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
                 if (event) {
                     saveSettings();
                 }
+                return Promise.resolve();
             },
         }));
 
@@ -67,21 +68,21 @@ const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
 
             const isCustomDuration = ![15, 30, 45, 60].includes(event.duration);
             setDurationMode(isCustomDuration ? 'custom' : 'preset');
-        }, [event]);
+        }, []);
 
         if (!event) {
             return <Skeleton active />;
         }
 
         const saveSettings = () => {
-            if (!validate() || loading) return;
-            callApi({
+            if (!validate()) return;
+            return callApi({
                 path: `events/${event.id}`,
                 method: 'PUT',
                 data: event,
                 onSuccess: () => {
                     successNotice(__('Event settings saved successfully', 'quillbooking'));
-                    setDisabled(true); // Mark as saved
+                    setDisabled(true);
                 },
                 onError: (error: string) => {
                     errorNotice(error);
@@ -91,7 +92,7 @@ const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
 
         const handleChange = (key: string, value: any) => {
             actions.setEvent({ ...event, [key]: value });
-            setDisabled(false); // Mark as having unsaved changes
+            setDisabled(false);
         };
 
         const handleAdditionalSettingsChange = (key: string, value: any) => {
@@ -102,7 +103,7 @@ const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
                     [key]: value,
                 },
             });
-            setDisabled(false); // Mark as having unsaved changes
+            setDisabled(false);
         };
 
         const validate = () => {
@@ -127,6 +128,10 @@ const EventDetails = forwardRef<EventFieldsTabHandle, EventDetailsProps>(
 
             return options;
         };
+
+        // if (loading || !event) {
+        //     return <Card title={__('Event Details', 'quillbooking')} loading />;
+        // }
 
         return (
             <div className='w-full px-9'>

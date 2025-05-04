@@ -12,15 +12,15 @@ interface EmailTabsProps {
 	isNoticeVisible: boolean;
 	setNoticeVisible: (visible: boolean) => void;
 	notificationSettings: Record<string, NotificationType>;
-	setEditingKey: (key: string | null) => void;
 	editingKey: string | null;
+	onSelect: (key: string) => void; // Only accepts string, not null
 }
 const EmailTabs: React.FC<EmailTabsProps> = ({
 	isNoticeVisible,
 	setNoticeVisible,
 	notificationSettings,
-	setEditingKey,
 	editingKey,
+	onSelect,
 }) => {
 	return (
 		<Card>
@@ -45,12 +45,14 @@ const EmailTabs: React.FC<EmailTabsProps> = ({
 							return (
 								<NotificationRow
 									description={__(
-										'This SMS will be sent to the attendee if phone number is provided during booking.',
+										'This Email will be sent to the attendee if email is provided during booking.',
 										'quillbooking'
 									)}
 									noticationKey={key}
 									changedKey={editingKey}
-									setEditingKey={setEditingKey}
+									setEditingKey={(key: string | null) => {
+										key && editingKey !== key && onSelect(key)
+									}}
 									notification={
 										notification as NotificationType
 									}

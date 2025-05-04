@@ -11,7 +11,7 @@ import {
 	Card,
 	Button,
 	Modal,
-	Input, 
+	Input,
 	InputNumber,
 	Select,
 	Flex,
@@ -32,20 +32,22 @@ import {
 import { ReactMultiEmail } from 'react-multi-email';
 import 'react-multi-email/dist/style.css';
 
-type NotificationCardProps = {
+type EmailNotificationCardProps = {
 	notifications: Record<string, NotificationType>;
 	notificationKey: string;
 	setNotifications: (notifications: Record<string, NotificationType>) => void;
+	setDisabled: (disabled: boolean) => void;
 };
 
-const EmailNotificationCard: React.FC<NotificationCardProps> = ({
+const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 	notifications,
 	notificationKey,
 	setNotifications,
+	setDisabled,
 }) => {
 	const [mergeTagModal, setMergeTagModal] = useState<boolean>(false);
 	const [focused, setFocused] = useState(false);
-	
+
 	// Get current notification directly from the parent state
 	const notification = notifications[notificationKey];
 
@@ -59,6 +61,9 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({
 			},
 		};
 		setNotifications(updatedSettings);
+		if (JSON.stringify(updatedSettings) !== JSON.stringify(notifications)) {
+			setDisabled(false); // enable save button
+		}
 	};
 
 	// Update template.subject in notifications
@@ -229,14 +234,14 @@ const EmailNotificationCard: React.FC<NotificationCardProps> = ({
 								<Flex key={index} align="center" gap={10}>
 									<InputNumber
 										value={time.value}
-										onChange={(value) => 
+										onChange={(value) =>
 											handleTimeValueChange(index, value as number)
 										}
 										className="h-[48px] rounded-lg pt-2 w-16"
 									/>
 									<Select
 										value={time.unit}
-										onChange={(unit) => 
+										onChange={(unit) =>
 											handleTimeUnitChange(index, unit)
 										}
 										className="h-[48px] rounded-lg w-44"

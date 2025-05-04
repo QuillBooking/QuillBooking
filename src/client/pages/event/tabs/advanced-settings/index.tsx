@@ -200,7 +200,6 @@ const EventAdvancedSettings = forwardRef<EventAdvancedSettingsHandle, EventAdvan
 
     const saveSettings = async () => {
         if (!event) return;
-
         return saveApi({
             path: `events/${event.id}`,
             method: 'POST',
@@ -217,7 +216,6 @@ const EventAdvancedSettings = forwardRef<EventAdvancedSettingsHandle, EventAdvan
             },
             onError(error) {
                 errorNotice(error.message);
-                return Promise.reject(error);
             },
         });
     };

@@ -22,6 +22,7 @@ import {
 	PriceIcon,
 	CalendarAddIcon,
 	BookingNumIcon,
+	UpcomingCalendarIcon,
 } from '@quillbooking/components';
 import {
 	useCopyToClipboard,
@@ -68,13 +69,13 @@ const CalendarEvents: React.FC<{
 									<Flex
 										justify="space-between"
 										className="border-b pb-2"
-										>
+									>
 										<Flex vertical gap={2}>
 											<Typography.Title
 												level={5}
 												style={{ margin: 0 }}
 												className="capitalize text-[16px] font-[700] text-[#313131]"
-												>
+											>
 												{event.name}
 											</Typography.Title>
 											<Typography.Text
@@ -274,19 +275,24 @@ const CalendarEvents: React.FC<{
 						/>
 					)}
 					{calendar.type == 'host' && (
-
 						<>
-							<Button
-								className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]"
-								onClick={() => setShowCreateEventModal(true)}
-							>
-								<CalendarAddIcon />
-								<span className="pt-[8.5px] text-center text-color-primary self-center">
-									{__('Create Event', 'quillbooking')}
-								</span>
-							</Button>
-
-
+							<Flex vertical gap={30} justify='center' align='center' className='py-10'>
+								<div className='border rounded-full p-7 bg-[#F4F5FA] border-[#E1E2E9] text-[#BEC0CA]'>
+									<UpcomingCalendarIcon width={60} height={60} />
+								</div>
+								<Flex vertical gap={5} justify='center' align='center'>
+									<span className='text-[20px] font-medium text-black'>{__('No Events Added Yet?', 'quillbooking')}</span>
+									<span className='text-[#8B8D97]'>{__('You can also create Teams and manage their events', 'quillbooking')}</span>
+								</Flex>
+								<Button
+									color='primary'
+									className='text-[16px] bg-color-primary text-white border-none shadow-none w-fit'
+									onClick={() => setShowCreateEventModal(true)}
+								>
+									{__('+ Add New Event', 'quillbooking')}
+								</Button>
+							</Flex>
+							
 							<CreateEvent
 								visible={showCreateEventModal}
 								setVisible={setShowCreateEventModal}

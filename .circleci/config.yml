@@ -157,7 +157,7 @@ jobs:
             wp plugin activate quill-booking
       - run:
           name: Run integration tests
-          command: cd $CIRCLE_WORKING_DIRECTORY && composer run integration-test
+          command: cd $CIRCLE_WORKING_DIRECTORY && composer run test:integration
 
 workflows:
   wordpress-react-tests:

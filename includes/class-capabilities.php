@@ -255,14 +255,23 @@ class Capabilities {
 	 *
 	 * @return bool
 	 */
+	// Inside Capabilities class
 	public static function can_manage_booking( $booking_id ) {
+
+		if ( current_user_can( 'quillbooking_manage_all_bookings' ) ) {
+			return true;
+		}
+
 		$booking = Booking_Model::find( $booking_id );
 
 		if ( ! $booking ) {
 			return false;
 		}
+		if ( $booking->relationLoaded( 'event' ) || $booking->load( 'event' ) ) { // Ensure event is loaded
+			return $booking->event && $booking->event->user_id === get_current_user_id();
+		}
 
-		return $booking->user_id === get_current_user_id() || current_user_can( 'quillbooking_manage_all_bookings' );
+		return false;
 	}
 
 	/**
@@ -274,17 +283,19 @@ class Capabilities {
 	 *
 	 * @return bool
 	 */
+	// Inside Capabilities::can_read_booking
+	// Inside Capabilities class
 	public static function can_read_booking( $booking_id ) {
-		$booking = Booking_Model::find( $booking_id );
-
-		if ( ! $booking ) {
-			return false;
-		}
-
-		if ( $booking->user_id === get_current_user_id() ) {
+		if ( current_user_can( 'quillbooking_read_all_bookings' ) ) {
 			return true;
 		}
-
-		return current_user_can( 'quillbooking_read_all_bookings' );
+		$booking = Booking_Model::with( 'event' )->find( $booking_id );
+		if ( ! $booking ) {
+			return false; // Keep this check for non-admins
+		}
+		if ( current_user_can( 'quillbooking_read_own_bookings' ) && $booking->event && $booking->event->user_id === get_current_user_id() ) {
+			return true;
+		}
+		return false;
 	}
 }

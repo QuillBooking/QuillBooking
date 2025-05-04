@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Booking Actions
+ *
+ * This class is responsible for handling booking actions
+ *
+ * @since 1.0.0
+ *
+ * @package QuillBooking
+ */
+
 namespace QuillBooking\Booking;
 
 use QuillBooking\Booking\Booking_Validator;
@@ -10,8 +20,22 @@ use Illuminate\Support\Arr;
 class Booking_Actions {
 
 
-	public function __construct() {
-		 add_action( 'wp_loaded', array( $this, 'init' ) );
+
+	// --- Dependency Properties ---
+	private string $calendarModelClass;
+	private string $eventModelClass;
+	private string $bookingValidatorClass; // Inject validator class name too
+
+	public function __construct(
+		string $calendarModelClass = Calendar_Model::class,
+		string $eventModelClass = Event_Model::class,
+		string $bookingValidatorClass = Booking_Validator::class
+	) {
+		$this->calendarModelClass    = $calendarModelClass;
+		$this->eventModelClass       = $eventModelClass;
+		$this->bookingValidatorClass = $bookingValidatorClass;
+
+		add_action( 'wp_loaded', array( $this, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 
@@ -63,17 +87,17 @@ class Booking_Actions {
 
 	public function render_booking_page() {
 		 $calendar = Arr::get( $_GET, 'quillbooking_calendar', null );
+
 		if ( ! $calendar ) {
 			return;
 		}
 
-		$calendar = Calendar_Model::where( 'slug', $calendar )->first();
+		$calendar = $this->calendarModelClass::where( 'slug', $calendar )->first();
 		if ( ! $calendar ) {
 			return;
 		}
-
 		$event_slug = Arr::get( $_GET, 'event', null );
-		$event      = Event_Model::where( 'slug', $event_slug )
+		$event      = $this->eventModelClass::where( 'slug', $event_slug )
 			->where( 'calendar_id', $calendar->id )
 			->first();
 		if ( ! $event && $event_slug ) {
@@ -110,7 +134,7 @@ class Booking_Actions {
 
 		try {
 			$id      = sanitize_text_field( Arr::get( $_GET, 'id', null ) );
-			$booking = Booking_Validator::validate_booking( $id );
+			$booking = $this->bookingValidatorClass::validate_booking( $id );
 
 			if ( $booking->status === $new_status ) {
 				throw new \Exception( sprintf( __( 'Booking is already %s', 'quillbooking' ), $new_status ) );
@@ -130,7 +154,6 @@ class Booking_Actions {
 			do_action( "quillbooking_booking_{$action_type}", $booking );
 
 			wp_send_json_success( $this->generate_success_message( ucfirst( $action_type ), $new_status ) );
-
 		} catch ( \Exception $e ) {
 			wp_send_json_error( $this->generate_error_message( ucfirst( $action_type ), $e->getMessage() ) );
 		}

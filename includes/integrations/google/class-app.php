@@ -160,12 +160,20 @@ class App {
 	 * @return array|false|WP_Error
 	 */
 	public function refresh_tokens( $refresh_token = null, $account_id = null ) {
-		if ( empty( $refresh_token ) ) {
+		if ( empty( $refresh_token ) || empty( $account_id ) ) {
 			return false;
 		}
 
 		$app_credentials = $this->get_app_credentials();
-		$refeshed_tokens = $this->get_tokens(
+
+		if (
+			empty( $app_credentials ) ||
+			! Arr::has( $app_credentials, array( 'client_id', 'client_secret' ) )
+		) {
+			return false;
+		}
+
+		$refreshed_tokens = $this->get_tokens(
 			array(
 				'client_id'     => Arr::get( $app_credentials, 'client_id' ),
 				'client_secret' => Arr::get( $app_credentials, 'client_secret' ),
@@ -174,20 +182,35 @@ class App {
 			)
 		);
 
-		if ( empty( $refeshed_tokens ) ) {
+		if (
+			empty( $refreshed_tokens ) ||
+			! Arr::has( $refreshed_tokens, 'access_token' )
+			) {
+				return false;
+		}
+
+		$account_data = $this->integration->accounts->get_account( $account_id );
+		if ( empty( $account_data ) || ! is_array( $account_data ) ) {
 			return false;
 		}
 
-		$account_data           = $this->integration->accounts->get_account( $account_id );
-		$tokens                 = Arr::get( $account_data, 'tokens', array() );
-		$tokens['access_token'] = Arr::get( $refeshed_tokens, 'access_token' );
+		$tokens = Arr::get( $account_data, 'tokens', array() );
+		if ( ! is_array( $tokens ) ) {
+			$tokens = array();
+		}
 
-		$this->integration->accounts->update_account(
+		$tokens['access_token'] = Arr::get( $refreshed_tokens, 'access_token' );
+
+		$updated = $this->integration->accounts->update_account(
 			$account_id,
 			array(
 				'tokens' => $tokens,
 			)
 		);
+
+		if ( ! $updated ) {
+			return false;
+		}
 
 		return $tokens;
 	}

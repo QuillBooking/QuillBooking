@@ -466,6 +466,7 @@ class Integration extends Abstract_Integration {
 	 * @return array
 	 */
 	public function get_available_slots( $slots, $event, $start_date, $end_date, $timezone ) {
+
 		$this->set_host( $event->calendar );
 		$google_integration = $this->host->get_meta( $this->meta_key, array() );
 		if ( empty( $google_integration ) ) {
@@ -487,8 +488,9 @@ class Integration extends Abstract_Integration {
 				foreach ( $events as $event ) {
 					$start = Arr::get( $event, 'start.dateTime' );
 					$end   = Arr::get( $event, 'end.dateTime' );
-
-					$slots = $this->remove_booked_slot( $slots, $start, $end, $timezone );
+					if ( $start && $end ) {
+						$slots = $this->remove_booked_slot( $slots, $start, $end, $timezone );
+					}
 				}
 			}
 		}

@@ -3,11 +3,7 @@
 use QuillBooking\Booking\Booking_Tasks;
 use phpmock\phpunit\PHPMock;
 
-
-
-
-
-class BookingTasksTest extends WP_UnitTestCase {
+class Test_Booking_Tasks extends WP_UnitTestCase {
 
 	use PHPMock; // Enable function mocking
 
@@ -20,13 +16,6 @@ class BookingTasksTest extends WP_UnitTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
-
-		if ( ! class_exists( 'QuillBooking\Models\Booking_Model', false ) ) {
-			class_alias( FakeBookingModel::class, 'QuillBooking\Models\Booking_Model' );
-		}
-		if ( ! class_exists( 'QuillBooking\Models\Event_Model', false ) ) {
-			class_alias( FakeEventModel::class, 'QuillBooking\Models\Event_Model' );
-		}
 
 		$this->booking_tasks = new Booking_Tasks();
 

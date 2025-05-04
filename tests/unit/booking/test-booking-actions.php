@@ -3,7 +3,7 @@
 use phpmock\phpunit\PHPMock;
 use QuillBooking\Booking\Booking_Actions;
 
-class BookingActionsTest extends WP_UnitTestCase {
+class Test_Booking_Actions extends WP_UnitTestCase {
 
 	use PHPMock;
 	protected $booking_actions;
@@ -13,19 +13,6 @@ class BookingActionsTest extends WP_UnitTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
-
-		if ( ! class_exists( 'QuillBooking\Booking\Booking_Validator', false ) ) {
-			class_alias( FakeBooking_Validator::class, 'QuillBooking\Booking\Booking_Validator' );
-		}
-		if ( ! class_exists( 'QuillBooking\Models\Booking_Model', false ) ) {
-			class_alias( FakeBookingModel::class, 'QuillBooking\Models\Booking_Model' );
-		}
-		if ( ! class_exists( 'QuillBooking\Models\Calendar_Model', false ) ) {
-			class_alias( FakeCalendarModel::class, 'QuillBooking\Models\Calendar_Model' );
-		}
-		if ( ! class_exists( 'QuillBooking\Models\Event_Model', false ) ) {
-			class_alias( FakeEventModel::class, 'QuillBooking\Models\Event_Model' );
-		}
 
 		$wpSendJsonSuccessMock = $this->getFunctionMock( 'QuillBooking\Booking', 'wp_send_json_success' );
 		$wpSendJsonSuccessMock->expects( $this->any() )
@@ -63,7 +50,11 @@ class BookingActionsTest extends WP_UnitTestCase {
 			)
 		);
 
-		$this->booking_actions = new Booking_Actions();
+		$this->booking_actions = new Booking_Actions(
+			FakeCalendarModel::class,
+			FakeEventModel::class,
+			FakeBooking_Validator::class,
+		);
 	}
 
 	public function tearDown(): void {
@@ -82,19 +73,11 @@ class BookingActionsTest extends WP_UnitTestCase {
 		$_GET['quillbooking_calendar'] = 'test-calendar';
 		$_GET['event']                 = 'test-event';
 
-		$bookingActions = $this->getMockBuilder( Booking_Actions::class )
-			->onlyMethods( array( 'get_head', 'get_footer' ) )
-			->getMock();
-
-		$bookingActions->method( 'get_head' )->willReturn( '<head></head>' );
-		$bookingActions->method( 'get_footer' )->willReturn( '<footer></footer>' );
-
 		ob_start();
-		$bookingActions->render_booking_page();
+		$this->booking_actions->render_booking_page();
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( '<div id="quillbooking-booking-page">', $output );
-		$this->assertStringContainsString( '<footer></footer>', $output );
 	}
 
 

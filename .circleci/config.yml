@@ -11,8 +11,29 @@ commands:
           command: |
             sudo apt-get update
             sudo apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev
-            sudo docker-php-ext-configure gd --with-freetype --with-jpeg
-            sudo docker-php-ext-install -j$(nproc) gd exif mysqli pdo_mysql zip bcmath soap intl
+            
+            # Check which extensions are already installed
+            INSTALLED_EXTENSIONS=$(php -m | tr '[:upper:]' '[:lower:]')
+            
+            # Configure GD if not already installed
+            if ! echo "$INSTALLED_EXTENSIONS" | grep -q "^gd$"; then
+              sudo docker-php-ext-configure gd --with-freetype --with-jpeg
+            fi
+            
+            # Install extensions only if they're not already installed
+            EXTENSIONS_TO_INSTALL=""
+            for ext in gd exif mysqli pdo_mysql zip bcmath soap intl; do
+              if ! echo "$INSTALLED_EXTENSIONS" | grep -q "^$ext$"; then
+                EXTENSIONS_TO_INSTALL="$EXTENSIONS_TO_INSTALL $ext"
+              fi
+            done
+            
+            # Only run the install command if there are extensions to install
+            if [ ! -z "$EXTENSIONS_TO_INSTALL" ]; then
+              sudo docker-php-ext-install -j$(nproc) $EXTENSIONS_TO_INSTALL
+            else
+              echo "All required PHP extensions are already installed."
+            fi
 
 jobs:
   php-test:
@@ -66,27 +87,26 @@ jobs:
           command: npm test
           
   integration-test:
-    docker:
-      - image: cimg/php:8.1
-        environment:
-          WP_CLI_ALLOW_ROOT: 1
-      - image: cimg/mysql:5.7
-        environment:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: wordpress
-      - image: wordpress:latest
-        environment:
-          WORDPRESS_DB_HOST: 127.0.0.1
-          WORDPRESS_DB_USER: root
-          WORDPRESS_DB_PASSWORD: password
-          WORDPRESS_DB_NAME: wordpress
-          WORDPRESS_DEBUG: 1
+    machine:
+      image: ubuntu-2204:current
     steps:
       - checkout
-      - install-php-extensions
       - run:
-          name: Install MySQL client
-          command: sudo apt-get update && sudo apt-get install -y mysql-client
+          name: Set up MySQL
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y mysql-server
+            sudo systemctl start mysql
+            sudo mysql -e "CREATE DATABASE wordpress;"
+            sudo mysql -e "CREATE USER 'wordpress'@'localhost' IDENTIFIED BY 'password';"
+            sudo mysql -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'localhost';"
+            sudo mysql -e "FLUSH PRIVILEGES;"
+      - run:
+          name: Install PHP and extensions
+          command: |
+            sudo add-apt-repository ppa:ondrej/php -y
+            sudo apt-get update
+            sudo apt-get install -y php7.4 php7.4-mysql php7.4-gd php7.4-xml php7.4-mbstring php7.4-zip php7.4-curl php7.4-intl subversion
       - run:
           name: Install WordPress CLI
           command: |
@@ -94,34 +114,62 @@ jobs:
             chmod +x wp-cli.phar
             sudo mv wp-cli.phar /usr/local/bin/wp
       - run:
-          name: Install dependencies
-          command: composer install --no-ansi --no-interaction
-      - run:
-          name: Wait for WordPress to be ready
+          name: Install and configure WordPress
           command: |
-            # Simple healthcheck to wait for WordPress
-            for i in $(seq 1 30); do
-              if curl -s http://localhost:80 > /dev/null; then
-                echo "WordPress is up and running"
-                break
-              fi
-              echo "Waiting for WordPress..."
-              sleep 2
-            done
+            # Create WordPress directory
+            sudo mkdir -p /var/www/html
+            sudo chown -R $USER:$USER /var/www/html
+            
+            # Download and configure WordPress
+            cd /var/www/html
+            wp core download
+            wp config create --dbname=wordpress --dbuser=wordpress --dbpass=password --dbhost=localhost
+            wp core install --url=localhost --title="Test Site" --admin_user=admin --admin_password=password --admin_email=test@example.com --skip-email
+            
+            # Make sure wp-content is writable
+            sudo chmod -R 755 wp-content
       - run:
-          name: Install plugin into WordPress
+          name: Install Composer dependencies
+          command: |
+            # Install Composer 2.2 (last version with PHP 7.4 compatibility)
+            cd $CIRCLE_WORKING_DIRECTORY
+            php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+            php composer-setup.php --version=2.2.18
+            php -r "unlink('composer-setup.php');"
+            sudo mv composer.phar /usr/local/bin/composer
+
+            # Remove incompatible dependencies for PHP 7.4
+            composer remove --dev spatie/phpunit-watcher --no-update --no-interaction
+            
+            # Install dependencies
+            composer update --no-progress --no-ansi --no-interaction
+      - run:
+          name: Install and activate plugin
           command: |
             # Create plugin directory
-            mkdir -p /tmp/wordpress/wp-content/plugins/quill-booking
+            mkdir -p /var/www/html/wp-content/plugins/quill-booking
             
             # Copy plugin files
-            cp -r ./* /tmp/wordpress/wp-content/plugins/quill-booking/
+            cp -r ./* /var/www/html/wp-content/plugins/quill-booking/
             
-            # Install and activate plugin using WP-CLI
-            wp plugin activate quill-booking --path=/var/www/html
+            # Activate the plugin
+            cd /var/www/html
+            wp plugin activate quill-booking
+      - run:
+          name: Set up WordPress test environment
+          command: |
+            # Set up environment variables needed for tests
+            export WP_TESTS_DB_NAME=wordpress
+            export WP_TESTS_DB_USER=wordpress
+            export WP_TESTS_DB_PASSWORD=password
+            export WP_TESTS_DB_HOST=localhost
+            
+            # Run the WordPress test setup script
+            cd $CIRCLE_WORKING_DIRECTORY
+            bash bin/install-wp-tests.sh wordpress wordpress password localhost latest
       - run:
           name: Run integration tests
-          command: composer run integration-test
+          command: cd $CIRCLE_WORKING_DIRECTORY && composer run test:integration
 
 workflows:
   wordpress-react-tests:
@@ -189,4 +237,42 @@ workflows:
       - integration-test:
           requires:
             - php-test
-            - react-test 
+            - react-test
+
+  # Pull request workflow with approval
+  pull-request-workflow:
+    jobs:
+      - hold:
+          type: approval
+          filters:
+            branches:
+              ignore: main
+      - php-test:
+          requires:
+            - hold
+          matrix:
+            parameters:
+              php-version: ["7.4", "8.0", "8.1", "8.2"]
+              wordpress-version: ["latest", "6.4", "6.3"]
+            exclude:
+              # PHP 8.2 compatibility exclusions
+              - php-version: "8.2"
+                wordpress-version: "6.0"
+              - php-version: "8.2"
+                wordpress-version: "6.1"
+          filters:
+            branches:
+              ignore: main
+      - react-test:
+          requires:
+            - hold
+          filters:
+            branches:
+              ignore: main
+      - integration-test:
+          requires:
+            - php-test
+            - react-test
+          filters:
+            branches:
+              ignore: main 

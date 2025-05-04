@@ -345,13 +345,16 @@ class REST_Booking_Controller extends REST_Controller {
 				$start_date = Utils::create_date_time( $start_date, $timezone );
 			}
 
-			$invitee          = array(
+			$invitee = array(
 				array(
 					'name'  => $name,
 					'email' => $email,
 				),
 			);
-			$booking_service  = new Booking_Service();
+
+			// Allow filtering the Booking_Service instance for testing
+			$booking_service = apply_filters( 'quillbooking_booking_service_instance', new Booking_Service() );
+
 			$validate_invitee = $booking_service->validate_invitee( $event, $invitee );
 			$calendar_id      = $event->calendar_id;
 			$booking          = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields );

@@ -8,17 +8,17 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { $getRoot } from 'lexical';
-import { ToolbarPlugin } from './ToolbarPlugin';
+import { ToolbarPlugin } from './plugins/ToolbarPlugin';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
 import { TextNode } from 'lexical';
-import { MentionNode } from './mention-node';
-import { ImageNode } from './img-node';
-import AutoLinkMatchers from './autolink-plugin';
+import { MentionNode } from './nodes/mention-node';
+import { ImageNode } from './nodes/img-node';
+import AutoLinkMatchers from './plugins/autolink-plugin';
 import HtmlSerializer from './html-serializer';
-import InitialContentPlugin from './initial-content-plugin';
+import InitialContentPlugin from './plugins/initial-content-plugin';
 import WordCountPlugin from './word-count';
 
 import "./style.scss";
@@ -137,9 +137,8 @@ export default function Editor({ message, onChange, type }: EditorProps) {
                 />
               }
               placeholder={<div className="editor-placeholder">Enter content here...</div>}
-              ErrorBoundary={({ children }) => (
+              ErrorBoundary={() => (
                 <div className="editor-error">
-                  {children}
                 </div>
               )}
             />

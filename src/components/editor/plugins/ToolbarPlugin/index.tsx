@@ -15,9 +15,9 @@ import {
   $createQuoteNode,
   HeadingTagType,
 } from '@lexical/rich-text';
-import "../style.scss";
 import { __ } from "@wordpress/i18n";
-import { $createImageNode, INSERT_IMAGE_COMMAND } from '../img-node';
+import { $createImageNode } from '../../nodes/img-node';
+import { INSERT_IMAGE_COMMAND } from '../../plugins/image-plugin';  
 import ListStyles from "./list-styles";
 import FontEditing from "./font-editing";
 import AlignmentStyles from "./alignment-styles";

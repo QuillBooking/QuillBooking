@@ -6,7 +6,6 @@ import {
   INSERT_CHECK_LIST_COMMAND,
 } from '@lexical/list';
 import { Button, Flex } from "antd";
-import "../../style.scss";
 
 interface ListStylesProps {
   activeEditor: any;

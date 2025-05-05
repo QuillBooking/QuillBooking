@@ -11,9 +11,8 @@ import {
 } from 'lexical';
 import { $createLinkNode } from '@lexical/link';
 import { Button, Flex  } from "antd";
-import "../../style.scss";
 import { __ } from "@wordpress/i18n";
-import { INSERT_IMAGE_COMMAND } from '../../img-node';
+import { INSERT_IMAGE_COMMAND } from '../../../plugins/image-plugin';
 
 interface AttachmentsProps {
   activeEditor: any;

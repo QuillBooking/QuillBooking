@@ -5,7 +5,6 @@ import {
   FORMAT_TEXT_COMMAND
 } from 'lexical';
 import { Button, Flex, Select } from "antd";
-import "../../style.scss";
 import { __ } from "@wordpress/i18n";
 
 interface FontEditingProps {

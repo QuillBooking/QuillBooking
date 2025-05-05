@@ -373,7 +373,7 @@ const Event: React.FC = () => {
 				open={open}
 				onClose={handleClose}
 				fullScreen
-				className="z-[1000000000000000000]"
+				className="z-[150000]"
 			>
 				<DialogTitle className="border-b" sx={{ padding: '10px 16px' }}>
 					<Flex className="justify-between items-center">

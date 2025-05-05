@@ -131,6 +131,12 @@ abstract class Location {
 
 			try {
 				$field_type = Fields_Manager::instance()->get_item( $field['type'] );
+
+				// Check if field_type exists before trying to instantiate it
+				if ( null === $field_type ) {
+					return new \WP_Error( 'invalid_field_type', sprintf( __( 'Field type "%s" does not exist', 'quillbooking' ), $field['type'] ) );
+				}
+
 				$field_type = new $field_type(
 					array(
 						'is_required' => $field['required'] ?? false,

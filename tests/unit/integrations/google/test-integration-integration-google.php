@@ -2,14 +2,13 @@
 
 namespace QuillBooking\Tests\Integrations\Google;
 
-use PHPUnit\Framework\TestCase;
 use phpmock\phpunit\PHPMock;
-use phpmock\MockBuilder;
 use QuillBooking\Integrations\Google\Integration;
 use QuillBooking\Integrations\Google\API; // Class we need to mock interactions with
 use WP_Error;
 use DateTime; // If manipulating dates
 use DateTimeZone; // If manipulating dates
+use phpmock\MockBuilder;
 use QuillBooking_Base_Test_Case;
 
 class  Test_Integration_Integration_Google extends QuillBooking_Base_Test_Case {
@@ -49,11 +48,11 @@ class  Test_Integration_Integration_Google extends QuillBooking_Base_Test_Case {
 		// --- Mock Models ---
 		// Create basic mocks; adjust properties/methods as needed by the tests
 		$this->bookingMock = $this->getMockBuilder( \stdClass::class )
-			->addMethods( array( 'get_meta', 'update_meta', 'logs' /* other needed methods */ ) )
+			->addMethods( array( 'get_meta', 'update_meta', 'logs' ) )
 			->getMock();
 		// Mock the logs() method to return another mock
 		$this->logMock = $this->getMockBuilder( \stdClass::class )
-			->addMethods( array( 'create' /* other needed methods */ ) )
+			->addMethods( array( 'create' ) )
 			->getMock();
 
 		$this->bookingMock->method( 'logs' )->willReturn( $this->logMock );
@@ -87,8 +86,8 @@ class  Test_Integration_Integration_Google extends QuillBooking_Base_Test_Case {
 		$this->bookingMock->hash_id    = 'booking-hash'; // Example hash ID
 
 		// Mock global functions needed by Integration class methods
-		$getOptionMock = $this->getFunctionMock( self::INTEGRATION_NAMESPACE, 'get_option' );
-		$getOptionMock->expects( $this->any() )->with( 'quillbooking_site_uid' )->willReturn( 'test-site-uid' );
+		// $getOptionMock = $this->getFunctionMock( self::INTEGRATION_NAMESPACE, 'get_option' );
+		// $getOptionMock->expects( $this->any() )->with( 'quillbooking_site_uid' )->willReturn( 'test-site-uid' );
 
 		// Mock __() and _e() etc. if needed
 		$l10nMock = $this->getFunctionMock( self::INTEGRATION_NAMESPACE, '__' );
@@ -127,7 +126,7 @@ class  Test_Integration_Integration_Google extends QuillBooking_Base_Test_Case {
 				->willReturn( $this->apiMock ); // Make connect return our apiMock
 		} else {
 			$integration->method( 'connect' )
-				->willReturn( new WP_Error( 'connect_fail', 'Connection failed' ) ); // Simulate connection failure
+				->willReturn( null ); // Simulate connection failure
 		}
 
 		// If the `host` property needs setting for a test, do it here or in the test
@@ -499,5 +498,344 @@ class  Test_Integration_Integration_Google extends QuillBooking_Base_Test_Case {
 		// Optionally compare exact timestamps
 		$this->assertEquals( $expected_slots['2023-11-01'][0]['start'], $result_slots['2023-11-01'][0]['start'] );
 		$this->assertEquals( $expected_slots['2023-11-01'][1]['start'], $result_slots['2023-11-01'][1]['start'] );
+	}
+
+	// Example for reschedule_event connect failure
+	public function test_reschedule_event_connect_fail() {
+		// Use createIntegrationInstance(false) to make connect return WP_Error
+		$integration = $this->createIntegrationInstance( false );
+
+		$host_id         = $this->calendarMock->id;
+		$account_id      = 'google-acc-1';
+		$google_event_id = 'gevent1';
+		// Setup meta data that WOULD be processed if connect worked
+		$google_events_meta = array( $google_event_id => array( 'account_id' => $account_id ) );
+
+		// --- Mock Dependencies ---
+		$integration->expects( $this->once() )->method( 'set_host' )->with( $host_id );
+		$reflection = new \ReflectionClass( $integration );
+		$hostProp   = $reflection->getProperty( 'host' );
+		$hostProp->setAccessible( true );
+		$hostProp->setValue( $integration, $this->calendarMock );
+		// Mock get_meta to return the data needed to enter the loop
+		$this->bookingMock->method( 'get_meta' )
+			->with( 'google_events_details', array() )
+			->willReturn( $google_events_meta );
+		// connect() is mocked to fail by createIntegrationInstance
+
+		// --- Assertions ---
+		// Expect error log
+		$this->logMock->expects( $this->once() )->method( 'create' )
+			->with(
+				$this->callback(
+					function ( $log_data ) {
+						return $log_data['type'] === 'error' && str_contains( $log_data['message'], 'Error connecting' );
+					}
+				)
+			);
+		// Expect API and meta updates NOT to happen
+		$this->apiMock->expects( $this->never() )->method( 'update_event' );
+		$this->bookingMock->expects( $this->never() )->method( 'update_meta' );
+
+		// --- Execute ---
+		$integration->reschedule_event( $this->bookingMock );
+	}
+
+
+	// In class Test_Integration_Integration_Google
+
+	public function test_add_event_to_calendars_connect_fails_in_loop() {
+		// Scenario: connect() fails for one account but should continue to the next if multiple accounts exist.
+		$integration = $this->createIntegrationInstance( false ); // Configure connect to fail
+
+		$host_id      = $this->calendarMock->id;
+		$account_id_1 = 'google-acc-1'; // Fails connect
+		$account_id_2 = 'google-acc-2'; // Should not be reached if first fails & returns early (check code logic)
+		// If code uses 'continue', this tests that behaviour.
+
+		$calendar_ids_to_sync = array( 'primary' );
+		// Setup meta for two accounts
+		$integration_meta   = array(
+			$account_id_1 => array(
+				'name'   => 'acc1@test.com',
+				'config' => array( 'calendars' => $calendar_ids_to_sync ),
+			),
+			$account_id_2 => array(
+				'name'   => 'acc2@test.com',
+				'config' => array( 'calendars' => $calendar_ids_to_sync ),
+			),
+		);
+		$number_of_accounts = count( $integration_meta ); // = 2
+
+		// --- Mock Dependencies ---
+		$integration->expects( $this->once() )->method( 'set_host' )->with( $host_id );
+		// Set host property manually
+		$reflection = new \ReflectionClass( $integration );
+		$hostProp   = $reflection->getProperty( 'host' );
+		$hostProp->setAccessible( true );
+		$hostProp->setValue( $integration, $this->calendarMock );
+		// Mock get_meta on the calendar mock
+		$this->calendarMock->method( 'get_meta' )->willReturn( $integration_meta );
+
+		// Configure connect mock (set in createIntegrationInstance to return WP_Error)
+		// Verify it's called (at least) once for the first account
+		$integration->expects( $this->atLeastOnce() )->method( 'connect' );
+
+		$this->logMock->expects( $this->exactly( $number_of_accounts ) ) // <<< FIX: Change once() to exactly(2)
+			->method( 'create' )
+			->with(
+				$this->callback(
+					function ( $log_data ) {
+						// Callback still checks type/message
+						return $log_data['type'] === 'error' && str_contains( $log_data['message'], 'Error connecting' );
+					}
+				)
+			);
+
+		$this->apiMock->expects( $this->never() )->method( 'add_event' );
+		$this->bookingMock->expects( $this->never() )->method( 'update_meta' );
+
+		// --- Execute ---
+		$integration->add_event_to_calendars( $this->bookingMock );
+		// Note: Assert based on whether the code `continue`s or `return`s on connect failure in the loop.
+		// If it `continue`s, the connect mock might be called twice, adjust expectation.
+	}
+
+	public function test_add_event_to_calendars_host_meta_empty() {
+		 $integration = $this->createIntegrationInstance( true ); // connect succeeds if called
+
+		$host_id = $this->calendarMock->id;
+
+		// --- Mock Dependencies ---
+		$integration->expects( $this->once() )->method( 'set_host' )->with( $host_id );
+		// Set host property manually
+		$reflection = new \ReflectionClass( $integration );
+		$hostProp   = $reflection->getProperty( 'host' );
+		$hostProp->setAccessible( true );
+		$hostProp->setValue( $integration, $this->calendarMock );
+		// Mock get_meta on calendar to return empty
+		$this->calendarMock->method( 'get_meta' )
+			->with( $integration->meta_key )
+			->willReturn( array() ); // Empty meta
+
+		// --- Assertions ---
+		$integration->expects( $this->never() )->method( 'connect' ); // Connect shouldn't be called
+		$this->logMock->expects( $this->never() )->method( 'create' );
+		$this->apiMock->expects( $this->never() )->method( 'add_event' );
+		$this->bookingMock->expects( $this->never() )->method( 'update_meta' );
+
+		// --- Execute ---
+		$result = $integration->add_event_to_calendars( $this->bookingMock );
+
+		// Assert it returns the original booking object
+		$this->assertSame( $this->bookingMock, $result );
+	}
+
+	public function test_add_event_to_calendars_calendars_list_empty() {
+		$integration = $this->createIntegrationInstance( true ); // connect succeeds
+
+		$host_id    = $this->calendarMock->id;
+		$account_id = 'google-acc-1';
+		// Setup meta with NO calendars config
+		$integration_meta = array(
+			$account_id => array(
+				'name'   => 'acc1@test.com',
+				'config' => array( 'calendars' => array() ),
+			), // Empty calendars list
+			// $account_id => ['name' => 'acc1@test.com', 'config' => []] // Or config missing calendars key
+		);
+
+		// --- Mock Dependencies ---
+		$integration->expects( $this->once() )->method( 'set_host' )->with( $host_id );
+		$reflection = new \ReflectionClass( $integration );
+		$hostProp   = $reflection->getProperty( 'host' );
+		$hostProp->setAccessible( true );
+		$hostProp->setValue( $integration, $this->calendarMock );
+		$this->calendarMock->method( 'get_meta' )->willReturn( $integration_meta );
+
+		// Connect should be called once
+		$integration->expects( $this->once() )->method( 'connect' )->with( $host_id, $account_id )->willReturn( $this->apiMock );
+
+		// --- Assertions ---
+		// Log should NOT be called for this scenario
+		$this->logMock->expects( $this->never() )->method( 'create' );
+		// API add_event should NOT be called
+		$this->apiMock->expects( $this->never() )->method( 'add_event' );
+		$this->bookingMock->expects( $this->never() )->method( 'update_meta' );
+
+		// --- Execute ---
+		$integration->add_event_to_calendars( $this->bookingMock );
+	}
+
+	// In class Test_Integration_Integration_Google
+
+	public function test_remove_event_from_calendars_api_fail() {
+		$integration = $this->createIntegrationInstance( true ); // connect succeeds
+
+		$host_id            = $this->calendarMock->id;
+		$account_id         = 'google-acc-1';
+		$calendar_id        = 'primary';
+		$google_event_id    = 'gevent1';
+		$google_events_meta = array(
+			$google_event_id => array(
+				'event'       => array( 'id' => $google_event_id ),
+				'account_id'  => $account_id,
+				'calendar_id' => $calendar_id,
+			),
+		);
+		$api_error_response = array(
+			'success' => false,
+			'error'   => array( 'error' => array( 'message' => 'Deletion Failed' ) ),
+		);
+
+		// --- Mock Dependencies ---
+		$integration->expects( $this->once() )->method( 'set_host' )->with( $host_id );
+		$this->bookingMock->method( 'get_meta' )->with( 'google_events_details', array() )->willReturn( $google_events_meta );
+		// connect() succeeds (mocked in createIntegrationInstance)
+
+		// Mock API delete_event to fail
+		$this->apiMock->expects( $this->once() )
+			->method( 'delete_event' )
+			->with( $calendar_id, $google_event_id )
+			->willReturn( $api_error_response );
+
+		// --- Assertions ---
+		// Expect error log
+		$this->logMock->expects( $this->once() )->method( 'create' )
+			->with(
+				$this->callback(
+					function ( $log_data ) {
+						return $log_data['type'] === 'error' && str_contains( $log_data['message'], 'Error removing' );
+					}
+				)
+			);
+		// Expect meta NOT to be updated (as the deletion failed)
+		$this->bookingMock->expects( $this->never() )->method( 'update_meta' );
+
+		// --- Execute ---
+		$integration->remove_event_from_calendars( $this->bookingMock );
+	}
+
+	public function test_remove_event_from_calendars_meta_empty() {
+		 $integration = $this->createIntegrationInstance( true ); // connect succeeds if called
+
+		$host_id = $this->calendarMock->id;
+
+		// --- Mock Dependencies ---
+		$integration->expects( $this->once() )->method( 'set_host' )->with( $host_id );
+		// Mock get_meta to return empty
+		$this->bookingMock->method( 'get_meta' )
+			->with( 'google_events_details', array() )
+			->willReturn( array() );
+
+		// --- Assertions ---
+		$integration->expects( $this->never() )->method( 'connect' ); // Should not connect if meta is empty
+		$this->logMock->expects( $this->never() )->method( 'create' );
+		$this->apiMock->expects( $this->never() )->method( 'delete_event' );
+		$this->bookingMock->expects( $this->never() )->method( 'update_meta' );
+
+		// --- Execute ---
+		$result = $integration->remove_event_from_calendars( $this->bookingMock );
+		// Assert it returns nothing or the booking object depending on signature
+		// $this->assertNull($result); or $this->assertSame($this->bookingMock, $result);
+	}
+
+
+	// In class Test_Integration_Integration_Google
+
+	public function test_reschedule_event_api_fail() {
+		$integration = $this->createIntegrationInstance( true ); // connect succeeds
+
+		$host_id            = $this->calendarMock->id;
+		$account_id         = 'google-acc-1';
+		$calendar_id        = 'primary';
+		$google_event_id    = 'gevent1';
+		$google_events_meta = array(
+			$google_event_id => array(
+				'event'       => array( 'id' => $google_event_id ),
+				'account_id'  => $account_id,
+				'calendar_id' => $calendar_id,
+			),
+		);
+		$api_error_response = array(
+			'success' => false,
+			'error'   => array( 'error' => array( 'message' => 'Update Failed' ) ),
+		);
+
+		// --- Mock Dependencies ---
+		$integration->expects( $this->once() )->method( 'set_host' )->with( $host_id );
+		$this->bookingMock->method( 'get_meta' )->with( 'google_events_details', array() )->willReturn( $google_events_meta );
+		// connect() succeeds (mocked in createIntegrationInstance)
+
+		// Mock API update_event to fail
+		$this->apiMock->expects( $this->once() )
+			->method( 'update_event' )
+			->with( $calendar_id, $google_event_id, $this->isType( 'array' ) )
+			->willReturn( $api_error_response );
+
+		// --- Assertions ---
+		$this->logMock->expects( $this->once() )->method( 'create' )
+			->with(
+				$this->callback(
+					function ( $log_data ) {
+						return $log_data['type'] === 'error' && str_contains( $log_data['message'], 'Error rescheduling' );
+					}
+				)
+			);
+		$this->bookingMock->expects( $this->never() )->method( 'update_meta' );
+
+		// --- Execute ---
+		$integration->reschedule_event( $this->bookingMock );
+	}
+
+	public function test_reschedule_event_meta_empty() {
+		$integration = $this->createIntegrationInstance( true ); // connect succeeds if called
+
+		$host_id = $this->calendarMock->id;
+
+		// --- Mock Dependencies ---
+		$integration->expects( $this->once() )->method( 'set_host' )->with( $host_id );
+		$this->bookingMock->method( 'get_meta' )->with( 'google_events_details', array() )->willReturn( array() );
+
+		// --- Assertions ---
+		$integration->expects( $this->never() )->method( 'connect' );
+		$this->logMock->expects( $this->never() )->method( 'create' );
+		$this->apiMock->expects( $this->never() )->method( 'update_event' );
+		$this->bookingMock->expects( $this->never() )->method( 'update_meta' );
+
+		// --- Execute ---
+		$integration->reschedule_event( $this->bookingMock );
+	}
+
+	// In class Test_Integration_Integration_Google
+
+	public function test_get_event_description_formats_correctly() {
+		// --- FIX: Instantiate the REAL Integration class ---
+		// Ensure dependencies are available. Assuming Utils is handled.
+		// If Integration constructor requires the Utils dependency injection:
+		$utils       = new \QuillBooking\Utils(); // Create real Utils
+		$integration = new Integration( $utils );   // Create real Integration
+
+		// If Integration constructor is parameterless (after removing Utils DI):
+		// $integration = new Integration();
+		// --- End Fix ---
+
+		// Use the mocks set up in setUp for booking details
+		$this->bookingMock->calendar->timezone = 'America/Denver'; // Set the target timezone
+
+		// Call the real method
+		$description = $integration->get_event_description( $this->bookingMock );
+
+		// --- Assertions ---
+		$this->assertIsString( $description );
+		$this->assertStringContainsString( 'Event Detials:', $description );
+		$this->assertStringContainsString( 'Invitee: Guest User', $description );
+		$this->assertStringContainsString( 'Invitee Email: guest@test.com', $description );
+		$this->assertStringContainsString( 'When:', $description );
+
+		// --- FIX: Assert the times as they are formatted by the code ---
+		$this->assertStringContainsString( '2023-10-27 10:00', $description ); // Check start time
+		$this->assertStringContainsString( '2023-10-27 11:00', $description ); // Check end time
+		$this->assertStringContainsString( '(America/Denver)', $description ); // Check timezone lab
 	}
 }

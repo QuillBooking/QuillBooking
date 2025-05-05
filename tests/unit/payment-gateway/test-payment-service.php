@@ -31,6 +31,11 @@ class PaymentServiceTest extends QuillBooking_Base_Test_Case {
 	private $booking;
 
 	/**
+	 * Event object
+	 */
+	private $event;
+
+	/**
 	 * Setup the test
 	 */
 	public function setUp(): void {
@@ -49,18 +54,24 @@ class PaymentServiceTest extends QuillBooking_Base_Test_Case {
 			)
 		);
 
-		// Create mock booking
-		$this->booking = $this->getMockBuilder( Booking_Model::class )
-			->disableOriginalConstructor()
-			->getMock();
-
-		// Setup event property with payments settings
-		$this->booking->event                    = new stdClass();
-		$this->booking->event->payments_settings = array(
+		// Create event object with payment settings
+		$this->event                    = new stdClass();
+		$this->event->payments_settings = array(
 			'type'                                   => 'native',
 			'enable_payment'                         => true,
 			'enable_' . $this->payment_gateway->slug => true,
 		);
+
+		// Create mock booking with proper method expectation for event property
+		$this->booking = $this->getMockBuilder( Booking_Model::class )
+			->disableOriginalConstructor()
+			->getMock();
+
+		// Set up the mock to return our event object when event property is accessed
+		$this->booking->expects( $this->any() )
+			->method( '__get' )
+			->with( 'event' )
+			->willReturn( $this->event );
 
 		// Create mock payment service
 		$this->payment_service = new Mock_Payment_Service( $this->payment_gateway );
@@ -118,7 +129,7 @@ class PaymentServiceTest extends QuillBooking_Base_Test_Case {
 		$this->payment_service->reset();
 
 		// Set enable_payment to false
-		$this->booking->event->payments_settings['enable_payment'] = false;
+		$this->event->payments_settings['enable_payment'] = false;
 
 		// Call after_booking_created with matching payment method
 		$args = array( 'payment_method' => $this->payment_gateway->slug );
@@ -136,7 +147,7 @@ class PaymentServiceTest extends QuillBooking_Base_Test_Case {
 		$this->payment_service->reset();
 
 		// Set enable_test_gateway to false
-		$this->booking->event->payments_settings[ 'enable_' . $this->payment_gateway->slug ] = false;
+		$this->event->payments_settings[ 'enable_' . $this->payment_gateway->slug ] = false;
 
 		// Call after_booking_created with matching payment method
 		$args = array( 'payment_method' => $this->payment_gateway->slug );
@@ -154,7 +165,7 @@ class PaymentServiceTest extends QuillBooking_Base_Test_Case {
 		$this->payment_service->reset();
 
 		// Set type to non-native
-		$this->booking->event->payments_settings['type'] = 'external';
+		$this->event->payments_settings['type'] = 'external';
 
 		// Call after_booking_created with matching payment method
 		$args = array( 'payment_method' => $this->payment_gateway->slug );
@@ -204,7 +215,7 @@ class PaymentServiceTest extends QuillBooking_Base_Test_Case {
 	public function test_availability_check() {
 		// Reset booking and payment service
 		$this->payment_service->reset();
-		$this->booking->event->payments_settings = array(
+		$this->event->payments_settings = array(
 			'type'                                   => 'native',
 			'enable_payment'                         => true,
 			'enable_' . $this->payment_gateway->slug => true,
@@ -215,20 +226,20 @@ class PaymentServiceTest extends QuillBooking_Base_Test_Case {
 
 		// Test with payment disabled
 		$this->payment_service->reset();
-		$this->booking->event->payments_settings['enable_payment'] = false;
+		$this->event->payments_settings['enable_payment'] = false;
 		$this->assertFalse( $this->payment_service->test_availability( $this->booking ) );
 
 		// Test with gateway disabled
 		$this->payment_service->reset();
-		$this->booking->event->payments_settings['enable_payment']                           = true;
-		$this->booking->event->payments_settings[ 'enable_' . $this->payment_gateway->slug ] = false;
+		$this->event->payments_settings['enable_payment']                           = true;
+		$this->event->payments_settings[ 'enable_' . $this->payment_gateway->slug ] = false;
 		$this->assertFalse( $this->payment_service->test_availability( $this->booking ) );
 
 		// Test with non-native payment type
 		$this->payment_service->reset();
-		$this->booking->event->payments_settings['type']                                     = 'external';
-		$this->booking->event->payments_settings['enable_payment']                           = true;
-		$this->booking->event->payments_settings[ 'enable_' . $this->payment_gateway->slug ] = true;
+		$this->event->payments_settings['type']                                     = 'external';
+		$this->event->payments_settings['enable_payment']                           = true;
+		$this->event->payments_settings[ 'enable_' . $this->payment_gateway->slug ] = true;
 		$this->assertFalse( $this->payment_service->test_availability( $this->booking ) );
 	}
 }

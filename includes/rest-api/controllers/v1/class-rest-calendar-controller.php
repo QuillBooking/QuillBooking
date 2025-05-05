@@ -782,6 +782,11 @@ class REST_Calendar_Controller extends REST_Controller {
 	 * Validate host calendar requirements
 	 */
 	private function validate_host_calendar( $user_id, $availability ) {
+		// Check if user exists
+		if ( empty( $user_id ) || ! User_Model::where( 'ID', $user_id )->exists() ) {
+			throw new Exception( __( 'Invalid user ID. User does not exist.', 'quillbooking' ), 400 );
+		}
+
 		// Check for existing host calendar
 		if ( Calendar_Model::where( 'user_id', $user_id )->where( 'type', 'host' )->exists() ) {
 			throw new Exception( __( 'You already have a host calendar', 'quillbooking' ), 400 );

@@ -17,6 +17,7 @@ use QuillBooking\Models\Calendar_Model;
 use QuillBooking\Models\Event_Model;
 use Illuminate\Support\Arr;
 use QuillBooking\Models\User_Model;
+use QuillBooking\Renderer;
 
 class Booking_Actions {
 
@@ -38,6 +39,7 @@ class Booking_Actions {
 
 		add_action( 'wp_loaded', array( $this, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+
 	}
 
 	public function enqueue_scripts() {
@@ -76,6 +78,8 @@ class Booking_Actions {
 		);
 
 		wp_style_add_data( 'quillbooking-renderer', 'rtl', 'replace' );
+		Renderer::set_renderer();
+
 	}
 
 	public function init() {
@@ -122,6 +126,7 @@ class Booking_Actions {
 		}
 
 		$event->hosts             = $users;
+		$event->fields            = $event->getFieldsAttribute();
 		$event->availability_data = $event->getAvailabilityAttribute();
 		$event->reserve           = $event->getReserveTimesAttribute();
 
@@ -230,4 +235,5 @@ class Booking_Actions {
 		<?php
 		return ob_get_clean();
 	}
+
 }

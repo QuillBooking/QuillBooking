@@ -1,4 +1,5 @@
-/* eslint-disable jsdoc/check-line-alignment */
+
+// Add these to your imports
 import type {
     ConfigData,
     Integrations,
@@ -6,9 +7,11 @@ import type {
     Capabilities,
     PaymentGateways,
     CurrentUser,
+    MergeTagGroups, // New import
 } from './types/config-data';
 import type { Availability } from '@quillbooking/client';
 
+// Update your configData object to include mergeTags
 const configData: ConfigData = {
     blogName: '',
     adminUrl: '',
@@ -25,6 +28,7 @@ const configData: ConfigData = {
     capabilities: {},
     paymentGateways: {},
     fieldsTypes: {},
+    mergeTags: {}, // Initialize empty merge tags
     currentUser: {
         id: 0,
         email: '',
@@ -33,6 +37,7 @@ const configData: ConfigData = {
         capabilities: {},
     } as CurrentUser,
 };
+
 
 /**
  * Returns configuration value for given key
@@ -351,6 +356,28 @@ export const setCurrentUser = (data: ConfigData) => (value: CurrentUser) => {
     data.currentUser = value;
 };
 
+/**
+ * Get merge tags
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * 
+ * @returns MergeTagGroups
+ */
+export const getMergeTags = (data: ConfigData): MergeTagGroups => {
+    return data.mergeTags;
+};
+
+/**
+ * Set merge tags
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * @param value the value to set
+ */
+export const setMergeTags = (data: ConfigData) => (value: MergeTagGroups) => {
+    data.mergeTags = value;
+};
+
+// Update your ConfigApi interface to include the new methods
 export interface ConfigApi {
     <T>(key: string): T;
     getBlogName: () => string;
@@ -383,8 +410,11 @@ export interface ConfigApi {
     setPaymentGateways: (value: PaymentGateways) => void;
     getCurrentUser: () => CurrentUser;
     setCurrentUser: (value: CurrentUser) => void;
+    getMergeTags: () => MergeTagGroups; // New method
+    setMergeTags: (value: MergeTagGroups) => void; // New method
 }
 
+// Update the createConfig function to include the new methods
 const createConfig = (data: ConfigData): ConfigApi => {
     const configApi = config(data) as ConfigApi;
     configApi.getBlogName = getBlogName(data);
@@ -417,6 +447,8 @@ const createConfig = (data: ConfigData): ConfigApi => {
     configApi.setPaymentGateways = setPaymentGateways(data);
     configApi.getCurrentUser = () => getCurrentUser(data);
     configApi.setCurrentUser = setCurrentUser(data);
+    configApi.getMergeTags = () => getMergeTags(data); // New method
+    configApi.setMergeTags = setMergeTags(data); // New method
 
     return configApi;
 };

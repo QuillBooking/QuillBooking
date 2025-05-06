@@ -238,6 +238,10 @@ class FakeEventModel extends FakeBaseModel {
 		return $this->attributes['team_members'] ?? array();
 	}
 
+	public function getFieldsAttribute() {
+		return $this->attributes['fields'] ?? array();
+	}
+
 	public function getAvailabilityAttribute() {
 		return $this->attributes['availability'] ?? array();
 	}

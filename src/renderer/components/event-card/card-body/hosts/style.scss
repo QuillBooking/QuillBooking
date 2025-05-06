@@ -1,0 +1,27 @@
+.hosts-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 20px;
+}
+
+.host-card {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.host-image {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+}
+
+.host-name {
+	font-family: Inter;
+	font-weight: 400;
+	font-size: 16px;
+	line-height: 150%;
+  color: #1A1A1A99;
+  margin-top: 8px;
+}

@@ -20,6 +20,8 @@ use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Managers\Fields_Manager;
 use QuillBooking\Availabilities;
 use QuillBooking\Managers\Integrations_Manager;
+use QuillBooking\Payment_Gateway\Payment_Validator;
+use QuillBooking\Managers\Payment_Gateways_Manager;
 
 /**
  * Calendar Events Model class
@@ -770,6 +772,7 @@ class Event_Model extends Model {
 	 * Require payment
 	 *
 	 * @return bool
+	 * @throws \Exception If payments are enabled but no gateway is selected.
 	 */
 	public function requirePayment() {
 		$payments_settings = $this->payments_settings;
@@ -785,6 +788,12 @@ class Event_Model extends Model {
 		$items = Arr::get( $payments_settings, 'items', array() );
 		if ( empty( $items ) ) {
 			return false;
+		}
+
+		// Validate payment gateway selection
+		$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+		if ( is_wp_error( $validation_result ) ) {
+			throw new \Exception( $validation_result->get_error_message() );
 		}
 
 		return true;

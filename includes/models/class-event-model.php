@@ -494,35 +494,121 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
+	// public function getConnectedIntegrationsAttribute() {
+	// $connected_integrations = array();
+	// $integrations           = Integrations_Manager::instance()->get_integrations();
+
+	// $calendar_ids = array( $this->calendar_id );
+	// if ( in_array( $this->type, array( 'round-robin', 'collective' ) ) ) {
+	// $team_members = $this->calendar->getTeamMembers();
+	// $calendar_ids = $team_members;
+	// }
+
+	// foreach ( $integrations as $integration_class ) {
+	// ** @var \QuillBooking\Abstracts\Integration $integration */
+	// $integration   = new $integration_class();
+	// $all_connected = true;
+
+	// foreach ( $calendar_ids as $calendar_id ) {
+	// $integration->set_host( $calendar_id );
+	// $accounts = $integration->accounts->get_accounts();
+
+	// if ( empty( $accounts ) ) {
+	// $all_connected = false;
+	// break;
+	// }
+	// }
+
+	// $connected_integrations[ $integration->slug ] = array(
+	// 'name'      => $integration->name,
+	// 'connected' => $all_connected,
+	// );
+	// }
+
+	// return $connected_integrations;
+	// }
+
+
+
+	/**
+	 * Get Connected Integrations
+	 *
+	 * @return array
+	 */
 	public function getConnectedIntegrationsAttribute() {
 		$connected_integrations = array();
-		$integrations           = Integrations_Manager::instance()->get_integrations();
+		// Get the *already registered* integration instances from the manager
+		// Assuming get_integrations() returns an array like ['google' => GoogleIntegrationInstance, 'outlook' => OutlookIntegrationInstance]
+		// OR assuming it returns class names ['google' => GoogleIntegration::class, ...]
+		$integrations_data = Integrations_Manager::instance()->get_integrations(); // Check what this returns!
 
 		$calendar_ids = array( $this->calendar_id );
 		if ( in_array( $this->type, array( 'round-robin', 'collective' ) ) ) {
-			$team_members = $this->calendar->getTeamMembers();
+			$team_members = $this->calendar->getTeamMembers(); // Ensure getTeamMembers() is mockable/testable
 			$calendar_ids = $team_members;
 		}
 
-		foreach ( $integrations as $integration_class ) {
-			/** @var \QuillBooking\Abstracts\Integration $integration */
-			$integration   = new $integration_class();
-			$all_connected = true;
-
-			foreach ( $calendar_ids as $calendar_id ) {
-				$integration->set_host( $calendar_id );
-				$accounts = $integration->accounts->get_accounts();
-
-				if ( empty( $accounts ) ) {
-					$all_connected = false;
-					break;
+		// Adapt the loop based on what get_integrations() returns
+		// Scenario 1: get_integrations() returns INSTANCES
+		if ( ! empty( $integrations_data ) && is_object( reset( $integrations_data ) ) ) {
+			foreach ( $integrations_data as $slug => $integration_instance ) {
+				/** @var \QuillBooking\Integration\Integration $integration_instance */
+				if ( ! $integration_instance instanceof \QuillBooking\Integration\Integration ) {
+					continue; // Skip if not an integration
 				}
-			}
 
-			$connected_integrations[ $integration->slug ] = array(
-				'name'      => $integration->name,
-				'connected' => $all_connected,
-			);
+				$all_connected = true;
+				foreach ( $calendar_ids as $calendar_id ) {
+					$integration_instance->set_host( $calendar_id ); // Use the instance
+					// Ensure 'accounts' property and 'get_accounts' method exist and are testable
+					if ( ! isset( $integration_instance->accounts ) ) {
+						continue; // Safety check
+					}
+					$accounts = $integration_instance->accounts->get_accounts();
+
+					if ( empty( $accounts ) ) {
+						$all_connected = false;
+						break;
+					}
+				}
+
+				$connected_integrations[ $integration_instance->slug ] = array(
+					'name'      => $integration_instance->name,
+					'connected' => $all_connected,
+				);
+			}
+		}
+		// Scenario 2: get_integrations() returns CLASS NAMES (less ideal but fixable)
+		elseif ( ! empty( $integrations_data ) && is_string( reset( $integrations_data ) ) ) {
+			foreach ( $integrations_data as $slug => $integration_class ) {
+				// --- FIX: Use instance() method ---
+				if ( class_exists( $integration_class ) && method_exists( $integration_class, 'instance' ) ) {
+					/** @var \QuillBooking\Integration\Integration $integration */
+					$integration = $integration_class::instance(); // Use the singleton accessor
+				} else {
+					continue; // Skip if class/method doesn't exist
+				}
+				// --- End Fix ---
+
+				$all_connected = true;
+				foreach ( $calendar_ids as $calendar_id ) {
+					$integration->set_host( $calendar_id );
+					if ( ! isset( $integration->accounts ) ) {
+						continue; // Safety check
+					}
+					$accounts = $integration->accounts->get_accounts();
+
+					if ( empty( $accounts ) ) {
+						$all_connected = false;
+						break;
+					}
+				}
+
+				$connected_integrations[ $integration->slug ] = array(
+					'name'      => $integration->name,
+					'connected' => $all_connected,
+				);
+			}
 		}
 
 		return $connected_integrations;

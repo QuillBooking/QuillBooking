@@ -771,6 +771,7 @@ class Event_Model extends Model {
 	 * Require payment
 	 *
 	 * @return bool
+	 * @throws \Exception If payments are enabled but no gateway is selected.
 	 */
 	public function requirePayment() {
 		$payments_settings = $this->payments_settings;
@@ -804,7 +805,7 @@ class Event_Model extends Model {
 		}
 
 		if ( ! $found_gateway ) {
-			return false;
+			throw new \Exception( __( 'Payment is enabled but no payment gateway is selected. Please select at least one payment gateway.', 'quillbooking' ) );
 		}
 
 		return true;

@@ -209,15 +209,31 @@ class REST_Event_Controller extends REST_Controller {
 			)
 		);
 
-		// disable events
+		// hande event disable status
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/disable',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/disable-status',
 			array(
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'disable_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id'         => array(
+							'description' => __( 'Unique identifier for the object.', 'quill-booking' ),
+							'type'        => 'integer',
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						),
+						'properties' => array(
+							'status' => array(
+								'description' => __( 'Disable status.', 'quill-booking' ),
+								'type'        => 'boolean',
+								'context'     => array( 'view', 'edit' ),
+								'readonly'    => true,
+							),
+						),
+					),
 				),
 			)
 		);
@@ -1099,31 +1115,16 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function disable_item( $request ) {
 		try {
-			global $wpdb;
-			$wpdb->query( 'START TRANSACTION' );
-
-			$ids = $request->get_param( 'ids' );
-			if ( ! $ids ) {
-				$wpdb->query( 'ROLLBACK' );
-				return new WP_Error( 'rest_event_error', __( 'No events to disable', 'quillbooking' ), array( 'status' => 400 ) );
+			$id     = $request->get_param( 'id' );
+			$status = $request->get_param( 'status' );
+			$event  = Event_Model::find( $id );
+			if ( ! $event ) {
+				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
-			foreach ( $ids as $id ) {
-				$event = Event_Model::find( $id );
-
-				if ( ! $event ) {
-					$wpdb->query( 'ROLLBACK' );
-					return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
-				}
-
-				$event->is_disabled = true;
-				$event->save();
-			}
-
-			$wpdb->query( 'COMMIT' );
-			return new WP_REST_Response( $ids );
+			$event->is_disabled = $status;
+			$event->save();
+			return new WP_REST_Response( $event, 200 );
 		} catch ( Exception $e ) {
-			global $wpdb;
-			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}

@@ -20,6 +20,7 @@ use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Managers\Fields_Manager;
 use QuillBooking\Availabilities;
 use QuillBooking\Managers\Integrations_Manager;
+use QuillBooking\Managers\Payment_Gateways_Manager;
 
 /**
  * Calendar Events Model class
@@ -784,6 +785,25 @@ class Event_Model extends Model {
 
 		$items = Arr::get( $payments_settings, 'items', array() );
 		if ( empty( $items ) ) {
+			return false;
+		}
+
+		// Check if at least one payment gateway is enabled
+		$found_gateway = false;
+
+		// Get all registered payment gateways dynamically
+		$payment_gateways = Payment_Gateways_Manager::instance()->get_items();
+
+		if ( ! empty( $payment_gateways ) ) {
+			foreach ( $payment_gateways as $gateway ) {
+				if ( Arr::get( $payments_settings, 'enable_' . $gateway->slug, false ) ) {
+					$found_gateway = true;
+					break;
+				}
+			}
+		}
+
+		if ( ! $found_gateway ) {
 			return false;
 		}
 

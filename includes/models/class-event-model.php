@@ -21,7 +21,6 @@ use QuillBooking\Managers\Fields_Manager;
 use QuillBooking\Availabilities;
 use QuillBooking\Managers\Integrations_Manager;
 use QuillBooking\Payment_Gateway\Payment_Validator;
-use QuillBooking\Managers\Payment_Gateways_Manager;
 
 /**
  * Calendar Events Model class

@@ -25,7 +25,6 @@ use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Models\Calendar_Model;
 use QuillBooking\Models\User_Model;
 use QuillBooking\Managers\Locations_Manager;
-use QuillBooking\Managers\Payment_Gateways_Manager;
 use QuillBooking\Payment_Gateway\Payment_Validator;
 
 /**

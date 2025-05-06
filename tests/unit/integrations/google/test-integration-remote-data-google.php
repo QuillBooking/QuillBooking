@@ -359,4 +359,39 @@ class Test_Integration_Remote_Data_Google extends QuillBooking_Base_Test_Case {
 		$result = $remoteData->fetch_events( $input_data );
 		$this->assertEquals( array(), $result );
 	}
+
+
+	public function test_fetch_events_event_missing_datetime() {
+		$remoteData        = $this->createRemoteDataInstance();
+		$input_data        = array(
+			'calendar'   => 'test-calendar-id',
+			'start_date' => '2023-01-01T00:00:00Z',
+			'end_date'   => '2023-01-01T23:59:59Z',
+		);
+		$api_response_data = array(
+			'value' => array(
+				array(
+					'id'      => 'zoom_all_day',
+					'subject' => 'Zoom All Day Event',
+					'start'   => array( 'date' => '2023-11-05' ), // Use 'date' key
+					'end'     => array( 'date' => '2023-11-06' ), // Use 'date' key
+				),
+			),
+		);
+		$api_response      = array(
+			'success' => true,
+			'data'    => $api_response_data,
+		);
+
+		$this->apiMock->expects( $this->once() )
+			->method( 'get_events' )->willReturn( $api_response );
+
+		// This call should now trigger the expected Warning
+		$request = $remoteData->fetch_events( $input_data );
+
+		$this->assertEquals( array(), $request );
+
+		// No assertEquals([]) needed here, as the expectation is the warning itself.
+	}
+
 } // End class RemoteDataTest

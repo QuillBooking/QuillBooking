@@ -18,7 +18,7 @@ export class MentionNode extends TextNode {
 	}
 
 	constructor(mentionName, category, text, key) {
-		super(text || `@${mentionName}`, key);
+		super(text || `{{${category}:${key}}}`, key);
 		this.__mention = mentionName;
 		this.__category = category;
 	}

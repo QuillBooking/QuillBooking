@@ -205,6 +205,7 @@ class FakeEventModel extends FakeBaseModel {
 	public $payments_settings = array( 'enabled' => true );
 	public $id;
 	public $hash_id;
+	public $user;
 
 	public function __construct( array $attributes = array() ) {
 		$this->id                = $attributes['id'] ?? null;
@@ -212,6 +213,7 @@ class FakeEventModel extends FakeBaseModel {
 		$this->calendar_id       = $attributes['calendar_id'] ?? 1;
 		$this->payments_settings = $attributes['payments_settings'] ?? array( 'enabled' => true );
 		$this->hash_id           = $attributes['hash_id'] ?? 'test-event-hash';
+		$this->user              = $attributes['user'] ?? (object) array( 'ID' => 1 );
 
 		parent::__construct( $attributes );
 
@@ -232,6 +234,17 @@ class FakeEventModel extends FakeBaseModel {
 		return 1;
 	}
 
+	public function getTeamMembersAttribute() {
+		return $this->attributes['team_members'] ?? array();
+	}
+
+	public function getAvailabilityAttribute() {
+		return $this->attributes['availability'] ?? array();
+	}
+
+	public function getReserveTimesAttribute() {
+		return $this->attributes['reserve_times'] ?? array();
+	}
 
 	public static function find( $id ) {
 		foreach ( self::$instances as $instance ) {

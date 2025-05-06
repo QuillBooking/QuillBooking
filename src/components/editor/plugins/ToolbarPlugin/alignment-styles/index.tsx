@@ -6,7 +6,6 @@ import {
   FORMAT_ELEMENT_COMMAND
 } from 'lexical';
 import { Button, Flex } from "antd";
-import "../../style.scss";
 import { __ } from "@wordpress/i18n";
 import { $patchStyleText } from "@lexical/selection";
 import { useCallback } from "react";

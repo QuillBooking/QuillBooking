@@ -17,8 +17,21 @@ export type ConfigData = Record<string, unknown> & {
 	fieldsTypes: FieldsTypes;
 	capabilities: Capabilities;
 	currentUser: CurrentUser;
+	mergeTags: MergeTagGroups; 
+
 };
 
+export type MergeTagGroups = {
+	[group: string]: {
+	  mergeTags: {
+		[slug: string]: {
+		  name: string;
+		  value: string;
+		};
+	  };
+	};
+  };
+  
 export type CurrentUser = {
 	id: number;
 	email: string;

@@ -13,6 +13,7 @@ use QuillBooking\Utils;
 use QuillBooking\Managers\Integrations_Manager;
 use QuillBooking\Managers\Locations_Manager;
 use QuillBooking\Managers\Payment_Gateways_Manager;
+use QuillBooking\Managers\Merge_Tags_Manager;
 use QuillBooking\Availabilities;
 use QuillBooking\Capabilities;
 
@@ -57,7 +58,8 @@ class Core {
 			'quillbooking.config.setAvailabilities( ' . json_encode( Availabilities::get_availabilities() ) . ' );' .
 			'quillbooking.config.setCapabilities( ' . json_encode( Capabilities::get_core_capabilities() ) . ' );' .
 			'quillbooking.config.setPaymentGateways( ' . json_encode( Payment_Gateways_Manager::instance()->get_options() ) . ' );' .
-			'quillbooking.config.setCurrentUser( ' . json_encode( $current_user ) . ' );'
+			'quillbooking.config.setCurrentUser( ' . json_encode( $current_user ) . ' );' .
+			'quillbooking.config.setMergeTags( ' . json_encode( Merge_Tags_Manager::instance()->get_groups() ) . ' );' 
 		);
 	}
 }

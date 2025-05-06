@@ -5,11 +5,10 @@ import {
   $isRangeSelection,
 } from 'lexical';
 import { Button, Flex, Modal } from "antd";
-import "../../style.scss";
-import { $createMentionNode } from '../../mention-node';
+import { $createMentionNode } from '../../../nodes/mention-node';
 import { Header, UrlIcon } from "@quillbooking/components";
 import { __ } from "@wordpress/i18n";
-import Mentions from "../../mentions";
+import Mentions from "../../../mentions";
 
 interface AddingShortCodeProps {
   activeEditor: any;

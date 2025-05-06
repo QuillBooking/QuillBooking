@@ -25,6 +25,7 @@ use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Models\Calendar_Model;
 use QuillBooking\Models\User_Model;
 use QuillBooking\Managers\Locations_Manager;
+use QuillBooking\Payment_Gateway\Payment_Validator;
 
 /**
  * Event Controller class
@@ -209,15 +210,31 @@ class REST_Event_Controller extends REST_Controller {
 			)
 		);
 
-		// disable events
+		// hande event disable status
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/disable',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/disable-status',
 			array(
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'disable_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id'         => array(
+							'description' => __( 'Unique identifier for the object.', 'quill-booking' ),
+							'type'        => 'integer',
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						),
+						'properties' => array(
+							'status' => array(
+								'description' => __( 'Disable status.', 'quill-booking' ),
+								'type'        => 'boolean',
+								'context'     => array( 'view', 'edit' ),
+								'readonly'    => true,
+							),
+						),
+					),
 				),
 			)
 		);
@@ -428,16 +445,17 @@ class REST_Event_Controller extends REST_Controller {
 			global $wpdb;
 			$wpdb->query( 'START TRANSACTION' );
 
-			$calendar_id = $request->get_param( 'calendar_id' );
-			$name        = $request->get_param( 'name' );
-			$description = $request->get_param( 'description' );
-			$status      = $request->get_param( 'status' );
-			$type        = $request->get_param( 'type' );
-			$duration    = $request->get_param( 'duration' );
-			$color       = $request->get_param( 'color' );
-			$visibility  = $request->get_param( 'visibility' );
-			$location    = $request->get_param( 'location' );
-			$hosts       = $request->get_param( 'hosts' );
+			$calendar_id       = $request->get_param( 'calendar_id' );
+			$name              = $request->get_param( 'name' );
+			$description       = $request->get_param( 'description' );
+			$status            = $request->get_param( 'status' );
+			$type              = $request->get_param( 'type' );
+			$duration          = $request->get_param( 'duration' );
+			$color             = $request->get_param( 'color' );
+			$visibility        = $request->get_param( 'visibility' );
+			$location          = $request->get_param( 'location' );
+			$hosts             = $request->get_param( 'hosts' );
+			$payments_settings = $request->get_param( 'payments_settings' );
 
 			if ( empty( $location ) ) {
 				return new WP_Error( 'rest_event_error', __( 'Event location is required.', 'quillbooking' ), array( 'status' => 400 ) );
@@ -455,6 +473,15 @@ class REST_Event_Controller extends REST_Controller {
 			if ( ( 'host' === $calendar->type && ! in_array( $type, $host_events ) ) || ( 'team' === $calendar->type && ! in_array( $type, $team_events ) ) ) {
 				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Invalid event type.', 'quillbooking' ), array( 'status' => 400 ) );
+			}
+
+			// Validate payment settings if provided
+			if ( $payments_settings ) {
+				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+				if ( is_wp_error( $validation_result ) ) {
+					$wpdb->query( 'ROLLBACK' );
+					return $validation_result;
+				}
 			}
 
 			$event_data = array(
@@ -511,7 +538,7 @@ class REST_Event_Controller extends REST_Controller {
 			$event->additional_settings = Event_Fields::instance()->get_default_additional_settings( $type );
 			$event->advanced_settings   = Event_Fields::instance()->get_default_advanced_settings();
 			$event->sms_notifications   = Event_Fields::instance()->get_default_sms_notification_settings();
-			$event->payments_settings   = Event_Fields::instance()->get_default_payments_settings();
+			$event->payments_settings   = $payments_settings ?? Event_Fields::instance()->get_default_payments_settings();
 			if ( 'group' === $type ) {
 				$event->group_settings = array(
 					'max_invites'    => 2,
@@ -749,6 +776,15 @@ class REST_Event_Controller extends REST_Controller {
 			if ( ! $event ) {
 				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			// Validate payment settings
+			if ( $payments_settings ) {
+				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+				if ( is_wp_error( $validation_result ) ) {
+					$wpdb->query( 'ROLLBACK' );
+					return $validation_result;
+				}
 			}
 
 			$updated = array(
@@ -1046,31 +1082,16 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function disable_item( $request ) {
 		try {
-			global $wpdb;
-			$wpdb->query( 'START TRANSACTION' );
-
-			$ids = $request->get_param( 'ids' );
-			if ( ! $ids ) {
-				$wpdb->query( 'ROLLBACK' );
-				return new WP_Error( 'rest_event_error', __( 'No events to disable', 'quillbooking' ), array( 'status' => 400 ) );
+			$id     = $request->get_param( 'id' );
+			$status = $request->get_param( 'status' );
+			$event  = Event_Model::find( $id );
+			if ( ! $event ) {
+				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
-			foreach ( $ids as $id ) {
-				$event = Event_Model::find( $id );
-
-				if ( ! $event ) {
-					$wpdb->query( 'ROLLBACK' );
-					return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
-				}
-
-				$event->is_disabled = true;
-				$event->save();
-			}
-
-			$wpdb->query( 'COMMIT' );
-			return new WP_REST_Response( $ids );
+			$event->is_disabled = $status;
+			$event->save();
+			return new WP_REST_Response( $event, 200 );
 		} catch ( Exception $e ) {
-			global $wpdb;
-			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}

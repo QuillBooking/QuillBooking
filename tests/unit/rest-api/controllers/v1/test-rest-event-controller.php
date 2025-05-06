@@ -294,7 +294,7 @@ class Test_Rest_Event_Controller extends QuillBooking_Base_Test_Case {
 		$this->assertArrayHasKey( $base_route . '/(?P<id>[\d]+)/fields', $routes, 'Fields sub-route missing' );
 		$this->assertArrayHasKey( $base_route . '/duplicate', $routes, 'Duplicate route missing' );
 		$this->assertArrayHasKey( $base_route . '/(?P<id>[\d]+)/meta/(?P<key>[\w-]+)', $routes, 'Meta sub-route missing' );
-		$this->assertArrayHasKey( $base_route . '/disable', $routes, 'Disable route missing' );
+		$this->assertArrayHasKey( $base_route . '/(?P<id>[\d]+)/disable-status', $routes, 'Disable route missing' );
 	}
 
 	/** @covers ::get_item_schema */

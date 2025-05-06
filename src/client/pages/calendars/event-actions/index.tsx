@@ -43,10 +43,10 @@ const EventActions: React.FC<EventActionsProps> = ({
 
 	const handleDisable = () => {
 		callApi({
-			path: `events/disable`,
+			path: `events/${event.id}/disable-status`,
 			method: 'PUT',
 			data: {
-				ids: event.id ? [event.id] : [],
+				status: true,
 			},
 			onSuccess: () => {
 				successNotice(

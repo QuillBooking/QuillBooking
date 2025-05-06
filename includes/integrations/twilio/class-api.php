@@ -1,10 +1,7 @@
 <?php
+
 /**
  * Twilio Meet Integration API
- *
- * This class is responsible for handling the Twilio Meet Integration API
- *
- * @since 1.0.0
  *
  * @package QuillBooking
  */
@@ -17,6 +14,7 @@ use QuillBooking\Integration\API as Abstract_API;
  * Twilio Integration API class
  */
 class API extends Abstract_API {
+
 
 	/**
 	 * SMS Number
@@ -48,12 +46,6 @@ class API extends Abstract_API {
 
 	/**
 	 * Constructor
-	 *
-	 * @param string $sms_number SMS Number.
-	 * @param string $whatsapp_number WhatsApp Number.
-	 * @param string $account_sid Account SID.
-	 * @param string $auth_token Auth Token.
-	 * @since 1.0.0
 	 */
 	public function __construct( $sms_number, $whatsapp_number, $account_sid, $auth_token ) {
 		$this->endpoint        = 'https://api.twilio.com/2010-04-01/Accounts';
@@ -75,9 +67,8 @@ class API extends Abstract_API {
 	/**
 	 * Send SMS
 	 *
-	 * @param string $to To.
-	 * @param string $message Message.
-	 *
+	 * @param string $to To number.
+	 * @param string $message Message content.
 	 * @return array
 	 */
 	public function send_sms( $to, $message ) {
@@ -87,16 +78,16 @@ class API extends Abstract_API {
 				'From' => $this->sms_number,
 				'To'   => $to,
 				'Body' => $message,
-			)
+			),
+			'form'
 		);
 	}
 
 	/**
-	 * Send WhatsApp Message
+	 * Send WhatsApp message
 	 *
-	 * @param string $to To.
-	 * @param string $message Message.
-	 *
+	 * @param string $to To number.
+	 * @param string $message Message content.
 	 * @return array
 	 */
 	public function send_whatsapp_message( $to, $message ) {
@@ -106,30 +97,54 @@ class API extends Abstract_API {
 				'From' => "whatsapp:{$this->whatsapp_number}",
 				'To'   => "whatsapp:$to",
 				'Body' => $message,
-			)
+			),
+			'form'
 		);
 	}
 
 	/**
-	 * Send POST request to the api.
+	 * Send a POST request to the API.
 	 *
-	 * @param string     $path Path.
-	 * @param array|null $body Body.
+	 * @param string $path Request path.
+	 * @param array  $body Request body.
+	 * @param string $content_type Either 'form' or 'json'.
 	 * @return array
 	 */
-	public function post( $path, $body = array() ) {
-		return $this->request( 'POST', $path, $body ? http_build_query( $body ) : null );
+	public function post( $path, $body = array(), $content_type = 'form' ) {
+		$formatted_body = $content_type === 'json'
+			? wp_json_encode( $body )
+			: http_build_query( $body );
+
+		return $this->request( 'POST', $path, $formatted_body, $content_type );
 	}
 
 	/**
-	 * Send request to the api.
+	 * General request wrapper.
 	 *
-	 * @param string      $method Method.
-	 * @param string      $path URL.
-	 * @param string|null $body Body.
+	 * @param string      $method HTTP method.
+	 * @param string      $path   URL path.
+	 * @param string|null $body   Request body.
+	 * @param string      $content_type Either 'form' or 'json'.
+	 * @return array
+	 */
+	public function request( $method, $path, $body = null, $content_type = 'form' ) {
+		return $this->request_remote( $method, $path, $body, $content_type );
+	}
+
+	/**
+	 * Perform the actual request using wp_remote_request.
+	 *
+	 * @param string      $method HTTP method.
+	 * @param string      $path   URL path.
+	 * @param string|null $body   Request body.
+	 * @param string      $content_type Either 'form' or 'json'.
 	 * @return array|WP_Error
 	 */
-	public function request_remote( $method, $path, $body = null ) {
+	public function request_remote( $method, $path, $body = null, $content_type = 'form' ) {
+		$content_type_header = $content_type === 'json'
+			? 'application/json; charset=' . get_option( 'blog_charset' )
+			: 'application/x-www-form-urlencoded';
+
 		return wp_remote_request(
 			"{$this->endpoint}/$path",
 			array(
@@ -137,7 +152,7 @@ class API extends Abstract_API {
 				'body'    => $body,
 				'headers' => array(
 					'Accept'        => 'application/json',
-					'Content-Type'  => 'application/json; charset=' . get_option( 'blog_charset' ),
+					'Content-Type'  => $content_type_header,
 					'Cache-Control' => 'no-cache',
 					'Authorization' => 'Basic ' . base64_encode( $this->account_sid . ':' . $this->auth_token ),
 				),

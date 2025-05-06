@@ -60,6 +60,10 @@ class Remote_Data extends Abstracts_Remote_Data {
 		$start_date  = $data['start_date'];
 		$end_date    = $data['end_date'];
 
+		if ( empty( $calendar_id ) || empty( $start_date ) || empty( $end_date ) ) {
+			return array();
+		}
+
 		// Convert date in 2011-06-03T10:00:00Z
 		$start_date = new \DateTime( $start_date, new \DateTimeZone( 'UTC' ) );
 		$end_date   = new \DateTime( $end_date, new \DateTimeZone( 'UTC' ) );
@@ -84,8 +88,13 @@ class Remote_Data extends Abstracts_Remote_Data {
 		foreach ( Arr::get( $response, 'data.value', array() ) as $event ) {
 			$event_start = Arr::get( $event, 'start.dateTime' );
 			$event_end   = Arr::get( $event, 'end.dateTime' );
-			$start       = new \DateTime( $event_start, new \DateTimeZone( 'UTC' ) );
-			$end         = new \DateTime( $event_end, new \DateTimeZone( 'UTC' ) );
+
+			if ( empty( $event_start ) || empty( $event_end ) ) {
+				continue;
+			}
+
+			$start = new \DateTime( $event_start, new \DateTimeZone( 'UTC' ) );
+			$end   = new \DateTime( $event_end, new \DateTimeZone( 'UTC' ) );
 
 			// Format date in 2011-06-03 10:00:00
 			$start = $start->format( 'Y-m-d H:i:s' );

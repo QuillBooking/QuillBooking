@@ -202,19 +202,40 @@ abstract class Integration {
 	}
 
 	/**
+	 * Wrapper for finding a calendar model by ID.
+	 * Allows mocking the lookup process without mocking the static method directly.
+	 *
+	 * @param int $host_id
+	 * @return Calendar_Model|null
+	 */
+	protected function findCalendarById( $host_id ) {
+		// This method now contains the only direct static call to find()
+		// Ensure the correct namespace for Calendar_Model is used
+		return \QuillBooking\Models\Calendar_Model::find( $host_id );
+	}
+
+	/**
 	 * Set host
 	 *
 	 * @param int|Calendar_Model $host Host.
 	 *
 	 * @return void
 	 */
+	// In AbstractIntegration
 	public function set_host( $host ) {
-		if ( $host instanceof Calendar_Model ) {
+
+		if ( is_object( $host ) && $host instanceof Calendar_Model ) {
 			$this->host = $host;
 			return;
 		}
 
-		$this->host = Calendar_Model::find( $host );
+		$host_id = absint( $host );
+		if ( ! $host_id ) {
+			$this->host = null;
+			return;
+		}
+
+		$this->host = $this->findCalendarById( $host_id );
 	}
 
 	/**
@@ -229,6 +250,7 @@ abstract class Integration {
 	 */
 	public function connect( $host_id, $account_id ) {
 		$this->set_host( $host_id );
+
 		if ( ! $this->host ) {
 			return new \WP_Error( 'host_not_found', __( 'Host not found.', 'quillbooking' ) );
 		}

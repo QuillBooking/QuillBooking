@@ -56,6 +56,10 @@ class Remote_Data extends Abstracts_Remote_Data {
 		$start_date  = $data['start_date'];
 		$end_date    = $data['end_date'];
 
+		if ( empty( $calendar_id ) || empty( $start_date ) || empty( $end_date ) ) {
+			return array();
+		}
+
 		// Convert date in 2011-06-03T10:00:00Z
 		$start_date = new \DateTime( $start_date, new \DateTimeZone( 'UTC' ) );
 		$end_date   = new \DateTime( $end_date, new \DateTimeZone( 'UTC' ) );
@@ -73,6 +77,11 @@ class Remote_Data extends Abstracts_Remote_Data {
 
 		$events = array();
 		foreach ( $response['data']['items'] ?? array() as $event ) {
+
+			if ( empty( $event['start']['dateTime'] ) || empty( $event['end']['dateTime'] ) ) {
+				continue;
+			}
+
 			$start = new \DateTime( $event['start']['dateTime'], new \DateTimeZone( 'UTC' ) );
 			$end   = new \DateTime( $event['end']['dateTime'], new \DateTimeZone( 'UTC' ) );
 

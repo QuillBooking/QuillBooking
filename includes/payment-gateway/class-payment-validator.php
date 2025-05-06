@@ -9,7 +9,7 @@
  * @package QuillBooking
  */
 
-namespace QuillBooking\Utils;
+namespace QuillBooking\Payment_Gateway;
 
 use Illuminate\Support\Arr;
 use QuillBooking\Managers\Payment_Gateways_Manager;

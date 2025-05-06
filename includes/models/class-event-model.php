@@ -20,7 +20,7 @@ use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Managers\Fields_Manager;
 use QuillBooking\Availabilities;
 use QuillBooking\Managers\Integrations_Manager;
-use QuillBooking\Utils\Payment_Validator;
+use QuillBooking\Payment_Gateway\Payment_Validator;
 use QuillBooking\Managers\Payment_Gateways_Manager;
 
 /**

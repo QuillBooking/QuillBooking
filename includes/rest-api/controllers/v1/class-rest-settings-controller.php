@@ -15,7 +15,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
-use QuillBooking\Utils\Payment_Validator;
+use QuillBooking\Payment_Gateway\Payment_Validator;
 
 /**
  * REST_Settings_Controller class.

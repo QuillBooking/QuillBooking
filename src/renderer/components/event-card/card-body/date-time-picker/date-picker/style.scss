@@ -1,0 +1,127 @@
+.custom-calendar {
+	font-family: "Inter", sans-serif;
+	background-color: #fbf9fc;
+	border-radius: 20px;
+	overflow: hidden;
+	padding: 16px 0;
+	flex: 4;
+	height: fit-content;
+
+	.ant-picker-panel {
+		padding: 16px;
+		background-color: #fbf9fc;
+		border: none;
+	}
+
+	.ant-picker-cell-disabled::before {
+		background-color: transparent !important;
+	}
+
+	.ant-picker-calendar-date {
+		padding: 0 !important;
+	}
+
+	.calendar-date {
+		width: 36px;
+		height: 36px;
+		margin: 0 auto;
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 500;
+		color: #333;
+		border-radius: 50%;
+
+		.date-number {
+			z-index: 2;
+		}
+
+		&.highlight-date {
+			background-color: rgba(168, 85, 247, 0.15); // Light purple
+			color: #9333ea;
+		}
+
+		&.selected-date {
+			background-color: #a855f7; // Primary purple
+			color: white;
+		}
+
+		.dot {
+			width: 4px;
+			height: 4px;
+			border-radius: 50%;
+			background-color: #a855f7;
+			position: absolute;
+			bottom: 4px;
+			left: 50%;
+			transform: translateX(-50%);
+		}
+	}
+
+	.ant-picker-calendar-header {
+		display: flex;
+		justify-content: space-around;
+		align-items: center;
+		font-size: 16px;
+		font-weight: 600;
+		margin-bottom: 16px;
+		padding: 0 8px;
+
+		.ant-picker-calendar-year-select,
+		.ant-picker-calendar-month-select {
+			font-weight: 600;
+		}
+
+		.ant-picker-calendar-mode-switch {
+			display: none; // Hide mode switch if not needed
+		}
+
+		.anticon {
+			color: #a855f7;
+		}
+	}
+
+	.ant-picker-body {
+		padding: 8px;
+	}
+
+	.ant-picker-content {
+		th {
+			color: #888;
+			font-size: 12px;
+			font-weight: 500;
+		}
+
+		td {
+			padding: 8px;
+		}
+	}
+}
+
+.calendar-header {
+	display: flex;
+	justify-content: space-around;
+	flex-wrap: wrap;
+	align-items: center;
+	margin-bottom: 10px;
+	font-size: 16px;
+	font-weight: 600;
+	padding: 0 8px;
+
+	.month-label {
+		width: 220px;
+		text-align: center;
+		color: #111;
+	}
+
+	.nav-arrow {
+		border: none;
+		padding: 10px 13px;
+		border-radius: 50%;
+		background-color: #f1e0ff;
+		font-size: 18px;
+		color: #9333ea;
+		cursor: pointer;
+	}
+}

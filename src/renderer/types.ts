@@ -3,48 +3,182 @@ export type Config = {
     nonce: string;
     url: string;
     lang: string;
-    calendar: {
-        id: number;
-        hash_id: string;
-        user_id: number;
-        name: string;
-        description: string | null;
-        slug: string;
-        status: string;
-        type: string;
-        created_at: string;
-        updated_at: string;
-        timezone: string;
-        avatar: string | null;
-        featured_image: string | null;
+    calendar: Calendar;
+    event: Event;
+};
+
+export type Event = {
+    id: number;
+    hash_id: string;
+    calendar_id: number;
+    user_id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    status: 'active' | 'inactive' | 'deleted';
+    type: EventTypes;
+    duration: number;
+    color: string;
+    visibility: 'public' | 'private';
+    dynamic_duration: boolean;
+    location: Location[];
+    created_at: string;
+    updated_at: string;
+    calendar: Calendar;
+    additional_settings: AdditionalSettings;
+    hosts?: Host[];
+    fields: Fields;
+    availability_data?: Availability,
+    reserve: boolean;
+    connected_integrations: {
+        apple: ConnectedIntegrationsFields;
+        google: ConnectedIntegrationsFields;
+        outlook: ConnectedIntegrationsFields;
+        twilio: ConnectedIntegrationsFields;
+        zoom: ConnectedIntegrationsFields;
     };
-    event: {
+};
+
+
+export type EventTypes = 'one-to-one' | 'group' | 'round-robin';
+
+export type Calendar = {
+    id: number;
+    user_id: number;
+    name: string;
+    description: string;
+    slug: string;
+    status: 'active' | 'inactive';
+    timezone: string;
+    type: string;
+    avatar: {
         id: number;
-        hash_id: string;
+        url: string;
+    };
+    featured_image: {
+        id: number;
+        url: string;
+    };
+    events: {
+        id: number;
         calendar_id: number;
-        user_id: number;
         name: string;
-        description: string | null;
+        duration: number;
+        type: EventTypes;
         slug: string;
-        status: string;
-        type: string;
-        duration: string;
-        color: string;
-        visibility: string;
-        created_at: string;
-        updated_at: string;
-        dynamic_duration: boolean;
-        location: {
-            type: string;
-            fields: Record<string, any> | any[];
-        }[];
-        additional_settings: {
-            allow_attendees_to_select_duration: boolean;
-            default_duration: number;
-            selectable_durations: number[];
-            invitee: {
-                allow_additional_guests: boolean;
-            };
-        };
+        location: Location[];
+        is_disabled: boolean;
+        booking_count: number;
+    }[];
+    created_at: string;
+    updated_at: string;
+    user?: User;
+};
+
+export type AdditionalSettings = {
+    allow_attendees_to_select_duration: boolean;
+    default_duration: number;
+    selectable_durations: number[];
+    allow_additional_guests: boolean;
+    max_invitees: number;
+    show_remaining: boolean;
+};
+
+
+export type User = {
+    id: number;
+    display_name: string;
+    user_login: string;
+    user_email: string;
+};
+
+export type Host = {
+    id: number;
+    name: string;
+    image: string;
+    availabilities?: {
+        [key: string]: Availability;
     };
+};
+
+export interface EventMetaData {
+    id: number;
+    event_id: number;
+    event: Event;
+    meta_key: string;
+    meta_value: string;
+    updated_at: string;
+    create_at: string;
+}
+
+export interface CustomAvailability {
+    name: string;
+    weekly_hours: WeeklyHours;
+    override: DateOverrides;
+    timezone: string;
+    events?: EventMetaData[];
+    events_count?: number;
+    is_default?: boolean;
+    type?: 'custom' | 'existing';
+    is_common?: boolean;
+}
+export interface Availability extends CustomAvailability {
+    id: string;
+    user_id: string | number;
+};
+
+export type ConnectedIntegrationsFields = {
+    name: string;
+    connected: boolean;
+}
+
+export type WeeklyHours = {
+    [day: string]: {
+        times: Array<{
+            start: string;
+            end: string;
+        }>;
+        off: boolean;
+    };
+};
+
+export type DateOverrides = {
+    [date: string]: TimeSlot[];
+};
+
+export type TimeSlot = {
+    start: string;
+    end: string;
+};
+
+
+export type FieldType = {
+	label: string;
+	type: string;
+	required: boolean;
+	group: string;
+	event_location: string;
+	placeholder: string;
+	order: number;
+	hidden?: boolean;
+	settings?: {
+		options?: string[];
+		min?: string;
+		max?: string;
+		format?: string;
+		maxFileSize?: number;
+		maxFileCount?: number;
+		allowedFiles?: string[];
+	};
+};
+
+export type Fields = {
+	system: FieldsGroup;
+	location: FieldsGroup;
+	custom: FieldsGroup;
+	other?: FieldsGroup;
+};
+
+export type FieldsGroup = {
+	[key: string]: FieldType;
 };

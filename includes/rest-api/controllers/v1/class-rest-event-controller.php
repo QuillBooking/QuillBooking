@@ -416,42 +416,6 @@ class REST_Event_Controller extends REST_Controller {
 	}
 
 	/**
-	 * Validate location data
-	 *
-	 * @param array $location_data The location data to validate
-	 * @return array|WP_Error Validated location data or WP_Error
-	 */
-	private function validate_location_data( $location_data ) {
-		if ( empty( $location_data ) ) {
-			return new WP_Error( 'rest_event_error', __( 'Event location is required.', 'quillbooking' ), array( 'status' => 400 ) );
-		}
-
-		if ( ! is_array( $location_data ) ) {
-			return new WP_Error( 'rest_event_error', __( 'Invalid location data format.', 'quillbooking' ), array( 'status' => 400 ) );
-		}
-
-		$validated_locations = array();
-
-		foreach ( $location_data as $index => $location ) {
-			$location_type = Locations_Manager::instance()->get_location( $location['type'] );
-
-			if ( ! $location_type ) {
-				return new WP_Error( 'rest_event_error', __( 'Location type does not exist', 'quillbooking' ), array( 'status' => 400 ) );
-			}
-
-			// Validate the fields with the location type handler
-			$validation = $location_type->validate_fields( $location );
-			if ( is_wp_error( $validation ) ) {
-				return new WP_Error( 'rest_event_error', $validation->get_error_message(), array( 'status' => 400 ) );
-			}
-
-			$validated_locations[ $index ] = $validation;
-		}
-
-		return $validated_locations;
-	}
-
-	/**
 	 * Create item
 	 *
 	 * @since 1.0.0
@@ -475,11 +439,8 @@ class REST_Event_Controller extends REST_Controller {
 			$location    = $request->get_param( 'location' );
 			$hosts       = $request->get_param( 'hosts' );
 
-			// Validate location data before any database operations
-			$validated_location = $this->validate_location_data( $location );
-			if ( is_wp_error( $validated_location ) ) {
-				$wpdb->query( 'ROLLBACK' );
-				return $validated_location;
+			if ( empty( $location ) ) {
+				return new WP_Error( 'rest_event_error', __( 'Event location is required.', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
 			$calendar = Calendar_Model::find( $calendar_id );
@@ -544,8 +505,7 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			$event->setReserveTimesAttribute( false );
-			// Use validated location data
-			$event->update_meta( 'location', $validated_location );
+			$event->location            = $location;
 			$event->limits              = Event_Fields::instance()->get_default_limit_settings();
 			$event->email_notifications = Event_Fields::instance()->get_default_email_notification_settings();
 			$event->additional_settings = Event_Fields::instance()->get_default_additional_settings( $type );
@@ -791,15 +751,6 @@ class REST_Event_Controller extends REST_Controller {
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			// Validate location data if provided
-			if ( $location ) {
-				$validated_location = $this->validate_location_data( $location );
-				if ( is_wp_error( $validated_location ) ) {
-					$wpdb->query( 'ROLLBACK' );
-					return $validated_location;
-				}
-			}
-
 			$updated = array(
 				'name'                => $name,
 				'description'         => $description,
@@ -808,6 +759,7 @@ class REST_Event_Controller extends REST_Controller {
 				'duration'            => $duration,
 				'color'               => $color,
 				'visibility'          => $visibility,
+				'location'            => $location,
 				'limits'              => $limits,
 				'additional_settings' => $additional_settings,
 				'group_settings'      => $group_settings,
@@ -839,11 +791,6 @@ class REST_Event_Controller extends REST_Controller {
 
 			foreach ( $updated as $key => $value ) {
 				$event->{$key} = $value;
-			}
-
-			// Update the location with validated data if provided
-			if ( $location ) {
-				$event->update_meta( 'location', $validated_location );
 			}
 
 			if ( $fields ) {

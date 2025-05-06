@@ -212,7 +212,30 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setLocationAttribute( array $value ) {
-		$this->update_meta( 'location', $value );
+		$event_location = $value ?? null;
+		if ( ! $event_location ) {
+			return;
+		}
+
+		if ( ! is_array( $event_location ) ) {
+			throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
+		}
+
+		foreach ( $event_location as $index => $location ) {
+			$location_type = Locations_Manager::instance()->get_location( $location['type'] );
+			if ( ! $location_type ) {
+				throw new \Exception( __( 'Location does not exist', 'quillbooking' ) );
+			}
+
+			$validation = $location_type->validate_fields( $location );
+			if ( is_wp_error( $validation ) ) {
+				throw new \Exception( $validation->get_error_message() );
+			}
+
+			$event_location[ $index ] = $validation;
+		}
+
+		$this->update_meta( 'location', $event_location );
 	}
 
 	/**

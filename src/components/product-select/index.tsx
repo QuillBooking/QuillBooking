@@ -1,12 +1,24 @@
-import { useEffect, useState } from 'react';
-import { debounce } from 'lodash';
+/**
+ * WordPress dependencies
+ */
 import { __ } from '@wordpress/i18n';
-import { Card, Flex } from 'antd';
+import { useEffect, useState } from '@wordpress/element';
+import { addQueryArgs } from '@wordpress/url';
+
+/**
+ * External dependencies
+ */
+import AsyncSelect from 'react-select/async';
+import { isObject, map, debounce } from 'lodash';
+
+/**
+ * Internal dependencies
+ */
+import { useApi } from '@quillbooking/hooks';
 
 interface Product {
     id: number;
     name: string;
-    price: number; // Added price field
 }
 
 interface ProductSelectProps {
@@ -17,105 +29,102 @@ interface ProductSelectProps {
     exclude?: number[];
 }
 
-const ProductSelect: React.FC<ProductSelectProps> = ({
-    value,
-    onChange,
-    multiple = false,
-    exclude = [],
-}) => {
-    const [products, setProducts] = useState<Product[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+const ProductSelect: React.FC<ProductSelectProps> = ({ value, onChange, multiple = false, placeholder, exclude }) => {
+    const [products, setHosts] = useState<{ id: number; name: string }[]>([]);
+    const { callApi } = useApi();
 
     const fetchProducts = async (input = '', ids: number[] = []) => {
-        setIsLoading(true);
-        try {
-            // This is a mock API call - replace with your actual API
-            const response = await fetch(`/api/products?search=${input}&ids=${ids.join(',')}`);
-            const data = await response.json();
-            setProducts(data);
-        } catch (error) {
-            console.error('Error fetching products:', error);
-        } finally {
-            setIsLoading(false);
+        const data: Record<string, any> = {};
+        if (input) {
+            data['search'] = input;
         }
+        if (ids.length) {
+            data['include'] = ids;
+        }
+
+        return new Promise((resolve) => {
+            callApi({
+                path: addQueryArgs(`wc/v3/products`, { per_page: 10, ...data }),
+                method: 'GET',
+                onSuccess: (response: Product[]) => {
+                    setHosts((prevHosts) => [...prevHosts, ...response]);
+                    const mappedHosts = map(response, (product) => ({
+                        value: product.id,
+                        label: product.name,
+                        disabled: exclude?.includes(product.id),
+                    }));
+                    resolve(mappedHosts);
+                },
+                onError: () => {
+                    resolve([]);
+                },
+                isCore: false
+            });
+        });
     };
 
-    const debouncedFetch = debounce((term: string) => {
-        fetchProducts(term);
+    const debouncedLoadOptions = debounce(async (inputValue, callback) => {
+        const products = await fetchProducts(inputValue);
+        callback(products);
     }, 300);
 
-    useEffect(() => {
-        debouncedFetch(searchTerm);
-    }, [searchTerm]);
+    const handleChange = (selected: any) => {
+        if (multiple) {
+            onChange(map(selected, 'value'));
+        } else {
+            onChange(selected?.value || null);
+        }
+    };
 
     useEffect(() => {
-        const ids = Array.isArray(value) ? value : value ? [value] : [];
-        if (ids.length > 0) {
-            fetchProducts('', ids);
-        } else {
-            fetchProducts();
-        }
+        const fetchInitialValues = async () => {
+            if (!value || (Array.isArray(value) && value.length === 0)) return;
+
+            const ids = Array.isArray(value) ? value : [value];
+            const products = await fetchProducts('', ids);
+            if (!products) return;
+
+            if (Array.isArray(value)) {
+                onChange(products);
+            } else {
+                onChange(products[0]);
+            }
+        };
+
+        fetchInitialValues();
     }, []);
 
-    const handleSelect = (productId: number) => {
-        if (multiple) {
-            const currentValue = Array.isArray(value) ? value : [];
-            const newValue = currentValue.includes(productId)
-                ? currentValue.filter(id => id !== productId)
-                : [...currentValue, productId];
-            onChange(newValue);
+    const getValue = () => {
+        if (multiple && Array.isArray(value)) {
+            return map(value, (id) => {
+                const product = products.find((u) => u.id === id);
+                if (product && isObject(product)) {
+                    return { value: product.id, label: product.name };
+                }
+                return null;
+            });
         } else {
-            onChange(value === productId ? null : productId);
+            const product = products.find((u) => u.id === value);
+            if (product && isObject(product)) {
+                return { value: product.id, label: product.name };
+            }
+            return null;
         }
-    };
-
-    const isSelected = (productId: number) => {
-        if (multiple) {
-            return Array.isArray(value) && value.includes(productId);
-        }
-        return value === productId;
-    };
-
-    const formatPrice = (price: number) => {
-        return `${price}$`;
-    };
+    }
 
     return (
-        <div className="space-y-4">
-            {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[1, 2, 3].map((n) => (
-                        <div key={n} className="h-16 rounded-lg bg-gray-100 animate-pulse" />
-                    ))}
-                </div>
-            ) : (
-                <Flex gap={4}>
-                    {products.map((product) => (
-                        <Card
-                            key={product.id}
-                            onClick={() => !exclude.includes(product.id) && handleSelect(product.id)}
-                            className={`
-                                relative rounded-lg p-4 transition-all duration-200 border text-[#1E2125]
-                                ${isSelected(product.id) ? 'bg-color-secondary border-color-primary' : ''}
-                                ${exclude.includes(product.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                            `}
-                        >
-                            <Flex vertical gap={8}>
-                                <div
-                                    className={`font-bold
-                                    ${isSelected(product.id) ? 'text-color-primary' : ''}`}
-                                >
-                                    {formatPrice(product.price)}
-                                </div>
-                                <div>
-                                    {product.name}
-                                </div>
-                            </Flex>
-                        </Card>
-                    ))}
-                </Flex>
-            )}
+        <div className="product-select">
+            <AsyncSelect
+                isMulti={multiple}
+                cacheOptions
+                defaultOptions
+                loadOptions={debouncedLoadOptions}
+                onChange={handleChange}
+                value={getValue()}
+                placeholder={placeholder || __('Select a product...', 'quillbooking')}
+                isOptionDisabled={(option) => option.disabled}
+                className='rounded-lg w-full h-[48px]'
+            />
         </div>
     );
 };

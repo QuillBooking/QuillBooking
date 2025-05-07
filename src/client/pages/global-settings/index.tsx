@@ -12,8 +12,7 @@ import { Button, Card, Flex } from 'antd';
 /**
  * Internal dependencies
  */
-import { useParams } from '@quillbooking/navigation';
-import { useBreadcrumbs, useNavigate, useCurrentUser, useNotice } from '@quillbooking/hooks';
+import { useNavigate, useCurrentUser, useNotice } from '@quillbooking/hooks';
 import { GeneralSettingsTab, TeamTab, PaymentsTab, LicenseTab, AdvancedModulesTab } from './tabs';
 import { AdvancedModulesIcon, Header, LicenseIcon, SettingsIcon, SettingsPaymentIcon, SettingsTeamIcon, TabButtons } from '@quillbooking/components';
 
@@ -22,12 +21,10 @@ import { AdvancedModulesIcon, Header, LicenseIcon, SettingsIcon, SettingsPayment
  * Parent component for all settings tabs
  */
 const GlobalSettings: React.FC = () => {
-    const { tab = 'general' } = useParams<{ tab?: string }>();
     const navigate = useNavigate();
-    const setBreadcrumbs = useBreadcrumbs();
     const { isAdmin } = useCurrentUser();
     const { errorNotice } = useNotice();
-    const [activeTab, setActiveTab] = useState<string>(tab);
+    const [activeTab, setActiveTab] = useState<string>('general');
 
     useEffect(() => {
         if (!isAdmin()) {
@@ -35,35 +32,7 @@ const GlobalSettings: React.FC = () => {
             navigate('calendars');
             return;
         }
-
-        setBreadcrumbs([
-            {
-                path: 'settings',
-                title: __('Settings', 'quillbooking')
-            },
-            {
-                path: `settings/${activeTab}`,
-                title: getTabTitle(activeTab)
-            }
-        ]);
-    }, [activeTab]);
-
-    function getTabTitle(tabKey: string): string {
-        switch (tabKey) {
-            case 'general':
-                return __('General Settings', 'quillbooking');
-            case 'team':
-                return __('Team Members', 'quillbooking');
-            case 'licenses':
-                return __('Licenses', 'quillbooking');
-            case 'advanced':
-                return __('Advanced Settings', 'quillbooking');
-            case 'payments':
-                return __('Payment Gateways', 'quillbooking');
-            default:
-                return __('Settings', 'quillbooking');
-        }
-    }
+    }, []);
 
     if (!isAdmin()) {
         return null;
@@ -71,7 +40,6 @@ const GlobalSettings: React.FC = () => {
 
     const handleTabChange = (key: string) => {
         setActiveTab(key);
-        navigate(`settings/${key}`);
     };
 
     const renderTabContent = () => {

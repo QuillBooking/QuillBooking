@@ -79,6 +79,7 @@ const EventAdvancedSettings = forwardRef<EventAdvancedSettingsHandle, EventAdvan
             if (settings) {
                 return saveSettings();
             }
+            return Promise.resolve();
         },
     }));
 

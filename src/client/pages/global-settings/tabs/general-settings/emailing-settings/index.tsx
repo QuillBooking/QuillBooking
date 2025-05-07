@@ -25,10 +25,6 @@ import {
 
 const EmailingSettings = ({ settings, updateSettings }) => {
 
-    const validateEmail = (email: string) => {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    };
-
     return (
         <Card>
             <CardHeader

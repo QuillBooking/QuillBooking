@@ -1,6 +1,15 @@
+/**
+ * Wordpress dependencies
+ */
 import { __ } from '@wordpress/i18n';
+/**
+ * External dependencies
+ */
 import { Card, Flex, Typography } from 'antd';
-import { NotificationType } from '../../client';
+/**
+ * Internal dependencies
+ */
+import { NotificationType } from '@quillbooking/client';
 
 interface NotificationRowProps {
 	noticationKey: string;

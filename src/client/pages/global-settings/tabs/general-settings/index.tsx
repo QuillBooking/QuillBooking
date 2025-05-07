@@ -5,6 +5,11 @@ import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 
 /**
+ * External dependencies
+ */
+import { Button, Flex } from 'antd';
+
+/**
  * Internal dependencies
  */
 import { useApi, useNotice } from '@quillbooking/hooks';
@@ -12,7 +17,6 @@ import GeneralSettingsCard from './general-settings-card';
 import PaymentSettings from './payment-settings';
 import EmailingSettings from './emailing-settings';
 import ThemeSettings from './theme-settings';
-import { Button, Flex } from 'antd';
 
 /**
  * General Settings Component
@@ -27,7 +31,7 @@ const GeneralSettings = () => {
         general: {
             admin_email: '',
             start_from: 'monday',
-            time_format: '12',
+            time_format: '',
             auto_cancel_after: 60, // 1 hour default
             auto_complete_after: 120, // 2 hours default
             default_country_code: '+1',

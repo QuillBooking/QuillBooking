@@ -1,4 +1,10 @@
+/**
+ * WordPress dependencies
+ */
 import { __ } from "@wordpress/i18n";
+/**
+ * External dependencies
+ */
 import { Button, Flex, QRCode } from "antd";
 import React from "react";
 import { BsInfoCircleFill } from "react-icons/bs";

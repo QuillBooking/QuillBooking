@@ -36,11 +36,11 @@ const { Title, Text, Paragraph } = Typography;
 
 const IntegrationsTab: React.FC = () => {
     const [activeTab, setActiveTab] = useState('oauth');
-    const integrations = ConfigAPI.getIntegrations();
+    const integrations = Object.entries(ConfigAPI.getIntegrations());
     
-    const oauthIntegrations = Object.entries(integrations).filter(
-        ([_, integration]) => integration.auth_type === 'oauth' && integration.is_calendar
-    );
+    // const oauthIntegrations = Object.entries(integrations).filter(
+    //     ([_, integration]) => integration.auth_type === 'oauth' && integration.is_calendar
+    // );
     
     const tabItems = [
         {
@@ -51,7 +51,7 @@ const IntegrationsTab: React.FC = () => {
                     <span>{__('OAuth Integrations', 'quillbooking')}</span>
                 </Flex>
             ),
-            children: <OAuthIntegrations integrations={oauthIntegrations} />
+            children: <OAuthIntegrations integrations={integrations} />
         }
     ];
 
@@ -212,3 +212,107 @@ const IntegrationCard: React.FC<{
 };
 
 export default IntegrationsTab;
+
+// /**
+//  * WordPress dependencies
+//  */
+// import { __ } from '@wordpress/i18n';
+// import { useEffect, useState } from '@wordpress/element';
+
+// /**
+//  * External dependencies
+//  */
+// import { Button, Card, Flex } from 'antd';
+
+// /**
+//  * Internal dependencies
+//  */
+// import { Header, TabButtons, UpcomingCalendarIcon, VideoConferencingIcon } from '@quillbooking/components';
+// import { useCurrentUser, useNavigate, useNotice } from '@quillbooking/hooks';
+// import { CalendarsIntegrations, VideoConferencing } from './tabs';
+
+// /**
+//  * Integration component
+//  * Parent component for all integrations tabs
+//  */
+
+// const Integrations: React.FC = () => {
+//     const navigate = useNavigate();
+//     const { isAdmin } = useCurrentUser();
+//     const { errorNotice } = useNotice();
+//     const [activeTab, setActiveTab] = useState<string>('video');
+
+//     useEffect(() => {
+//         if (!isAdmin()) {
+//             errorNotice(__('You do not have permission to access this page', 'quillbooking'));
+//             navigate('calendars');
+//             return;
+//         }
+//     }, []);
+
+//     if (!isAdmin()) {
+//         return null;
+//     }
+
+//     const handleTabChange = (key: string) => {
+//         setActiveTab(key);
+//     };
+
+//     const renderTabContent = () => {
+//         switch (activeTab) {
+//             case 'video':
+//                 return <VideoConferencing />;
+//             case 'calendars':
+//                 return <CalendarsIntegrations />;
+//             default:
+//                 return <VideoConferencing />;
+//         }
+//     };
+
+//     const items = [
+//         {
+//             key: 'video',
+//             label: __('Video Conferencing', 'quillbooking'),
+//             icon: <VideoConferencingIcon />
+//         },
+//         {
+//             key: 'calendars',
+//             label: __('Calendars', 'quillbooking'),
+//             icon: <UpcomingCalendarIcon width={20} height={20} />
+//         },
+//     ];
+
+//     return (
+//         <div className="quillbooking-integrations-page">
+//             <Header
+//                 header={__('Integrations', 'quillbooking')}
+//                 subHeader={__('Connect Quill Booking to your tools and apps to enhance your scheduling automations.', 'quillbooking')}
+//             />
+//             <Flex vertical gap={20} className="integrations-container">
+//                 <Card className='mt-5'>
+//                     <Flex gap={15} align='center' justify='flex-start'>
+//                         {items.map(({ key, label, icon }) => (
+//                             <Button
+//                                 key={key}
+//                                 type="text"
+//                                 onClick={() => handleTabChange(key)}
+//                                 className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
+//                             >
+//                                 <TabButtons 
+//                                     label={label} 
+//                                     icon={icon}
+//                                     isActive={activeTab === key} 
+//                                 />
+//                             </Button>
+//                         ))}
+//                     </Flex>
+//                 </Card>
+//                 <Flex>
+//                     {renderTabContent()}
+//                 </Flex>
+//             </Flex>
+//         </div>
+//     );
+// };
+
+// export default Integrations;

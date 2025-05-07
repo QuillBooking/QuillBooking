@@ -285,7 +285,7 @@ export interface Booking extends BookingResponse {
 }
 
 export type User = {
-	id: number;
+	ID: number;
 	display_name: string;
 	user_login: string;
 	user_email: string;

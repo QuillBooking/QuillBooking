@@ -42,7 +42,15 @@ const UserSelect: React.FC<UserSelectProps> = ({ value, onChange, multiple = fal
                 path: addQueryArgs('/wp/v2/users', { per_page: 10, ...data }),
                 method: 'GET',
                 onSuccess: (response: { id: number; name: string }[]) => {
-                    setUsers((prevUsers) => [...prevUsers, ...response]);
+                    // Only add users that aren't already in the state
+                    const newUsers = response.filter(
+                        newUser => !users.some(existingUser => existingUser.id === newUser.id)
+                    );
+                    
+                    if (newUsers.length > 0) {
+                        setUsers(prevUsers => [...prevUsers, ...newUsers]);
+                    }
+                    
                     const mappedUsers = map(response, (user) => ({
                         value: user.id,
                         label: user.name,
@@ -60,7 +68,6 @@ const UserSelect: React.FC<UserSelectProps> = ({ value, onChange, multiple = fal
 
     const debouncedLoadOptions = debounce(async (inputValue, callback) => {
         const users = await fetchUsers(inputValue);
-        console.log('users1', users);
         callback(users);
     }, 300);
 
@@ -92,6 +99,16 @@ const UserSelect: React.FC<UserSelectProps> = ({ value, onChange, multiple = fal
         fetchInitialValues();
     }, []);
 
+    // This effect ensures the excluded users list is properly applied
+    useEffect(() => {
+        // Re-fetch the options when exclude prop changes
+        if (exclude && exclude.length > 0) {
+            // We don't need to do anything else with the response
+            // as the state is already managed by the fetchUsers function
+            fetchUsers('');
+        }
+    }, [exclude]);
+
     const getValue = () => {
         if (multiple && Array.isArray(value)) {
             return map(value, (id) => {
@@ -100,7 +117,7 @@ const UserSelect: React.FC<UserSelectProps> = ({ value, onChange, multiple = fal
                     return { value: user.id, label: user.name };
                 }
                 return null;
-            });
+            }).filter(Boolean); // Filter out null values
         } else {
             const user = users.find((u) => u.id === value);
             if (user && isObject(user)) {
@@ -149,7 +166,6 @@ const UserSelect: React.FC<UserSelectProps> = ({ value, onChange, multiple = fal
                     }),
                 }}
             />
-
         </div>
     );
 };

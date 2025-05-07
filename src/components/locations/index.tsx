@@ -1,16 +1,26 @@
-import { useEffect, useState } from '@wordpress/element';
+/**
+ * Wordpress dependencies
+ */
+import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Card, Flex, Button, Input, Modal, Form, Switch, Checkbox } from 'antd';
+/**
+ * External dependencies
+ */
+import { Flex, Button, Input, Modal, Form, Checkbox } from 'antd';
 import { map, isEmpty, get, uniqueId } from 'lodash';
+import { FaPlus } from 'react-icons/fa';
+/**
+ * Internal dependencies
+ */
 import ConfigAPI from '@quillbooking/config';
 import type { LocationField } from '@quillbooking/config';
 import type { Location } from '@quillbooking/client';
 import { EditIcon, TrashIcon } from '@quillbooking/components';
-import { FaPlus } from 'react-icons/fa';
+
 import "./style.scss";
-import meet from "../../../../../../../assets/icons/google/google_meet.png";
-import zoom from "../../../../../../../assets/icons/zoom/zoom_video.png";
-import teams from "../../../../../../../assets/icons/teams/teams.png";
+import meet from "../../../assets/icons/google/google_meet.png";
+import zoom from "../../../assets/icons/zoom/zoom_video.png";
+import teams from "../../../assets/icons/teams/teams.png";
 import { useApi, useNavigate } from '@quillbooking/hooks';
 
 // Extended Location type to include custom ID for multiple custom locations
@@ -358,7 +368,7 @@ const Locations: React.FC<{
 
     // Navigate to integration settings page
     const navigateToIntegrations = (integrationType: string) => {
-        navigate(`/settings/integrations/${integrationType}`);
+        navigate('integrations');
     };
 
     return (

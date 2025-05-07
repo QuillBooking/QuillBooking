@@ -34,6 +34,19 @@ interface MappedHost {
     disabled?: boolean;
 }
 
+// Define the shape of a host from the calendar response
+interface Host {
+    id: number;
+    user_id: number;
+    name: string;
+    user?: {
+        ID: number;
+        display_name: string;
+        user_email: string;
+        user_login: string;
+    };
+}
+
 const HostSelect: React.FC<HostSelectProps> = ({ 
     value, 
     onChange, 
@@ -43,7 +56,7 @@ const HostSelect: React.FC<HostSelectProps> = ({
     defaultValue,
     selectFirstHost = false
 }) => {
-    const [hosts, setHosts] = useState<{ id: number; name: string }[]>([]);
+    const [hosts, setHosts] = useState<Host[]>([]);
     const [isInitialized, setIsInitialized] = useState(false);
     const { callApi } = useApi();
 
@@ -62,7 +75,7 @@ const HostSelect: React.FC<HostSelectProps> = ({
                 method: 'GET',
                 onSuccess: (response: CalendarResponse) => {
                     const newHosts = response.data.filter(
-                        host => !hosts.some(existingHost => existingHost.id === host.user_id)
+                        host => !hosts.some(existingHost => existingHost.user_id === host.user_id)
                     );
                     
                     if (newHosts.length > 0) {
@@ -71,7 +84,7 @@ const HostSelect: React.FC<HostSelectProps> = ({
                     
                     const mappedHosts = map(response.data, (host) => ({
                         value: host.user_id,
-                        label: host.user?.display_name,
+                        label: host.user?.display_name || host.name,
                         disabled: exclude?.includes(host.id),
                     }));
                     resolve(mappedHosts as MappedHost[]);
@@ -155,18 +168,23 @@ const HostSelect: React.FC<HostSelectProps> = ({
 
     const getValue = () => {
         if (multiple && Array.isArray(value)) {
-            // TODO: update this to use the user structure not the host
-            return map(value, (id) => {
-                const host = hosts.find((u) => u.user_id === id);
+            return map(value, (userId) => {
+                const host = hosts.find((h) => h.user_id === userId);
                 if (host && isObject(host)) {
-                    return { value: host.user_id, label: host.user.display_name };
+                    return { 
+                        value: host.user_id, 
+                        label: host.user?.display_name || host.name 
+                    };
                 }
                 return null;
             }).filter(Boolean);
         } else {
-            const host = hosts.find((u) => u.id === value);
+            const host = hosts.find((h) => h.user_id === value);
             if (host && isObject(host)) {
-                return { value: host.id, label: host.name };
+                return { 
+                    value: host.user_id, 
+                    label: host.user?.display_name || host.name 
+                };
             }
             return null;
         }

@@ -7,7 +7,11 @@ import { __ } from '@wordpress/i18n';
  * External dependencies
  */
 import React, { useState, useEffect } from 'react';
-import { Input, Select, Checkbox, Radio, Space, Button, Card, Flex } from 'antd';
+import { Input, Select, Checkbox, Radio, Button, Card, Flex } from 'antd';
+
+/**
+ * Internal dependencies
+ */
 import { FlashIcon, TrashIcon } from '@quillbooking/components';
 
 const { Option } = Select;

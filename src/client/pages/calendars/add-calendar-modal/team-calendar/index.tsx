@@ -1,10 +1,21 @@
+/**
+ * WordPress dependencies
+ */
+import { __ } from '@wordpress/i18n';
+
+/**
+ * External dependencies
+ */
 import { Button, Flex, Input, Modal } from 'antd';
+
+/**
+ * Internal dependencies
+ */
 import {
 	CardHeader,
 	HostSelect,
 	UpcomingCalendarOutlinedIcon,
 } from '@quillbooking/components';
-import { __ } from '@wordpress/i18n';
 import { Calendar } from 'client/types';
 
 interface TeamCalendarProps {
@@ -45,16 +56,14 @@ const TeamCalendar: React.FC<TeamCalendarProps> = ({
 			]}
 		>
 			<Flex vertical>
-				<Flex gap={10} className="items-center">
-					<CardHeader
-						title={__('Add New Team', 'quillbooking')}
-						description={__(
-							'Add the following data to Add New Team',
-							'quillbooking'
-						)}
-						icon={<UpcomingCalendarOutlinedIcon />}
-					/>
-				</Flex>
+				<CardHeader
+					title={__('Add New Team', 'quillbooking')}
+					description={__(
+						'Add the following data to Add New Team',
+						'quillbooking'
+					)}
+					icon={<UpcomingCalendarOutlinedIcon />}
+				/>
 				<div className="text-[#09090B] text-[16px] mt-5">
 					{__('Team Name', 'quillbooking')}
 					<span className="text-red-500">*</span>

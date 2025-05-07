@@ -149,7 +149,7 @@ jobs:
           cp -r ./* /tmp/wordpress/wp-content/plugins/quill-booking/
           
           # Install and activate plugin using WP-CLI
-          wp plugin activate quill-booking --path=/var/www/html --allow-root
+          wp plugin activate quill-booking --path=/tmp/wordpress --allow-root
         
       - name: Run integration tests
         run: |

@@ -575,6 +575,9 @@ class REST_Calendar_Controller extends REST_Controller {
 			$slug           = $request->get_param( 'slug' );
 
 			$calendar = Calendar_Model::find( $id );
+			if ( isset( $calendar->team_members ) ) {
+				unset( $calendar->team_members );
+			}
 
 			if ( ! $calendar ) {
 				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );

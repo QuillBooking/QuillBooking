@@ -63,7 +63,6 @@ class Booking_Ajax {
 			if ( ! $timezone ) {
 				throw new \Exception( __( 'Invalid timezone', 'quillbooking' ) );
 			}
-
 			$start_date = $this->bookingValidatorClass::validate_start_date( $start_date, $timezone );
 
 			$duration = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : $event->duration;
@@ -75,14 +74,14 @@ class Booking_Ajax {
 			}
 
 			// Validate invitees if needed
-			$invitee = isset( $_POST['invitee'] ) ? $_POST['invitee'] : array();
-			if ( empty( $invitee ) ) {
-				throw new \Exception( __( 'Please, add invitee', 'quillbooking' ) );
+			$invitees = isset( $_POST['invitees'] ) ? json_decode( stripslashes( $_POST['invitees'] ), true ) : array();
+			if ( empty( $invitees ) || ! is_array( $invitees ) ) {
+				throw new \Exception( __( 'Please, add valid invitees', 'quillbooking' ) );
 			}
 
 			$booking_service = new $this->bookingServiceClass();
 
-			$validate_invitee = $booking_service->validate_invitee( $event, $invitee );
+			$validate_invitee = $booking_service->validate_invitee( $event, $invitees );
 			if ( 'group' !== $event->type && count( $validate_invitee ) > 1 ) {
 				throw new \Exception( __( 'Invalid event type', 'quillbooking' ) );
 			}
@@ -107,7 +106,7 @@ class Booking_Ajax {
 				)
 			);
 
-			wp_send_json_success( array( 'message' => __( 'Booking successful', 'quillbooking' ) ) );
+			wp_send_json_success( array( 'booking' => $booking ) );
 		} catch ( \Exception $e ) {
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}

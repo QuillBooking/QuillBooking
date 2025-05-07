@@ -54,7 +54,7 @@ const FIELD_COMPONENTS = {
 	),
 };
 
-const FormField = ({ field, id, form }) => {
+const FormField = ({ field, id, form, locationFields }) => {
 	const {
 		type,
 		label,
@@ -74,8 +74,6 @@ const FormField = ({ field, id, form }) => {
 		style,
 		...otherProps,
 	};
-
-	console.log('fieldProps', field);
 
 	return (
 		<>
@@ -103,7 +101,10 @@ const FormField = ({ field, id, form }) => {
 				{helpText && <div className="help-text">{helpText}</div>}
 			</div>
 			{id === 'location-select' && form && (
-				<DynamicLocationFields fieldKey={id} />
+				<DynamicLocationFields
+					fieldKey={id}
+					locationFields={locationFields}
+				/>
 			)}
 		</>
 	);

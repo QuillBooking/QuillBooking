@@ -1,5 +1,4 @@
 import { Checkbox, Form, Input } from 'antd';
-import ConfigAPI from '@quillbooking/config';
 
 const renderField = (field) => {
 	switch (field.type) {
@@ -16,39 +15,47 @@ const renderField = (field) => {
 /**
  * Renders dynamic fields for a selected location type
  */
-const DynamicLocationFields = ({ fieldKey = 'location-select' }) => {
-	const locationTypes = ConfigAPI.getLocations();
+interface Field {
+	label: string;
+	desc: string;
+	type: string;
+	required?: boolean;
+}
+
+interface DynamicLocationFieldsProps {
+	fieldKey?: string;
+	locationFields: Record<string, Field>;
+}
+
+const DynamicLocationFields = ({
+	fieldKey = 'location-select',
+	locationFields,
+}: DynamicLocationFieldsProps) => {
 	return (
 		<Form.Item noStyle shouldUpdate>
 			{({ getFieldValue }) => {
 				const selectedType = getFieldValue('location-select');
-				const locationConfig = locationTypes[selectedType];
-				if (!locationConfig) return null;
-
+				if (!locationFields[selectedType]) return null;
+				console.log(Object.values(locationFields[selectedType]));
+				const field = locationFields[selectedType];
 				return (
 					<>
-						{Object.entries(locationConfig.frontend_fields).map(
-							([_, field]) => (
-								<Form.Item
-									key={fieldKey}
-									name={['field', fieldKey]}
-									label={
-										<div className="form-label">
-											<p>
-												{field.label}
-												{field.required && (
-													<span className="required">
-														*
-													</span>
-												)}
-											</p>
-										</div>
-									}
-								>
-									{renderField(field)}
-								</Form.Item>
-							)
-						)}
+						<Form.Item
+							key={fieldKey}
+							name={['field', fieldKey]}
+							label={
+								<div className="form-label">
+									<p>
+										{field.label}
+										{field.required && (
+											<span className="required">*</span>
+										)}
+									</p>
+								</div>
+							}
+						>
+							{renderField(field)}
+						</Form.Item>
 					</>
 				);
 			}}

@@ -23,12 +23,61 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 		setSelectedTime(time);
 		setStep(2);
 	};
-	
-	const handleSave = (values: any) => {
-		console.log('handke save:', values);
+
+	const handleSave = async (values: any) => {
+		const formData = new FormData();
+		formData.append('action', 'quillbooking_booking');
+		formData.append('id', event.id.toString());
+		formData.append('timezone', timeZone || '');
+		formData.append(
+			'start_date',
+			(selectedDate ? selectedDate.format('YYYY-MM-DD') : '') +
+				' ' +
+				(selectedTime + ':00' || '')
+		);
+		formData.append('duration', event.duration.toString());
+
+		formData.append(
+			'invitees',
+			JSON.stringify([
+				{
+					name: values['name'],
+					email: values['email'],
+				},
+			])
+		);
+
+		formData.append('location', JSON.stringify(values['location-select']));
+		const filteredValues = { ...values };
+		delete filteredValues['name'];
+		delete filteredValues['email'];
+		delete filteredValues['location-select'];
+		delete filteredValues['field'];
+
+		if (values['field']) {
+			filteredValues['location'] = values['field']['location-select'];
+		}
+
+		formData.append('fields', JSON.stringify(filteredValues));
+
+		try {
+			const response = await fetch('/wp-admin/admin-ajax.php', {
+				method: 'POST',
+				body: formData,
+			});
+			if (response.ok) {
+				const data = await response.json();
+				console.log('Booking response:', data);
+				const baseUrl =
+					window.top?.location?.origin || window.location.origin;
+				(window.top || window).location.href =
+					`${baseUrl}/?quillbooking=booking&booking_hash=${data.booking_hash}`;
+			}
+		} catch (error) {
+			console.error('Error fetching availability:', error);
+		}
 	};
 
-	console.log('event', event.fields);
 	return (
 		<div className="event-card-details">
 			<Hosts hosts={event.hosts} />

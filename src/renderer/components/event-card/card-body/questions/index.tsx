@@ -20,9 +20,15 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 
 	const allFields = {
 		...fields.system,
-		...fields.location,
+		'location-select': fields.location['location-select'],
 		...fields.custom,
 	};
+
+	const locationFields = {
+		attendee_address: fields.location.address,
+		attendee_phone: fields.location.phone,
+	};
+	console.log('all fields:', allFields);
 	const sortedFields = Object.keys(allFields).sort(
 		(a, b) => allFields[a].order - allFields[b].order
 	);
@@ -55,6 +61,7 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 								id={fieldKey}
 								field={allFields[fieldKey]}
 								form={form}
+								locationFields={locationFields}
 							/>
 						</>
 					))}

@@ -163,4 +163,4 @@ jobs:
         
       - name: Run integration tests
         run: |
-          composer run integration-test 
+          composer run test:integration

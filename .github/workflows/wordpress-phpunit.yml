@@ -135,7 +135,7 @@ jobs:
           sudo mv wp-cli.phar /usr/local/bin/wp
           
       - name: Install dependencies
-        run: composer install --no-ansi --no-interaction
+        run: composer update --no-progress --no-ansi --no-interaction
         
       - name: Install plugin into WordPress
         run: |

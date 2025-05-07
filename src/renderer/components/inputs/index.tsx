@@ -1,0 +1,112 @@
+import {
+	Form,
+	Input,
+	InputNumber,
+	DatePicker,
+	TimePicker,
+	Checkbox,
+	Radio,
+	Select,
+	Slider,
+	Upload,
+} from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
+import { __ } from '@wordpress/i18n';
+import './style.scss';
+import DynamicLocationFields from '../dynamic-location-field';
+
+const { TextArea, Password } = Input;
+const { Option } = Select;
+
+// Component mapping with configuration
+const FIELD_COMPONENTS = {
+	text: (props) => <Input {...props} />,
+	email: (props) => <Input {...props} />,
+	textarea: (props) => <TextArea {...props} />,
+	password: (props) => <Password {...props} />,
+	number: (props) => <InputNumber {...props} />,
+	phone: (props) => <InputNumber {...props} />,
+	date: (props) => <DatePicker {...props} />,
+	time: (props) => <TimePicker {...props} />,
+	datetime: (props) => <DatePicker showTime {...props} />,
+	range: (props) => <Slider {...props} />,
+	color: (props) => <Input type="color" {...props} />,
+	file: (props) => (
+		<Upload beforeUpload={() => false} {...props}>
+			<UploadOutlined /> {__('Upload', '@quillbooking')}
+		</Upload>
+	),
+	select: (props) => (
+		<Select {...props}>
+			{props.options?.map((opt) => (
+				<Option key={opt} value={opt}>
+					{opt}
+				</Option>
+			))}
+		</Select>
+	),
+	radio: (props) => <Radio.Group {...props} />,
+	checkbox: ({ label, required, ...props }) => (
+		<Checkbox {...props}>
+			{label}
+			{required && <span className="required">*</span>}
+		</Checkbox>
+	),
+};
+
+const FormField = ({ field, id, form }) => {
+	const {
+		type,
+		label,
+		value,
+		options = [],
+		helpText = null,
+		required,
+		...otherProps
+	} = field;
+	const FieldComponent = FIELD_COMPONENTS[type] || FIELD_COMPONENTS.text;
+	const style = { width: '100%' };
+	const fieldProps = {
+		value,
+		options,
+		label,
+		required,
+		style,
+		...otherProps,
+	};
+
+	console.log('fieldProps', field);
+
+	return (
+		<>
+			<div style={{ marginBottom: '24px' }}>
+				<Form.Item
+					style={{ marginBottom: 0 }}
+					label={
+						type !== 'checkbox' && (
+							<div className="form-label">
+								<p>
+									{label}
+									{required && (
+										<span className="required">*</span>
+									)}
+								</p>
+							</div>
+						)
+					}
+					name={id}
+					key={id}
+					valuePropName={type === 'checkbox' ? 'checked' : 'value'}
+				>
+					{FieldComponent(fieldProps)}
+				</Form.Item>
+				{helpText && <div className="help-text">{helpText}</div>}
+			</div>
+			{id === 'location-select' && form && (
+				<DynamicLocationFields fieldKey={id} />
+			)}
+		</>
+	);
+};
+
+export default FormField;

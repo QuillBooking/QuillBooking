@@ -17,14 +17,28 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 	const [timeZone, setTimeZone] = useState<string>(
 		Intl.DateTimeFormat().resolvedOptions().timeZone
 	);
-	// TODO: the logic for handling save goes here
+	const [step, setStep] = useState<number>(1);
 
+	const handleSelectedTime = (time: string) => {
+		setSelectedTime(time);
+		setStep(2);
+	};
+	
+	const handleSave = (values: any) => {
+		console.log('handke save:', values);
+	};
+
+	console.log('event', event.fields);
 	return (
 		<div className="event-card-details">
 			<Hosts hosts={event.hosts} />
 			<EventDetails event={event} />
-			{selectedTime ? (
-				<QuestionsComponents fields={event.fields} />
+			{selectedTime && step === 2 ? (
+				<QuestionsComponents
+					fields={event.fields}
+					setStep={setStep}
+					onSubmit={handleSave}
+				/>
 			) : (
 				<DateTimePicker
 					selectedTime={selectedTime}
@@ -33,7 +47,7 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 					setSelectedDate={setSelectedDate}
 					timeZone={timeZone}
 					setTimeZone={setTimeZone}
-					setSelectedTime={setSelectedTime}
+					setSelectedTime={handleSelectedTime}
 				/>
 			)}
 		</div>

@@ -117,7 +117,7 @@ const GeneralSettings: React.FC = () => {
                             <Flex vertical gap={4}>
                                 <div className='text-base font-semibold'>{__('Host Timezone', 'quillbooking')}</div>
                                 <TimezoneSelect
-                                    value={state.timezone || ''}
+                                    value={state.timezone}
                                     onChange={(value) => handleChange('timezone', value)}
                                 />
                             </Flex>

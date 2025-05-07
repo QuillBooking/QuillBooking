@@ -121,10 +121,13 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {
-				saveEventDetails();
+				if (event){
+					return saveEventDetails();
+				}
+				return Promise.resolve();
 			},
 		}));
-		const saveEventDetails = () => {
+		const saveEventDetails = async () => {
 			const eventHostavailability = {
 				...availability,
 				type: availabilityType,
@@ -137,7 +140,7 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 				type: availabilityType,
 				is_common: commonSchedule,
 			};
-			callApi({
+			return callApi({
 				path: `events/${event?.id}`,
 				method: 'PUT',
 				data: {

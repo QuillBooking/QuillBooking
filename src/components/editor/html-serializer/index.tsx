@@ -1,3 +1,6 @@
+/**
+ *  External dependencies
+ */
 import { useEffect, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $generateHtmlFromNodes } from '@lexical/html';

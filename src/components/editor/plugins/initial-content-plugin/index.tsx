@@ -1,8 +1,13 @@
-// components/InitialContentPlugin.tsx
+/**
+ *  External dependencies
+ */
 import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, $createParagraphNode, $createTextNode } from 'lexical';
+import { $getRoot, $createParagraphNode } from 'lexical';
 import { $generateNodesFromDOM } from '@lexical/html';
+/**
+ *  Internal dependencies
+ */
 import { $createMentionNode } from '../../nodes/mention-node';
 
 interface InitialContentPluginProps {

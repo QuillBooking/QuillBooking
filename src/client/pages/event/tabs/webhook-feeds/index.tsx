@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Button, Typography, Skeleton, Flex, Popconfirm, Switch, Space, Tag } from 'antd';
+import { Card, Button, Skeleton, Flex, Switch } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 /**
@@ -56,6 +56,7 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>((props
             if (webhookFeeds) {
                 return saveWebhookFeeds(webhookFeeds);
             }
+            return Promise.resolve();
         },
     }));
 
@@ -96,7 +97,7 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>((props
         setShowEditor(false);
     };
 
-    const saveWebhookFeeds = (feeds: WebhookFeedType[]) => {
+    const saveWebhookFeeds = async(feeds: WebhookFeedType[]) => {
         if (!event) return;
 
         return saveApi({

@@ -7,6 +7,8 @@ import { __ } from '@wordpress/i18n';
  * External dependencies
  */
 import { Card, Flex, Button, Typography, Popover, Empty } from 'antd';
+import { SlOptions } from 'react-icons/sl';
+import { useEffect, useState } from 'react';
 
 /**
  * Internal dependencies
@@ -26,11 +28,7 @@ import {
 } from '@quillbooking/components';
 import {
 	useCopyToClipboard,
-	useNavigate,
 } from '@quillbooking/hooks';
-import { SlOptions } from 'react-icons/sl';
-import { map } from 'lodash';
-import { useEffect, useState } from 'react';
 import ShareModal from '../share-modal';
 import EventActions from '../event-actions';
 import CreateEvent from '../../create-event';
@@ -42,28 +40,55 @@ const CalendarEvents: React.FC<{
 	calendar: Calendar;
 	typesLabels: Record<string, string>;
 	updateCalendarEvents: () => void;
-}> = ({ calendar, typesLabels, updateCalendarEvents }) => {
+	setStatusMessage: (message: boolean) => void;
+}> = ({ calendar, typesLabels, updateCalendarEvents, setStatusMessage }) => {
 	const siteUrl = ConfigAPI.getSiteUrl();
 	const copyToClipboard = useCopyToClipboard();
 	const [modalShareId, setModalShareId] = useState<number | null>(null);
-	const [disabledEvents, setDisabledEvents] = useState({});
+	const [disabledEvents, setDisabledEvents] = useState<Record<string, boolean>>({});
 	const [showCreateEventModal, setShowCreateEventModal] = useState(false);
-	console.log(calendar.events);
+	const [events, setEvents] = useState(calendar.events);
+	// New state to track which popover is open
+	const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
+	
+	// Initialize disabledEvents state based on initial event status
+	useEffect(() => {
+		const initialDisabledState: Record<string, boolean> = {};
+		calendar.events.forEach(event => {
+			if (event.id) {
+				initialDisabledState[event.id] = !!event.is_disabled;
+			}
+		});
+		setDisabledEvents(initialDisabledState);
+		setEvents(calendar.events);
+	}, [calendar.events]);
+
+	// Function to handle event disable status change
+	const handleEventStatusChange = (eventId: number | undefined, disabled: boolean) => {
+		if (eventId) {
+			setDisabledEvents(prev => ({
+				...prev,
+				[eventId]: disabled
+			}));
+		}
+	};
+
+	// Function to close the popover
+	const closePopover = () => {
+		setOpenPopoverId(null);
+	};
 
 	return (
 		<>
-			{calendar.events.length > 0 ? (
+			{events.length > 0 ? (
 				<div className="quillbooking-calendar-events">
-					{calendar.events.map((event) => {
-						const isDisabled = event.is_disabled;
+					{events.map((event) => {
+						const isDisabled = event.id ? disabledEvents[event.id] : event.is_disabled;
+						
 						return (
 							<Card
 								key={event.id}
-								className="quillbooking-calendar-event w-[310px] border-t-4 border-t-color-primary rounded-xl"
-								style={{
-									opacity: isDisabled ? 0.5 : 1,
-									pointerEvents: isDisabled ? 'none' : 'auto',
-								}}
+								className={`quillbooking-calendar-event w-[310px] border-t-4 border-t-color-primary rounded-xl ${isDisabled ? 'opacity-50' : ''}`}
 							>
 								<Flex gap={20} vertical>
 									<Flex
@@ -89,20 +114,20 @@ const CalendarEvents: React.FC<{
 										</Flex>
 										<Popover
 											trigger={['click']}
+											open={openPopoverId === event.id}
+											onOpenChange={(visible) => {
+												setOpenPopoverId(visible ? event.id || null : null);
+											}}
 											content={
 												<EventActions
 													event={event}
 													calendarId={calendar.id}
-													updateCalendarEvents={() =>
-														updateCalendarEvents()
-													}
+													updateCalendarEvents={updateCalendarEvents}
 													isDisabled={isDisabled}
-													setDisabledEvents={
-														setDisabledEvents
-													}
-
+													setDisabledEvents={handleEventStatusChange}
+													setStatusMessage={setStatusMessage}
+													onActionComplete={closePopover} // Pass the close function
 												/>
-
 											}
 										>
 											<Button
@@ -115,7 +140,7 @@ const CalendarEvents: React.FC<{
 									</Flex>
 									<Flex vertical justify="center" gap={10}>
 										<Flex gap={10} className="items-center">
-											<LocationIcon />
+											<LocationIcon/>
 											<div className="flex flex-col">
 												<span className="text-[#71717A] text-[12px]">
 													{__(
@@ -187,12 +212,6 @@ const CalendarEvents: React.FC<{
 											</div>
 										</Flex>
 									</Flex>
-									{/* <Tooltip title={calendar.name}>
-                                    <Avatar icon={<UserOutlined />} />
-                                </Tooltip>
-                                <Typography.Link href={`${siteUrl}?quillbooking_event=${event.slug}`} target='_blank'>
-                                    {__('View Booking Page', 'quillbooking')}
-                                </Typography.Link> */}
 									<Flex
 										justify="space-between"
 										className="border-t pt-3"
@@ -213,6 +232,7 @@ const CalendarEvents: React.FC<{
 												paddingLeft: 0,
 												paddingRight: 0,
 											}}
+											disabled={isDisabled}
 										>
 											{__('Copy Link', 'quillbooking')}
 										</Button>
@@ -226,6 +246,7 @@ const CalendarEvents: React.FC<{
 											onClick={() =>
 												setModalShareId(event.id)
 											}
+											disabled={isDisabled}
 										>
 											{__('Share', 'quillbooking')}
 										</Button>
@@ -304,15 +325,6 @@ const CalendarEvents: React.FC<{
 					)}
 				</div>
 			)}
-			{/* {cloneCalendar && (
-                <CloneEventModal
-                    open={!!cloneCalendar}
-                    calendar={cloneCalendar}
-                    onClose={() => setCloneCalendar(null)}
-                    excludedEvents={map(cloneCalendar.events, 'id')}
-                    onSaved={handleSaved}
-                />
-            )} */}
 		</>
 	);
 };

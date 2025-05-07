@@ -1,3 +1,10 @@
+/**
+ *  Wordpress dependencies
+ */
+import { __ } from "@wordpress/i18n";
+/**
+ *  External dependencies
+ */
 import { HiOutlineCodeBracketSquare } from "react-icons/hi2";
 import { useCallback, useState } from 'react';
 import {
@@ -5,9 +12,11 @@ import {
   $isRangeSelection,
 } from 'lexical';
 import { Button, Flex, Modal } from "antd";
+/**
+ *  Internal dependencies
+ */
 import { $createMentionNode } from '../../../nodes/mention-node';
-import { Header, UrlIcon } from "@quillbooking/components";
-import { __ } from "@wordpress/i18n";
+import { Header, UrlIcon, MergeTagModal } from "@quillbooking/components";
 import Mentions from "../../../mentions";
 
 interface AddingShortCodeProps {
@@ -62,7 +71,7 @@ export default function AddingShortCode({ activeEditor }: AddingShortCodeProps) 
               'quillbooking'
             )} />
         </Flex>
-        <Mentions onMentionClick={(mention, category) => handleAddMention(mention, category)} />
+        <MergeTagModal onMentionClick={(mention, category) => handleAddMention(mention, category)} />
       </Modal>
     </>
   );

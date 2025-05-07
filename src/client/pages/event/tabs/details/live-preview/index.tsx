@@ -1,14 +1,20 @@
 /**
- * External dependencies.
+ * WordPress dependencies
  */
-import React, { useState } from 'react';
-
-import { Flex } from 'antd';
 import { __ } from '@wordpress/i18n';
-import { SlArrowDown, SlArrowUp } from "react-icons/sl";
+
+/**
+ * External dependencies
+ */
+import React from 'react';
+import { Flex } from 'antd';
+import { SlArrowUp } from "react-icons/sl";
 import { CardContent, Card } from '@mui/material';
 import { CiShare1 } from "react-icons/ci";
 import { LuClock5 } from "react-icons/lu";
+/**
+ * Internal dependencies
+ */
 import type { Location } from '@quillbooking/client';
 import user from "../../../../../../components/icons/user.png";
 

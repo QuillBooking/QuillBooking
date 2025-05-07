@@ -1,11 +1,19 @@
 /**
- * External dependencies.
+ * WordPress dependencies
  */
+import { __ } from '@wordpress/i18n';
+
+/**
+ * External dependencies
+ */
+import { PiClockClockwiseFill } from "react-icons/pi";
 import React, { useEffect, useState } from 'react';
 import { Flex, Card, Input, Switch, Select } from 'antd';
-import { CardHeader, FieldWrapper, Header } from '@quillbooking/components';
-import { PiClockClockwiseFill } from "react-icons/pi";
-import { __ } from '@wordpress/i18n';
+/**
+ * Internal dependencies
+ */
+import { CardHeader } from '@quillbooking/components';
+
 
 
 interface DurationProps {

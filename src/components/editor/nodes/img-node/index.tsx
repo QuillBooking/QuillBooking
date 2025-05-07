@@ -1,16 +1,16 @@
+/**
+ *  External dependencies
+ */
 import type {
   DOMConversionMap,
   DOMConversionOutput,
-  DOMExportOutput,
   EditorConfig,
   LexicalNode,
   NodeKey,
   SerializedLexicalNode,
   Spread,
 } from 'lexical';
-
-import { $applyNodeReplacement, createEditor, DecoratorNode } from 'lexical';
-import * as React from 'react';
+import { $applyNodeReplacement, DecoratorNode } from 'lexical';
 
 export interface ImagePayload {
   src: string;

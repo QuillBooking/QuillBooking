@@ -1,6 +1,12 @@
+/**
+ * External dependencies
+ */
 import { Flex } from 'antd';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { IoClose } from 'react-icons/io5';
+/**
+ * Internal dependencies
+ */
 import { NoticeMessage } from '@quillbooking/client';
 
 interface NoticeBannerProps {

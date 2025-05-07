@@ -1,11 +1,21 @@
+/**
+ * WordPress dependencies
+ */
+import { __ } from '@wordpress/i18n';
+
+/**
+ * External dependencies
+ */
 import { Card } from 'antd';
+/**
+ * Internal dependencies
+ */
 import {
 	CardHeader,
 	SmsNotificationIcon,
 	NoticeComponent,
 	NotificationRow,
 } from '@quillbooking/components';
-import { __ } from '@wordpress/i18n';
 import { NotificationType } from 'client/types';
 
 interface SmsTabsProps {

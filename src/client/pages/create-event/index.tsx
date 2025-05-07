@@ -7,20 +7,20 @@ import { useEffect, useState } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Input, Button, Card, Flex, Steps, Modal, Checkbox } from 'antd';
+import { Input, Button, Card, Flex, Steps, Modal, Checkbox, Select } from 'antd';
 
 /**
  * Internal dependencies
  */
 import {
     CollectiveIcon,
-    FieldWrapper,
     GroupIcon,
     Header,
-    HostSelect,
     RoundRobinIcon,
     ShareEventIcon,
     SingleIcon,
+    Locations,
+    ColorSelector,
 } from '@quillbooking/components';
 import {
     useApi,
@@ -28,26 +28,13 @@ import {
     useNavigate,
     useCurrentUser,
 } from '@quillbooking/hooks';
-import type { Event, AdditionalSettings, Host, ConnectedIntegrationsFields } from '@quillbooking/client';
-import Locations from '../event/tabs/details/locations';
+import type { Event, AdditionalSettings, Host } from '@quillbooking/client';
 import './style.scss';
-import { FaCheck } from 'react-icons/fa';
 
 /**
  * Create Event Component.
  */
 const { Step } = Steps;
-
-const colors = [
-    '#953AE4',
-    '#0099FF',
-    '#FF4F00',
-    '#E55CFF',
-    '#0AE8F0',
-    '#17E885',
-    '#CCF000',
-    '#FFA600',
-];
 
 interface CreateEventProps {
     visible: boolean;
@@ -70,6 +57,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
     const { successNotice, errorNotice } = useNotice();
     const navigate = useNavigate();
     const [selectedUser, setSelectedUser] = useState<number>(0);
+    const [teamMembers, setTeamMembers] = useState<Host[]>([]);
     const [event, setEvent] = useState<Partial<Event>>({
         name: '',
         description: '',
@@ -223,16 +211,22 @@ const CreateEvent: React.FC<CreateEventProps> = ({
         callApi({
             path: 'calendars/' + calendarId + '/team',
             method: 'GET',
-            onSuccess: (response: Host[]) => {
-                // setEvent({ ...event, hosts: response });
-                console.log("team", response);
+            onSuccess: (response: any[]) => {
+                const transformedHosts: Host[] = response.map((member) => ({
+                    id: member.ID,
+                    name: member.display_name,
+                    image: '', // or member.image if available
+                    availabilities: {}, // optional, if not needed you can omit
+                }));
+                setTeamMembers(transformedHosts);
             },
+
         });
     };
 
     useEffect(() => {
         fetchCalendarTeam();
-    }, [calendarId]);
+    }, []);
 
     const steps = [
         {
@@ -264,35 +258,22 @@ const CreateEvent: React.FC<CreateEventProps> = ({
                                 {__('Select Team Members', 'quillbooking')}
                                 <span className="text-red-500">*</span>
                             </div>
-                            <HostSelect
-                                value={
-                                    event.hosts?.map((host) => host.id) || []
-                                }
-                                onChange={(userIds: number[]) => {
-                                    // Update both user_id (primary host) and hosts array
-                                    const updatedEvent = {
-                                        ...event,
-                                        user_id: userIds[0] || 0, // Set first selected as primary
-                                        hosts: userIds.map((id) => ({
-                                            id,
-                                            name: '',
-                                        })), // Minimal host object
-                                    };
-                                    setEvent(updatedEvent);
-
-                                    // Clear validation error when users are selected
-                                    if (userIds.length > 0) {
-                                        setValidationErrors((prev) => ({
-                                            ...prev,
-                                            members: false,
-                                        }));
-                                    }
+                            <Select
+                                mode="multiple"
+                                placeholder="Select team members"
+                                value={event.hosts?.map((host) => host.id)}
+                                onChange={(selectedIds) => {
+                                    const selectedHosts = teamMembers.filter((member) =>
+                                        selectedIds.includes(member.id)
+                                    );
+                                    setEvent({ ...event, hosts: selectedHosts });
+                                    setValidationErrors((prev) => ({ ...prev, members: false }));
                                 }}
-                                multiple
-                                placeholder={__(
-                                    'Select team members...',
-                                    'quillbooking'
-                                )}
+                                options={teamMembers.map((member) => ({
+                                    label: member.name,
+                                    value: member.id,
+                                }))}
+                                style={{ width: '100%' }}
                             />
                             {validationErrors.members && (
                                 <span className="text-red-500 text-sm">
@@ -468,7 +449,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
         {
             title: 'Event Name & Duration',
             content: (
-                <Flex gap={20} className="w-full">
+                <Flex gap={20} className="w-[1000px]">
                     <Card className="w-1/2">
                         <Flex vertical>
                             <Flex gap={1} vertical>
@@ -530,32 +511,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
                                 {__('Event Color', 'quillbooking')}
                             </div>
                             <div className="flex flex-wrap gap-4 place-items-center mt-2">
-                                {colors.map((colorOption) => (
-                                    <Button
-                                        key={colorOption}
-                                        shape="circle"
-                                        size="large"
-                                        className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 
-                                                                        ${event.color === colorOption ? 'ring ring-offset-2' : ''}`} // Apply ring only if selected
-                                        style={{
-                                            backgroundColor: colorOption,
-                                            minWidth: '25px',
-                                            border: colorOption
-                                                ? ''
-                                                : '2px solid #F2EBF9', // Dynamic border color
-                                            '--tw-ring-color': colorOption
-                                                ? colorOption
-                                                : '',
-                                        }}
-                                        onClick={() =>
-                                            handleChange('color', colorOption)
-                                        } // Update selected color
-                                    >
-                                        {event.color === colorOption && (
-                                            <FaCheck className="text-white text-md absolute" />
-                                        )}
-                                    </Button>
-                                ))}
+                                <ColorSelector
+                                    selectedColor={event.color || null}
+                                    onColorSelect={(color) => handleChange('color', color)}
+                                />
                             </div>
                         </Flex>
                     </Card>
@@ -700,6 +659,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
             onCancel={onClose}
             footer={null}
             destroyOnClose
+            zIndex={120000}
             className="w-fit"
         >
             <Flex vertical className="quillbooking-create-event">

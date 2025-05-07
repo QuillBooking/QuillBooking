@@ -34,6 +34,7 @@ const TimezoneSelect: React.FC<TimezoneSelectProps> = ({ value, onChange, ...res
 			onChange={(newVal) => onChange(newVal)}
 			options={options}
 			{...rest}
+			className='h-[48px] rounded-lg'
 		/>
 	);
 };

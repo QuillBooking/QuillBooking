@@ -16,9 +16,10 @@ import {
 	Select,
 	Flex,
 } from 'antd';
-
+import { ReactMultiEmail } from 'react-multi-email';
+import 'react-multi-email/dist/style.css';
 /**
- * External dependencies
+ * Interanl dependencies
  */
 import { NotificationType } from '@quillbooking/client';
 import {
@@ -29,8 +30,7 @@ import {
 	UrlIcon,
 	Editor,
 } from '@quillbooking/components';
-import { ReactMultiEmail } from 'react-multi-email';
-import 'react-multi-email/dist/style.css';
+
 
 type EmailNotificationCardProps = {
 	notifications: Record<string, NotificationType>;
@@ -136,7 +136,7 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 						value={notification.template?.subject || ''}
 						onChange={(e) => handleSubjectChange(e.target.value)}
 						placeholder="New Booking: {{guest.full_name}} @ {{booking.start_date_time_for_host}}"
-						className="h-[48px] rounded-lg mt-2"
+						className="h-[48px] rounded-lg mt-2 pl-[10px] pr-0 py-0"
 						suffix={
 							<span
 								className="bg-[#EEEEEE] p-[0.7rem] rounded-r-lg"
@@ -145,7 +145,6 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 								<UrlIcon />
 							</span>
 						}
-						style={{ padding: '0 0 0 10px' }}
 					/>
 				</div>
 
@@ -153,7 +152,7 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 					open={mergeTagModal}
 					onCancel={() => setMergeTagModal(false)}
 					footer={null}
-					width={700}
+					width={1000}
 					getContainer={false}
 				>
 					<Flex gap={10} className="items-center border-b pb-4 mb-4">

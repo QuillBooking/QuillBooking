@@ -1,8 +1,19 @@
+/**
+ * WordPress dependencies
+ */
+import { __ } from "@wordpress/i18n";
+
+/**
+ * External dependencies
+ */
 import React, { useState } from "react";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { IoCloseSharp } from "react-icons/io5";
-import { __ } from "@wordpress/i18n";
 import { Card, Flex } from "antd";
+
+/**
+ * Internal dependencies
+ */
 import { DirectLinkIcon, EmbedCodeIcon, Header, PopUpIcon, QrIcon, ShareEventIcon, ShortCodeIcon } from "@quillbooking/components";
 import DirectLink from "./direct-link";
 import ShortCode from "./short-code";
@@ -32,12 +43,8 @@ const ShareModal: React.FC<{ open: boolean; onClose: () => void; url: string }> 
             aria-describedby="share-modal-description"
             className="share-modal"
             maxWidth="lg"
-            PaperProps={{
-                sx: {
-                    marginLeft: "250px",
-                    padding: '10px 8px',
-                    borderRadius: "16px"
-                }
+            sx={{
+                zIndex: 160000, // Higher than the other dialog
             }}
         >
             <DialogTitle

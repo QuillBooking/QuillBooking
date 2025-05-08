@@ -2,6 +2,7 @@
  * Wordpress dependencies
  */
 import { __ } from '@wordpress/i18n';
+import { useState } from '@wordpress/element';
 
 /**
  * External dependencies
@@ -11,7 +12,6 @@ import { Availability, Calendar } from 'client/types';
 /**
  * Internal dependencies
  */
-import { useState } from '@wordpress/element';
 import HostAvailability from './host-availability';
 import HostData from './host-data';
 

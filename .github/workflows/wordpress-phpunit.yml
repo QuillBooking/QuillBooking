@@ -99,22 +99,10 @@ jobs:
         image: mysql:5.7
         env:
           MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: wordpress
+          MYSQL_DATABASE: wordpress_test
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-        
-      wordpress:
-        image: wordpress:latest
-        env:
-          WORDPRESS_DB_HOST: 127.0.0.1
-          WORDPRESS_DB_USER: root
-          WORDPRESS_DB_PASSWORD: password
-          WORDPRESS_DB_NAME: wordpress
-          WORDPRESS_DEBUG: 1
-        ports:
-          - 8080:80
-        options: --health-cmd="curl -f http://localhost:80/" --health-interval=10s --health-timeout=5s --health-retries=3
         
     steps:
       - name: Checkout code
@@ -128,29 +116,22 @@ jobs:
           coverage: none
           tools: composer
           
-      - name: Install WordPress CLI
-        run: |
-          curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-          chmod +x wp-cli.phar
-          sudo mv wp-cli.phar /usr/local/bin/wp
+      - name: Install SVN
+        run: sudo apt-get update && sudo apt-get install -y subversion
           
       - name: Install dependencies
-        run: composer install --no-ansi --no-interaction
+        run: composer update --no-progress --no-ansi --no-interaction
         
-      - name: Install plugin into WordPress
+      # Set up WordPress test environment for integration tests
+      - name: Set up WordPress test environment
+        env:
+          WP_TESTS_DB_NAME: wordpress_test
+          WP_TESTS_DB_USER: root
+          WP_TESTS_DB_PASSWORD: password
+          WP_TESTS_DB_HOST: 127.0.0.1
         run: |
-          # Wait for WordPress to be ready
-          sleep 10
-          
-          # Create plugin directory
-          mkdir -p /tmp/wordpress/wp-content/plugins/quill-booking
-          
-          # Copy plugin files
-          cp -r ./* /tmp/wordpress/wp-content/plugins/quill-booking/
-          
-          # Install and activate plugin using WP-CLI
-          wp plugin activate quill-booking --path=/var/www/html --allow-root
+          bash bin/install-wp-tests.sh
         
       - name: Run integration tests
         run: |
-          composer run integration-test 
+          composer run test:integration

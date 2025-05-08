@@ -1,8 +1,19 @@
-import { Button, Flex, Input } from "antd";
-import { CopyWhiteIcon } from "@quillbooking/components";
-import React from "react";
-import { useCopyToClipboard } from "@quillbooking/hooks";
+/**
+ * WordPress dependencies
+ */
 import { __ } from "@wordpress/i18n";
+
+/**
+ * External dependencies
+ */
+import React from "react";
+import { Button, Flex, Input } from "antd";
+
+/**
+ * Internal dependencies
+ */
+import { CopyWhiteIcon } from "@quillbooking/components";
+import { useCopyToClipboard } from "@quillbooking/hooks";
 
 const DirectLink: React.FC<{ url: string; icon: React.ReactNode; title: string }> = ({ url, icon, title }) => {
     const copyToClipboard = useCopyToClipboard();

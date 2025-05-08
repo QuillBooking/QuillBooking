@@ -1,8 +1,20 @@
-import { CopyWhiteIcon, ShareIcon } from "@quillbooking/components";
-import { useCopyToClipboard } from "@quillbooking/hooks";
+/**
+ * WordPress dependencies
+ */
 import { __ } from "@wordpress/i18n";
+
+/**
+ * External dependencies
+ */
 import { Button, Card, Flex, Input, Select } from "antd";
 import React, { useState } from "react";
+
+/**
+ * Internal dependencies
+ */
+import { CopyWhiteIcon } from "@quillbooking/components";
+import { useCopyToClipboard } from "@quillbooking/hooks";
+
 
 const ShortCode: React.FC<{ url: string; icon: React.ReactNode; title: string }> = ({ url, icon, title }) => {
     const copyToClipboard = useCopyToClipboard();

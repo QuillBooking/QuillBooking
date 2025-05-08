@@ -2,27 +2,24 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { forwardRef, Ref, useEffect, useImperativeHandle, useState } from '@wordpress/element';
+import { forwardRef, useEffect, useImperativeHandle, useState } from '@wordpress/element';
 
 /**
  * External dependencies
  */
-import { Button, Card, Flex, Skeleton } from 'antd';
+import { Card, Flex, Skeleton } from 'antd';
+import { get } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
-import Locations from './locations';
-import { get } from 'lodash';
 import EventInfo from './event-info';
 import LivePreview from './live-preview';
 import Duration from './duration';
-import { CardHeader, EventLocIcon } from '@quillbooking/components';
+import { CardHeader, EventLocIcon, NoticeBanner, Locations } from '@quillbooking/components';
 import { EventTabHandle } from 'client/types';
-import { IoClose } from 'react-icons/io5';
-import { FaCheckCircle } from "react-icons/fa";
 
 
 /**
@@ -48,7 +45,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
         useImperativeHandle(ref, () => ({
             saveSettings: async () => {
                 if (event) {
-                    saveSettings();
+                    return saveSettings();
                 }
                 return Promise.resolve();
             },
@@ -74,7 +71,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
             return <Skeleton active />;
         }
 
-        const saveSettings = () => {
+        const saveSettings = async () => {
             if (!validate()) return;
             return callApi({
                 path: `events/${event.id}`,
@@ -136,19 +133,14 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
         return (
             <div className='w-full px-9'>
                 {notice && (
-                    <Flex className='justify-between items-start border py-3 px-5 mb-4 bg-[#0EA4731A] border-[#0EA473] rounded-lg'>
-                        <Flex vertical>
-                            <Flex className='items-baseline gap-2'>
-                                <FaCheckCircle className='text-[#0EA473] text-[14px]' />
-                                <span className='text-[#0EA473] text-[16px] font-semibold'>{notice.title}</span>
-                            </Flex>
-                            <span className='text-[#0EA473]'>{notice.message}</span>
-                        </Flex>
-                        <IoClose
-                            onClick={clearNotice}
-                            className='text-[#0F5032] text-[18px] cursor-pointer pt-1'
-                        />
-                    </Flex>
+                    <NoticeBanner
+                        notice={{
+                            type: 'success',
+                            title: __('Successfully Disabled', 'quillbooking'),
+                            message: __('The Event has been Disabled successfully.', 'quillbooking')
+                        }}
+                        closeNotice={clearNotice}
+                    />
                 )}
                 <div className='grid grid-cols-2 gap-5'>
                     <Flex vertical gap={20}>

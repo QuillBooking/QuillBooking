@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
+import { useState } from '@wordpress/element';
 
 /**
  * External dependencies
@@ -20,8 +21,6 @@ import {
     CardHeader,
     GeneralSettingsPaymentIcon
 } from '@quillbooking/components';
-import { useState } from '@wordpress/element';
-
 
 const PaymentSettings = ({ settings, updateSettings }) => {
     const [enablePaymentModule, setEnablePaymentModule] = useState(false);

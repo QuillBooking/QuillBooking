@@ -8,6 +8,16 @@ import { useState, useEffect, useRef } from '@wordpress/element';
  * External dependencies
  */
 import { Button, Flex, Switch } from 'antd';
+import {
+	Box,
+	Dialog,
+	DialogActions,
+	DialogTitle,
+	Tab,
+	Tabs,
+} from '@mui/material';
+import { IoCloseSharp } from 'react-icons/io5';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Internal dependencies
@@ -39,26 +49,15 @@ import { Provider } from './state/context';
 import Calendar from '../calendar';
 import {
 	EventDetails,
-	Availability,
 	AdvancedSettings,
 	Payments,
 	WebhookFeeds,
 	EmailNotificationTab,
 	SmsNotificationTab,
+	AvailabilityLimits
 } from './tabs';
-import {
-	Box,
-	Dialog,
-	DialogActions,
-	DialogTitle,
-	Tab,
-	Tabs,
-} from '@mui/material';
-import { IoCloseSharp } from 'react-icons/io5';
 import ShareModal from '../calendars/share-modal';
 import EventFieldsTab from './tabs/fields';
-import AvailabilityLimits from './tabs/availability-limits';
-import { useLocation } from 'react-router-dom';
 
 interface NoticeType {
 	title: string;

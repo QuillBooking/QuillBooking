@@ -20,7 +20,8 @@ import {
     Checkbox,
 } from 'antd';
 import { get, isEmpty, map } from 'lodash';
-
+import { PiClockClockwiseFill } from "react-icons/pi";
+import { FaPlus } from 'react-icons/fa';
 /**
  * Internal Dependencies
  */
@@ -29,10 +30,9 @@ import { AlertIcon, CardHeader, Header, PaymentIcon, ProductSelect } from '@quil
 import ConfigAPI from '@quillbooking/config';
 import { useEventContext } from '../../state/context';
 import './style.scss';
-import { FaPlus } from 'react-icons/fa';
 import paypal from '../../../../../../assets/icons/paypal/paypal.png';
 import stripe from '../../../../../../assets/icons/stripe/stripe.png';
-import { PiClockClockwiseFill } from "react-icons/pi";
+
 
 
 interface PaymentItem {
@@ -79,6 +79,7 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
             if (settings) {
                 return saveSettings();
             }
+            return Promise.resolve();
         },
     }));
 
@@ -179,7 +180,7 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
         ]);
     }, [event]);
 
-    const saveSettings = () => {
+    const saveSettings = async() => {
         form.validateFields().then((values) => {
             if (!event) return;
 
@@ -189,7 +190,6 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                 ...values,
                 payment_methods: selectedMethod,
             };
-            return new Promise<void>((resolve, reject) => {
 
                return callApi({
                     path: `events/${event.id}`,
@@ -202,15 +202,12 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>((props, ref) 
                             __('Settings saved successfully', 'quillbooking')
                         );
                         props.setDisabled(true);
-                        resolve();
                     },
                     onError(error) {
                         errorNotice(error.message);
-                        reject(error);
                     },
                 });
             });
-        });
     };
 
     const handleFormChange = () => {

@@ -86,7 +86,9 @@ const NavBar: React.FC = () => {
 						className: "button-item pl-0",
 						label: (
 							<a className='navbar-upgrade-button' href='/'>
+								<div className='mr-[15px]'>
 								<UpgradeIcon />
+								</div>
 								<span>{__('Upgrade Plan', 'quillbooking')}</span>
 							</a>
 						),

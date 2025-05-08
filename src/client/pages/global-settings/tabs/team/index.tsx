@@ -11,7 +11,6 @@ import {
     Card,
     Button,
     Typography,
-    List,
     Skeleton,
     Flex,
     Modal,
@@ -20,18 +19,18 @@ import {
     Checkbox,
     Avatar,
     Empty,
-    Space
+    Col,
+    Row
 } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons';
 
 /**
  * Internal dependencies
  */
 import { useApi, useNotice } from '@quillbooking/hooks';
-import { Header, UserSelect } from '@quillbooking/components';
+import { AddIcon, CardHeader, EditIcon, Header, TeamMembersIcon, TrashIcon, UserSelect } from '@quillbooking/components';
 import ConfigAPI from '@quillbooking/config';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 type TeamMember = {
     ID: number;
@@ -103,7 +102,7 @@ const TeamTab: React.FC = () => {
     const handleEditSubmit = (values: { capabilities: string[] }) => {
         if (!currentMember) return;
         const allCapabilities = Object.values(values.capabilities || {}).flat();
-        
+
         saveApi({
             path: `team-members/${currentMember.ID}`,
             method: 'PUT',
@@ -150,20 +149,27 @@ const TeamTab: React.FC = () => {
     };
 
     const renderCapabilityGroups = () => {
-        return Object.entries(capabilities).map(([key, group]) => (
-            <div key={key} className="capability-group mb-4">
-                <Title level={5}>{group.title}</Title>
-                <Form.Item name={["capabilities", key]} noStyle>
-                    <Checkbox.Group>
-                        {Object.entries(group.capabilities).map(([capKey, capLabel]) => (
-                            <div key={capKey} className="mb-2">
-                                <Checkbox value={capKey}>{capLabel}</Checkbox>
-                            </div>
-                        ))}
-                    </Checkbox.Group>
-                </Form.Item>
-            </div>
-        ));
+        return (
+            <>
+                <div className="text-[#09090B] text-[16px] mb-2">
+                    {__('Access Permissions for this user', 'quillbooking')}
+                    <span className="text-red-500">*</span>
+                </div>
+                {Object.entries(capabilities).map(([key, group]) => (
+                    <div key={key} className="capability-group">
+                        <Form.Item name={["capabilities", key]} noStyle>
+                            {Object.entries(group.capabilities).map(([capKey, capLabel]) => (
+                                <div key={capKey} className="mb-2">
+                                    <Checkbox value={capKey} className="custom-check text-[#3F4254] font-semibold">
+                                        {capLabel}
+                                    </Checkbox>
+                                </div>
+                            ))}
+                        </Form.Item>
+                    </div>
+                ))}
+            </>
+        );
     };
 
     if (loading && !teamMembers.length) {
@@ -178,19 +184,27 @@ const TeamTab: React.FC = () => {
     };
 
     return (
-        <div className="team-tab">
-            <Card className="settings-card rounded-lg">
-                <Flex gap={10} className='items-center border-b pb-4 mb-4'>
-                    <div className='bg-[#EDEDED] rounded-lg p-2'>
-                        <TeamOutlined style={{ fontSize: '20px' }} />
-                    </div>
-                    <Header
-                        header={__('Team Members', 'quillbooking')}
-                        subHeader={__(
-                            'Team Members Access to QuillBookings for Calendar and Booking Management',
+        <div className="team-tab w-full">
+            <Card className="settings-card rounded-lg w-full">
+                <Flex justify='space-between' align='center' className='border-b mb-4'>
+                    <CardHeader title={__('Team Members', 'quillbooking')}
+                        description={__(
+                            'Grant Team Members Access to FluentBookings for Calendar and Booking Management.',
                             'quillbooking'
                         )}
-                    />
+                        icon={<TeamMembersIcon />}
+                        border={false} />
+                    <Button
+                        type='text'
+                        icon={<AddIcon />}
+                        onClick={() => {
+                            form.resetFields();
+                            setIsAddModalVisible(true);
+                        }}
+                        className='bg-color-primary text-white px-5'
+                    >
+                        {__('Team Member', 'quillbooking')}
+                    </Button>
                 </Flex>
 
                 {teamMembers.length === 0 ? (
@@ -199,126 +213,97 @@ const TeamTab: React.FC = () => {
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
                     />
                 ) : (
-                    <List
-                        dataSource={teamMembers}
-                        renderItem={(member) => (
-                            <List.Item
-                                key={member.ID}
-                                actions={[
-                                    member.is_admin ? (
-                                        <Text type="secondary">{__('Administrator', 'quillbooking')}</Text>
-                                    ) : (
-                                        <Space>
-                                            <Button
-                                                icon={<EditOutlined />}
-                                                onClick={() => handleEditMember(member)}
-                                            >
-                                                {__('Edit', 'quillbooking')}
-                                            </Button>
-                                            {!member.is_host && (
-                                                    <Popconfirm
-                                                        title={__('Are you sure you want to remove this team member?', 'quillbooking')}
-                                                        onConfirm={() => handleRemoveMember(member.ID)}
-                                                        okText={__('Yes', 'quillbooking')}
-                                                        cancelText={__('No', 'quillbooking')}
-                                                    >
-                                                        <Button icon={<DeleteOutlined />} danger>
-                                                            {__('Remove', 'quillbooking')}
+                    <Row gutter={[16, 16]}>
+                        {teamMembers.map((member) => (
+                            <Col key={member.ID} xs={24} sm={12} md={8} lg={6}>
+                                <Card className='h-[164px]'>
+                                    <Flex vertical gap={10} align='flex-start' justify=''>
+                                        <Avatar size="large">{getInitials(member.display_name)}</Avatar>
+                                        <div className='text-[#3F4254] font-semibold text-base'>{member.display_name}</div>
+                                        {
+                                            member.is_admin
+                                                ? [<Text type="secondary" key="admin">{__('Administrator', 'quillbooking')}</Text>]
+                                                : [
+                                                    <Flex gap={20}>
+                                                        <Button
+                                                            key="edit"
+                                                            onClick={() => handleEditMember(member)}
+                                                            className='border-none outline-none p-0'
+                                                        >
+                                                            <EditIcon />
                                                         </Button>
-                                                    </Popconfirm>
-                                            )}
-                                        </Space>
-                                    )
-                                ]}
-                            >
-                                <List.Item.Meta
-                                    avatar={
-                                        <Avatar size="large">
-                                            {getInitials(member.display_name)}
-                                        </Avatar>
-                                    }
-                                    title={member.display_name}
-                                    description={member.user_email}
-                                />
-                            </List.Item>
-                        )}
-                    />
+                                                        {!member.is_host && (
+                                                            <Popconfirm
+                                                                key="delete"
+                                                                title={__('Are you sure you want to remove this team member?', 'quillbooking')}
+                                                                onConfirm={() => handleRemoveMember(member.ID)}
+                                                                okText={__('Yes', 'quillbooking')}
+                                                                cancelText={__('No', 'quillbooking')}
+                                                            >
+                                                                <Button danger className='border-none outline-none p-0'>
+                                                                    <TrashIcon />
+                                                                </Button>
+                                                            </Popconfirm>
+                                                        )}
+                                                    </Flex>
+                                                ]
+                                        }
+                                    </Flex>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
                 )}
 
-                <Button
-                    type="dashed"
-                    icon={<PlusOutlined />}
-                    onClick={() => {
-                        form.resetFields();
-                        setIsAddModalVisible(true);
-                    }}
-                    style={{ marginTop: 16 }}
-                >
-                    {__('Add Team Member', 'quillbooking')}
-                </Button>
+
             </Card>
 
             <Modal
-                title={__('Edit Team Member Permissions', 'quillbooking')}
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
-                footer={[
-                    <Button key="cancel" onClick={() => setIsModalVisible(false)}>
-                        {__('Cancel', 'quillbooking')}
-                    </Button>,
-                    <Button
-                        key="submit"
-                        type="primary"
-                        loading={saveLoading}
-                        onClick={() => form.submit()}
-                    >
-                        {__('Save', 'quillbooking')}
-                    </Button>
-                ]}
+                footer={null}
                 width={600}
             >
                 {currentMember && (
                     <>
-                        <div className="mb-4">
-                            <Text strong>{currentMember.display_name}</Text>
-                            <br />
-                            <Text type="secondary">{currentMember.user_email}</Text>
-                        </div>
+                        <Header header={__(`Edit ${currentMember.display_name} Permissions`, "quillbooking")}
+                            subHeader={__("Edit the following data", "quillbooking")} />
 
+                        {/* <div className="my-4">
+                            <Text strong>{currentMember.display_name}</Text>
+                        </div> */}
                         <Form
                             form={form}
                             layout="vertical"
                             onFinish={handleEditSubmit}
+                            className='mt-4'
                         >
                             {renderCapabilityGroups()}
+                            <Button
+                                key="submit"
+                                type="primary"
+                                loading={saveLoading}
+                                onClick={() => form.submit()}
+                                className='mt-4 w-full'
+                            >
+                                {__('Save', 'quillbooking')}
+                            </Button>
                         </Form>
                     </>
                 )}
             </Modal>
 
             <Modal
-                title={__('Add Team Member', 'quillbooking')}
                 open={isAddModalVisible}
                 onCancel={() => setIsAddModalVisible(false)}
-                footer={[
-                    <Button key="cancel" onClick={() => setIsAddModalVisible(false)}>
-                        {__('Cancel', 'quillbooking')}
-                    </Button>,
-                    <Button
-                        key="submit"
-                        type="primary"
-                        loading={saveLoading}
-                        onClick={handleAddMember}
-                    >
-                        {__('Add', 'quillbooking')}
-                    </Button>
-                ]}
+                footer={null}
                 width={600}
             >
-                <div className="mb-4">
+                <Header header={__("Add Team Member", "quillbooking")}
+                    subHeader={__("Add the following data", "quillbooking")} />
+                <div className="my-4">
                     <Form form={form} layout="vertical">
                         <Form.Item
-                            label={__('Select User', 'quillbooking')}
                             rules={[
                                 {
                                     required: true,
@@ -326,6 +311,10 @@ const TeamTab: React.FC = () => {
                                 }
                             ]}
                         >
+                            <div className="text-[#09090B] text-[16px]">
+                                {__('Select Team Member', 'quillbooking')}
+                                <span className="text-red-500">*</span>
+                            </div>
                             <UserSelect
                                 value={selectedUser || 0}
                                 onChange={(value) => setSelectedUser(value)}
@@ -333,8 +322,16 @@ const TeamTab: React.FC = () => {
                                 exclude={teamMembers.map(member => member.ID)}
                             />
                         </Form.Item>
-
                         {renderCapabilityGroups()}
+                        <Button
+                            key="submit"
+                            type="primary"
+                            loading={saveLoading}
+                            onClick={handleAddMember}
+                            className='mt-4 w-full'
+                        >
+                            {__('Add Team Member', 'quillbooking')}
+                        </Button>
                     </Form>
                 </div>
             </Modal>

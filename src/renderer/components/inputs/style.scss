@@ -1,0 +1,21 @@
+.form-label p {
+	margin: 0;
+	font-weight: 700;
+	font-size: 16px;
+}
+
+.required {
+	color: #ef4444;
+}
+
+.help-text {
+	padding: 5px;
+	font-size: 14px;
+	color: #6b7280;
+}
+
+.checkbox-field {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}

@@ -1,7 +1,13 @@
+/**
+ *  External dependencies
+ */
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $insertNodeToNearestRoot } from '@lexical/utils';
 import { COMMAND_PRIORITY_EDITOR, createCommand } from 'lexical';
 import { useEffect } from 'react';
+/**
+ *  Internal dependencies
+ */
 import { $createImageNode, ImagePayload, ImageNode } from '../../nodes/img-node';
 
 export const INSERT_IMAGE_COMMAND = createCommand<ImagePayload>('INSERT_IMAGE_COMMAND');

@@ -42,8 +42,9 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {
 				if (fields) {
-					saveFields(fields);
+					return saveFields(fields);
 				}
+				return Promise.resolve();
 			},
 		}));
 
@@ -87,9 +88,9 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 			props.setDisabled(false);
 		};
 
-		const saveFields = (fields: Fields) => {
+		const saveFields = async(fields: Fields) => {
 			if (!event) return;
-			saveApi({
+			return saveApi({
 				path: `events/${event.id}`,
 				method: 'POST',
 				data: {

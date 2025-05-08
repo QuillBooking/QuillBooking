@@ -1,4 +1,10 @@
+/**
+ * Wordpress dependencies
+ */
 import { __ } from '@wordpress/i18n';
+/**
+ * External dependencies
+ */
 import React from 'react';
 
 interface TabButtonsProps {

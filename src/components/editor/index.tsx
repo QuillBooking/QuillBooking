@@ -1,3 +1,6 @@
+/**
+ *  External dependencies
+ */
 import { useEffect, useState, useRef } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -7,22 +10,25 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { $getRoot } from 'lexical';
-import { ToolbarPlugin } from './plugins/ToolbarPlugin';
+import { $getRoot, TextNode } from 'lexical';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
-import { TextNode } from 'lexical';
+import { Flex } from 'antd';
+
+/**
+ *  Internal dependencies
+ */
+import { ToolbarPlugin } from './plugins/ToolbarPlugin';
 import { MentionNode } from './nodes/mention-node';
 import { ImageNode } from './nodes/img-node';
 import AutoLinkMatchers from './plugins/autolink-plugin';
 import HtmlSerializer from './html-serializer';
 import InitialContentPlugin from './plugins/initial-content-plugin';
 import WordCountPlugin from './word-count';
-
 import "./style.scss";
-import { Flex } from 'antd';
+
 
 const theme = {
   paragraph: 'editor-paragraph',

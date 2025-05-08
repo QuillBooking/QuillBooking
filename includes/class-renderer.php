@@ -9,6 +9,7 @@
 
 namespace QuillBooking;
 
+use QuillBooking\Managers\Locations_Manager;
 use QuillBooking\Utils;
 
 /**
@@ -27,6 +28,7 @@ class Renderer {
 
 		wp_add_inline_script(
 			'quillbooking-renderer',
+			'quillbooking.config.setLocations( ' . json_encode( Locations_Manager::instance()->get_options() ) . ' );' .
 			'quillbooking.config.setTimezones( ' . json_encode( Utils::get_timezones() ) . ' );'
 		);
 	}

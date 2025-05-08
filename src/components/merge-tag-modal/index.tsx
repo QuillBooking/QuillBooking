@@ -1,6 +1,15 @@
-import React, { useState, useEffect } from "react";
+/**
+ * Wordpress dependencies
+ */
 import { __ } from "@wordpress/i18n";
+/**
+ * External dependencies
+ */
+import React, { useState, useEffect } from "react";
 import { Card, Flex } from "antd";
+/**
+ * Internal dependencies
+ */
 import { 
   MergeTagAttIcon, 
   MergeTagBookingIcon, 

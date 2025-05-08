@@ -17,7 +17,7 @@ import { motion } from 'framer-motion';
 /**
  * Internal Dependencies
  */
-import Home from '../pages/home';
+import Dashboard from '../pages/dashboard';
 import Calendars from '../pages/calendars';
 import Calendar from '../pages/calendar';
 import Availability from '../pages/availability';
@@ -27,9 +27,10 @@ import BookingDetails from '../pages/booking-details';
 import Event from '../pages/event';
 import Help from '../pages/help';
 import Logout from '../pages/logout';
-import { AvailabilityIcon, BookingIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon, UpcomingCalendarIcon } from '@quillbooking/components';
-import Navmenu from './navmenu';
+import Integrations from '../pages/integrations';
 import GeneralSettings from '../pages/global-settings';
+import { AvailabilityIcon, BookingIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon, UpcomingCalendarIcon, IntegrationsTabIcon } from '@quillbooking/components';
+import Navmenu from './navmenu';
 import ProtectedRoute from './protected-route';
 
 
@@ -49,11 +50,11 @@ export const Controller = ({ page }) => {
 	);
 };
 
-registerAdminPage('home', {
+registerAdminPage('dashboard', {
 	path: '/',
-	component: () => <Home />,
+	component: () => <Dashboard />,
 	label: (
-		<Navmenu icon={<HomeIcon width={24} height={24}/>} title={__('Home', 'quillbooking')} />
+		<Navmenu icon={<HomeIcon width={24} height={24}/>} title={__('Dashboard', 'quillbooking')} />
 	),
 });
 
@@ -115,8 +116,16 @@ registerAdminPage('availability', {
 	],
 });
 
+registerAdminPage('integrations', {
+	path: 'integrations',
+	component: () => <Integrations />,
+	label: (
+		<Navmenu icon={<IntegrationsTabIcon width={24} height={24}/>} title={__('Integrations', 'quillbooking')} />
+	),
+})
+
 registerAdminPage('settings', {
-	path: 'settings/:tab?',
+	path: 'settings/',
 	component: () => <GeneralSettings />,
 	label: (
 		<Navmenu icon={<SettingsIcon width={24} height={24}/>} title={__('Settings', 'quillbooking')} />

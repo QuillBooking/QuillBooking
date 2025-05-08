@@ -1,4 +1,10 @@
+/**
+ * Wordpress dependencies
+ */
 import { __ } from '@wordpress/i18n';
+/**
+ * External dependencies
+ */
 import { Flex } from 'antd';
 import { BsInfoCircleFill } from 'react-icons/bs';
 import { IoClose } from 'react-icons/io5';

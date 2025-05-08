@@ -238,6 +238,35 @@ class REST_Event_Controller extends REST_Controller {
 				),
 			)
 		);
+
+		// Get latest events
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/latest',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_latest_events' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'limit'   => array(
+							'description' => __( 'Number of events to retrieve.', 'quillbooking' ),
+							'type'        => 'integer',
+							'default'     => 5,
+						),
+						'user_id' => array(
+							'description' => __( 'Filter by user ID.', 'quillbooking' ),
+							'type'        => 'integer',
+						),
+						'status'  => array(
+							'description' => __( 'Filter by event status.', 'quillbooking' ),
+							'type'        => 'string',
+							'enum'        => array( 'active', 'inactive' ),
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -1158,5 +1187,68 @@ class REST_Event_Controller extends REST_Controller {
 			}
 		}
 		return $availability;
+	}
+
+	/**
+	 * Get latest events
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_latest_events( $request ) {
+		try {
+			$limit   = $request->get_param( 'limit' ) ? absint( $request->get_param( 'limit' ) ) : 7;
+			$user_id = $request->get_param( 'user_id' );
+			$status  = $request->get_param( 'status' );
+
+			$query = Event_Model::with( array( 'calendar', 'meta' ) )->orderBy( 'created_at', 'desc' );
+
+			// Apply filters if provided
+			if ( $user_id ) {
+				$query->where( 'user_id', $user_id );
+			} elseif ( ! current_user_can( 'quillbooking_read_all_calendars' ) ) {
+				$query->where( 'user_id', get_current_user_id() );
+			}
+
+			if ( $status ) {
+				$query->where( 'status', $status );
+			}
+
+			$events = $query->limit( $limit )->get();
+
+			// Prepare events for response
+			$prepared_events = array();
+			foreach ( $events as $event ) {
+				$prepared_events[] = $this->prepare_event_for_response( $event );
+			}
+
+			return new WP_REST_Response( $prepared_events, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Prepare event data for API response
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param Event_Model $event The event model.
+	 * @return array Prepared event with only essential data.
+	 */
+	protected function prepare_event_for_response( $event ) {
+		// Extract only the essential data needed for display
+		$prepared_data = array(
+			'id'         => $event->id,
+			'name'       => $event->name,
+			'duration'   => $event->duration,
+			'type'       => $event->type,
+			'booking_no' => $event->id,
+			'location'   => $event->location[0]['type'],
+		);
+
+		return $prepared_data;
 	}
 }

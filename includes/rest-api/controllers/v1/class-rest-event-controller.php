@@ -1236,34 +1236,24 @@ class REST_Event_Controller extends REST_Controller {
 	 * @since 1.0.0
 	 *
 	 * @param Event_Model $event The event model.
-	 * @return Event_Model Prepared event with additional data.
+	 * @return array Prepared event with only essential data.
 	 */
 	protected function prepare_event_for_response( $event ) {
-		// Add availability data
-		$event->availability_data = $event->getAvailabilityAttribute();
-		$event->reserve           = $event->getReserveTimesAttribute();
+		// Extract only the essential data needed for display
+		$prepared_data = array(
+			'id'         => $event->id,
+			'name'       => $event->name,
+			'duration'   => $event->duration,
+			'type'       => $event->type,
+			'booking_no' => $event->id, // Using ID as booking number
+			'location'   => $event->location,
+		);
 
-		// Get event hosts
-		$usersId = $event->getTeamMembersAttribute() ?: array( $event->user_id );
-		$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
-
-		$users = array();
-		foreach ( $usersId as $userId ) {
-			$user = User_Model::find( $userId );
-
-			if ( $user ) {
-				$user_avatar_url = get_avatar_url( $user->ID );
-
-				$users[] = array(
-					'id'    => $user->ID,
-					'name'  => $user->display_name,
-					'image' => $user_avatar_url,
-				);
-			}
+		// If location is an array or object, extract just the provider name
+		if ( is_array( $event->location ) && isset( $event->location['provider'] ) ) {
+			$prepared_data['location_provider'] = $event->location['provider'];
 		}
 
-		$event->hosts = $users;
-
-		return $event;
+		return $prepared_data;
 	}
 }

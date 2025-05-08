@@ -1203,7 +1203,7 @@ class REST_Event_Controller extends REST_Controller {
 			$user_id = $request->get_param( 'user_id' );
 			$status  = $request->get_param( 'status' );
 
-			$query = Event_Model::query()->orderBy( 'created_at', 'desc' );
+			$query = Event_Model::with( array( 'calendar', 'meta' ) )->orderBy( 'created_at', 'desc' );
 
 			// Apply filters if provided
 			if ( $user_id ) {
@@ -1218,9 +1218,52 @@ class REST_Event_Controller extends REST_Controller {
 
 			$events = $query->limit( $limit )->get();
 
-			return new WP_REST_Response( $events, 200 );
+			// Prepare events for response
+			$prepared_events = array();
+			foreach ( $events as $event ) {
+				$prepared_events[] = $this->prepare_event_for_response( $event );
+			}
+
+			return new WP_REST_Response( $prepared_events, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
 		}
+	}
+
+	/**
+	 * Prepare event data for API response
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param Event_Model $event The event model.
+	 * @return Event_Model Prepared event with additional data.
+	 */
+	protected function prepare_event_for_response( $event ) {
+		// Add availability data
+		$event->availability_data = $event->getAvailabilityAttribute();
+		$event->reserve           = $event->getReserveTimesAttribute();
+
+		// Get event hosts
+		$usersId = $event->getTeamMembersAttribute() ?: array( $event->user_id );
+		$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
+
+		$users = array();
+		foreach ( $usersId as $userId ) {
+			$user = User_Model::find( $userId );
+
+			if ( $user ) {
+				$user_avatar_url = get_avatar_url( $user->ID );
+
+				$users[] = array(
+					'id'    => $user->ID,
+					'name'  => $user->display_name,
+					'image' => $user_avatar_url,
+				);
+			}
+		}
+
+		$event->hosts = $users;
+
+		return $event;
 	}
 }

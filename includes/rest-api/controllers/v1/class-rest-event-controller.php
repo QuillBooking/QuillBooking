@@ -1200,8 +1200,8 @@ class REST_Event_Controller extends REST_Controller {
 	public function get_latest_events( $request ) {
 		try {
 			$limit   = $request->get_param( 'limit' ) ? absint( $request->get_param( 'limit' ) ) : 7;
-			$user_id = $request->get_param( 'user_id' );
-			$status  = $request->get_param( 'status' );
+			$user_id = $request->get_param( 'user_id' ) ? absint( $request->get_param( 'user_id' ) ) : null;
+			$status  = $request->get_param( 'status' ) ? sanitize_text_field( $request->get_param( 'status' ) ) : null;
 
 			$query = Event_Model::with( array( 'calendar', 'meta' ) )->orderBy( 'created_at', 'desc' );
 

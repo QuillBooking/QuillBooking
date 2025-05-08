@@ -1,0 +1,127 @@
+* {
+	padding: 0;
+	margin: 0;
+}
+
+.quillbooking-meeting-confirmation {
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+	width: 100%;
+	max-width: 856px;
+	margin: 0 auto;
+}
+
+.confirmation-details-container {
+	padding: 2rem;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	border: 1.05px solid #3333331f;
+}
+
+.profile-picture img {
+	display: block;
+	margin: 0 auto;
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+}
+
+.confirmation-title {
+	font-weight: 700;
+	font-size: 32px;
+	text-align: center;
+	color: #953ae4;
+}
+
+.calendar-info {
+	font-weight: 500;
+	font-size: 20px;
+	text-align: center;
+	color: #737373;
+	padding: 10px 0;
+}
+
+.booking-card {
+	border: 1px solid #eaeaea;
+	padding: 1rem;
+	border-radius: 8px;
+	margin-bottom: 1rem;
+}
+
+.booking-card .event-title {
+	font-weight: 700;
+	font-size: 18px;
+	color: #1a1a1a;
+	text-transform: capitalize;
+	padding: 10px 0;
+}
+
+.booking-card p {
+	font-weight: 400;
+	font-size: 16px;
+}
+
+.calendar-buttons {
+	text-align: center;
+	border: 1px solid #eaeaea;
+	padding: 1rem;
+	border-radius: 8px;
+}
+
+.calendar-buttons p {
+	font-weight: 500;
+	font-size: 20px;
+	text-align: center;
+}
+
+.calendar-buttons .icons img {
+	width: 32px;
+	margin: 0 8px;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.confirmation-footer {
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	border-radius: 16px;
+	padding: 40px 48px;
+	border: 1.05px solid #3333331f;
+}
+
+.change-options {
+	text-align: center;
+	font-weight: 500;
+	font-size: 16px;
+	text-align: center;
+}
+
+.cancel-link {
+	font-weight: 700;
+	font-size: 16px;
+	color: #ef4444;
+}
+
+.reschedule-link {
+	font-weight: 700;
+	font-size: 16px;
+	color: #0b69c7;
+}
+
+.cancellation-policy {
+	margin-top: 2rem;
+	font-weight: 400;
+	font-size: 16px;
+}
+
+.cancellation-policy h3 {
+	font-weight: 700;
+	font-size: 16px;
+	margin: 1em 0;
+}
+
+h3 {
+	color: red;
+	background-color: #0b69c7;
+}

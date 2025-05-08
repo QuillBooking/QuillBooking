@@ -20,7 +20,9 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 
 	const allFields = {
 		...fields.system,
-		'location-select': fields.location['location-select'],
+		...(fields.location['location-select'] && {
+			'location-select': fields.location['location-select'],
+		}),
 		...fields.custom,
 	};
 

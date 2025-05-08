@@ -51,9 +51,11 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 		const filteredValues = { ...values };
 		delete filteredValues['name'];
 		delete filteredValues['email'];
-		delete filteredValues['location-select'];
 		delete filteredValues['field'];
 
+		if (values['location-select']) {
+			delete filteredValues['location-select'];
+		}
 		if (values['field']) {
 			filteredValues['location'] = values['field']['location-select'];
 		}
@@ -67,11 +69,10 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 			});
 			if (response.ok) {
 				const data = await response.json();
-				console.log('Booking response:', data);
 				const baseUrl =
 					window.top?.location?.origin || window.location.origin;
 				(window.top || window).location.href =
-					`${baseUrl}/?quillbooking=booking&booking_hash=${data.booking_hash}`;
+					`${baseUrl}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
 			}
 		} catch (error) {
 			console.error('Error fetching availability:', error);

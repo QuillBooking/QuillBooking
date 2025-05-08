@@ -1051,14 +1051,7 @@ class REST_Booking_Controller extends REST_Controller {
 			// Total guests count
 			$total_guests = $primary_guests_count + $additional_guests_count;
 
-			return new WP_REST_Response(
-				array(
-					'primary_guests_count'    => $primary_guests_count,
-					'additional_guests_count' => $additional_guests_count,
-					'total_guests_count'      => $total_guests,
-				),
-				200
-			);
+			return new WP_REST_Response( $total_guests, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
 		}

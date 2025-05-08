@@ -123,7 +123,7 @@ class Integration extends Abstract_Integration {
 						'message' => __( 'Error connecting to Apple Calendar.', 'quillbooking' ),
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with account %2$s.', 'quillbooking' ),
-							$host->name,
+							$this->host->name,
 							$account_id
 						),
 					)
@@ -189,6 +189,7 @@ class Integration extends Abstract_Integration {
 		$this->set_host( $host );
 
 		$apple_events = $booking->get_meta( 'apple_events_details', array() );
+
 		if ( empty( $apple_events ) ) {
 			return;
 		}
@@ -203,6 +204,7 @@ class Integration extends Abstract_Integration {
 			$account_id  = Arr::get( $apple_event, 'account_id', '' );
 
 			$api = $this->connect( $host, $account_id );
+
 			if ( ! $api ) {
 				$booking->logs()->create(
 					array(
@@ -210,7 +212,7 @@ class Integration extends Abstract_Integration {
 						'message' => __( 'Error connecting to Apple Calendar.', 'quillbooking' ),
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with account %2$s.', 'quillbooking' ),
-							$host->name,
+							$this->host->name,
 							$account_id
 						),
 					)
@@ -288,7 +290,7 @@ class Integration extends Abstract_Integration {
 						'message' => __( 'Error connecting to Apple Calendar.', 'quillbooking' ),
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with account %2$s.', 'quillbooking' ),
-							$host->name,
+							$this->host->name,
 							$account_id
 						),
 					)

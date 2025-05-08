@@ -161,7 +161,11 @@ class App {
 	 */
 	public function refresh_tokens( $refresh_token = null, $account_id = null ) {
 		if ( empty( $refresh_token ) || empty( $account_id ) ) {
-			return false;
+			return new \WP_Error(
+				'missing_required_fields',
+				__( 'Missing refresh token or account ID.', 'quillbooking' ),
+				array( 'status' => 400 )
+			);
 		}
 
 		$app_credentials = $this->get_app_credentials();
@@ -170,7 +174,11 @@ class App {
 			empty( $app_credentials ) ||
 			! Arr::has( $app_credentials, array( 'client_id', 'client_secret' ) )
 		) {
-			return false;
+			return new \WP_Error(
+				'invalid_credentials',
+				__( 'Missing or invalid app credentials.', 'quillbooking' ),
+				array( 'status' => 401 )
+			);
 		}
 
 		$refreshed_tokens = $this->get_tokens(
@@ -185,13 +193,21 @@ class App {
 		if (
 			empty( $refreshed_tokens ) ||
 			! Arr::has( $refreshed_tokens, 'access_token' )
-			) {
-				return false;
+		) {
+			return new \WP_Error(
+				'token_refresh_failed',
+				__( 'Failed to refresh the access token.', 'quillbooking' ),
+				array( 'status' => 500 )
+			);
 		}
 
 		$account_data = $this->integration->accounts->get_account( $account_id );
 		if ( empty( $account_data ) || ! is_array( $account_data ) ) {
-			return false;
+			return new \WP_Error(
+				'account_not_found',
+				__( 'Account not found.', 'quillbooking' ),
+				array( 'status' => 404 )
+			);
 		}
 
 		$tokens = Arr::get( $account_data, 'tokens', array() );
@@ -209,7 +225,11 @@ class App {
 		);
 
 		if ( ! $updated ) {
-			return false;
+			return new \WP_Error(
+				'account_update_failed',
+				__( 'Failed to update account with new tokens.', 'quillbooking' ),
+				array( 'status' => 500 )
+			);
 		}
 
 		return $tokens;

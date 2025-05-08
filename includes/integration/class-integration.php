@@ -211,7 +211,7 @@ abstract class Integration {
 	protected function findCalendarById( $host_id ) {
 		// This method now contains the only direct static call to find()
 		// Ensure the correct namespace for Calendar_Model is used
-		return \QuillBooking\Models\Calendar_Model::find( $host_id );
+		return Calendar_Model::find( $host_id );
 	}
 
 	/**

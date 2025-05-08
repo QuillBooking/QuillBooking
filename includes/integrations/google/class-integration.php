@@ -201,7 +201,7 @@ class Integration extends Abstract_Integration {
 						'message' => __( 'Error connecting to Google Calendar.', 'quillbooking' ),
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with Google Account %2$s.', 'quillbooking' ),
-							$host->name,
+							$this->host->name,
 							$account_id
 						),
 					)

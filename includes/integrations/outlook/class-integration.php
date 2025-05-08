@@ -111,7 +111,7 @@ class Integration extends Abstract_Integration {
 						'message' => __( 'Error connecting to Outlook Calendar.', 'quillbooking' ),
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with Outlook Account %2$s.', 'quillbooking' ),
-							$host->name,
+							$this->host->name,
 							$account_id
 						),
 					)
@@ -197,7 +197,7 @@ class Integration extends Abstract_Integration {
 						'message' => __( 'Error connecting to Outlook Calendar.', 'quillbooking' ),
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with Outlook Account %2$s.', 'quillbooking' ),
-							$host->name,
+							$this->host->name,
 							$account_id
 						),
 					)
@@ -269,7 +269,7 @@ class Integration extends Abstract_Integration {
 						'message' => __( 'Error connecting to Outlook Calendar.', 'quillbooking' ),
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with Outlook Account %2$s.', 'quillbooking' ),
-							$host->name,
+							$this->host->name,
 							$account_id
 						),
 					)

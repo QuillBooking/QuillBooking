@@ -159,12 +159,28 @@ class App {
 	 * @return array|false|WP_Error
 	 */
 	public function refresh_tokens( $refresh_token = null, $account_id = null ) {
-		if ( empty( $refresh_token ) ) {
-			return false;
+		if ( empty( $refresh_token ) || empty( $account_id ) ) {
+			return new \WP_Error(
+				'missing_required_fields',
+				__( 'Missing refresh token or account ID.', 'quillbooking' ),
+				array( 'status' => 400 )
+			);
 		}
 
 		$app_credentials = $this->get_app_credentials();
-		$refeshed_tokens = $this->get_tokens(
+
+		if (
+			empty( $app_credentials ) ||
+			! Arr::has( $app_credentials, array( 'client_id', 'client_secret' ) )
+		) {
+			return new  \WP_Error(
+				'invalid_credentials',
+				__( 'App credentials are missing or invalid.', 'quillbooking' ),
+				array( 'status' => 401 )
+			);
+		}
+
+		$refreshed_tokens = $this->get_tokens(
 			array(
 				'client_id'     => Arr::get( $app_credentials, 'client_id' ),
 				'client_secret' => Arr::get( $app_credentials, 'client_secret' ),
@@ -173,23 +189,48 @@ class App {
 			)
 		);
 
-		if ( empty( $refeshed_tokens ) ) {
-			return false;
+		if ( empty( $refreshed_tokens ) || ! Arr::has( $refreshed_tokens, 'access_token' ) ) {
+			return new  \WP_Error(
+				'token_refresh_failed',
+				__( 'Failed to refresh the access token.', 'quillbooking' ),
+				array( 'status' => 500 )
+			);
 		}
 
-		$account_data           = $this->integration->accounts->get_account( $account_id );
-		$tokens                 = Arr::get( $account_data, 'tokens', array() );
-		$tokens['access_token'] = Arr::get( $refeshed_tokens, 'access_token' );
+		$account_data = $this->integration->accounts->get_account( $account_id );
+		if ( empty( $account_data ) || ! is_array( $account_data ) ) {
+			return new  \WP_Error(
+				'account_not_found',
+				__( 'Account not found.', 'quillbooking' ),
+				array( 'status' => 404 )
+			);
+		}
 
-		$this->integration->accounts->update_account(
+		$tokens = Arr::get( $account_data, 'tokens', array() );
+		if ( ! is_array( $tokens ) ) {
+			$tokens = array();
+		}
+
+		$tokens['access_token'] = Arr::get( $refreshed_tokens, 'access_token' );
+
+		$updated = $this->integration->accounts->update_account(
 			$account_id,
 			array(
 				'tokens' => $tokens,
 			)
 		);
 
+		if ( ! $updated ) {
+			return new  \WP_Error(
+				'account_update_failed',
+				__( 'Failed to update account with new token.', 'quillbooking' ),
+				array( 'status' => 500 )
+			);
+		}
+
 		return $tokens;
 	}
+
 
 	/**
 	 * Get tokens

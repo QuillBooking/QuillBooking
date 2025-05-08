@@ -5,9 +5,10 @@ namespace QuillBooking\Tests\Integrations\Apple;
 use WP_UnitTestCase; // Or PHPUnit\Framework\TestCase
 use phpmock\phpunit\PHPMock;
 use QuillBooking\Integrations\Apple\Client as AppleClient; // Alias the class under test
+use QuillBooking_Base_Test_Case;
 use Sabre\DAV\Client as SabreDAV_Client; // Class to mock
 
-class Test_Integration_Client_Apple extends WP_UnitTestCase {
+class Test_Integration_Client_Apple extends QuillBooking_Base_Test_Case {
 
 
 	// Or extends TestCase
@@ -25,7 +26,7 @@ class Test_Integration_Client_Apple extends WP_UnitTestCase {
 	 */
 	private $sabreClientMock;
 
-	protected function setUp(): void {
+	public function setUp(): void {
 		parent::setUp();
 
 		// Create the mock for the SabreDAV client

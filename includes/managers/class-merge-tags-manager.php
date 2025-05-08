@@ -16,7 +16,7 @@ use QuillBooking\Models\Booking_Model;
 use QuillBooking\Abstracts\Manager;
 use QuillBooking\Traits\Singleton;
 
-final class Merge_Tags_Manager extends Manager {
+class Merge_Tags_Manager extends Manager {
 
 	use Singleton;
 
@@ -95,7 +95,7 @@ final class Merge_Tags_Manager extends Manager {
 		if ( empty( $content ) ) {
 			return '';
 		}
-		
+
 		return preg_replace_callback(
 			'/{{(.*?):(.*?)}}/',
 			function( $matches ) use ( $booking ) {

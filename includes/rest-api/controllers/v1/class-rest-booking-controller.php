@@ -118,6 +118,26 @@ class REST_Booking_Controller extends REST_Controller {
 				),
 			)
 		);
+
+		// Booking counts route
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/counts',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_booking_counts' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'user' => array(
+							'description' => __( 'User ID to filter counts by.', 'quillbooking' ),
+							'type'        => 'string',
+							'default'     => 'own',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -725,5 +745,54 @@ class REST_Booking_Controller extends REST_Controller {
 
 			$day = absint( $day );
 			return ( $day >= 1 && $day <= 31 ) ? sprintf( '%02d', $day ) : null;
+	}
+
+
+	/**
+	 * Get booking counts by status
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_booking_counts( $request ) {
+		// Get user parameter
+		$user = sanitize_text_field( $request->get_param( 'user' ) ?? 'own' );
+
+		if ( 'own' === $user ) {
+			$user = get_current_user_id();
+		}
+
+		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
+			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
+		}
+
+		try {
+			$query = Booking_Model::query();
+
+			// Apply user filter if needed
+			if ( 'all' !== $user ) {
+				$this->apply_user_filter( $query, $user );
+			}
+
+			// Get the current time for upcoming/past filtering
+			$current_time = current_time( 'mysql' );
+
+			// Calculate all counts
+			$counts = array(
+				'total'     => ( clone $query )->count(),
+				'upcoming'  => ( clone $query )->where( 'start_time', '>', $current_time )->where( 'status', '!=', $this->STATUS_CANCELLED )->count(),
+				'completed' => ( clone $query )->where( 'status', $this->STATUS_COMPLETED )->count(),
+				'pending'   => ( clone $query )->where( 'status', $this->STATUS_PENDING )->count(),
+				'cancelled' => ( clone $query )->where( 'status', $this->STATUS_CANCELLED )->count(),
+				'no_show'   => ( clone $query )->where( 'status', $this->STATUS_NO_SHOW )->count(),
+			);
+
+			return new WP_REST_Response( $counts, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
 	}
 }

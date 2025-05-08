@@ -1245,14 +1245,9 @@ class REST_Event_Controller extends REST_Controller {
 			'name'       => $event->name,
 			'duration'   => $event->duration,
 			'type'       => $event->type,
-			'booking_no' => $event->id, // Using ID as booking number
-			'location'   => $event->location,
+			'booking_no' => $event->id,
+			'location'   => $event->location[0]['type'],
 		);
-
-		// If location is an array or object, extract just the provider name
-		if ( is_array( $event->location ) && isset( $event->location['provider'] ) ) {
-			$prepared_data['location_provider'] = $event->location['provider'];
-		}
 
 		return $prepared_data;
 	}

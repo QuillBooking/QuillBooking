@@ -162,6 +162,30 @@ class REST_Booking_Controller extends REST_Controller {
 				),
 			)
 		);
+
+		// Total guests route
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/total-guests',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_total_guests' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'user'   => array(
+							'description' => __( 'User ID to filter guests by.', 'quillbooking' ),
+							'type'        => 'string',
+							'default'     => 'own',
+						),
+						'filter' => array(
+							'description' => __( 'Filter the results.', 'quillbooking' ),
+							'type'        => 'object',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -949,6 +973,92 @@ class REST_Booking_Controller extends REST_Controller {
 			}
 
 			return new WP_REST_Response( $results, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Get total guests
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_total_guests( $request ) {
+		// Get user parameter
+		$user = sanitize_text_field( $request->get_param( 'user' ) ?? 'own' );
+
+		if ( 'own' === $user ) {
+			$user = get_current_user_id();
+		}
+
+		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
+			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
+		}
+
+		try {
+			// Parse filters
+			$filter     = $request->get_param( 'filter' ) ?? array();
+			$period     = sanitize_text_field( Arr::get( $filter, 'period', 'all' ) );
+			$event      = sanitize_text_field( Arr::get( $filter, 'event', 'all' ) );
+			$event_type = sanitize_text_field( Arr::get( $filter, 'event_type', 'all' ) );
+
+			// Validate date parameters
+			$year  = $this->validate_year( Arr::get( $filter, 'year', current_time( 'Y' ) ) );
+			$month = $this->validate_month( Arr::get( $filter, 'month', current_time( 'm' ) ) );
+			$day   = $this->validate_day( Arr::get( $filter, 'day' ) );
+
+			// Base query
+			$query = Booking_Model::query();
+
+			// Apply date range filter
+			$this->apply_date_range_filter( $query, $year, $month, $day );
+
+			// Apply user filter if needed
+			if ( 'all' !== $user ) {
+				$this->apply_user_filter( $query, $user );
+			}
+
+			// Apply period filter
+			$this->apply_period_filter( $query, $period );
+
+			// Apply event filters
+			if ( 'all' !== $user ) {
+				$this->apply_event_filters( $query, $event, $event_type );
+			}
+
+			// Get bookings with their guests
+			$bookings = $query->with( 'guest' )->get();
+
+			// Count primary guests (1 per booking)
+			$primary_guests_count = $bookings->count();
+
+			// Count additional guests from booking fields
+			$additional_guests_count = 0;
+			foreach ( $bookings as $booking ) {
+				$fields = $booking->fields;
+				if ( isset( $fields ) && is_array( $fields ) ) {
+					$additional_guests = Arr::get( $fields, 'additional_guests', array() );
+					if ( is_array( $additional_guests ) ) {
+						$additional_guests_count += count( $additional_guests );
+					}
+				}
+			}
+
+			// Total guests count
+			$total_guests = $primary_guests_count + $additional_guests_count;
+
+			return new WP_REST_Response(
+				array(
+					'primary_guests_count'    => $primary_guests_count,
+					'additional_guests_count' => $additional_guests_count,
+					'total_guests_count'      => $total_guests,
+				),
+				200
+			);
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
 		}

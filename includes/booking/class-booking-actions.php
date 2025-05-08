@@ -98,7 +98,8 @@ class Booking_Actions {
 
 	public function init() {
 		$this->booking_actions();
-		return $this->route_frontend();
+		add_action( 'template_redirect', array( $this, 'route_frontend' ) );
+		// return $this->route_frontend();
 	}
 
 	public function render_booking_page() {
@@ -255,7 +256,7 @@ class Booking_Actions {
 		$this->process_booking_action( 'cancel', 'cancelled', __( 'Booking cancelled', 'quillbooking' ), __( 'Booking cancelled by Attendee', 'quillbooking' ) );
 	}
 
-	private  function route_frontend() {
+	public function route_frontend() {
 		$hash = sanitize_text_field( Arr::get( $_GET, 'id', '' ) );
 		$type = sanitize_text_field( Arr::get( $_GET, 'type', '' ) );
 
@@ -333,13 +334,10 @@ class Booking_Actions {
 		extract( array( 'booking' => $booking_array ) );
 
 		// Debugging: Output the booking data for inspection
-		echo $this->get_head();
-		echo '<pre>';
-		print_r( $booking_array );
-		echo '</pre>';
-
 		wp_enqueue_script( 'quillbooking-page' );
 		wp_enqueue_style( 'quillbooking-page' );
+
+		wp_head();
 
 		// Provide variables to the template
 		include $template_path;

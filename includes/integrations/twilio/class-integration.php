@@ -67,7 +67,7 @@ class Integration extends Abstract_Integration {
 	 *
 	 * @var array
 	 */
-	protected static $classes = array(
+	public static $classes = array(
 		'rest_api' => REST_API::class,
 	);
 

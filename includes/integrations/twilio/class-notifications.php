@@ -82,7 +82,7 @@ class Notifications {
 	 */
 	public function send_booking_created_sms( $booking ) {
 		$event = $booking->event;
-		$this->set_host( $event->calendar );
+		// $this->set_host( $event->calendar );
 		$sms_notifications = $event->sms_notifications;
 
 		$attendee_confirmation  = Arr::get( $sms_notifications, 'attendee_confirmation.enabled', true );
@@ -107,7 +107,7 @@ class Notifications {
 	 */
 	public function send_attendee_cancelled_sms( $booking ) {
 		$event = $booking->event;
-		$this->set_host( $event->calendar );
+		// $this->set_host( $event->calendar );
 		$sms_notifications = $event->sms_notifications;
 
 		$attendee_cancellation = Arr::get( $sms_notifications, 'attendee_cancellation.enabled', true );
@@ -126,7 +126,7 @@ class Notifications {
 	 */
 	public function send_organizer_cancelled_sms( $booking ) {
 		$event = $booking->event;
-		$this->set_host( $event->calendar );
+		// $this->set_host( $event->calendar );
 		$sms_notifications = $event->sms_notifications;
 
 		$organizer_cancellation = Arr::get( $sms_notifications, 'organizer_cancellation.enabled', true );
@@ -145,7 +145,7 @@ class Notifications {
 	 */
 	public function send_organizer_rescheduled_sms( $booking ) {
 		$event = $booking->event;
-		$this->set_host( $event->calendar );
+		// $this->set_host( $event->calendar );
 		$sms_notifications = $event->sms_notifications;
 
 		$organizer_rescheduled = Arr::get( $sms_notifications, 'organizer_reschedule.enabled', true );
@@ -164,7 +164,7 @@ class Notifications {
 	 */
 	public function send_attendee_rescheduled_sms( $booking ) {
 		$event = $booking->event;
-		$this->set_host( $event->calendar );
+		// $this->set_host( $event->calendar );
 		$sms_notifications = $event->sms_notifications;
 
 		$attendee_rescheduled = Arr::get( $sms_notifications, 'attendee_reschedule.enabled', true );
@@ -183,7 +183,7 @@ class Notifications {
 	 */
 	public function send_booking_pending_sms( $booking ) {
 		$event = $booking->event;
-		$this->set_host( $event->calendar );
+		// $this->set_host( $event->calendar );
 		$sms_notifications = $event->sms_notifications;
 
 		$pending = Arr::get( $sms_notifications, 'pending.enabled', true );
@@ -202,7 +202,7 @@ class Notifications {
 	 */
 	public function send_organizer_reminder_sms( $booking ) {
 		$event = $booking->event;
-		$this->set_host( $event->calendar );
+		// $this->set_host( $event->calendar );
 		$sms_notifications = $event->sms_notifications;
 
 		$reminder = Arr::get( $sms_notifications, 'organizer_reminder.enabled', true );
@@ -221,7 +221,7 @@ class Notifications {
 	 */
 	public function send_attendee_reminder_sms( $booking ) {
 		$event = $booking->event;
-		$this->set_host( $event->calendar );
+		// $this->set_host( $event->calendar );
 		$sms_notifications = $event->sms_notifications;
 
 		$reminder = Arr::get( $sms_notifications, 'attendee_reminder.enabled', true );

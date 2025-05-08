@@ -184,7 +184,7 @@ class Test_Integration_App_Google extends QuillBooking_Base_Test_Case {
 	}
 
 
-	public function test_refresh_tokens_returns_false_if_refresh_token_empty() {
+	public function test_refresh_tokens_returns_wp_error_if_refresh_token_empty() {
 		$app                 = $this->createAppInstance();
 		$account_id          = 'acc-123';
 		$empty_refresh_token = '';
@@ -193,10 +193,13 @@ class Test_Integration_App_Google extends QuillBooking_Base_Test_Case {
 
 		$result = $app->refresh_tokens( $empty_refresh_token, $account_id );
 
-		$this->assertFalse( $result );
+		// return wp_error
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertEquals( 'missing_required_fields', $result->get_error_code() );
+		$this->assertEquals( 'Missing refresh token or account ID.', $result->get_error_message() );
 	}
 
-	public function test_refresh_tokens_returns_false_if_get_tokens_fails() {
+	public function test_refresh_tokens_returns_wp_error_if_get_tokens_fails() {
 		$app             = $this->createAppInstance();
 		$refresh_token   = 'valid-refresh-token';
 		$account_id      = 'acc-123';
@@ -223,14 +226,16 @@ class Test_Integration_App_Google extends QuillBooking_Base_Test_Case {
 		// --- Execute Method Under Test ---
 		$result = $app->refresh_tokens( $refresh_token, $account_id );
 
-		// --- Assert Result ---
-		$this->assertFalse( $result );
+		// return wp_error
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertEquals( 'token_refresh_failed', $result->get_error_code() );
+		$this->assertEquals( 'Failed to refresh the access token.', $result->get_error_message() );
 		// Ensure account update methods were NOT called
 		$this->accountsMock->expects( $this->never() )->method( 'get_account' );
 		$this->accountsMock->expects( $this->never() )->method( 'update_account' );
 	}
 
-	public function test_refresh_tokens_returns_false_if_account_data_missing() {
+	public function test_refresh_tokens_returns_wp_error_if_account_data_missing() {
 		$app                = $this->createAppInstance();
 		$refresh_token      = 'valid-refresh-token';
 		$account_id         = 'acc-123';
@@ -276,8 +281,10 @@ class Test_Integration_App_Google extends QuillBooking_Base_Test_Case {
 		// Execute
 		$result = $app->refresh_tokens( $refresh_token, $account_id );
 
-		// Assert
-		$this->assertFalse( $result );
+		// return wp_error
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertEquals( 'account_not_found', $result->get_error_code() );
+		$this->assertEquals( 'Account not found.', $result->get_error_message() );
 	}
 
 	// Test get_app_credentials() [SUCCESS]

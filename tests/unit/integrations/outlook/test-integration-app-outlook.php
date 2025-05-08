@@ -306,6 +306,110 @@ class Test_Integration_App_Outlook extends QuillBooking_Base_Test_Case {
 		$this->assertFalse( $result );
 	}
 
+	public function test_refresh_tokens_returns_wp_error_if_refresh_token_empty() {
+		$app                 = $this->createAppInstance();
+		$account_id          = 'acc-123';
+		$empty_refresh_token = '';
+
+		// No mocks needed as it should return early
+
+		$result = $app->refresh_tokens( $empty_refresh_token, $account_id );
+
+		// return wp_error
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertEquals( 'missing_required_fields', $result->get_error_code() );
+		$this->assertEquals( 'Missing refresh token or account ID.', $result->get_error_message() );
+	}
+
+
+	public function test_refresh_tokens_returns_wp_error_if_get_tokens_fails() {
+		$app             = $this->createAppInstance();
+		$refresh_token   = 'valid-refresh-token';
+		$account_id      = 'acc-123';
+		$app_credentials = array(
+			'client_id'     => 'the-client-id',
+			'client_secret' => 'the-client-secret',
+		);
+
+		// --- Mock Dependencies ---
+		// 1. Mock integration->get_setting
+		$this->integrationMock->expects( $this->once() )
+			->method( 'get_setting' )
+			->with( 'app' )
+			->willReturn( $app_credentials );
+
+		// 2. Mock wp_remote_post to simulate failure from get_tokens
+		$wpError          = new WP_Error( 'token_fail', 'Failed to get token' );
+		$wpRemotePostMock = $this->getFunctionMock( self::APP_NAMESPACE, 'wp_remote_post' );
+		$wpRemotePostMock->expects( $this->once() ) // Expect get_tokens to be called
+			->willReturn( $wpError ); // Simulate WP_Error response
+
+		// is_wp_error mock in setUp handles checking this
+
+		// --- Execute Method Under Test ---
+		$result = $app->refresh_tokens( $refresh_token, $account_id );
+
+		// return wp_error
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertEquals( 'token_refresh_failed', $result->get_error_code() );
+		$this->assertEquals( 'Failed to refresh the access token.', $result->get_error_message() );
+		// Ensure account update methods were NOT called
+		$this->accountsMock->expects( $this->never() )->method( 'get_account' );
+		$this->accountsMock->expects( $this->never() )->method( 'update_account' );
+	}
+
+	public function test_refresh_tokens_returns_wp_error_if_account_data_missing() {
+		$app                = $this->createAppInstance();
+		$refresh_token      = 'valid-refresh-token';
+		$account_id         = 'acc-123';
+		$app_credentials    = array(
+			'client_id'     => 'the-client-id',
+			'client_secret' => 'the-client-secret',
+		);
+		$new_token_response = array(
+			'access_token' => 'new-access-token',
+			'expires_in'   => 3599,
+		);
+
+		// 1. Mock get_setting
+		$this->integrationMock->expects( $this->once() )
+			->method( 'get_setting' )
+			->with( 'app' )
+			->willReturn( $app_credentials );
+
+		// 2. Mock wp_remote_post
+		$mock_generic_wp_response = array(
+			'response' => array( 'code' => 200 ),
+			'body'     => 'dummy',
+		);
+		$wpRemotePostMock         = $this->getFunctionMock( self::APP_NAMESPACE, 'wp_remote_post' );
+		$wpRemotePostMock->expects( $this->once() )->willReturn( $mock_generic_wp_response );
+
+		// 3. Mock wp_remote_retrieve_body
+		$retrieveBodyMock = $this->getFunctionMock( self::APP_NAMESPACE, 'wp_remote_retrieve_body' );
+		$retrieveBodyMock->expects( $this->once() )
+			->with( $mock_generic_wp_response )
+			->willReturn( json_encode( $new_token_response ) );
+
+		// 4. Mock get_account -> return null (simulate missing account)
+		$this->accountsMock->expects( $this->once() )
+			->method( 'get_account' )
+			->with( $account_id )
+			->willReturn( null );
+
+		// 5. update_account should NOT be called
+		$this->accountsMock->expects( $this->never() )
+			->method( 'update_account' );
+
+		// Execute
+		$result = $app->refresh_tokens( $refresh_token, $account_id );
+
+		// return wp_error
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertEquals( 'account_not_found', $result->get_error_code() );
+		$this->assertEquals( 'Account not found.', $result->get_error_message() );
+	}
+
 
 
 }

@@ -6,6 +6,7 @@ import Hosts from './hosts';
 import './style.scss';
 import { Dayjs } from 'dayjs';
 import QuestionsComponents from './questions';
+import ConfigAPI from '@quillbooking/config';
 
 interface CardBodyProps {
 	event: Event;
@@ -18,6 +19,7 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 		Intl.DateTimeFormat().resolvedOptions().timeZone
 	);
 	const [step, setStep] = useState<number>(1);
+	const ajax_url = ConfigAPI.getAjaxUrl();
 
 	const handleSelectedTime = (time: string) => {
 		setSelectedTime(time);
@@ -63,7 +65,7 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 		formData.append('fields', JSON.stringify(filteredValues));
 
 		try {
-			const response = await fetch('/wp-admin/admin-ajax.php', {
+			const response = await fetch(ajax_url, {
 				method: 'POST',
 				body: formData,
 			});

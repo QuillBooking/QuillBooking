@@ -1,7 +1,11 @@
+<?php
+$icons_url = plugins_url( 'src/templates/icons/', QUILLBOOKING_PLUGIN_FILE );
+?>
+
 <div class="quillbooking-meeting-confirmation">
 	<div class="confirmation-details-container">
 		<div class="profile-picture">
-			<img src="URL_TO_PROFILE_IMAGE" alt="<?php esc_attr_e( 'confirmation', 'quillbooking' ); ?>" />
+			<img src="<?php echo esc_url( $icons_url . 'confirm.svg' ); ?>" alt="<?php esc_attr_e( 'confirmation', 'quillbooking' ); ?>" />
 		</div>
 
 		<h1 class="confirmation-title"><?php esc_html_e( 'Your meeting has been Scheduled', 'quillbooking' ); ?></h1>
@@ -12,20 +16,39 @@
 				<?php echo esc_html( $booking_array['event']['name'] ?? '' ); ?>
 			</h2>
 
-			<p><strong><?php esc_html_e( 'Host:', 'quillbooking' ); ?></strong> <?php echo esc_html( $booking_array['event']['host'] ?? 'Khaled Nour' ); ?></p>
-			<p><strong><?php esc_html_e( 'Date & Time:', 'quillbooking' ); ?></strong>
+			<p>
+				<span>
+					<img src="<?php echo esc_url( $icons_url . 'profile.svg' ); ?>" alt="Outlook" />
+				</span>
+				<?php echo esc_html( $booking_array['event']['host'] ?? '' ); ?>
+			</p>
+			<p>
+				<span>
+					<img src="<?php echo esc_url( $icons_url . 'calendar.svg' ); ?>" alt="Outlook" />
+				</span>
+
 				<?php echo esc_html( $booking_array['start_time'] ?? '' ); ?>
 			</p>
-			<p><strong><?php esc_html_e( 'Time Zone:', 'quillbooking' ); ?></strong> <?php echo esc_html( $booking_array['timezone'] ?? '' ); ?></p>
-			<p><strong><?php esc_html_e( 'Location:', 'quillbooking' ); ?></strong> <?php echo esc_html( $booking_array['location'] ?? '' ); ?></p>
+			<p>
+				<span>
+					<img src="<?php echo esc_url( $icons_url . 'icon.svg' ); ?>" alt="Outlook" />
+				</span>
+				<?php echo esc_html( $booking_array['timezone'] ?? '' ); ?>
+			</p>
+			<p>
+				<span>
+					<img src="<?php echo esc_url( $icons_url . 'location.svg' ); ?>" alt="Outlook" />
+				</span>
+				<?php echo esc_html( $booking_array['location'] ?? '' ); ?>
+			</p>
 		</div>
 
 		<div class="calendar-buttons">
 			<p><?php esc_html_e( 'Add your Scheduled to calendars.', 'quillbooking' ); ?></p>
 			<div class="icons">
-				<img src="URL_TO_OUTLOOK_ICON" alt="Outlook" />
-				<img src="URL_TO_GOOGLE_CALENDAR_ICON" alt="Google Calendar" />
-				<img src="URL_TO_APPLE_CALENDAR_ICON" alt="Apple Calendar" />
+				<img src="<?php echo esc_url( $icons_url . 'outlook.svg' ); ?>" alt="Outlook" />
+				<img src="<?php echo esc_url( $icons_url . 'google.svg' ); ?>" alt="Google Calendar" />
+				<img src="<?php echo esc_url( $icons_url . 'apple.svg' ); ?>" alt="Apple Calendar" />
 			</div>
 		</div>
 	</div>
@@ -35,9 +58,9 @@
 	<div class="confirmation-footer">
 		<div class="change-options">
 			<p><?php esc_html_e( 'Need to make a change?', 'quillbooking' ); ?>
-				<a href="#" class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
+				<a href="/?quillbooking=booking&id=<?php echo $booking_array['hash_id']; ?>&type=cancel" class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
 				<?php esc_html_e( 'or', 'quillbooking' ); ?>
-				<a href="#" class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
+				<a href="/?quillbooking=booking&id=<?php echo $booking_array['hash_id']; ?>&type=reschedule" class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
 			</p>
 		</div>
 

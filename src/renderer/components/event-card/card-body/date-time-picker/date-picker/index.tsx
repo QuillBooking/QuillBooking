@@ -9,6 +9,7 @@ import { Event } from '../../../../../types';
 import { Dayjs } from 'dayjs';
 import PreviousIcon from '../../../../../icons/previous-icon';
 import NextIcon from '../../../../../icons/next-icon';
+import ConfigAPI from '@quillbooking/config';
 
 dayjs.extend(isBetween);
 dayjs.extend(isToday);
@@ -31,7 +32,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 	setSelectedAvailability,
 }) => {
 	const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
-
+	const ajax_url = ConfigAPI.getAjaxUrl();
 	useEffect(() => {
 		if (selectedDate) {
 			setCurrentMonth(selectedDate);
@@ -51,7 +52,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 		}
 
 		try {
-			const response = await fetch('/wp-admin/admin-ajax.php', {
+			const response = await fetch(ajax_url, {
 				method: 'POST',
 				body: formData,
 			});

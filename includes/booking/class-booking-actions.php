@@ -265,15 +265,21 @@ class Booking_Actions {
 			return $this->render_booking_page();
 		}
 
+		if ( $hash && $type === 'reschedule' ) {
+			return $this->render_reschedule_page();
+		}
 		// Validate booking by hash
 		try {
-			$booking = $this->bookingValidatorClass::validate_booking( $hash );
+			$booking      = $this->bookingValidatorClass::validate_booking( $hash );
+			$event        = $this->eventModelClass::where( 'slug', $booking['event']['slug'] )->first();
+			$fields       = $event->getFieldsAttribute();
+			$other_fields = $fields['other'];
 		} catch ( \Exception $e ) {
 			wp_die( esc_html__( 'Invalid or expired booking link.', 'quillbooking' ) );
 		}
 
 		// Dispatch to specific page
-		return $this->dispatchPage( $type, $booking );
+		return $this->dispatchPage( $type, $booking, $other_fields );
 
 	}
 
@@ -281,15 +287,14 @@ class Booking_Actions {
 		return in_array( $type, array( 'cancel', 'reschedule', 'confirm' ), true );
 	}
 
-	private function dispatchPage( string $type, $booking ) {
+	private function dispatchPage( string $type, $booking, $fields ) {
 		$map = array(
-			'cancel'     => 'render_cancel_page',
-			'reschedule' => 'render_reschedule_page',
-			'confirm'    => 'render_confirmation_page',
+			'cancel'  => 'render_cancel_page',
+			'confirm' => 'render_confirmation_page',
 		);
 
 		if ( isset( $map[ $type ] ) && method_exists( $this, $map[ $type ] ) ) {
-				return $this->{$map[ $type ]}( $booking );
+				return $this->{$map[ $type ]}( $booking, $fields );
 		}
 
 		// Fallback
@@ -299,15 +304,78 @@ class Booking_Actions {
 	/**
 	 * Render cancel page
 	 */
-	protected function render_cancel_page( $booking ) {
-			return $this->render_generic_page( 'cancel', $booking );
+	protected function render_cancel_page( $booking, $fields ) {
+			return $this->render_generic_page( 'cancel', $booking, $fields );
 	}
 
 	/**
 	 * Render reschedule page
 	 */
-	protected function render_reschedule_page( $booking ) {
-			return $this->render_generic_page( 'reschedule', $booking );
+	protected function render_reschedule_page() {
+		// $calendar = Arr::get( $_GET, 'quillbooking_calendar', null );
+		// $type     = Arr::get( $_GET, 'type', null );
+
+		// if ( ! $calendar ) {
+		// return;
+		// }
+
+		// $calendar = $this->calendarModelClass::where( 'slug', $calendar )->first();
+		// if ( ! $calendar ) {
+		// return;
+		// }
+		// $event_slug = Arr::get( $_GET, 'event', null );
+		// $event      = $this->eventModelClass::where( 'slug', $event_slug )
+		// ->where( 'calendar_id', $calendar->id )
+		// ->first();
+
+		// $usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
+		// $usersId = is_array( $usersId ) ? $usersId : array( $usersId );
+
+		// $users = array();
+
+		// foreach ( $usersId as $userId ) {
+		// $user = User_Model::find( $userId );
+
+		// if ( $user ) {
+		// $user_avatar_url = get_avatar_url( $user->ID );
+
+		// $users[] = array(
+		// 'id'    => $user->ID,
+		// 'name'  => $user->display_name,
+		// 'image' => $user_avatar_url,
+		// );
+		// }
+		// }
+
+		// $event->hosts             = $users;
+		// $event->fields            = $event->getFieldsAttribute();
+		// $event->availability_data = $event->getAvailabilityAttribute();
+		// $event->reserve           = $event->getReserveTimesAttribute();
+
+		// if ( ! $event && $event_slug ) {
+		// return;
+		// }
+
+		wp_enqueue_script( 'quillbooking-renderer' );
+		wp_enqueue_style( 'quillbooking-renderer' );
+
+		// add_filter(
+		// 'quillbooking_config',
+		// function ( $config ) use ( $calendar, $event ) {
+		// $config['calendar'] = $calendar->toArray();
+		// if ( $event ) {
+		// $config['event'] = $event->toArray();
+		// }
+		// return $config;
+		// }
+		// );
+
+		echo $this->get_head();
+		?>
+		<div id="quillbooking-reschedule-page"></div>
+		<?php
+		echo $this->get_footer();
+		return true;
 	}
 
 	/**
@@ -321,24 +389,24 @@ class Booking_Actions {
 	/**
 	 * Generic renderer for cancel/reschedule/confirm pages
 	 */
-	protected function render_generic_page( string $page, $booking ) {
+	protected function render_generic_page( string $page, $booking, $fields = array() ) {
 		// echo QUILLBOOKING_PLUGIN_DIR . "templates/{$page}.php";
 		$template_path = QUILLBOOKING_PLUGIN_DIR . "src/templates/{$page}.php";
 
 		if ( ! file_exists( $template_path ) ) {
 			return false;
 		}
-
 		$booking_array = $booking->toArray();
 		// Make the booking data available to the template
 		extract( array( 'booking' => $booking_array ) );
-
+		echo '<pre>';
+		var_export( $fields );
+		echo '</pre>';
 		// Debugging: Output the booking data for inspection
 		wp_enqueue_script( 'quillbooking-page' );
 		wp_enqueue_style( 'quillbooking-page' );
 
 		wp_head();
-
 		// Provide variables to the template
 		include $template_path;
 

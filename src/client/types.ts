@@ -37,6 +37,8 @@ export type Calendar = {
 		type: EventTypes;
 		slug: string;
 		location: Location[];
+		is_disabled: boolean;
+		booking_count: number;
 	}[];
 	created_at: string;
 	updated_at: string;
@@ -46,6 +48,11 @@ export type Calendar = {
 export type CalendarResponse = Response & {
 	data: Calendar[];
 };
+
+export type ConnectedIntegrationsFields = {
+	name: string;
+	connected: boolean;
+}
 
 export type Event = {
 	id: number;
@@ -68,6 +75,15 @@ export type Event = {
 	additional_settings: AdditionalSettings;
 	hosts?: Host[];
 	fields?: EventMetaData[];
+	availability_data?: Availability,
+	reserve: boolean;
+	connected_integrations: {
+		apple: ConnectedIntegrationsFields;
+		google: ConnectedIntegrationsFields;
+		outlook: ConnectedIntegrationsFields;
+		twilio: ConnectedIntegrationsFields;
+		zoom: ConnectedIntegrationsFields;
+	};
 };
 
 export type AdditionalSettings = {
@@ -105,9 +121,7 @@ export type DateOverrides = {
 	[date: string]: TimeSlot[];
 };
 
-export type Availability = {
-	id: string;
-	user_id: string | number;
+export interface CustomAvailability {
 	name: string;
 	weekly_hours: WeeklyHours;
 	override: DateOverrides;
@@ -115,6 +129,12 @@ export type Availability = {
 	events?: EventMetaData[];
 	events_count?: number;
 	is_default?: boolean;
+	type?: 'custom' | 'existing';
+	is_common?: boolean;
+}
+export interface Availability extends CustomAvailability {
+	id: string;
+	user_id: string | number;
 };
 
 export type AvailabilityRange = {
@@ -129,12 +149,19 @@ export type EventAvailability = {
 	range: AvailabilityRange;
 };
 
-export type LimitUnit = 'minutes' | 'hours' | 'days' | 'weeks';
+export type LimitUnit = 'days' | 'weeks' | 'months';
 
 export interface LimitRule {
 	limit: number;
 	unit: LimitUnit;
 }
+
+export interface UnitOption {
+	label: string;
+	disabled: boolean;
+}
+
+export type UnitOptions = Record<LimitUnit, UnitOption>;
 
 export interface EventLimits {
 	general: {
@@ -258,7 +285,7 @@ export interface Booking extends BookingResponse {
 }
 
 export type User = {
-	id: number;
+	ID: number;
 	display_name: string;
 	user_login: string;
 	user_email: string;
@@ -267,6 +294,10 @@ export type User = {
 export type Host = {
 	id: number;
 	name: string;
+	image: string;
+	availabilities?: {
+		[key: string]: Availability;
+	};
 };
 
 export type IconProps = {
@@ -275,11 +306,11 @@ export type IconProps = {
 	rectFill?: boolean;
 };
 
-export interface EventFieldsTabHandle {
+export interface EventTabHandle {
 	saveSettings: () => Promise<void>;
 }
 
-export interface EventFieldsTabProps {
+export interface EventTabProps {
 	disabled: boolean;
 	setDisabled: (disabled: boolean) => void;
 }
@@ -316,3 +347,14 @@ export type FieldsGroup = {
 	[key: string]: FieldType;
 };
 
+
+export interface LimitBaseProps {
+	limits: EventLimits;
+	handleChange: (section: keyof EventLimits, key: string, value: any) => void;
+}
+
+export type NoticeMessage = {
+	type: 'success' | 'error';
+	title: string;
+	message: string;
+};

@@ -1,0 +1,18 @@
+.event-card-header {
+	display: flex;
+  flex-wrap: wrap;
+	justify-content: space-between;
+  align-items: center;
+	align-items: center;
+	padding: 10px 20px;
+	background-color: #953ae4;
+	color: white;
+}
+
+@media (max-width: 275px) {
+  .event-card-header {
+    flex-direction: column;
+    align-items: center;
+    padding-top: 10px;
+  }
+}

@@ -49,6 +49,9 @@ class Confirm_URL extends Merge_Tag {
 	 * @return string
 	 */
 	public function get_value( $booking, $options = array() ) {
+		if (! ($booking instanceof Booking_Model) || ! method_exists($booking, 'getConfirmUrl')) {
+			return '';
+		}
 		return $booking->getConfirmUrl();
 	}
 }

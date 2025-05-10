@@ -12,64 +12,55 @@ import { PlusOutlined } from '@ant-design/icons';
 /**
  * Internal dependencies
  */
-import { Button, Flex, Segmented, Typography } from 'antd';
-import AddAvailabilitySechduleModal from './add-schedule-modal';
+import { Button, Flex } from 'antd';
+import AddAvailabilityScheduleModal from './add-schedule-modal';
 import AvailabilityList from './availability-list';
+import { Header } from '@quillbooking/components';
+import SchedulesType from './schedules-type';
+import { useCurrentUser } from '@quillbooking/hooks';
 
 /**
  * Main Calendars Component.
  */
-const { Title, Paragraph } = Typography;
 const Availability: React.FC = () => {
 	const [open, setOpen] = useState<boolean>(false);
-	const [isFiltered, setIsFiltered] = useState<boolean>(false);
+	const [showAllSchedules, setShowAllSchedules] = useState<boolean>(false);
+	const currentUser = useCurrentUser();
+	const isAdmin = currentUser?.isAdmin() ?? false;
+
 	return (
 		<>
 			<Flex justify="space-between" align="center">
-				<Typography>
-					<Title level={1}>
-						{__('Availability', 'quillbooking')}
-					</Title>
-					<Paragraph>
-						{__(
-							'Configure times when you are available for bookings.',
-							'quillbooking'
-						)}
-					</Paragraph>
-				</Typography>
+				<Header
+					header={__('Availability', 'quillbooking')}
+					subHeader={__(
+						'Configure times when you are available for bookings.',
+						'quillbooking'
+					)}
+				/>
 
-				<Flex justify="space-between" align="center" gap={10}>
-					<Segmented<string>
-						options={[
-							__('My Schedule', 'quillbooking'),
-							__('All Schedule', 'quillbooking'),
-						]}
-						onChange={() => {
-							setIsFiltered((prev) => !prev);
-						}}
-					/>
-					<Button
-						type="primary"
-						icon={<PlusOutlined />}
-						size="large"
-						onClick={() => {
-							setOpen(true);
-						}}
-					>
-						{__('Add New', 'quillbooking')}
-					</Button>
-				</Flex>
+				<Button
+					className="px-8"
+					type="primary"
+					icon={<PlusOutlined />}
+					size="middle"
+					onClick={() => {
+						setOpen(true);
+					}}
+				>
+					{__('Add New', 'quillbooking')}
+				</Button>
 			</Flex>
 
-			<AvailabilityList isFiltered={isFiltered} />
+			<SchedulesType
+				isAdmin={isAdmin}
+				showAllSchedules={showAllSchedules}
+				setShowAllSchedules={setShowAllSchedules}
+			/>
 
-			{open && (
-				<AddAvailabilitySechduleModal
-					open={open}
-					onClose={() => setOpen(false)}
-					onSaved={() => setOpen(false)}
-				/>
-			)}
+			<AvailabilityList showAllSchedules={showAllSchedules} openAvailabilityModal={setOpen} />
+
+			<AddAvailabilityScheduleModal open={open} setOpen={setOpen} />
 		</>
 	);
 };

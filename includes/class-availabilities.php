@@ -53,6 +53,42 @@ class Availabilities {
 	}
 
 	/**
+	 * Get User Availabilities
+	 *
+	 * @param string $id
+	 *
+	 * @return array
+	 */
+	public static function get_user_availabilities( $id ) {
+		$availabilities = self::get_availabilities();
+
+		return array_filter(
+			$availabilities,
+			function( $availability ) use ( $id ) {
+				return $id === $availability['user_id'];
+			}
+		);
+	}
+
+	/**
+	 * Get User Default Availability
+	 *
+	 * @param string $id
+	 *
+	 * @return array|null
+	 */
+	public static function get_user_default_availability( $id ) {
+		$availabilities = self::get_availabilities();
+
+		return Arr::first(
+			$availabilities,
+			function( $availability ) use ( $id ) {
+				return $id === $availability['user_id'] && $availability['is_default'] === true;
+			}
+		);
+	}
+
+	/**
 	 * Add Availability
 	 *
 	 * @param array $availability

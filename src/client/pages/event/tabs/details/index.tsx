@@ -2,297 +2,205 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
+import { forwardRef, useEffect, useImperativeHandle, useState } from '@wordpress/element';
 
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Typography, Input, Select, InputNumber, Skeleton, Switch } from 'antd';
+import { Card, Flex, Skeleton } from 'antd';
+import { get } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
-import Locations from './locations';
-import { get } from 'lodash';
 import EventInfo from './event-info';
 import LivePreview from './live-preview';
 import Duration from './duration';
-import { EventLocIcon, FieldWrapper, Header } from '@quillbooking/components';
+import { CardHeader, EventLocIcon, NoticeBanner, Locations } from '@quillbooking/components';
+import { EventTabHandle } from 'client/types';
+
 
 /**
  * Event General Settings Component.
  */
-const EventDetails: React.FC<{ onKeepDialogOpen: () => void; }> = ({ onKeepDialogOpen }) => {
-    const { state: event, actions } = useEventContext();
-    const { callApi, loading } = useApi();
-    const { successNotice, errorNotice } = useNotice();
-    const setBreadcrumbs = useBreadcrumbs();
-    const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset');
+interface EventDetailsProps {
+    onKeepDialogOpen: () => void;
+    notice: { title: string; message: string } | null;
+    clearNotice: () => void;
+    disabled: boolean;
+    setDisabled: (disabled: boolean) => void;
+}
 
-    useEffect(() => {
+const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
+    ({ onKeepDialogOpen, notice, clearNotice, disabled, setDisabled }, ref) => {
+        const { state: event, actions } = useEventContext();
+        const { callApi, loading } = useApi();
+        const { successNotice, errorNotice } = useNotice();
+        const setBreadcrumbs = useBreadcrumbs();
+        const [durationMode, setDurationMode] = useState<'preset' | 'custom'>('preset');
+
+        // Implement useImperativeHandle to expose the saveSettings method
+        useImperativeHandle(ref, () => ({
+            saveSettings: async () => {
+                if (event) {
+                    return saveSettings();
+                }
+                return Promise.resolve();
+            },
+        }));
+
+        useEffect(() => {
+            if (!event) {
+                return;
+            }
+
+            setBreadcrumbs([
+                {
+                    path: `calendars/${event.calendar_id}/events/${event.id}/general`,
+                    title: __('General', 'quillbooking'),
+                },
+            ]);
+
+            const isCustomDuration = ![15, 30, 45, 60].includes(event.duration);
+            setDurationMode(isCustomDuration ? 'custom' : 'preset');
+        }, []);
+
         if (!event) {
-            return;
+            return <Skeleton active />;
         }
 
-        setBreadcrumbs([
-            {
-                path: `calendars/${event.calendar_id}/events/${event.id}/general`,
-                title: __('General', 'quillbooking'),
-            },
-        ]);
+        const saveSettings = async () => {
+            if (!validate()) return;
+            return callApi({
+                path: `events/${event.id}`,
+                method: 'PUT',
+                data: event,
+                onSuccess: () => {
+                    successNotice(__('Event settings saved successfully', 'quillbooking'));
+                    setDisabled(true);
+                },
+                onError: (error: string) => {
+                    errorNotice(error);
+                },
+            });
+        };
 
-        const isCustomDuration = ![15, 30, 45, 60].includes(event.duration);
-        setDurationMode(isCustomDuration ? 'custom' : 'preset');
-    }, [event]);
+        const handleChange = (key: string, value: any) => {
+            actions.setEvent({ ...event, [key]: value });
+            setDisabled(false);
+        };
 
-    if (!event) {
-        return <Skeleton active />;
-    }
+        const handleAdditionalSettingsChange = (key: string, value: any) => {
+            actions.setEvent({
+                ...event,
+                additional_settings: {
+                    ...event.additional_settings,
+                    [key]: value,
+                },
+            });
+            setDisabled(false);
+        };
 
-    const saveSettings = () => {
-        if (!validate() || loading) return;
-        callApi({
-            path: `events/${event.id}`,
-            method: 'PUT',
-            data: event,
-            onSuccess: () => {
-                successNotice(__('Event settings saved successfully', 'quillbooking'));
-            },
-            onError: (error: string) => {
-                errorNotice(error);
-            },
-        });
-    };
+        const validate = () => {
+            if (!event.name) {
+                errorNotice(__('Please enter a name for the event.', 'quillbooking'));
+                return false;
+            }
 
-    const handleChange = (key: string, value: any) => {
-        actions.setEvent({ ...event, [key]: value });
-    };
+            if (!event.duration || event.duration <= 0) {
+                errorNotice(__('Please enter a valid duration for the event.', 'quillbooking'));
+                return false;
+            }
 
-    const handleAdditionalSettingsChange = (key: string, value: any) => {
-        actions.setEvent({
-            ...event,
-            additional_settings: {
-                ...event.additional_settings,
-                [key]: value,
-            },
-        });
-    };
+            return true;
+        };
 
-    const validate = () => {
-        if (!event.name) {
-            errorNotice(__('Please enter a name for the event.', 'quillbooking'));
-            return false;
-        }
+        const getDefaultDurationOptions = () => {
+            const options = get(event, 'additional_settings.selectable_durations') ? get(event, 'additional_settings.selectable_durations').map((duration) => ({
+                value: duration,
+                label: `${duration} minutes`,
+            })) : [];
 
-        if (!event.duration || event.duration <= 0) {
-            errorNotice(__('Please enter a valid duration for the event.', 'quillbooking'));
-            return false;
-        }
+            return options;
+        };
 
-        return true;
-    };
+        // if (loading || !event) {
+        //     return <Card title={__('Event Details', 'quillbooking')} loading />;
+        // }
 
-    const durationOptions = Array.from({ length: 96 }, (_, i) => ({
-        value: (i + 1) * 5,
-        label: `${(i + 1) * 5} minutes`,
-    }));
-
-    const handleDurationChange = (value: number | string) => {
-        if (value === 'custom') {
-            setDurationMode('custom');
-        } else {
-            setDurationMode('preset');
-            handleChange('duration', value);
-        }
-    };
-    console.log(event);
-
-    const getDefaultDurationOptions = () => {
-        const options = get(event, 'additional_settings.selectable_durations') ? get(event, 'additional_settings.selectable_durations').map((duration) => ({
-            value: duration,
-            label: `${duration} minutes`,
-        })) : [];
-
-        return options;
-    };
-
-    return (
-        <>
-            <div className='px-9 grid grid-cols-2 gap-5'>
-                <Flex vertical gap={20}>
-                    <EventInfo
-                        name={event.name}
-                        hosts={event.hosts || []}
-                        description={event.description}
-                        color={event.color}
-                        onChange={handleChange} />
-                    <Flex vertical gap={20}>
-                        <Duration
-                            duration={event.duration}
-                            onChange={handleChange}
-                            handleAdditionalSettingsChange={handleAdditionalSettingsChange}
-                            getDefaultDurationOptions={getDefaultDurationOptions}
-                            allow_attendees_to_select_duration={event.additional_settings.allow_attendees_to_select_duration}
-                            selectable_durations={event.additional_settings.selectable_durations}
-                            default_duration={event.additional_settings.default_duration}
-                        />
-                    </Flex>
-                </Flex >
-                <Flex vertical gap={20}>
-                    <LivePreview
-                        name={event.name}
-                        hosts={event.hosts || []}
-                        duration={event.duration}
-                        locations={event.location}
+        return (
+            <div className='w-full px-9'>
+                {notice && (
+                    <NoticeBanner
+                        notice={{
+                            type: 'success',
+                            title: __('Successfully Disabled', 'quillbooking'),
+                            message: __('The Event has been Disabled successfully.', 'quillbooking')
+                        }}
+                        closeNotice={clearNotice}
                     />
-                    <Card>
+                )}
+                <div className='grid grid-cols-2 gap-5'>
+                    <Flex vertical gap={20}>
+                        <EventInfo
+                            name={event.name}
+                            hosts={event.hosts || []}
+                            description={event.description}
+                            color={event.color}
+                            onChange={handleChange} />
                         <Flex vertical gap={20}>
-                            <Flex gap={10} className='items-center border-b pb-4'>
-                                <div className="bg-[#EDEDED] rounded-lg p-2">
-                                    <EventLocIcon />
-                                </div>
-                                <Header header={__('Event Location', 'quillbooking')}
-                                    subHeader={__(
+                            <Duration
+                                duration={event.duration}
+                                onChange={handleChange}
+                                handleAdditionalSettingsChange={handleAdditionalSettingsChange}
+                                getDefaultDurationOptions={getDefaultDurationOptions}
+                                allow_attendees_to_select_duration={event.additional_settings.allow_attendees_to_select_duration}
+                                selectable_durations={event.additional_settings.selectable_durations}
+                                default_duration={event.additional_settings.default_duration}
+                            />
+                        </Flex>
+                    </Flex >
+                    <Flex vertical gap={20}>
+                        <LivePreview
+                            name={event.name}
+                            hosts={event.hosts || []}
+                            duration={event.duration}
+                            locations={event.location}
+                        />
+                        <Card>
+                            <Flex vertical gap={20}>
+                                <CardHeader title={__('Event Location', 'quillbooking')}
+                                    description={__(
                                         'Select Where you will Meet Guests.',
                                         'quillbooking'
-                                    )} />
+                                    )}
+                                    icon={<EventLocIcon />} />
+                                <Flex className='justify-between'>
+                                    <div className="text-[#09090B] text-[16px]">
+                                        {__("How Will You Meet", "quillbooking")}
+                                        <span className='text-red-500'>*</span>
+                                    </div>
+                                    <div className="text-[#848484] italic">
+                                        {__("You Can Select More Than One", "quillbooking")}
+                                    </div>
+                                </Flex>
+                                <Flex vertical gap={15}>
+                                    <Locations
+                                        locations={event.location}
+                                        connected_integrations={event.connected_integrations}
+                                        onChange={(updatedLocations) => handleChange('location', updatedLocations)}
+                                        onKeepDialogOpen={onKeepDialogOpen}
+                                    />
+                                </Flex>
                             </Flex>
-                            <Flex className='justify-between'>
-                                <div className="text-[#09090B] text-[16px]">
-                                    {__("How Will You Meet", "quillbooking")}
-                                    <span className='text-red-500'>*</span>
-                                </div>
-                                <div className="text-[#848484] italic">
-                                    {__("You Can Select More Than One", "quillbooking")}
-                                </div>
-                            </Flex>
-                            <Flex vertical gap={15}>
-                                <Locations locations={event.location} onChange={(updatedLocations) => handleChange('location', updatedLocations)} onKeepDialogOpen={onKeepDialogOpen} />
-                            </Flex>
-                        </Flex>
-                    </Card>
-                </Flex>
-            </div>
-            {/*<Flex vertical className="quillbooking-event-settings">
-                <Flex vertical gap={20}>
-                     <Card>
-                    <Flex gap={20} vertical>
-                        <FieldWrapper
-                            label={__('Event Name', 'quillbooking')}
-                            description={__('The name of the event', 'quillbooking')}
-                            style={{ flex: 1 }}
-                        >
-                            <Flex>
-                                <ColorSelector
-                                    value={event.color}
-                                    onChange={(color) => handleChange('color', color)}
-                                />
-                                <Input
-                                    value={event.name}
-                                    onChange={(e) => handleChange('name', e.target.value)}
-                                    placeholder={__('Enter a name for the event', 'quillbooking')}
-                                    size='large'
-                                    style={{
-                                        borderRadius: '0 4px 4px 0',
-                                        flex: 1,
-                                        borderLeft: 'none',
-                                    }}
-                                />
-                            </Flex>
-                        </FieldWrapper>
-                        <FieldWrapper
-                            label={__('Event Description', 'quillbooking')}
-                            description={__('A short description of the event', 'quillbooking')}
-                        >
-                            <Input.TextArea
-                                value={event.description || ''}
-                                onChange={(e) => handleChange('description', e.target.value)}
-                                placeholder={__('Enter a description for the event', 'quillbooking')}
-                                rows={4}
-                            />
-                        </FieldWrapper>
+                        </Card>
                     </Flex>
-                </Card> 
-            <Card>
-                <Flex gap={20} vertical>
-                    <FieldWrapper
-                        label={__('Allow Attendees to Select Duration', 'quillbooking')}
-                        description={__('Allow attendees to select the duration of the event', 'quillbooking')}
-                        type="horizontal"
-                    >
-                        <Switch
-                            checked={event.additional_settings.allow_attendees_to_select_duration}
-                            onChange={(checked) => {
-                                handleAdditionalSettingsChange('allow_attendees_to_select_duration', checked);
-                            }}
-                        />
-                    </FieldWrapper>
-                    {event.additional_settings.allow_attendees_to_select_duration ? (
-                        <>
-                            <FieldWrapper
-                                label={__('Selectable Durations', 'quillbooking')}
-                                description={__('Select the durations that attendees can choose from', 'quillbooking')}
-                                style={{ flex: 1 }}
-                            >
-                                <Select
-                                    mode="multiple"
-                                    options={durationOptions}
-                                    value={event.additional_settings.selectable_durations}
-                                    getPopupContainer={(trigger) => trigger.parentElement}
-                                    onChange={(values) => handleAdditionalSettingsChange('selectable_durations', values)}
-                                />
-                            </FieldWrapper>
-                            <FieldWrapper
-                                label={__('Default Duration', 'quillbooking')}
-                                description={__('The default duration for the event', 'quillbooking')}
-                                style={{ flex: 1 }}
-                            >
-                                <Select
-                                    options={getDefaultDurationOptions()}
-                                    getPopupContainer={(trigger) => trigger.parentElement}
-                                    value={event.additional_settings.default_duration}
-                                    onChange={(value) => handleAdditionalSettingsChange('default_duration', value)}
-                                />
-                            </FieldWrapper>
-                        </>
-                    ) : (
-                        <FieldWrapper
-                            label={__('Event Duration', 'quillbooking')}
-                            description={__('The duration of the event in minutes', 'quillbooking')}
-                            style={{ flex: 1 }}
-                        >
-                            <Select
-                                options={durationOptions}
-                                value={durationMode === 'custom' ? 'custom' : event.duration}
-                                onChange={handleDurationChange}
-                            />
-                        </FieldWrapper>
-                    )}
-                    {durationMode === 'custom' && !event.additional_settings.allow_attendees_to_select_duration && (
-                        <FieldWrapper
-                            label={__('Custom Duration', 'quillbooking')}
-                            description={__('Enter a custom duration in minutes', 'quillbooking')}
-                            style={{ flex: 1 }}
-                        >
-                            <InputNumber
-                                value={event.duration}
-                                onChange={(value) => handleChange('duration', value)}
-                                placeholder={__('Enter a custom duration in minutes', 'quillbooking')}
-                            />
-                        </FieldWrapper>
-                    )}
-                </Flex>
-            </Card>
-            <Locations locations={event.location} onChange={(locations) => handleChange('location', locations)} />
-                    <Button type="primary" onClick={saveSettings} loading={loading}>
-                        {__('Save', 'quillbooking')}
-                    </Button>
-                </Flex>
-            </Flex>*/}
-        </>
-    );
-};
+                </div>
+            </div>
+        );
+    }
+);
 
 export default EventDetails;

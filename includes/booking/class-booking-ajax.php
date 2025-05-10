@@ -13,12 +13,20 @@ namespace QuillBooking\Booking;
 use QuillBooking\Booking\Booking_Validator;
 use QuillBooking\Booking_Service;
 
+
 class Booking_Ajax {
 
-	/**
-	 * Constructor
-	 */
-	public function __construct() {
+	// --- Dependency Properties ---
+	private string $bookingValidatorClass;
+	private string $bookingServiceClass;
+
+
+	public function __construct(
+		string $bookingValidatorClass = Booking_Validator::class,
+		string $bookingServiceClass = Booking_Service::class
+	) {
+		$this->bookingValidatorClass = $bookingValidatorClass;
+		$this->bookingServiceClass   = $bookingServiceClass;
 		add_action( 'wp_ajax_quillbooking_booking_slots', array( $this, 'booking_details' ) );
 		add_action( 'wp_ajax_nopriv_quillbooking_booking_slots', array( $this, 'booking_details' ) );
 		add_action( 'wp_ajax_quillbooking_booking', array( $this, 'booking' ) );
@@ -39,7 +47,7 @@ class Booking_Ajax {
 
 		try {
 			$id    = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
-			$event = Booking_Validator::validate_event( $id );
+			$event = $this->bookingValidatorClass::validate_event( $id );
 
 			$payment_method = isset( $_POST['payment_method'] ) ? sanitize_text_field( $_POST['payment_method'] ) : null;
 			if ( ! $payment_method && $event->requirePayment() ) {
@@ -55,11 +63,10 @@ class Booking_Ajax {
 			if ( ! $timezone ) {
 				throw new \Exception( __( 'Invalid timezone', 'quillbooking' ) );
 			}
-
-			$start_date = Booking_Validator::validate_start_date( $start_date, $timezone );
+			$start_date = $this->bookingValidatorClass::validate_start_date( $start_date, $timezone );
 
 			$duration = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : $event->duration;
-			$duration = Booking_Validator::validate_duration( $duration, $event->duration );
+			$duration = $this->bookingValidatorClass::validate_duration( $duration, $event->duration );
 
 			$location = isset( $_POST['location'] ) ? sanitize_text_field( $_POST['location'] ) : null;
 			if ( ! $location ) {
@@ -67,14 +74,14 @@ class Booking_Ajax {
 			}
 
 			// Validate invitees if needed
-			$invitee = isset( $_POST['invitee'] ) ? $_POST['invitee'] : array();
-			if ( empty( $invitee ) ) {
-				throw new \Exception( __( 'Please, add invitee', 'quillbooking' ) );
+			$invitees = isset( $_POST['invitees'] ) ? json_decode( stripslashes( $_POST['invitees'] ), true ) : array();
+			if ( empty( $invitees ) || ! is_array( $invitees ) ) {
+				throw new \Exception( __( 'Please, add valid invitees', 'quillbooking' ) );
 			}
 
-			$booking_service = new Booking_Service();
+			$booking_service = new $this->bookingServiceClass();
 
-			$validate_invitee = $booking_service->validate_invitee( $event, $invitee );
+			$validate_invitee = $booking_service->validate_invitee( $event, $invitees );
 			if ( 'group' !== $event->type && count( $validate_invitee ) > 1 ) {
 				throw new \Exception( __( 'Invalid event type', 'quillbooking' ) );
 			}
@@ -83,7 +90,7 @@ class Booking_Ajax {
 			if ( ! $available_slots ) {
 				throw new \Exception( __( 'Sorry, This booking is not available', 'quillbooking' ) );
 			}
-
+			// check type === group
 			if ( $available_slots < count( $validate_invitee ) ) {
 				throw new \Exception( __( 'You have selected an invalid slot', 'quillbooking' ) );
 			}
@@ -99,7 +106,7 @@ class Booking_Ajax {
 				)
 			);
 
-			wp_send_json_success( array( 'message' => __( 'Booking successful', 'quillbooking' ) ) );
+			wp_send_json_success( array( 'booking' => $booking ) );
 		} catch ( \Exception $e ) {
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
@@ -115,13 +122,13 @@ class Booking_Ajax {
 
 		try {
 			$id          = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
-			$calendar_id = isset( $_POST['calendar'] ) ? intval( $_POST['calendar_id'] ) : null;
+			$calendar_id = isset( $_POST['calendar_id'] ) ? intval( $_POST['calendar_id'] ) : null;
 
 			if ( ! $id ) {
 				throw new \Exception( __( 'Invalid event', 'quillbooking' ) );
 			}
 
-			$event = Booking_Validator::validate_event( $id );
+			$event = $this->bookingValidatorClass::validate_event( $id );
 
 			$start_date = isset( $_POST['start_date'] ) ? sanitize_text_field( $_POST['start_date'] ) : null;
 			if ( ! $start_date ) {
@@ -134,7 +141,7 @@ class Booking_Ajax {
 			}
 
 			$duration = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : $event->duration;
-			$duration = Booking_Validator::validate_duration( $duration, $event->duration );
+			$duration = $this->bookingValidatorClass::validate_duration( $duration, $event->duration );
 
 			$available_slots = $event->get_available_slots( $start_date, $timezone, $duration, $calendar_id );
 
@@ -154,7 +161,7 @@ class Booking_Ajax {
 
 		try {
 			$id      = isset( $_POST['id'] ) ? sanitize_text_field( $_POST['id'] ) : null;
-			$booking = Booking_Validator::validate_booking( $id );
+			$booking = $this->bookingValidatorClass::validate_booking( $id );
 
 			if ( $booking->isCompleted() ) {
 				throw new \Exception( __( 'Booking is already completed', 'quillbooking' ) );
@@ -190,7 +197,7 @@ class Booking_Ajax {
 
 		try {
 			$id      = isset( $_POST['id'] ) ? sanitize_text_field( $_POST['id'] ) : null;
-			$booking = Booking_Validator::validate_booking( $id );
+			$booking = $this->bookingValidatorClass::validate_booking( $id );
 
 			$start_date = isset( $_POST['start_date'] ) ? sanitize_text_field( $_POST['start_date'] ) : null;
 			if ( ! $start_date ) {
@@ -203,10 +210,10 @@ class Booking_Ajax {
 			}
 
 			// Use the Booking_Validator to validate the start date
-			$start_date = Booking_Validator::validate_start_date( $start_date, $timezone );
+			$start_date = $this->bookingValidatorClass::validate_start_date( $start_date, $timezone );
 
 			$duration = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : $booking->slot_time;
-			$duration = Booking_Validator::validate_duration( $duration, $booking->slot_time );
+			$duration = $this->bookingValidatorClass::validate_duration( $duration, $booking->slot_time );
 
 			if ( $booking->isCompleted() ) {
 				throw new \Exception( __( 'Booking is already completed', 'quillbooking' ) );

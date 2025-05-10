@@ -1,23 +1,20 @@
 /**
  * WordPress dependencies
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useState, forwardRef, useImperativeHandle } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Switch, Select, Input, InputNumber, Radio, Skeleton, Typography, Divider, Checkbox } from 'antd';
+import { Card, Flex, Switch, Select, Input, InputNumber, Radio, Skeleton, Divider, Checkbox, Modal } from 'antd';
 
 /**
  * Internal dependencies
  */
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
-import { AdvancedSettingsIcon, EditIcon, FieldWrapper, Header, UrlIcon } from '@quillbooking/components';
-import { BiEditAlt } from "react-icons/bi";
-
-const { Title } = Typography;
+import { AdvancedSettingsIcon, EditIcon, FieldWrapper, Header, UrlIcon, MergeTagModal, CardHeader } from '@quillbooking/components';
 
 type UnitOptions = 'minutes' | 'hours' | 'days';
 
@@ -41,6 +38,17 @@ interface AdvancedSettings {
     cannot_reschedule_time_value: number;
     cannot_reschedule_time_unit: UnitOptions;
     reschedule_denied_message: string;
+    event_title:string;
+    redirect_query_string:string;
+}
+
+interface EventAdvancedSettingsProps {
+    disabled: boolean;
+    setDisabled: (disabled: boolean) => void;
+}
+
+interface EventAdvancedSettingsHandle {
+    saveSettings: () => Promise<void>;
 }
 
 const unitOptions = [
@@ -49,19 +57,37 @@ const unitOptions = [
     { value: 'days', label: __('Days', 'quillbooking') },
 ];
 
-const EventAdvancedSettings: React.FC = () => {
+const EventAdvancedSettings = forwardRef<EventAdvancedSettingsHandle, EventAdvancedSettingsProps>((props, ref) => {
     const { state: event } = useEventContext();
     const [slug, setSlug] = useState<string>(event?.slug || '');
+    const [activeModalType, setActiveModalType] = useState<null | 'bookingTitle' | 'redirectUrl' | 'queryString' | 'permissionDenied'>(null);
     const { callApi, loading } = useApi();
+    const { callApi: saveApi } = useApi();
     const { successNotice, errorNotice } = useNotice();
     const [showSlugField, setShowSlugField] = useState(false);
     const [settings, setSettings] = useState<AdvancedSettings | null>(null);
+    const [initialSettings, setInitialSettings] = useState<AdvancedSettings | null>(null);
+    const [initialSlug, setInitialSlug] = useState<string>('');
     const setBreadcrumbs = useBreadcrumbs();
     const [passingFields, setPassingFields] = useState<boolean>(false);
 
+    console.log(initialSettings);
+
+    // Expose saveSettings method to parent component
+    useImperativeHandle(ref, () => ({
+        saveSettings: async () => {
+            if (settings) {
+                return saveSettings();
+            }
+            return Promise.resolve();
+        },
+    }));
+
     const handleCheckboxChange = () => {
-        setPassingFields(!passingFields); // Toggle passingFields state
+        setPassingFields(!passingFields);
+        checkForChanges();
     };
+
 
     const fetchSettings = () => {
         if (!event) return;
@@ -71,6 +97,8 @@ const EventAdvancedSettings: React.FC = () => {
             method: 'GET',
             onSuccess(response: AdvancedSettings) {
                 setSettings(response);
+                setInitialSettings(JSON.parse(JSON.stringify(response))); // Deep copy to track changes
+                setInitialSlug(event.slug || '');
             },
             onError(error) {
                 errorNotice(error.message);
@@ -92,14 +120,88 @@ const EventAdvancedSettings: React.FC = () => {
         ]);
     }, [event]);
 
-    const handleChange = (key: keyof AdvancedSettings, value: any) => {
-        setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
+    const checkForChanges = () => {
+        if (!settings || !initialSettings) return;
+
+        const hasSettingsChanged = JSON.stringify(settings) !== JSON.stringify(initialSettings);
+        const hasSlugChanged = slug !== initialSlug;
+
+        if (hasSettingsChanged || hasSlugChanged) {
+            props.setDisabled(false);
+        } else {
+            props.setDisabled(true);
+        }
     };
 
-    const saveSettings = () => {
-        if (!event) return;
+    const handleChange = (key: keyof AdvancedSettings, value: any) => {
+        setSettings((prev) => {
+            if (!prev) return prev;
+            return { ...prev, [key]: value };
+        });
 
-        callApi({
+        checkForChanges();
+    };
+
+    const handleBookingTitleClick = (mention: string) => {
+        setSettings((prev) => {
+            if (!prev) return prev;
+
+            return {
+                ...prev,
+                event_title: prev.event_title + mention,
+            };
+        });
+        setActiveModalType(null);
+        checkForChanges();
+    };
+
+    const handlePermissionDeniedClick = (mention: string) => {
+        setSettings((prev) => {
+            if (!prev) return prev;
+
+            return {
+                ...prev,
+                permission_denied_message: prev.permission_denied_message + mention,
+            };
+        });
+        setActiveModalType(null);
+        checkForChanges();
+    };
+
+    const handleQueryStringClick = (mention: string) => {
+        setSettings((prev) => {
+            if (!prev) return prev;
+
+            return {
+                ...prev,
+                redirect_query_string: prev.redirect_query_string + mention,
+            };
+        });
+        setActiveModalType(null);
+        checkForChanges();
+    };
+
+    const handleRedirectUrlClick = (mention: string) => {
+        setSettings((prev) => {
+            if (!prev) return prev;
+
+            return {
+                ...prev,
+                redirect_url: prev.redirect_url + mention,
+            };
+        });
+        setActiveModalType(null);
+        checkForChanges();
+    };
+
+    const handleSlugChange = (value: string) => {
+        setSlug(value);
+        checkForChanges();
+    };
+
+    const saveSettings = async () => {
+        if (!event) return;
+        return saveApi({
             path: `events/${event.id}`,
             method: 'POST',
             data: {
@@ -108,6 +210,10 @@ const EventAdvancedSettings: React.FC = () => {
             },
             onSuccess() {
                 successNotice(__('Settings saved successfully', 'quillbooking'));
+                // Update initial state to reflect saved state
+                setInitialSettings(JSON.parse(JSON.stringify(settings)));
+                setInitialSlug(slug);
+                props.setDisabled(true);
             },
             onError(error) {
                 errorNotice(error.message);
@@ -122,27 +228,24 @@ const EventAdvancedSettings: React.FC = () => {
     return (
         <div className='grid grid-cols-2 gap-5 px-9'>
             <Card className='rounded-lg'>
-                <Flex gap={10} className='items-center border-b pb-4'>
-                    <div className='bg-[#EDEDED] text-[50px] rounded-lg p-2'>
-                        <AdvancedSettingsIcon />
-                    </div>
-                    <Header header={__('Advanced Settings', 'quillbooking')}
-                        subHeader={__(
-                            'Customize the question asked on the booking page',
-                            'quillbooking'
-                        )} />
-                </Flex>
+                <CardHeader title={__('Advanced Settings', 'quillbooking')}
+                    description={__(
+                        'Customize the question asked on the booking page',
+                        'quillbooking'
+                    )}
+                    icon={<AdvancedSettingsIcon />} />
                 <Card className='rounded-lg mt-4'>
                     <Flex vertical>
                         <div className="text-[#09090B] text-[16px]">
                             {__("Booking Title", "quillbooking")}
                             <span className='text-red-500'>*</span>
                         </div>
-                        {/* static */}
                         <Input
+                            value={settings.event_title}
                             placeholder={__("{event name} between {host name} and {{guest.first_name}}", "quillbooking")}
                             className="h-[48px] rounded-lg"
-                            suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                            onChange={(e) => handleChange('event_title', e.target.value)}
+                            suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg' onClick={() => setActiveModalType('bookingTitle')}>
                                 <UrlIcon />
                             </span>}
                             style={{ padding: "0 0 0 10px" }}
@@ -192,7 +295,7 @@ const EventAdvancedSettings: React.FC = () => {
                                         size='large'
                                         placeholder={__('https://example.com/redirect-to-my-success-page', 'quillbooking')}
                                         className='rounded-lg h-[48px]'
-                                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg' onClick={() => setActiveModalType('redirectUrl')}>
                                             <UrlIcon />
                                         </span>}
                                         style={{ padding: "0 0 0 10px", marginBottom: "20px" }}
@@ -201,9 +304,6 @@ const EventAdvancedSettings: React.FC = () => {
                                 <FieldWrapper label={<span className="text-[#09090B] font-semibold">
                                     {__('Redirect Query String', 'quillbooking')}
                                 </span>}
-                                    description={<span className='text-[#71717A] text-[14px] italic'>
-                                        {__('Sample: email={{guest.email}}&phone={{booking.phone}}', 'quillbooking')}
-                                    </span>}
                                 >
                                     <Checkbox
                                         className="w-full transition-all duration-300 custom-check pb-2"
@@ -214,17 +314,24 @@ const EventAdvancedSettings: React.FC = () => {
                                             {__("Pass field data via query string", "quillbooking")}
                                         </div>
                                     </Checkbox>
-                                    <Input
-                                        value={settings.redirect_url}
-                                        onChange={(e) => handleChange('redirect_url', e.target.value)}
-                                        size='large'
-                                        placeholder={__('Redirect query string', 'quillbooking')}
-                                        className='rounded-lg h-[48px]'
-                                        suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
-                                            <UrlIcon />
-                                        </span>}
-                                        style={{ padding: "0 0 0 10px" }}
-                                    />
+                                    {passingFields && (
+                                        <>
+                                            <Input
+                                                value={settings.redirect_query_string}
+                                                onChange={(e) => handleChange('redirect_query_string', e.target.value)}
+                                                size='large'
+                                                placeholder={__('Redirect query string', 'quillbooking')}
+                                                className='rounded-lg h-[48px]'
+                                                suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg' onClick={() => setActiveModalType('queryString')}>
+                                                    <UrlIcon />
+                                                </span>}
+                                                style={{ padding: "0 0 0 10px" }}
+                                            />
+                                            <span className='text-[#71717A] text-[14px] italic'>
+                                                {__('Sample: email={{guest.email}}&phone={{booking.phone}}', 'quillbooking')}
+                                            </span>
+                                        </>
+                                    )}
                                 </FieldWrapper>
                             </>
                         )}
@@ -272,21 +379,21 @@ const EventAdvancedSettings: React.FC = () => {
                                         <FieldWrapper label={<span className="text-[#09090B] text-[16px] font-[500]">
                                             {__('Add Time', 'quillbooking')}
                                         </span>}>
-                                        <Flex gap={15} className='w-full mb-4'>
-                                            <InputNumber
-                                                value={settings.cannot_cancel_time_value}
-                                                onChange={(value) => handleChange('cannot_cancel_time_value', value)}
-                                                size='large'
-                                                className='rounded-lg h-[48px] w-full'
-                                            />
-                                            <Select
-                                                value={settings.cannot_cancel_time_unit}
-                                                options={unitOptions}
-                                                onChange={(value) => handleChange('cannot_cancel_time_unit', value)}
-                                                size='large'
-                                                getPopupContainer={(trigger) => trigger.parentElement}
-                                                className='rounded-lg h-[48px] w-full'
-                                            />
+                                            <Flex gap={15} className='w-full mb-4'>
+                                                <InputNumber
+                                                    value={settings.cannot_cancel_time_value}
+                                                    onChange={(value) => handleChange('cannot_cancel_time_value', value)}
+                                                    size='large'
+                                                    className='rounded-lg h-[48px] w-full'
+                                                />
+                                                <Select
+                                                    value={settings.cannot_cancel_time_unit}
+                                                    options={unitOptions}
+                                                    onChange={(value) => handleChange('cannot_cancel_time_unit', value)}
+                                                    size='large'
+                                                    getPopupContainer={(trigger) => trigger.parentElement}
+                                                    className='rounded-lg h-[48px] w-full'
+                                                />
                                             </Flex>
                                         </FieldWrapper>
                                     )}
@@ -303,7 +410,7 @@ const EventAdvancedSettings: React.FC = () => {
                                             size='large'
                                             className='rounded-lg h-[48px]'
                                             placeholder='Sorry! you can not cancel this'
-                                            suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg'>
+                                            suffix={<span className='bg-[#EEEEEE] p-[0.7rem] rounded-r-lg' onClick={() => setActiveModalType('permissionDenied')}>
                                                 <UrlIcon />
                                             </span>}
                                             style={{ padding: "0 0 0 10px" }}
@@ -338,7 +445,7 @@ const EventAdvancedSettings: React.FC = () => {
                                 >
                                     <Input
                                         value={slug}
-                                        onChange={(e) => setSlug( e.target.value)}
+                                        onChange={(e) => handleSlugChange(e.target.value)}
                                         size='large'
                                         placeholder={__('event-slug', 'quillbooking')}
                                         className='rounded-lg h-[48px]'
@@ -349,209 +456,41 @@ const EventAdvancedSettings: React.FC = () => {
                     </Card>
                 </Flex>
             </Card >
+            <Modal
+                open={activeModalType !== null}
+                onCancel={() => setActiveModalType(null)}
+                footer={null}
+                width={1000}
+                getContainer={false}
+            >
+                <Flex gap={10} className='items-center border-b pb-4 mb-4'>
+                    <div className='bg-[#EDEDED] rounded-lg p-3 mt-2'>
+                        <UrlIcon />
+                    </div>
+                    <Header
+                        header={
+                            activeModalType === 'bookingTitle' ? __('Booking Title Merge tags', 'quillbooking') :
+                                activeModalType === 'redirectUrl' ? __('Redirect URL', 'quillbooking') :
+                                    activeModalType === 'queryString' ? __('Redirect Query String', 'quillbooking') :
+                                        __('Permission Denied Message', 'quillbooking')
+                        }
+                        subHeader={__(
+                            'Choose your Merge tags type and Select one of them related to your input.',
+                            'quillbooking'
+                        )}
+                    />
+                </Flex>
+                <MergeTagModal
+                    onMentionClick={
+                        activeModalType === 'bookingTitle' ? handleBookingTitleClick :
+                            activeModalType === 'redirectUrl' ? handleRedirectUrlClick :
+                                activeModalType === 'queryString' ? handleQueryStringClick :
+                                    handlePermissionDeniedClick
+                    }
+                />
+            </Modal>
         </div >
-        // <Flex vertical gap={20} className="quillbooking-advanced-tab">
-        //     <Title className="quillbooking-tab-title" level={4}>
-        //         {__('Advanced Settings', 'quillbooking')}
-        //     </Title>
-        //     <Card>
-        //         <FieldWrapper label={__('Submit Button Text', 'quillbooking')}>
-        //             <Input
-        //                 value={settings.submit_button_text}
-        //                 onChange={(e) => handleChange('submit_button_text', e.target.value)}
-        //                 size='large'
-        //                 placeholder={__('Schedule Now', 'quillbooking')}
-        //             />
-        //         </FieldWrapper>
-        //     </Card>
-        //     <Card>
-        //         <FieldWrapper label={__('Redirect After Submit', 'quillbooking')} type="horizontal" description={__('Redirect user to a custom URL after submitting the booking form.', 'quillbooking')}>
-        //             <Switch
-        //                 checked={settings.redirect_after_submit}
-        //                 onChange={(checked) => handleChange('redirect_after_submit', checked)}
-        //             />
-        //         </FieldWrapper>
-        //         {settings.redirect_after_submit && (
-        //             <>
-        //                 <Divider />
-        //                 <FieldWrapper label={__('Redirect URL', 'quillbooking')}>
-        //                     <Input
-        //                         value={settings.redirect_url}
-        //                         onChange={(e) => handleChange('redirect_url', e.target.value)}
-        //                         size='large'
-        //                         placeholder={__('https://example.com', 'quillbooking')}
-        //                     />
-        //                 </FieldWrapper>
-        //             </>
-        //         )}
-        //     </Card>
-        //     <Card>
-        //         <FieldWrapper label={__('Require Confirmation', 'quillbooking')} type="horizontal" description={__('Require confirmation from the user before booking.', 'quillbooking')}>
-        //             <Switch
-        //                 checked={settings.require_confirmation}
-        //                 onChange={(checked) => handleChange('require_confirmation', checked)}
-        //             />
-        //         </FieldWrapper>
-        //         {settings.require_confirmation && (
-        //             <>
-        //                 <Divider />
-        //                 <Flex gap={10} vertical>
-        //                     <FieldWrapper>
-        //                         <Radio.Group
-        //                             value={settings.confirmation_time}
-        //                             onChange={(e) => handleChange('confirmation_time', e.target.value)}
-        //                         >
-        //                             <Radio value="always">{__('Always', 'quillbooking')}</Radio>
-        //                             <Flex gap={10} align="center">
-        //                                 <Radio value="less_than">
-        //                                     {__('When booking notice is less than', 'quillbooking')}
-        //                                 </Radio>
-        //                                 <InputNumber
-        //                                     value={settings.confirmation_time_value}
-        //                                     onChange={(value) => handleChange('confirmation_time_value', value)}
-        //                                     size='large'
-        //                                 />
-        //                                 <Select
-        //                                     value={settings.confirmation_time_unit}
-        //                                     options={unitOptions}
-        //                                     onChange={(value) => handleChange('confirmation_time_unit', value)}
-        //                                     size='large'
-        //                                 />
-        //                             </Flex>
-        //                         </Radio.Group>
-        //                     </FieldWrapper>
-        //                 </Flex>
-        //             </>
-        //         )}
-        //     </Card>
-        //     <Card>
-        //         <FieldWrapper label={__('Allow Multiple Bookings', 'quillbooking')} type="horizontal" description={__('Allow users to book multiple slots.', 'quillbooking')}>
-        //             <Switch
-        //                 checked={settings.allow_multiple_bookings}
-        //                 onChange={(checked) => handleChange('allow_multiple_bookings', checked)}
-        //             />
-        //         </FieldWrapper>
-        //         {settings.allow_multiple_bookings && (
-        //             <>
-        //                 <Divider />
-        //                 <FieldWrapper label={__('Maximum Bookings', 'quillbooking')} description={__('Set the maximum number of bookings allowed in a single transaction.', 'quillbooking')}>
-        //                     <InputNumber
-        //                         value={settings.maximum_bookings}
-        //                         onChange={(value) => handleChange('maximum_bookings', value)}
-        //                         size='large'
-        //                         style={{ width: '100%' }}
-        //                     />
-        //                 </FieldWrapper>
-        //             </>
-        //         )}
-        //     </Card>
-        //     <Card>
-        //         <FieldWrapper label={__('Attendee Cannot Cancel', 'quillbooking')} type="horizontal" description={__('Prevent attendees from canceling their bookings.', 'quillbooking')}>
-        //             <Switch
-        //                 checked={settings.attendee_cannot_cancel}
-        //                 onChange={(checked) => handleChange('attendee_cannot_cancel', checked)}
-        //             />
-        //         </FieldWrapper>
-        //         {settings.attendee_cannot_cancel && (
-        //             <>
-        //                 <Divider />
-        //                 <Flex gap={10} vertical>
-        //                 <FieldWrapper label={__('Cannot Cancel Time', 'quillbooking')}>
-        //                     <Radio.Group
-        //                         value={settings.cannot_cancel_time}
-        //                         onChange={(e) => handleChange('cannot_cancel_time', e.target.value)}
-        //                     >
-        //                         <Radio value="event_start">{__('Always', 'quillbooking')}</Radio>
-        //                         <Flex gap={10} align="center">
-        //                             <Radio value="less_than">
-        //                                 {__('When meeting starts in less than', 'quillbooking')}
-        //                             </Radio>
-        //                             <InputNumber
-        //                                 value={settings.cannot_cancel_time_value}
-        //                                 onChange={(value) => handleChange('cannot_cancel_time_value', value)}
-        //                                 size='large'
-        //                             />
-        //                             <Select
-        //                                 value={settings.cannot_cancel_time_unit}
-        //                                 options={unitOptions}
-        //                                 onChange={(value) => handleChange('cannot_cancel_time_unit', value)}
-        //                                 size='large'
-        //                             />
-        //                         </Flex>
-        //                     </Radio.Group>
-        //                 </FieldWrapper>
-        //                 <FieldWrapper label={__('Permission Denied Message', 'quillbooking')}>
-        //                     <Input
-        //                         value={settings.permission_denied_message}
-        //                         onChange={(e) => handleChange('permission_denied_message', e.target.value)}
-        //                         size='large'
-        //                     />
-        //                 </FieldWrapper>
-        //                 </Flex>
-        //             </>
-        //         )}
-        //     </Card>
-        //     <Card>
-        //         <FieldWrapper label={__('Attendee Cannot Reschedule', 'quillbooking')} type="horizontal" description={__('Prevent attendees from rescheduling their bookings.', 'quillbooking')}>
-        //             <Switch
-        //                 checked={settings.attendee_cannot_reschedule}
-        //                 onChange={(checked) => handleChange('attendee_cannot_reschedule', checked)}
-        //             />
-        //         </FieldWrapper>
-        //         {settings.attendee_cannot_reschedule && (
-        //             <>
-        //                 <Divider />
-        //                 <Flex gap={10} vertical>
-        //                     <FieldWrapper label={__('Cannot Reschedule Time', 'quillbooking')}>
-        //                         <Radio.Group
-        //                             value={settings.cannot_reschedule_time}
-        //                             onChange={(e) => handleChange('cannot_reschedule_time', e.target.value)}
-        //                         >
-        //                             <Radio value="event_start">{__('Always', 'quillbooking')}</Radio>
-        //                             <Flex gap={10} align="center">
-        //                                 <Radio value="less_than">
-        //                                     {__('When meeting starts in less than', 'quillbooking')}
-        //                                 </Radio>
-        //                                 <InputNumber
-        //                                     value={settings.cannot_reschedule_time_value}
-        //                                     onChange={(value) => handleChange('cannot_reschedule_time_value', value)}
-        //                                     size='large'
-        //                                 />
-        //                                 <Select
-        //                                     value={settings.cannot_reschedule_time_unit}
-        //                                     options={unitOptions}
-        //                                     onChange={(value) => handleChange('cannot_reschedule_time_unit', value)}
-        //                                     size='large'
-        //                                 />
-        //                             </Flex>
-        //                         </Radio.Group>
-        //                     </FieldWrapper>
-        //                     <FieldWrapper label={__('Reschedule Denied Message', 'quillbooking')}>
-        //                         <Input
-        //                             value={settings.reschedule_denied_message}
-        //                             onChange={(e) => handleChange('reschedule_denied_message', e.target.value)}
-        //                             size='large'
-        //                         />
-        //                     </FieldWrapper>
-        //                 </Flex>
-        //             </>
-        //         )}
-        //     </Card>
-        //     <Card>
-        //         <FieldWrapper label={__('Event Slug', 'quillbooking')} description={__('The slug used in the event URL.', 'quillbooking')}>
-        //             <Input
-        //                 value={settings.event_slug || event?.slug}
-        //                 onChange={(e) => handleChange('event_slug', e.target.value)}
-        //                 size='large'
-        //                 placeholder={__('event-slug', 'quillbooking')}
-        //             />
-        //         </FieldWrapper>
-        //     </Card>
-        //     <Button type="primary" onClick={saveSettings} loading={loading}>
-        //         {__('Save Settings', 'quillbooking')}
-        //     </Button>
-        // </Flex>
     );
-};
+});
 
 export default EventAdvancedSettings;

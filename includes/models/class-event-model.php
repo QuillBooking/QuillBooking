@@ -20,6 +20,7 @@ use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Managers\Fields_Manager;
 use QuillBooking\Availabilities;
 use QuillBooking\Managers\Integrations_Manager;
+use QuillBooking\Payment_Gateway\Payment_Validator;
 
 /**
  * Calendar Events Model class
@@ -66,6 +67,7 @@ class Event_Model extends Model {
 		'visibility',
 		'created_at',
 		'updated_at',
+		'is_disabled',
 	);
 
 	/**
@@ -76,6 +78,8 @@ class Event_Model extends Model {
 	protected $casts = array(
 		'user_id'     => 'integer',
 		'calendar_id' => 'integer',
+		'is_disabled' => 'boolean',
+		'reserve'     => 'boolean',
 	);
 
 	/**
@@ -246,6 +250,16 @@ class Event_Model extends Model {
 	}
 
 	/**
+	 * Set the event limits
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setLimitsAttribute( $value ) {
+		$this->update_meta( 'limits', $value );
+	}
+
+	/**
 	 * Get the event limits
 	 *
 	 * @return array
@@ -255,14 +269,45 @@ class Event_Model extends Model {
 	}
 
 	/**
-	 * Set the event limits
+	 * Set the event reserve times
 	 *
 	 * @param array $value
 	 * @return void
 	 */
-	public function setLimitsAttribute( $value ) {
-		$this->update_meta( 'limits', $value );
+	public function setReserveTimesAttribute( $value ) {
+		$this->update_meta( 'reserve_times', $value );
 	}
+
+
+	/**
+	 * Get the event reserve times
+	 *
+	 * @return array
+	 */
+	public function getReserveTimesAttribute() {
+		return $this->get_meta( 'reserve_times', array() );
+	}
+
+
+	/**
+	 * Get the event team members
+	 *
+	 * @return array
+	 */
+	public function getTeamMembersAttribute() {
+		return $this->get_meta( 'team_members', array() );
+	}
+
+	/**
+	 * Set the event team members
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setTeamMembersAttribute( $value ) {
+		$this->update_meta( 'team_members', $value );
+	}
+
 
 	/**
 	 * Get the event email notifications
@@ -756,6 +801,7 @@ class Event_Model extends Model {
 	 * Require payment
 	 *
 	 * @return bool
+	 * @throws \Exception If payments are enabled but no gateway is selected.
 	 */
 	public function requirePayment() {
 		$payments_settings = $this->payments_settings;
@@ -771,6 +817,12 @@ class Event_Model extends Model {
 		$items = Arr::get( $payments_settings, 'items', array() );
 		if ( empty( $items ) ) {
 			return false;
+		}
+
+		// Validate payment gateway selection
+		$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+		if ( is_wp_error( $validation_result ) ) {
+			throw new \Exception( $validation_result->get_error_message() );
 		}
 
 		return true;
@@ -1187,7 +1239,7 @@ class Event_Model extends Model {
 		$end_time = clone $start_time;
 		$end_time->modify( "+{$duration} minutes" );
 
-		return $this->is_slot_available( $start_time, $end_time, $calendar_id );
+		return $this->get_slot_availability_count( $start_time, $end_time, $calendar_id );
 	}
 
 	/**
@@ -1198,7 +1250,7 @@ class Event_Model extends Model {
 	 *
 	 * @return bool
 	 */
-	public function is_slot_available( $start_time, $end_time, $calendar_id ) {
+	public function get_slot_availability_count( $start_time, $end_time, $calendar_id ) {
 		$availability = $this->availability;
 		$weekly_hours = $availability['weekly_hours'] ?? array();
 		$day_of_week  = strtolower( date( 'l', $start_time->getTimestamp() ) ); // Get the day of the week (e.g., Monday, Tuesday)

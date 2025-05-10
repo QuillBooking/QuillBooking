@@ -47,12 +47,21 @@ class Additional_Guests extends Merge_Tag {
 	 *
 	 * @return string
 	 */
-	public function get_value( $booking, $options = array() ) {
-		$additional_guests = Arr::get( $booking->fields, 'additional_guests', array() );
-		if ( empty( $additional_guests ) ) {
+	public function get_value($booking, $options = array())
+	{
+		if (! isset($booking->fields) || ! is_array($booking->fields)) {
 			return '';
 		}
 
-		return implode( ', ', $additional_guests );
+		$additional_guests = Arr::get($booking->fields, 'additional_guests', array());
+
+		if (! is_array($additional_guests) || empty($additional_guests)) {
+			return '';
+		}
+
+		// Cast each value to string just in case
+		$guest_names = array_map('strval', $additional_guests);
+
+		return implode(', ', $guest_names);
 	}
 }

@@ -1,4 +1,15 @@
 {
   "editor.codeActionsOnSave": {},
-  "editor.formatOnSave": false
+  "editor.formatOnSave": false,
+  "php.version": "8.2",
+  "saveAndRun": {
+    "commands": [
+      {
+        "match": ".php",
+        "cmd": "composer format ${file}",
+        "useShortcut": false,
+        "silent": false
+      }
+    ]
+  },
 }

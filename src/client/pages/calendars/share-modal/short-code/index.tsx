@@ -1,8 +1,20 @@
-import { CopyWhiteIcon, ShareIcon } from "@quillbooking/components";
-import { useCopyToClipboard } from "@quillbooking/hooks";
+/**
+ * WordPress dependencies
+ */
 import { __ } from "@wordpress/i18n";
+
+/**
+ * External dependencies
+ */
 import { Button, Card, Flex, Input, Select } from "antd";
 import React, { useState } from "react";
+
+/**
+ * Internal dependencies
+ */
+import { CopyWhiteIcon } from "@quillbooking/components";
+import { useCopyToClipboard } from "@quillbooking/hooks";
+
 
 const ShortCode: React.FC<{ url: string; icon: React.ReactNode; title: string }> = ({ url, icon, title }) => {
     const copyToClipboard = useCopyToClipboard();
@@ -97,7 +109,7 @@ const ShortCode: React.FC<{ url: string; icon: React.ReactNode; title: string }>
                 <div className="pb-2 text-[#3F4254] text-[16px] font-semibold">{__("Generated Shortcode", "quillbooking")}</div>
                 <Flex gap={10}>
                     <Input value={url} readOnly className="h-[48px] text-[#999999] rounded-lg" />
-                    <Button className="bg-color-primary h-[48px] px-7 rounded-lg"
+                    <Button className="bg-color-primary h-[48px] px-7 rounded-lg text-white"
                         onClick={() => copyToClipboard(url, __('Link copied', 'quillbooking'))}>
                         <CopyWhiteIcon />
                         <span className="text-white text-[16px] font-[500] self-center">{__("Copy", 'quillbooking')}</span>

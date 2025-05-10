@@ -1,11 +1,19 @@
 /**
- * External dependencies.
+ * WordPress dependencies
  */
+import { __ } from '@wordpress/i18n';
+
+/**
+ * External dependencies
+ */
+import { PiClockClockwiseFill } from "react-icons/pi";
 import React, { useEffect, useState } from 'react';
 import { Flex, Card, Input, Switch, Select } from 'antd';
-import { FieldWrapper, Header } from '@quillbooking/components';
-import { PiClockClockwiseFill } from "react-icons/pi";
-import { __ } from '@wordpress/i18n';
+/**
+ * Internal dependencies
+ */
+import { CardHeader } from '@quillbooking/components';
+
 
 
 interface DurationProps {
@@ -59,14 +67,12 @@ const Duration: React.FC<DurationProps> = ({
 
     return (
         <Card className='rounded-lg'>
-            <Flex gap={10} className='items-center border-b pb-4'>
-                <PiClockClockwiseFill className='bg-[#EDEDED] text-[50px] rounded-lg p-2' />
-                <Header header={__('Set Duration', 'quillbooking')}
-                    subHeader={__(
-                        'Define how long your event will be. it can be as long as 12 hours.',
-                        'quillbooking'
-                    )} />
-            </Flex>
+            <CardHeader title={__('Set Duration', 'quillbooking')}
+                description={__(
+                    'Define how long your event will be. it can be as long as 12 hours.',
+                    'quillbooking'
+                )}
+                icon={<PiClockClockwiseFill className='text-[28px]' />} />
             <Flex className='items-center mt-4 justify-between'>
                 <Flex vertical gap={1}>
                     <div className="text-[#09090B] text-[16px] font-semibold">
@@ -142,6 +148,7 @@ const Duration: React.FC<DurationProps> = ({
                                 {__("Custom Duration", "quillbooking")}
                             </div>
                             <Input
+                            type='number'
                                 suffix={<span className='border-l pl-3'>{__("Min", "quillbooking")}</span>}
                                 className='h-[48px] rounded-lg flex items-center w-[194px]'
                                 value={duration}

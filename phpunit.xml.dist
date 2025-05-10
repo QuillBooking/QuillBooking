@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <phpunit
-	bootstrap="phpunit/bootstrap.php"
+	bootstrap="tests/bootstrap.php"
 	backupGlobals="false"
 	colors="true"
 	convertErrorsToExceptions="true"
@@ -8,13 +8,11 @@
 	convertWarningsToExceptions="true"
 	>
 	<testsuites>
-		<testsuite name="default">
-			<directory suffix="-test.php">./phpunit/</directory>
+		<testsuite name="unit">
+			<directory prefix="test-" suffix=".php">./tests/unit</directory>
+		</testsuite>
+		<testsuite name="integration">
+			<directory prefix="test-" suffix=".php">./tests/integration</directory>
 		</testsuite>
 	</testsuites>
-	<groups>
-		<exclude>
-			<group>ms-required</group>
-		</exclude>
-	</groups>
-</phpunit>
+</phpunit> 

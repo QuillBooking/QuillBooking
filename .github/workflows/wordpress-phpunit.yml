@@ -1,10 +1,6 @@
 name: WordPress and React Tests
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
   workflow_dispatch:
 
@@ -63,8 +59,13 @@ jobs:
         run: composer update --no-progress --no-ansi --no-interaction
 
       - name: Set up WordPress test environment
+        env:
+          WP_TESTS_DB_NAME: wordpress_test
+          WP_TESTS_DB_USER: root
+          WP_TESTS_DB_PASSWORD: password
+          WP_TESTS_DB_HOST: 127.0.0.1
         run: |
-          bash bin/install-wp-tests.sh wordpress_test root password localhost ${{ matrix.wordpress }}
+          bash bin/install-wp-tests.sh
 
       - name: Run PHPUnit tests
         run: |
@@ -88,3 +89,49 @@ jobs:
         
       - name: Run React tests
         run: npm test 
+        
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [php-test, react-test]
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, intl, gd, exif, iconv, imagick
+          coverage: none
+          tools: composer
+          
+      - name: Install SVN
+        run: sudo apt-get update && sudo apt-get install -y subversion
+          
+      - name: Install dependencies
+        run: composer update --no-progress --no-ansi --no-interaction
+        
+      # Set up WordPress test environment for integration tests
+      - name: Set up WordPress test environment
+        env:
+          WP_TESTS_DB_NAME: wordpress_test
+          WP_TESTS_DB_USER: root
+          WP_TESTS_DB_PASSWORD: password
+          WP_TESTS_DB_HOST: 127.0.0.1
+        run: |
+          bash bin/install-wp-tests.sh
+        
+      - name: Run integration tests
+        run: |
+          composer run test:integration

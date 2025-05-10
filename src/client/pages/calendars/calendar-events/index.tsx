@@ -7,6 +7,8 @@ import { __ } from '@wordpress/i18n';
  * External dependencies
  */
 import { Card, Flex, Button, Typography, Popover, Empty } from 'antd';
+import { SlOptions } from 'react-icons/sl';
+import { useEffect, useState } from 'react';
 
 /**
  * Internal dependencies
@@ -22,14 +24,11 @@ import {
 	PriceIcon,
 	CalendarAddIcon,
 	BookingNumIcon,
+	UpcomingCalendarIcon,
 } from '@quillbooking/components';
 import {
 	useCopyToClipboard,
-	useNavigate,
 } from '@quillbooking/hooks';
-import { SlOptions } from 'react-icons/sl';
-import { map } from 'lodash';
-import { useState } from 'react';
 import ShareModal from '../share-modal';
 import EventActions from '../event-actions';
 import CreateEvent from '../../create-event';
@@ -41,34 +40,55 @@ const CalendarEvents: React.FC<{
 	calendar: Calendar;
 	typesLabels: Record<string, string>;
 	updateCalendarEvents: () => void;
-}> = ({ calendar, typesLabels, updateCalendarEvents }) => {
+	setStatusMessage: (message: boolean) => void;
+}> = ({ calendar, typesLabels, updateCalendarEvents, setStatusMessage }) => {
 	const siteUrl = ConfigAPI.getSiteUrl();
 	const copyToClipboard = useCopyToClipboard();
 	const [modalShareId, setModalShareId] = useState<number | null>(null);
-	const [disabledEvents, setDisabledEvents] = useState({});
-	const navigate = useNavigate();
+	const [disabledEvents, setDisabledEvents] = useState<Record<string, boolean>>({});
 	const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+	const [events, setEvents] = useState(calendar.events);
+	// New state to track which popover is open
+	const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
+	
+	// Initialize disabledEvents state based on initial event status
+	useEffect(() => {
+		const initialDisabledState: Record<string, boolean> = {};
+		calendar.events.forEach(event => {
+			if (event.id) {
+				initialDisabledState[event.id] = !!event.is_disabled;
+			}
+		});
+		setDisabledEvents(initialDisabledState);
+		setEvents(calendar.events);
+	}, [calendar.events]);
 
-	const hostEventsTypes = {
-		'one-to-one': __('One to One', 'quillbooking'),
-		group: __('Group', 'quillbooking'),
+	// Function to handle event disable status change
+	const handleEventStatusChange = (eventId: number | undefined, disabled: boolean) => {
+		if (eventId) {
+			setDisabledEvents(prev => ({
+				...prev,
+				[eventId]: disabled
+			}));
+		}
+	};
+
+	// Function to close the popover
+	const closePopover = () => {
+		setOpenPopoverId(null);
 	};
 
 	return (
 		<>
-			{calendar.events.length > 0 ? (
+			{events.length > 0 ? (
 				<div className="quillbooking-calendar-events">
-					{calendar.events.map((event) => {
-						const isDisabled = disabledEvents[event.id];
+					{events.map((event) => {
+						const isDisabled = event.id ? disabledEvents[event.id] : event.is_disabled;
+						
 						return (
 							<Card
 								key={event.id}
-								className="quillbooking-calendar-event w-[310px] border-t-4 border-t-color-primary rounded-xl"
-								style={{
-									opacity: isDisabled ? 0.5 : 1,
-									pointerEvents: isDisabled ? 'none' : 'auto',
-								}}
-							//onClick={() => navigate(`calendars/${calendar.id}/events/${event.id}`)}
+								className={`quillbooking-calendar-event w-[310px] border-t-4 border-t-color-primary rounded-xl ${isDisabled ? 'opacity-50' : ''}`}
 							>
 								<Flex gap={20} vertical>
 									<Flex
@@ -94,20 +114,20 @@ const CalendarEvents: React.FC<{
 										</Flex>
 										<Popover
 											trigger={['click']}
+											open={openPopoverId === event.id}
+											onOpenChange={(visible) => {
+												setOpenPopoverId(visible ? event.id || null : null);
+											}}
 											content={
 												<EventActions
 													event={event}
 													calendarId={calendar.id}
-													updateCalendarEvents={() =>
-														updateCalendarEvents()
-													}
+													updateCalendarEvents={updateCalendarEvents}
 													isDisabled={isDisabled}
-													setDisabledEvents={
-														setDisabledEvents
-													}
-
+													setDisabledEvents={handleEventStatusChange}
+													setStatusMessage={setStatusMessage}
+													onActionComplete={closePopover} // Pass the close function
 												/>
-
 											}
 										>
 											<Button
@@ -120,7 +140,7 @@ const CalendarEvents: React.FC<{
 									</Flex>
 									<Flex vertical justify="center" gap={10}>
 										<Flex gap={10} className="items-center">
-											<LocationIcon />
+											<LocationIcon/>
 											<div className="flex flex-col">
 												<span className="text-[#71717A] text-[12px]">
 													{__(
@@ -171,7 +191,7 @@ const CalendarEvents: React.FC<{
 													)}
 												</span>
 												<span className="text-[#09090B] text-[14px] font-[500] capitalize">
-													24
+													{event.booking_count}
 												</span>
 											</div>
 										</Flex>
@@ -192,12 +212,6 @@ const CalendarEvents: React.FC<{
 											</div>
 										</Flex>
 									</Flex>
-									{/* <Tooltip title={calendar.name}>
-                                    <Avatar icon={<UserOutlined />} />
-                                </Tooltip>
-                                <Typography.Link href={`${siteUrl}?quillbooking_event=${event.slug}`} target='_blank'>
-                                    {__('View Booking Page', 'quillbooking')}
-                                </Typography.Link> */}
 									<Flex
 										justify="space-between"
 										className="border-t pt-3"
@@ -218,6 +232,7 @@ const CalendarEvents: React.FC<{
 												paddingLeft: 0,
 												paddingRight: 0,
 											}}
+											disabled={isDisabled}
 										>
 											{__('Copy Link', 'quillbooking')}
 										</Button>
@@ -231,6 +246,7 @@ const CalendarEvents: React.FC<{
 											onClick={() =>
 												setModalShareId(event.id)
 											}
+											disabled={isDisabled}
 										>
 											{__('Share', 'quillbooking')}
 										</Button>
@@ -280,19 +296,24 @@ const CalendarEvents: React.FC<{
 						/>
 					)}
 					{calendar.type == 'host' && (
-
 						<>
-							<Button
-								className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] w-[310px] text-[20px] flex flex-col items-center justify-center text-center h-[385px]"
-								onClick={() => setShowCreateEventModal(true)}
-							>
-								<CalendarAddIcon />
-								<span className="pt-[8.5px] text-center text-color-primary self-center">
-									{__('Create Event', 'quillbooking')}
-								</span>
-							</Button>
-
-
+							<Flex vertical gap={30} justify='center' align='center' className='py-10'>
+								<div className='border rounded-full p-7 bg-[#F4F5FA] border-[#E1E2E9] text-[#BEC0CA]'>
+									<UpcomingCalendarIcon width={60} height={60} />
+								</div>
+								<Flex vertical gap={5} justify='center' align='center'>
+									<span className='text-[20px] font-medium text-black'>{__('No Events Added Yet?', 'quillbooking')}</span>
+									<span className='text-[#8B8D97]'>{__('You can also create Teams and manage their events', 'quillbooking')}</span>
+								</Flex>
+								<Button
+									color='primary'
+									className='text-[16px] bg-color-primary text-white border-none shadow-none w-fit'
+									onClick={() => setShowCreateEventModal(true)}
+								>
+									{__('+ Add New Event', 'quillbooking')}
+								</Button>
+							</Flex>
+							
 							<CreateEvent
 								visible={showCreateEventModal}
 								setVisible={setShowCreateEventModal}
@@ -304,15 +325,6 @@ const CalendarEvents: React.FC<{
 					)}
 				</div>
 			)}
-			{/* {cloneCalendar && (
-                <CloneEventModal
-                    open={!!cloneCalendar}
-                    calendar={cloneCalendar}
-                    onClose={() => setCloneCalendar(null)}
-                    excludedEvents={map(cloneCalendar.events, 'id')}
-                    onSaved={handleSaved}
-                />
-            )} */}
 		</>
 	);
 };

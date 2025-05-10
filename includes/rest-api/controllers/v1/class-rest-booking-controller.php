@@ -118,6 +118,50 @@ class REST_Booking_Controller extends REST_Controller {
 				),
 			)
 		);
+
+		// Booking counts route
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/counts',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_booking_counts' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'user' => array(
+							'description' => __( 'User ID to filter counts by.', 'quillbooking' ),
+							'type'        => 'string',
+							'default'     => 'own',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/analytics',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_booking_analytics' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'user' => array(
+							'description' => __( 'User ID to filter analytics by.', 'quillbooking' ),
+							'type'        => 'string',
+							'default'     => 'own',
+						),
+						'date' => array(
+							'description' => __( 'Month and year in format "March 2025".', 'quillbooking' ),
+							'type'        => 'string',
+							'default'     => '', // Current month and year will be used if empty
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -345,13 +389,16 @@ class REST_Booking_Controller extends REST_Controller {
 				$start_date = Utils::create_date_time( $start_date, $timezone );
 			}
 
-			$invitee          = array(
+			$invitee = array(
 				array(
 					'name'  => $name,
 					'email' => $email,
 				),
 			);
-			$booking_service  = new Booking_Service();
+
+			// Allow filtering the Booking_Service instance for testing
+			$booking_service = apply_filters( 'quillbooking_booking_service_instance', new Booking_Service() );
+
 			$validate_invitee = $booking_service->validate_invitee( $event, $invitee );
 			$calendar_id      = $event->calendar_id;
 			$booking          = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields );
@@ -723,4 +770,188 @@ class REST_Booking_Controller extends REST_Controller {
 			$day = absint( $day );
 			return ( $day >= 1 && $day <= 31 ) ? sprintf( '%02d', $day ) : null;
 	}
+
+
+	/**
+	 * Get booking counts by status
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_booking_counts( $request ) {
+		// Get user parameter
+		$user = sanitize_text_field( $request->get_param( 'user' ) ?? 'own' );
+
+		if ( 'own' === $user ) {
+			$user = get_current_user_id();
+		}
+
+		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
+			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
+		}
+
+		try {
+			$query = Booking_Model::query();
+
+			// Apply user filter if needed
+			if ( 'all' !== $user ) {
+				$this->apply_user_filter( $query, $user );
+			}
+
+			// Get the current time for upcoming/past filtering
+			$current_time = current_time( 'mysql' );
+
+			// Calculate all counts
+			$counts = array(
+				'total'     => ( clone $query )->count(),
+				'upcoming'  => ( clone $query )->where( 'start_time', '>', $current_time )->where( 'status', '!=', $this->STATUS_CANCELLED )->count(),
+				'completed' => ( clone $query )->where( 'status', $this->STATUS_COMPLETED )->count(),
+				'pending'   => ( clone $query )->where( 'status', $this->STATUS_PENDING )->count(),
+				'cancelled' => ( clone $query )->where( 'status', $this->STATUS_CANCELLED )->count(),
+				'no_show'   => ( clone $query )->where( 'status', $this->STATUS_NO_SHOW )->count(),
+			);
+
+			return new WP_REST_Response( $counts, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Get booking analytics by day for a given month
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_booking_analytics( $request ) {
+		// Get user parameter
+		$user = sanitize_text_field( $request->get_param( 'user' ) ?? 'own' );
+
+		if ( 'own' === $user ) {
+			$user = get_current_user_id();
+		}
+
+		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
+			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
+		}
+
+		try {
+			// Parse date string (e.g., "March 2025")
+			$date_str = sanitize_text_field( $request->get_param( 'date' ) ?? '' );
+
+			if ( empty( $date_str ) ) {
+				// Use current month and year if not provided
+				$year  = current_time( 'Y' );
+				$month = current_time( 'm' );
+			} else {
+				// Parse date string like "March 2025"
+				$parsed_date = date_parse( $date_str );
+
+				if ( $parsed_date['error_count'] > 0 || ! isset( $parsed_date['month'] ) || ! isset( $parsed_date['year'] ) ) {
+					return new WP_Error(
+						'rest_booking_error',
+						__( 'Invalid date format. Please use format like "March 2025".', 'quillbooking' ),
+						array( 'status' => 400 )
+					);
+				}
+
+				$year  = $parsed_date['year'];
+				$month = $parsed_date['month'];
+			}
+
+			// Validate date ranges
+			$year  = $this->validate_year( $year );
+			$month = $this->validate_month( $month );
+
+			// Create start and end dates for the month
+			$start_date = new DateTime( "$year-$month-01 00:00:00" );
+			$end_date   = clone $start_date;
+			$end_date->modify( 'last day of this month' )->setTime( 23, 59, 59 );
+
+			// Get days in this month
+			$days_in_month = (int) $end_date->format( 'd' );
+
+			// Base query
+			$query = Booking_Model::query();
+
+			// Apply user filter if needed
+			if ( 'all' !== $user ) {
+				$this->apply_user_filter( $query, $user );
+			}
+
+			// Filter by month range
+			$query->whereBetween(
+				'start_time',
+				array(
+					$start_date->format( 'Y-m-d H:i:s' ),
+					$end_date->format( 'Y-m-d H:i:s' ),
+				)
+			);
+
+			// Get all relevant bookings for the month with their creation date and status
+			$bookings = $query
+				->select( 'id', 'status', 'start_time', 'created_at' )
+				->get();
+
+			// Initialize results array
+			$results = array();
+
+			// Temporary array to track booking counts
+			$days_with_data = array();
+
+			// Initialize the data structure for all days with zero counts
+			for ( $day = 1; $day <= $days_in_month; $day++ ) {
+				$day_key                    = (string) $day;
+				$days_with_data[ $day_key ] = array(
+					'booked'    => 0,
+					'completed' => 0,
+					'cancelled' => 0,
+				);
+			}
+
+			// Increment counters for each booking
+			foreach ( $bookings as $booking ) {
+				// Get the day of the month (1-31)
+				$booking_day = date( 'j', strtotime( $booking->start_time ) );
+				$created_day = date( 'j', strtotime( $booking->created_at ) );
+
+				// Make sure we're only counting days within our target month
+				if ( date( 'Y-m', strtotime( $booking->created_at ) ) === "$year-$month" ) {
+					// Increment the "booked" counter for the creation date
+					$days_with_data[ (string) $created_day ]['booked']++;
+				}
+
+				// Make sure we're only counting days within our target month
+				if ( date( 'Y-m', strtotime( $booking->start_time ) ) === "$year-$month" ) {
+					// Increment status counters for the appointment date
+					switch ( $booking->status ) {
+						case $this->STATUS_COMPLETED:
+							$days_with_data[ (string) $booking_day ]['completed']++;
+							break;
+						case $this->STATUS_CANCELLED:
+							$days_with_data[ (string) $booking_day ]['cancelled']++;
+							break;
+					}
+				}
+			}
+
+			// Only include days with booked > 0 in final results
+			foreach ( $days_with_data as $day => $counts ) {
+				if ( $counts['booked'] > 0 || $counts['completed'] > 0 || $counts['cancelled'] > 0 ) {
+					$results[ $day ] = $counts;
+				}
+			}
+
+			return new WP_REST_Response( $results, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
 }

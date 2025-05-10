@@ -23,6 +23,9 @@ use QuillBooking\Capabilities;
 use QuillBooking\Availabilities;
 use QuillBooking\Event_Fields\Event_Fields;
 use QuillBooking\Models\Calendar_Model;
+use QuillBooking\Models\User_Model;
+use QuillBooking\Managers\Locations_Manager;
+use QuillBooking\Payment_Gateway\Payment_Validator;
 
 /**
  * Event Controller class
@@ -207,15 +210,60 @@ class REST_Event_Controller extends REST_Controller {
 			)
 		);
 
-		// disable events
+		// hande event disable status
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/disable',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/disable-status',
 			array(
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'disable_item' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id'         => array(
+							'description' => __( 'Unique identifier for the object.', 'quill-booking' ),
+							'type'        => 'integer',
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						),
+						'properties' => array(
+							'status' => array(
+								'description' => __( 'Disable status.', 'quill-booking' ),
+								'type'        => 'boolean',
+								'context'     => array( 'view', 'edit' ),
+								'readonly'    => true,
+							),
+						),
+					),
+				),
+			)
+		);
+
+		// Get latest events
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/latest',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_latest_events' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'limit'   => array(
+							'description' => __( 'Number of events to retrieve.', 'quillbooking' ),
+							'type'        => 'integer',
+							'default'     => 5,
+						),
+						'user_id' => array(
+							'description' => __( 'Filter by user ID.', 'quillbooking' ),
+							'type'        => 'integer',
+						),
+						'status'  => array(
+							'description' => __( 'Filter by event status.', 'quillbooking' ),
+							'type'        => 'string',
+							'enum'        => array( 'active', 'inactive' ),
+						),
+					),
 				),
 			)
 		);
@@ -234,19 +282,19 @@ class REST_Event_Controller extends REST_Controller {
 			'title'      => 'event',
 			'type'       => 'object',
 			'properties' => array(
-				'id'          => array(
+				'id'            => array(
 					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
 					'type'        => 'integer',
 					'context'     => array( 'view' ),
 					'readonly'    => true,
 				),
-				'hash_id'     => array(
+				'hash_id'       => array(
 					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view' ),
 					'readonly'    => true,
 				),
-				'calendar_id' => array(
+				'calendar_id'   => array(
 					'description' => __( 'Calendar ID.', 'quillbooking' ),
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
@@ -255,7 +303,7 @@ class REST_Event_Controller extends REST_Controller {
 						'sanitize_callback' => 'absint',
 					),
 				),
-				'user_id'     => array(
+				'user_id'       => array(
 					'description' => __( 'User ID.', 'quillbooking' ),
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
@@ -263,7 +311,7 @@ class REST_Event_Controller extends REST_Controller {
 						'sanitize_callback' => 'absint',
 					),
 				),
-				'name'        => array(
+				'name'          => array(
 					'description' => __( 'Event name.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
@@ -272,7 +320,12 @@ class REST_Event_Controller extends REST_Controller {
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
-				'description' => array(
+				'is_disabled'   => array(
+					'description' => __( 'Is event disabled.', 'quillbooking' ),
+					'type'        => 'boolean',
+					'context'     => array( 'view', 'edit' ),
+				),
+				'description'   => array(
 					'description' => __( 'Event description.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
@@ -280,7 +333,7 @@ class REST_Event_Controller extends REST_Controller {
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
-				'slug'        => array(
+				'slug'          => array(
 					'description' => __( 'Event slug.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
@@ -288,7 +341,7 @@ class REST_Event_Controller extends REST_Controller {
 						'sanitize_callback' => 'sanitize_title',
 					),
 				),
-				'status'      => array(
+				'status'        => array(
 					'description' => __( 'Event status.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
@@ -297,7 +350,7 @@ class REST_Event_Controller extends REST_Controller {
 					),
 					'enum'        => array( 'active', 'inactive' ),
 				),
-				'type'        => array(
+				'type'          => array(
 					'description' => __( 'Event type.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
@@ -307,7 +360,7 @@ class REST_Event_Controller extends REST_Controller {
 					),
 					'enum'        => array( 'one-to-one', 'group', 'round-robin' ),
 				),
-				'duration'    => array(
+				'duration'      => array(
 					'description' => __( 'Event duration.', 'quillbooking' ),
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
@@ -316,7 +369,7 @@ class REST_Event_Controller extends REST_Controller {
 						'sanitize_callback' => 'absint',
 					),
 				),
-				'color'       => array(
+				'color'         => array(
 					'description' => __( 'Event color.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
@@ -324,7 +377,7 @@ class REST_Event_Controller extends REST_Controller {
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
-				'visibility'  => array(
+				'visibility'    => array(
 					'description' => __( 'Event visibility.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
@@ -333,13 +386,18 @@ class REST_Event_Controller extends REST_Controller {
 					),
 					'enum'        => array( 'public', 'private' ),
 				),
-				'created_at'  => array(
+				'reserve_times' => array(
+					'description' => __( 'Reserve times.', 'quillbooking' ),
+					'type'        => 'boolean',
+					'context'     => array( 'view', 'edit' ),
+				),
+				'created_at'    => array(
 					'description' => __( 'Event created at.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
 				),
-				'updated_at'  => array(
+				'updated_at'    => array(
 					'description' => __( 'Event updated at.', 'quillbooking' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
@@ -413,15 +471,20 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function create_item( $request ) {
 		try {
-			$calendar_id = $request->get_param( 'calendar_id' );
-			$name        = $request->get_param( 'name' );
-			$description = $request->get_param( 'description' );
-			$status      = $request->get_param( 'status' );
-			$type        = $request->get_param( 'type' );
-			$duration    = $request->get_param( 'duration' );
-			$color       = $request->get_param( 'color' );
-			$visibility  = $request->get_param( 'visibility' );
-			$location    = $request->get_param( 'location' );
+			global $wpdb;
+			$wpdb->query( 'START TRANSACTION' );
+
+			$calendar_id       = $request->get_param( 'calendar_id' );
+			$name              = $request->get_param( 'name' );
+			$description       = $request->get_param( 'description' );
+			$status            = $request->get_param( 'status' );
+			$type              = $request->get_param( 'type' );
+			$duration          = $request->get_param( 'duration' );
+			$color             = $request->get_param( 'color' );
+			$visibility        = $request->get_param( 'visibility' );
+			$location          = $request->get_param( 'location' );
+			$hosts             = $request->get_param( 'hosts' );
+			$payments_settings = $request->get_param( 'payments_settings' );
 
 			if ( empty( $location ) ) {
 				return new WP_Error( 'rest_event_error', __( 'Event location is required.', 'quillbooking' ), array( 'status' => 400 ) );
@@ -429,6 +492,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			$calendar = Calendar_Model::find( $calendar_id );
 			if ( ! $calendar ) {
+				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'You must add event to a calendar.', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
@@ -436,7 +500,17 @@ class REST_Event_Controller extends REST_Controller {
 			$host_events = array( 'one-to-one', 'group' );
 
 			if ( ( 'host' === $calendar->type && ! in_array( $type, $host_events ) ) || ( 'team' === $calendar->type && ! in_array( $type, $team_events ) ) ) {
+				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Invalid event type.', 'quillbooking' ), array( 'status' => 400 ) );
+			}
+
+			// Validate payment settings if provided
+			if ( $payments_settings ) {
+				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+				if ( is_wp_error( $validation_result ) ) {
+					$wpdb->query( 'ROLLBACK' );
+					return $validation_result;
+				}
 			}
 
 			$event_data = array(
@@ -448,6 +522,7 @@ class REST_Event_Controller extends REST_Controller {
 				'duration'    => $duration,
 				'color'       => $color,
 				'visibility'  => $visibility,
+				'is_disabled' => false,
 			);
 
 			$event_data = array_filter( $event_data );
@@ -459,23 +534,40 @@ class REST_Event_Controller extends REST_Controller {
 				)
 			);
 			if ( ! $event->id ) {
+				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Event not created', 'quillbooking' ), array( 'status' => 500 ) );
 			}
 
-			$default_availability = Availabilities::get_default_availability( get_current_user_id() );
-			if ( ! $default_availability ) {
-				$event->delete();
-				return new WP_Error( 'rest_event_error', __( 'Default availability not found', 'quillbooking' ), array( 'status' => 500 ) );
+			if ( 'host' === $calendar->type ) {
+				$default_availability = Availabilities::get_user_default_availability( $calendar->user_id );
+				if ( ! $default_availability ) {
+					$wpdb->query( 'ROLLBACK' );
+					return new WP_Error( 'rest_event_error', __( 'Default availability not found', 'quillbooking' ), array( 'status' => 500 ) );
+				}
+				$event->availability = $default_availability['id'];
+			} else {
+				$event->setTeamMembersAttribute( $hosts );
+				$availability_data = array(
+					'is_common' => false,
+					'type'      => 'existing',
+				);
+				foreach ( $hosts as $user_id ) {
+					$default_user_availability = Availabilities::get_user_default_availability( $user_id );
+					if ( $default_user_availability ) {
+						$availability_data['users_availability'][ $user_id ] = $default_user_availability;
+					}
+				}
+				$event->availability = $availability_data;
 			}
 
+			$event->setReserveTimesAttribute( false );
 			$event->location            = $location;
-			$event->availability        = $default_availability['id'];
 			$event->limits              = Event_Fields::instance()->get_default_limit_settings();
 			$event->email_notifications = Event_Fields::instance()->get_default_email_notification_settings();
 			$event->additional_settings = Event_Fields::instance()->get_default_additional_settings( $type );
 			$event->advanced_settings   = Event_Fields::instance()->get_default_advanced_settings();
 			$event->sms_notifications   = Event_Fields::instance()->get_default_sms_notification_settings();
-			$event->payments_settings   = Event_Fields::instance()->get_default_payments_settings();
+			$event->payments_settings   = $payments_settings ?? Event_Fields::instance()->get_default_payments_settings();
 			if ( 'group' === $type ) {
 				$event->group_settings = array(
 					'max_invites'    => 2,
@@ -484,10 +576,14 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			$event->save();
+			// Set system fields based on the validated location
 			$event->setSystemFields();
 
+			$wpdb->query( 'COMMIT' );
 			return new WP_REST_Response( $event, 200 );
 		} catch ( Exception $e ) {
+			global $wpdb;
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -557,51 +653,47 @@ class REST_Event_Controller extends REST_Controller {
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error
 	 */
+	// Inside REST_Event_Controller::get_item method in class-rest-event-controller.php
+
 	public function get_item( $request ) {
 		try {
 			$id    = $request->get_param( 'id' );
 			$event = Event_Model::with( 'calendar' )->find( $id );
 
 			if ( ! $event ) {
-				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
+				return new WP_Error(
+					'rest_event_not_found',
+					__( 'Event not found', 'quillbooking' ),
+					array( 'status' => 404 )
+				);
 			}
 
-			if ( $event->status == 'disabled' ) {
-				return new WP_Error( 'rest_event_error', __( 'Event is disabled', 'quillbooking' ), array( 'status' => 400 ) );
-			}
+			$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
+			$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
 
-			$calendarIds = $event->calendar->getTeamMembers();
+			$users = array();
+			foreach ( $usersId as $userId ) {
+				$user = User_Model::find( $userId );
 
-			if ( $calendarIds ) {
-				if ( ! is_array( $calendarIds ) ) {
-					$calendarIds = array( $calendarIds );
-				}
+				if ( $user ) {
+					$user_avatar_url = get_avatar_url( $user->ID );
+					$availabilities  = Availabilities::get_user_availabilities( $user->ID );
 
-				$calendars = array();
-				foreach ( $calendarIds as $calendarId ) {
-					$calendar = Calendar_Model::find( $calendarId );
-					if ( $calendar ) {
-						$calendars[] = array(
-							'id'   => $calendar->id,
-							'name' => $calendar->name,
-						);
-					}
-				}
-				$event->hosts = $calendars;
-			} else {
-				$calendar = $event->calendar;
-				if ( $calendar ) {
-					$event->hosts = array(
-						array(
-							'id'   => $calendar->id,
-							'name' => $calendar->name,
-						),
+					$users[] = array(
+						'id'             => $user->ID,
+						'name'           => $user->display_name,
+						'image'          => $user_avatar_url,
+						'availabilities' => $availabilities,
 					);
 				}
 			}
 
+			$event->hosts             = $users;
+			$event->availability_data = $event->getAvailabilityAttribute();
+			$event->reserve           = $event->getReserveTimesAttribute();
+
 			return new WP_REST_Response( $event, 200 );
-		} catch ( Exception $e ) {
+		} catch ( \Throwable $e ) { // Catch Throwable
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -624,7 +716,7 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			$data = array(
-				'availability' => $event->availability,
+				'availability' => $event->getAvailabilityAttribute(),
 				'range'        => $event->getEventRangeAttribute(),
 			);
 
@@ -680,6 +772,9 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function update_item( $request ) {
 		try {
+			global $wpdb;
+			$wpdb->query( 'START TRANSACTION' );
+
 			$id                  = $request->get_param( 'id' );
 			$user_id             = $request->get_param( 'user_id' );
 			$name                = $request->get_param( 'name' );
@@ -703,11 +798,22 @@ class REST_Event_Controller extends REST_Controller {
 			$webhook_feeds       = $request->get_param( 'webhook_feeds' );
 			$fields              = $request->get_param( 'fields' );
 			$slug                = $request->get_param( 'slug' );
+			$reserve_times       = $request->get_param( 'reserve_times' );
 
 			$event = Event_Model::find( $id );
 
 			if ( ! $event ) {
+				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			// Validate payment settings
+			if ( $payments_settings ) {
+				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+				if ( is_wp_error( $validation_result ) ) {
+					$wpdb->query( 'ROLLBACK' );
+					return $validation_result;
+				}
 			}
 
 			$updated = array(
@@ -723,7 +829,6 @@ class REST_Event_Controller extends REST_Controller {
 				'additional_settings' => $additional_settings,
 				'group_settings'      => $group_settings,
 				'event_range'         => $event_range,
-				'availability'        => $availability,
 				'advanced_settings'   => $advanced_settings,
 				'email_notifications' => $email_notifications,
 				'sms_notifications'   => $sms_notifications,
@@ -732,9 +837,12 @@ class REST_Event_Controller extends REST_Controller {
 				'dynamic_duration'    => $dynamic_duration,
 			);
 
+			$event->setReserveTimesAttribute( $reserve_times );
+
 			if ( ! empty( $slug ) ) {
 				$exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
 				if ( $exists ) {
+					$wpdb->query( 'ROLLBACK' );
 					return new WP_Error( 'rest_event_error', __( 'Event slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
 				}
 
@@ -754,10 +862,29 @@ class REST_Event_Controller extends REST_Controller {
 				$event->updateFields( $fields );
 			}
 
+			if ( $availability ) {
+				if ( $event->calendar->type === 'team' ) {
+					$result = $this->update_event_team_availability( $event, $availability );
+					if ( is_wp_error( $result ) ) {
+						$wpdb->query( 'ROLLBACK' );
+						return $result;
+					}
+				} else {
+					$result = $this->update_event_host_availability( $event, $availability );
+					if ( is_wp_error( $result ) ) {
+						$wpdb->query( 'ROLLBACK' );
+						return $result;
+					}
+				}
+			}
+
 			$event->save();
 
+			$wpdb->query( 'COMMIT' );
 			return new WP_REST_Response( $event, 200 );
 		} catch ( Exception $e ) {
+			global $wpdb;
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -772,42 +899,30 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function update_item_availability( $request ) {
 		try {
+			global $wpdb;
+			$wpdb->query( 'START TRANSACTION' );
+
 			$id           = $request->get_param( 'id' );
 			$availability = $request->get_param( 'availability' );
 
 			$event = Event_Model::find( $id );
 
 			if ( ! $event ) {
+				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			if ( 'custom' === $availability['type'] ) {
-				$event->meta()->updateOrCreate(
-					array(
-						'meta_key' => 'availability',
-					),
-					array(
-						'meta_value' => $availability,
-					)
-				);
-			} else {
-				$availability = Availabilities::get_availability( $availability['id'] );
-				if ( ! $availability ) {
-					return new WP_Error( 'rest_event_error', __( 'Availability not found', 'quillbooking' ), array( 'status' => 404 ) );
-				}
-
-				$event->meta()->updateOrCreate(
-					array(
-						'meta_key' => 'availability',
-					),
-					array(
-						'meta_value' => $availability['id'],
-					)
-				);
+			$result = $this->update_event_host_availability( $event, $availability );
+			if ( is_wp_error( $result ) ) {
+				$wpdb->query( 'ROLLBACK' );
+				return $result;
 			}
 
+			$wpdb->query( 'COMMIT' );
 			return new WP_REST_Response( $event->availability_value, 200 );
 		} catch ( Exception $e ) {
+			global $wpdb;
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -822,18 +937,25 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function update_fields( $request ) {
 		try {
+			global $wpdb;
+			$wpdb->query( 'START TRANSACTION' );
+
 			$id     = $request->get_param( 'id' );
 			$fields = $request->get_param( 'fields' );
 			$event  = Event_Model::find( $id );
 
 			if ( ! $event ) {
+				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			$event->updateFields( $fields );
 
+			$wpdb->query( 'COMMIT' );
 			return new WP_REST_Response( $event->fields, 200 );
 		} catch ( Exception $e ) {
+			global $wpdb;
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -861,16 +983,21 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function delete_item( $request ) {
 		try {
+			global $wpdb;
+			$wpdb->query( 'START TRANSACTION' );
+
 			$id = $request->get_param( 'id' );
 
 			$event = Event_Model::find( $id );
 
 			if ( ! $event ) {
+				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			$event->delete();
 
+			$wpdb->query( 'COMMIT' );
 			return new WP_REST_Response(
 				array(
 					'id' => $id,
@@ -878,6 +1005,8 @@ class REST_Event_Controller extends REST_Controller {
 				200
 			);
 		} catch ( Exception $e ) {
+			global $wpdb;
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -905,18 +1034,25 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function duplicate_item( $request ) {
 		try {
+			global $wpdb;
+			$wpdb->query( 'START TRANSACTION' );
+
 			$id = $request->get_param( 'id' );
 
 			$event = Event_Model::find( $id );
 
 			if ( ! $event ) {
+				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			$new_event = $event->duplicate();
 
+			$wpdb->query( 'COMMIT' );
 			return new WP_REST_Response( $new_event, 200 );
 		} catch ( Exception $e ) {
+			global $wpdb;
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -975,24 +1111,144 @@ class REST_Event_Controller extends REST_Controller {
 	 */
 	public function disable_item( $request ) {
 		try {
-			$ids = $request->get_param( 'ids' );
-			if ( ! $ids ) {
-				return new WP_Error( 'rest_event_error', __( 'No events to disable', 'quillbooking' ), array( 'status' => 400 ) );
+			$id     = $request->get_param( 'id' );
+			$status = $request->get_param( 'status' );
+			$event  = Event_Model::find( $id );
+			if ( ! $event ) {
+				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
-			foreach ( $ids as $id ) {
-				$event = Event_Model::find( $id );
-
-				if ( ! $event ) {
-					return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
-				}
-
-				$event->status = 'disabled';
-				$event->save();
-
-			}
-			return new WP_REST_Response( $ids );
+			$event->is_disabled = $status;
+			$event->save();
+			return new WP_REST_Response( $event, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
+	}
+
+	// Update event availability
+	private function update_event_host_availability( $event, $availability ) {
+
+		if ( 'custom' === $availability['type'] ) {
+			$event->meta()->updateOrCreate(
+				array(
+					'meta_key' => 'availability',
+				),
+				array(
+					'meta_value' => maybe_serialize( $availability ),
+				)
+			);
+		} else {
+			$availability_model = Availabilities::get_availability( $availability['id'] );
+			if ( ! $availability_model ) {
+				return new WP_Error( 'rest_event_error', __( 'Availability not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			Availabilities::update_availability( $availability );
+
+			$event->meta()->updateOrCreate(
+				array(
+					'meta_key' => 'availability',
+				),
+				array(
+					'meta_value' => $availability['id'],
+				)
+			);
+		}
+		return $availability;
+	}
+
+	// Update event availability
+	private function update_event_team_availability( $event, $availability ) {
+		$event->meta()->updateOrCreate(
+			array(
+				'meta_key' => 'availability',
+			),
+			array(
+				'meta_value' => maybe_serialize( $availability ),
+			)
+		);
+		if ( $availability['is_common'] ) {
+			if ( 'existing' === $availability['type'] ) {
+				$availability_model = Availabilities::get_availability( $availability['id'] );
+				if ( ! $availability_model ) {
+					return new WP_Error( 'rest_event_error', __( 'Availability not found', 'quillbooking' ), array( 'status' => 404 ) );
+				}
+				unset( $availability['is_common'], $availability['type'] );
+				Availabilities::update_availability( $availability );
+			}
+		} else {
+			foreach ( $availability->users_availability as $user_id => $user_availability ) {
+				$availability_model = Availabilities::get_availability( $user_availability['id'] );
+				if ( ! $availability_model ) {
+					return new WP_Error( 'rest_event_error', __( 'Availability not found', 'quillbooking' ), array( 'status' => 404 ) );
+				}
+
+				Availabilities::update_availability( $user_availability );
+			}
+		}
+		return $availability;
+	}
+
+	/**
+	 * Get latest events
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_latest_events( $request ) {
+		try {
+			$limit   = $request->get_param( 'limit' ) ? absint( $request->get_param( 'limit' ) ) : 7;
+			$user_id = $request->get_param( 'user_id' ) ? absint( $request->get_param( 'user_id' ) ) : null;
+			$status  = $request->get_param( 'status' ) ? sanitize_text_field( $request->get_param( 'status' ) ) : null;
+
+			$query = Event_Model::with( array( 'calendar', 'meta' ) )->orderBy( 'created_at', 'desc' );
+
+			// Apply filters if provided
+			if ( $user_id ) {
+				$query->where( 'user_id', $user_id );
+			} elseif ( ! current_user_can( 'quillbooking_read_all_calendars' ) ) {
+				$query->where( 'user_id', get_current_user_id() );
+			}
+
+			if ( $status ) {
+				$query->where( 'status', $status );
+			}
+
+			$events = $query->limit( $limit )->get();
+
+			// Prepare events for response
+			$prepared_events = array();
+			foreach ( $events as $event ) {
+				$prepared_events[] = $this->prepare_event_for_response( $event );
+			}
+
+			return new WP_REST_Response( $prepared_events, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Prepare event data for API response
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param Event_Model $event The event model.
+	 * @return array Prepared event with only essential data.
+	 */
+	protected function prepare_event_for_response( $event ) {
+		// Extract only the essential data needed for display
+		$prepared_data = array(
+			'id'         => $event->id,
+			'name'       => $event->name,
+			'duration'   => $event->duration,
+			'type'       => $event->type,
+			'booking_no' => $event->id,
+			'location'   => $event->location[0]['type'],
+		);
+
+		return $prepared_data;
 	}
 }

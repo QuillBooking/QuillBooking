@@ -15,7 +15,8 @@
         "sirbrillig/phpcs-variable-analysis": "^2.8",
         "phpunit/phpunit": "^9.6",
         "yoast/phpunit-polyfills": "^1.0",
-        "spatie/phpunit-watcher": "^1.24"
+        "spatie/phpunit-watcher": "^1.24",
+        "php-mock/php-mock-phpunit": "^2.13"
     },
     "require": {
         "php": ">=7.4",
@@ -37,6 +38,11 @@
         ],
         "format": "phpcbf --standard=phpcs.xml.dist --report-summary --report-source",
         "lint": "phpcs --standard=phpcs.xml.dist",
-         "test": "phpunit --testdox"
+        "test": "phpunit --testdox",
+        "test:unit": "phpunit --testdox --testsuite unit",
+        "test:integration": "phpunit --testdox --testsuite integration",
+        "test:booking": "phpunit --testdox tests/integration/test-booking-flow.php",
+        "test:payment": "phpunit --testdox tests/integration/test-payment-processing.php",
+        "test:api": "phpunit --testdox tests/integration/test-api-endpoints.php"
     }
 }

@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
+/**
+ * WordPress dependencies
+ */
 import { __ } from '@wordpress/i18n';
+/**
+ * External dependencies
+ */
+import React, { useState } from 'react';
 import { Button, Flex, Modal } from 'antd';
+/**
+ * Internal dependencies
+ */
 import {
 	EditIcon,
 	DisableIcon,
@@ -18,9 +27,9 @@ interface EventActionsProps {
 	calendarId: number;
 	isDisabled: boolean;
 	updateCalendarEvents: () => void;
-	setDisabledEvents: React.Dispatch<
-		React.SetStateAction<Record<string, boolean>>
-	>;
+	setDisabledEvents: (eventId: number | undefined, disabled: boolean) => void;
+	setStatusMessage: (message: boolean) => void;
+	onActionComplete: () => void; // New prop for closing the popover
 }
 
 const EventActions: React.FC<EventActionsProps> = ({
@@ -29,6 +38,8 @@ const EventActions: React.FC<EventActionsProps> = ({
 	isDisabled,
 	updateCalendarEvents,
 	setDisabledEvents,
+	setStatusMessage,
+	onActionComplete,
 }) => {
 	const [isModalDeleteOpen, setIsModalDeleteOpen] = useState(false);
 	const [isModalDisableOpen, setIsModalDisableOpen] = useState(false);
@@ -39,26 +50,38 @@ const EventActions: React.FC<EventActionsProps> = ({
 
 	const showDisableModal = () => {
 		setIsModalDisableOpen(true);
+		// Don't close the popover yet as we're showing a modal
 	};
 
-	const handleDisable = () => {
+	const handleDisable = (status: boolean) => {
 		callApi({
-			path: `events/disable`,
+			path: `events/${event.id}/disable-status`,
 			method: 'PUT',
 			data: {
-				ids: event.id ? [event.id] : [],
+				status,
 			},
 			onSuccess: () => {
 				successNotice(
-					__('Event disabled successfully', 'quillbooking')
+					isDisabled
+						? __('Event enabled successfully', 'quillbooking')
+						: __('Event disabled successfully', 'quillbooking')
 				);
-				setDisabledEvents((prev) => ({
-					...prev,
-					[event.id ?? '']: !prev[event.id ?? ''],
-				}));
+				// Update the disabled state for this event
+				setDisabledEvents(event.id, !isDisabled);
+				
+				if (!isDisabled) {
+					setStatusMessage(true);
+				}
+				else {
+					setStatusMessage(false);
+				}
+				// Close the popover after action is completed
+				onActionComplete();
 			},
 			onError: (error) => {
 				errorNotice(error.message);
+				// Close the popover even on error
+				onActionComplete();
 			},
 		});
 
@@ -92,31 +115,39 @@ const EventActions: React.FC<EventActionsProps> = ({
 		setIsModalDeleteOpen(false);
 	};
 
-  const handleClone = () => {
-    callApi({
+	const handleClone = () => {
+		callApi({
 			path: `events/duplicate`,
 			method: 'POST',
-      data: { id: event.id },
+			data: { id: event.id },
 			onSuccess: () => {
 				updateCalendarEvents();
 				successNotice(
 					__('Event duplicated successfully', 'quillbooking')
 				);
+				// Close the popover after action is completed
+				onActionComplete();
 			},
 			onError: (error) => {
 				errorNotice(error.message);
+				// Close the popover even on error
+				onActionComplete();
 			},
 		});
-  }
+	}
+
+	const handleEdit = () => {
+		// Close popover before navigation
+		navigate(`calendars/${calendarId}/events/${event.id}`);
+	};
 
 	return (
 		<Flex vertical gap={10} className="items-start text-color-primary-text">
 			<Button
 				type="text"
 				icon={<EditIcon />}
-				onClick={() =>
-					navigate(`calendars/${calendarId}/events/${event.id}`)
-				}
+				onClick={handleEdit}
+				className="w-full flex justify-start"
 			>
 				{__('Edit', 'quillbooking')}
 			</Button>
@@ -125,16 +156,17 @@ const EventActions: React.FC<EventActionsProps> = ({
 				type="text"
 				onClick={showDisableModal}
 				icon={<DisableIcon />}
+				className="w-full flex justify-start"
 			>
 				{isDisabled
 					? __('Enable', 'quillbooking')
 					: __('Disable', 'quillbooking')}
 			</Button>
 
-			<Button type="text" icon={<CloneIcon />} onClick={() => handleClone()}>
-                {__('Clone Events', 'quillbooking')}
-            </Button>
-			<Button type="text" icon={<TrashIcon />} onClick={showDeleteModal}>
+			<Button type="text" icon={<CloneIcon />} onClick={() => handleClone()} className="w-full flex justify-start">
+				{__('Clone Events', 'quillbooking')}
+			</Button>
+			<Button type="text" icon={<TrashIcon />} onClick={showDeleteModal} className="w-full flex justify-start">
 				{__('Delete', 'quillbooking')}
 			</Button>
 			<Modal
@@ -147,11 +179,12 @@ const EventActions: React.FC<EventActionsProps> = ({
 					<Flex
 						className="w-full mt-5 items-center justify-center"
 						gap={10}
+						key="footer"
 					>
 						<Button
 							key="cancel"
 							onClick={handleDeleteCancel}
-							className="border rounded-lg py-6 text-[#71717A] font-semibold w-full"
+							className="border rounded-lg text-[#71717A] font-semibold w-full"
 						>
 							{__('Back', 'quillbooking')}
 						</Button>
@@ -159,7 +192,7 @@ const EventActions: React.FC<EventActionsProps> = ({
 							key="save"
 							type="primary"
 							onClick={handleDelete}
-							className="bg-[#EF4444] rounded-lg py-6 font-semibold w-full"
+							className="bg-[#EF4444] rounded-lg font-semibold w-full"
 						>
 							{__('Yes, Delete', 'quillbooking')}
 						</Button>
@@ -191,7 +224,6 @@ const EventActions: React.FC<EventActionsProps> = ({
 			</Modal>
 			<Modal
 				open={isModalDisableOpen}
-				onOk={handleDisable}
 				onCancel={handleDisableCancel}
 				okText={__('Yes', 'quillbooking')}
 				cancelText={__('No', 'quillbooking')}
@@ -199,21 +231,24 @@ const EventActions: React.FC<EventActionsProps> = ({
 					<Flex
 						className="w-full mt-5 items-center justify-center"
 						gap={10}
+						key="footer"
 					>
 						<Button
 							key="cancel"
 							onClick={handleDisableCancel}
-							className="border rounded-lg py-6 text-[#71717A] font-semibold w-full"
+							className="border rounded-lg text-[#71717A] font-semibold w-full"
 						>
 							{__('Back', 'quillbooking')}
 						</Button>
 						<Button
 							key="save"
 							type="primary"
-							onClick={handleDisable}
-							className="bg-[#EF4444] rounded-lg py-6 font-semibold w-full"
+							onClick={() => handleDisable(!isDisabled)}
+							className="bg-[#EF4444] rounded-lg font-semibold w-full"
 						>
-							{__('Yes, Disable', 'quillbooking')}
+							{isDisabled
+								? __('Yes, Enable', 'quillbooking')
+								: __('Yes, Disable', 'quillbooking')}
 						</Button>
 					</Flex>,
 				]}
@@ -228,16 +263,16 @@ const EventActions: React.FC<EventActionsProps> = ({
 						<CalendarDisableIcon />
 					</div>
 					<p className="text-[#09090B] text-[20px] font-[700] mt-5">
-						{__(
-							'Do you really you want to disable this event?',
-							'quillbooking'
-						)}
+						{isDisabled
+							? __('Do you really you want to enable this event?', 'quillbooking')
+							: __('Do you really you want to disable this event?', 'quillbooking')
+						}
 					</p>
 					<span className="text-[#71717A] text-center">
-						{__(
-							'by Disable this event you will not be able to Share or edit event untiled you Enable it again!',
-							'quillbooking'
-						)}
+						{isDisabled
+							? __('Enabling this event will make it available for booking', 'quillbooking')
+							: __('by Disable this event you will not be able to Share or edit event untiled you Enable it again!', 'quillbooking')
+						}
 					</span>
 				</Flex>
 			</Modal>

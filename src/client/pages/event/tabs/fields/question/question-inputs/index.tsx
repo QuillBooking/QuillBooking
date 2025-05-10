@@ -23,7 +23,7 @@ import { BiPlus } from 'react-icons/bi';
 import { TrashIcon } from '../../../../../../../components';
 import CommonNumberInput from './common-number-input';
 import CommonDatepicker from './common-datepicker';
-import EmailEditor from '../../../notifications/notification-card/editor';
+import { Editor as EmailEditor } from '@quillbooking/components';
 
 interface QuestionInputsProps {
 	fieldKey: string;

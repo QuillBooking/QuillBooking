@@ -46,7 +46,11 @@ class Booking_Location extends Merge_Tag {
 	 *
 	 * @return string
 	 */
-	public function get_value( $booking, $options = array() ) {
+	public function get_value($booking, $options = array())
+	{
+		if (empty($booking->location)) {
+			return ''; 
+		}
 		return $booking->location;
 	}
 }

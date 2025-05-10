@@ -1,8 +1,19 @@
-import { Button, Flex, Input } from "antd";
-import { CopyWhiteIcon } from "@quillbooking/components";
-import React from "react";
-import { useCopyToClipboard } from "@quillbooking/hooks";
+/**
+ * WordPress dependencies
+ */
 import { __ } from "@wordpress/i18n";
+
+/**
+ * External dependencies
+ */
+import React from "react";
+import { Button, Flex, Input } from "antd";
+
+/**
+ * Internal dependencies
+ */
+import { CopyWhiteIcon } from "@quillbooking/components";
+import { useCopyToClipboard } from "@quillbooking/hooks";
 
 const DirectLink: React.FC<{ url: string; icon: React.ReactNode; title: string }> = ({ url, icon, title }) => {
     const copyToClipboard = useCopyToClipboard();
@@ -22,7 +33,7 @@ const DirectLink: React.FC<{ url: string; icon: React.ReactNode; title: string }
                 <div className="pb-2 text-[#3F4254] text-[16px] font-semibold">{__("Generated Link","quillbooking")}</div>
                 <Flex gap={10}>
                     <Input value={url} readOnly className="h-[48px] text-[#999999] rounded-lg"/>
-                    <Button className="bg-color-primary h-[48px] px-7 rounded-lg"
+                    <Button className="bg-color-primary h-[48px] px-7 rounded-lg text-white"
                     onClick={() => copyToClipboard(url, __('Link copied', 'quillbooking'))}>
                         <CopyWhiteIcon/>
                         <span className="text-white text-[16px] font-[500] self-center">{__("Copy",'quillbooking')}</span>

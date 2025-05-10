@@ -46,6 +46,9 @@ class Guest_Timezone extends Merge_Tag {
 	 * @return string
 	 */
 	public function get_value( $booking, $options = array() ) {
+		if ( ! isset( $booking->timezone ) ) {
+			return '';
+		}
 		return $booking->timezone;
 	}
 }

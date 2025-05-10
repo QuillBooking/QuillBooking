@@ -22,7 +22,7 @@ import BookingList from './booking-list';
 import MeetingInformation from './meeting-information';
 import InviteeInformation from './invitee-information';
 import MeetingActivities from './booking-activities';
-import { CancelIcon, UpcompingCalendarIcon } from '@quillbooking/components';
+import { CancelIcon, UpcomingCalendarIcon } from '@quillbooking/components';
 import { BookingActions } from '@quillbooking/components';
 import BookingQuestion from './booking-question';
 
@@ -166,7 +166,7 @@ const BookingDetails: React.FC = () => {
 
 				<div className="flex flex-col flex-2 gap-4">
 					<div className="bg-color-primary p-8 rounded-2xl text-white">
-						<UpcompingCalendarIcon width={60} height={60} />
+						<UpcomingCalendarIcon width={60} height={60} />
 						<p className="text-lg font-normal my-1">
 							{__('Event Date/Time', 'quillbooking')}
 						</p>

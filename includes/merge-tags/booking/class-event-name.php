@@ -47,6 +47,6 @@ class Event_Name extends Merge_Tag {
 	 * @return string
 	 */
 	public function get_value( $booking, $options = array() ) {
-		return $booking->event->name;
+		return isset($booking->event->name) ? $booking->event->name : '';
 	}
 }

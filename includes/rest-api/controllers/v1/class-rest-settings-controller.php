@@ -15,6 +15,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
+use QuillBooking\Payment_Gateway\Payment_Validator;
 
 /**
  * REST_Settings_Controller class.
@@ -73,7 +74,7 @@ class REST_Settings_Controller extends REST_Controller {
 			'type'                 => 'object',
 			'additionalProperties' => false,
 			'properties'           => array(
-				'general' => array(
+				'general'  => array(
 					'type'        => 'object',
 					'description' => __( 'General settings', 'quillbooking' ),
 					'properties'  => array(
@@ -85,7 +86,7 @@ class REST_Settings_Controller extends REST_Controller {
 						'start_from'              => array(
 							'type'        => 'string',
 							'description' => __( 'Start from', 'quillbooking' ),
-							'default'     => 'suturday',
+							'default'     => 'Monday',
 						),
 						'time_format'             => array(
 							'type'        => 'string',
@@ -118,72 +119,72 @@ class REST_Settings_Controller extends REST_Controller {
 							'default'     => 'daily',
 						),
 					),
-					'payments'    => array(
-						'type'        => 'object',
-						'description' => __( 'Payments settings', 'quillbooking' ),
-						'properties'  => array(
-							'currency' => array(
-								'type'        => 'string',
-								'description' => __( 'Currency', 'quillbooking' ),
-								'default'     => '',
-							),
+				),
+				'payments' => array(
+					'type'        => 'object',
+					'description' => __( 'Payments settings', 'quillbooking' ),
+					'properties'  => array(
+						'currency' => array(
+							'type'        => 'string',
+							'description' => __( 'Currency', 'quillbooking' ),
+							'default'     => '',
 						),
 					),
-					'email'       => array(
-						'type'        => 'object',
-						'description' => __( 'Email settings', 'quillbooking' ),
-						'properties'  => array(
-							'from_name'               => array(
-								'type'        => 'string',
-								'description' => __( 'From name', 'quillbooking' ),
-								'default'     => '',
-							),
-							'from_email'              => array(
-								'type'        => 'string',
-								'description' => __( 'From email', 'quillbooking' ),
-								'default'     => '',
-							),
-							'reply_to_name'           => array(
-								'type'        => 'string',
-								'description' => __( 'Reply to Name', 'quillbooking' ),
-								'default'     => '',
-							),
-							'reply_to_email'          => array(
-								'type'        => 'string',
-								'description' => __( 'Reply to Email', 'quillbooking' ),
-								'default'     => '',
-							),
-							'use_host_from_name'      => array(
-								'type'        => 'boolean',
-								'description' => __( 'Use host from name', 'quillbooking' ),
-								'default'     => false,
-							),
-							'use_host_reply_to_email' => array(
-								'type'        => 'boolean',
-								'description' => __( 'Use host reply to email', 'quillbooking' ),
-								'default'     => false,
-							),
-							'include_ics'             => array(
-								'type'        => 'boolean',
-								'description' => __( 'Include ICS', 'quillbooking' ),
-								'default'     => false,
-							),
-							'footer'                  => array(
-								'type'        => 'string',
-								'description' => __( 'Footer', 'quillbooking' ),
-								'default'     => '',
-							),
+				),
+				'email'    => array(
+					'type'        => 'object',
+					'description' => __( 'Email settings', 'quillbooking' ),
+					'properties'  => array(
+						'from_name'               => array(
+							'type'        => 'string',
+							'description' => __( 'From name', 'quillbooking' ),
+							'default'     => '',
+						),
+						'from_email'              => array(
+							'type'        => 'string',
+							'description' => __( 'From email', 'quillbooking' ),
+							'default'     => '',
+						),
+						'reply_to_name'           => array(
+							'type'        => 'string',
+							'description' => __( 'Reply to Name', 'quillbooking' ),
+							'default'     => '',
+						),
+						'reply_to_email'          => array(
+							'type'        => 'string',
+							'description' => __( 'Reply to Email', 'quillbooking' ),
+							'default'     => '',
+						),
+						'use_host_from_name'      => array(
+							'type'        => 'boolean',
+							'description' => __( 'Use host from name', 'quillbooking' ),
+							'default'     => false,
+						),
+						'use_host_reply_to_email' => array(
+							'type'        => 'boolean',
+							'description' => __( 'Use host reply to email', 'quillbooking' ),
+							'default'     => false,
+						),
+						'include_ics'             => array(
+							'type'        => 'boolean',
+							'description' => __( 'Include ICS', 'quillbooking' ),
+							'default'     => false,
+						),
+						'footer'                  => array(
+							'type'        => 'string',
+							'description' => __( 'Footer', 'quillbooking' ),
+							'default'     => '',
 						),
 					),
-					'theme'       => array(
-						'type'        => 'object',
-						'description' => __( 'Theme settings', 'quillbooking' ),
-						'properties'  => array(
-							'color_scheme' => array(
-								'type'        => 'string',
-								'description' => __( 'Color scheme', 'quillbooking' ),
-								'default'     => 'system',
-							),
+				),
+				'theme'    => array(
+					'type'        => 'object',
+					'description' => __( 'Theme settings', 'quillbooking' ),
+					'properties'  => array(
+						'color_scheme' => array(
+							'type'        => 'string',
+							'description' => __( 'Color scheme', 'quillbooking' ),
+							'default'     => 'system',
 						),
 					),
 				),
@@ -236,6 +237,20 @@ class REST_Settings_Controller extends REST_Controller {
 	 */
 	public function update( $request ) {
 		$settings = $request->get_json_params();
+
+		// Validate payment settings if they're being updated
+		if ( isset( $settings['payments'] ) ) {
+			$payments_settings = $settings['payments'];
+
+			// If there are event-specific payment settings being updated
+			if ( isset( $payments_settings['enable_payment'] ) ) {
+				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+				if ( is_wp_error( $validation_result ) ) {
+					return $validation_result;
+				}
+			}
+		}
+
 		Settings::update_many( $settings );
 		return new WP_REST_Response( array( 'success' => true ), 200 );
 	}

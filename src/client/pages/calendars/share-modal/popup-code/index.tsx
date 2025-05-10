@@ -1,12 +1,17 @@
+/**
+ * WordPress dependencies
+ */
 import { __ } from "@wordpress/i18n";
-import { Button, Card, Flex, Form, Input, Radio, Select } from "antd";
-import { CopyWhiteIcon } from "@quillbooking/components";
-import { useCopyToClipboard } from "@quillbooking/hooks";
-import { FaCheck } from "react-icons/fa6";
-
+/**
+ * External dependencies
+ */
+import { Button, Flex, Input, Select } from "antd";
 import React, { useState } from "react";
-
-const colors = ["#953AE4", "#0099FF", "#FF4F00", "#E55CFF", "#0AE8F0", "#17E885", "#CCF000", "#FFA600"];
+/**
+ * Internal dependencies
+ */
+import { ColorSelector, CopyWhiteIcon } from "@quillbooking/components";
+import { useCopyToClipboard } from "@quillbooking/hooks";
 
 const PopupCode: React.FC<{ url: string; icon: React.ReactNode; title: string }> = ({ url, icon, title }) => {
     const copyToClipboard = useCopyToClipboard();
@@ -71,70 +76,28 @@ const PopupCode: React.FC<{ url: string; icon: React.ReactNode; title: string }>
                 <Flex vertical gap={8} className="items-baseline justify-center">
                     <div className="text-[15px]">{__("Button background color", 'quillbooking')}</div>
                     <div className="grid grid-cols-3 gap-4 place-items-center mt-2">
-                        {colors.map((color) => (
-                            <Button
-                                key={color}
-                                shape="circle"
-                                size="large"
-                                onClick={() => handleChange("backgroundColor", color)}
-                                className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 
-                                    ${buttonSettings.backgroundColor === color ? "ring ring-offset-2" : ""}`} // Apply ring only if selected
-                                style={{
-                                    backgroundColor: color,
-                                    minWidth: "25px",
-                                    border: buttonSettings.backgroundColor === color ? '' : "2px solid #F2EBF9", // Dynamic border color
-                                    "--tw-ring-color": buttonSettings.backgroundColor === color ? color : "",
-                                }}
-                            >
-                                {buttonSettings.backgroundColor === color && <FaCheck className="text-white text-md absolute" />}
-                            </Button>
-                        ))}
+                        <ColorSelector
+                            selectedColor={buttonSettings.backgroundColor || null}
+                            onColorSelect={(color) => handleChange('backgroundColor', color)}
+                        />
                     </div>
                 </Flex>
                 <Flex vertical gap={8}>
                     <div className="text-[15px]">{__("Button text color", 'quillbooking')}</div>
                     <div className="grid grid-cols-3 gap-4 place-items-center mt-2">
-                        {colors.map((color) => (
-                            <Button
-                                key={color}
-                                shape="circle"
-                                size="large"
-                                onClick={() => handleChange("textColor", color)}
-                                className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 
-                                    ${buttonSettings.textColor === color ? "ring ring-offset-2" : ""}`} // Apply ring only if selected
-                                style={{
-                                    backgroundColor: color,
-                                    minWidth: "25px",
-                                    border: buttonSettings.textColor === color ? '' : "2px solid #F2EBF9", // Dynamic border color
-                                    "--tw-ring-color": buttonSettings.textColor === color ? color : "",
-                                }}
-                            >
-                                {buttonSettings.textColor === color && <FaCheck className="text-white text-md absolute" />}
-                            </Button>
-                        ))}
+                        <ColorSelector
+                            selectedColor={buttonSettings.textColor || null}
+                            onColorSelect={(color) => handleChange('textColor', color)}
+                        />
                     </div>
                 </Flex>
                 <Flex vertical gap={8}>
                     <div className="text-[15px]">{__("Button border color", 'quillbooking')}</div>
                     <div className="grid grid-cols-3 gap-4 place-items-center mt-2">
-                        {colors.map((color) => (
-                            <Button
-                                key={color}
-                                shape="circle"
-                                size="large"
-                                onClick={() => handleChange("borderColor", color)}
-                                className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 
-                                    ${buttonSettings.borderColor === color ? "ring ring-offset-2" : ""}`} // Apply ring only if selected
-                                style={{
-                                    backgroundColor: color,
-                                    minWidth: "25px",
-                                    border: buttonSettings.borderColor === color ? '' : "2px solid #F2EBF9", // Dynamic border color
-                                    "--tw-ring-color": buttonSettings.borderColor === color ? color : "",
-                                }}
-                            >
-                                {buttonSettings.borderColor === color && <FaCheck className="text-white text-md absolute" />}
-                            </Button>
-                        ))}
+                        <ColorSelector
+                            selectedColor={buttonSettings.borderColor || null}
+                            onColorSelect={(color) => handleChange('borderColor', color)}
+                        />
                     </div>
                 </Flex>
             </Flex>
@@ -249,7 +212,7 @@ const PopupCode: React.FC<{ url: string; icon: React.ReactNode; title: string }>
                 <div className="pb-2 text-[#3F4254] text-[16px] font-semibold">{__("Copy the shortcode below and insert it in your WordPress page or post.", "quillbooking")}</div>
                 <Flex gap={10} vertical>
                     <Input value={url} readOnly className="h-[140px] text-[#999999] rounded-lg" />
-                    <Button className="bg-color-primary h-[48px] px-9 w-fit rounded-lg"
+                    <Button className="bg-color-primary h-[48px] px-9 w-fit rounded-lg text-white"
                         onClick={() => copyToClipboard(url, __('Link copied', 'quillbooking'))}>
                         <CopyWhiteIcon />
                         <span className="text-white text-[16px] font-[500] self-center">{__("Copy", 'quillbooking')}</span>

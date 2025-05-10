@@ -7,12 +7,17 @@ import { useState, useEffect, useRef } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Button, Flex, Switch, Typography } from 'antd';
+import { Button, Flex, Switch } from 'antd';
 import {
-	SettingOutlined,
-	ClockCircleOutlined,
-	BorderBottomOutlined,
-} from '@ant-design/icons';
+	Box,
+	Dialog,
+	DialogActions,
+	DialogTitle,
+	Tab,
+	Tabs,
+} from '@mui/material';
+import { IoCloseSharp } from 'react-icons/io5';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Internal dependencies
@@ -44,24 +49,20 @@ import { Provider } from './state/context';
 import Calendar from '../calendar';
 import {
 	EventDetails,
-	Availability,
-	Limits,
-	Fields,
-	Notifications,
 	AdvancedSettings,
 	Payments,
+	WebhookFeeds,
+	EmailNotificationTab,
+	SmsNotificationTab,
+	AvailabilityLimits
 } from './tabs';
-import {
-	Box,
-	Dialog,
-	DialogActions,
-	DialogTitle,
-	Tab,
-	Tabs,
-} from '@mui/material';
-import { IoCloseSharp } from 'react-icons/io5';
 import ShareModal from '../calendars/share-modal';
 import EventFieldsTab from './tabs/fields';
+
+interface NoticeType {
+	title: string;
+	message: string;
+}
 
 const Event: React.FC = () => {
 	const {
@@ -82,6 +83,16 @@ const Event: React.FC = () => {
 	const [checked, setChecked] = useState(true);
 	const [modalShareId, setModalShareId] = useState<string | null>(null);
 	const [saveDisabled, setSaveDisabled] = useState(true);
+	const [isSaving, setIsSaving] = useState(false);
+	const location = useLocation();
+	const [notice, setNotice] = useState<NoticeType | null>(null);
+
+	useEffect(() => {
+		if (location.state?.notice) {
+			setNotice(location.state.notice);
+			window.history.replaceState({}, document.title);
+		}
+	}, [location.state]);
 
 	const navigate = useNavigate();
 	const setBreadcrumbs = useBreadcrumbs();
@@ -194,9 +205,16 @@ const Event: React.FC = () => {
 		setChecked(checked);
 	};
 
-	const handleSave = () => {
-		if (childRef.current) {
-			childRef.current.saveSettings();
+	const handleSave = async () => {
+		if (!childRef.current || isSaving) return; // Prevent multiple clicks
+
+		setIsSaving(true); // Disable button immediately
+
+		try {
+			await childRef.current.saveSettings(); // Wait for save to complete
+		}
+		finally {
+			setIsSaving(false); // Re-enable button
 		}
 	};
 
@@ -204,55 +222,91 @@ const Event: React.FC = () => {
 		{
 			key: 'details',
 			label: __('Event Details', 'quillbooking'),
-			children: <EventDetails onKeepDialogOpen={() => setOpen(true)} />,
+			children:
+				<EventDetails
+					onKeepDialogOpen={() => setOpen(true)}
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+					notice={notice}
+					clearNotice={() => setNotice(null)}
+				/>
+			,
 			icon: <CalendarsIcon />,
 		},
 		{
 			key: 'availability',
 			label: __('Availability & Limits', 'quillbooking'),
-			children: <Availability />,
+			children: (
+				<AvailabilityLimits
+					ref={childRef}
+					setDisabled={setSaveDisabled}
+					disabled={saveDisabled}
+				/>
+			),
 			icon: <AvailabilityIcon />,
 		},
 		{
 			key: 'question',
 			label: __('Question Settings', 'quillbooking'),
-			children: event ? (
+			children:
 				<EventFieldsTab
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
-				/>
-			) : null,
+				/>,
 			icon: <QuestionIcon />,
 		},
 		{
 			key: 'email-notifications',
 			label: __('Email Notification', 'quillbooking'),
-			children: <Notifications notificationType="email" />,
+			children: <EmailNotificationTab
+				ref={childRef}
+				disabled={saveDisabled}
+				setDisabled={setSaveDisabled}
+			/>,
 			icon: <EmailNotiIcon />,
 		},
 		{
 			key: 'sms-notifications',
 			label: __('SMS Notification', 'quillbooking'),
-			children: <Notifications notificationType="sms" />,
+			children: <SmsNotificationTab
+				ref={childRef}
+				disabled={saveDisabled}
+				setDisabled={setSaveDisabled}
+			/>,
 			icon: <SmsNotiIcon />,
 		},
 		{
 			key: 'advanced-settings',
 			label: __('Advanced Settings', 'quillbooking'),
-			children: <AdvancedSettings />,
+			children:
+				<AdvancedSettings
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>,
 			icon: <SettingsIcon />,
 		},
 		{
 			key: 'payment-settings',
 			label: __('Payments Settings', 'quillbooking'),
-			children: <Payments />,
+			children:
+				<Payments
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>,
 			icon: <PaymentSettingsIcon />,
 		},
 		{
 			key: 'webhooks-feeds',
 			label: __('Webhooks Feeds', 'quillbooking'),
-			children: <Payments />,
+			children: <WebhookFeeds
+				ref={childRef}
+				disabled={saveDisabled}
+				setDisabled={setSaveDisabled}
+			/>,
 			icon: <WebhookIcon />,
 		},
 		// {
@@ -318,7 +372,8 @@ const Event: React.FC = () => {
 				open={open}
 				onClose={handleClose}
 				fullScreen
-				>
+				className="z-[150000]"
+			>
 				<DialogTitle className="border-b" sx={{ padding: '10px 16px' }}>
 					<Flex className="justify-between items-center">
 						<Flex gap={10}>
@@ -372,13 +427,12 @@ const Event: React.FC = () => {
 							<Button
 								type="primary"
 								size="middle"
-								// onClick={saveSettings}
 								onClick={handleSave}
-								loading={loading}
-								disabled={saveDisabled}
-								className={`rounded-lg font-[500] text-white ${saveDisabled
-										? 'bg-gray-400 cursor-not-allowed'
-										: 'bg-color-primary '
+								loading={isSaving}
+								disabled={saveDisabled || isSaving}
+								className={`rounded-lg font-[500] text-white ${saveDisabled || isSaving
+									? 'bg-gray-400 cursor-not-allowed'
+									: 'bg-color-primary '
 									}`}
 							>
 								{__('Save Changes', 'quillbooking')}

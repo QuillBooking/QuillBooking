@@ -1,9 +1,20 @@
+/**
+ * WordPress dependencies
+ */
+import { __ } from "@wordpress/i18n";
+
+/**
+ * External dependencies
+ */
 import React, { useState } from "react";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { IoCloseSharp } from "react-icons/io5";
-import { __ } from "@wordpress/i18n";
 import { Card, Flex } from "antd";
-import { EmbedCodeIcon, Header, LinkIcon, PopUpIcon, QrIcon, ShareEventIcon, ShortCodeIcon } from "@quillbooking/components";
+
+/**
+ * Internal dependencies
+ */
+import { DirectLinkIcon, EmbedCodeIcon, Header, PopUpIcon, QrIcon, ShareEventIcon, ShortCodeIcon } from "@quillbooking/components";
 import DirectLink from "./direct-link";
 import ShortCode from "./short-code";
 import EmbedCode from "./embed-code";
@@ -11,11 +22,11 @@ import PopupCode from "./popup-code";
 import QrCode from "./qr-code";
 
 const shareOptions = [
-    { key: "directLink", icon: <LinkIcon />, title: __('Direct Link', 'quillbooking'), description: __("Copy the form link and share it with your audience..",'quillbooking'), component: DirectLink },
-    { key: "shortCode", icon: <ShortCodeIcon />, title: __("Short Code", 'quillbooking'), description: __("Copy the shortcode and paste it into your post or page.","quillbooking"), component: ShortCode },
-    { key: "embedCode", icon: <EmbedCodeIcon />, title: __("Embed Code",'quillbooking'), description: __("Embed code is useful to share the form in an external web page. Copy the code and paste it into your external post or page.","quillbooking"), component: EmbedCode },
-    { key: "popUp", icon: <PopUpIcon />, title: __("Pop Up",'quillbooking'), description: __("Display your form on a popup upon clicking a designated button. Copy the short code and paste it into your post or page.",'quillbooking'), component: PopupCode },
-    { key: "qrCode", icon: <QrIcon />, title: __("QR Code",'quillbooking'), description: __("Share your form with others by scanning the QR code.",'quillbooking'), component: QrCode },
+    { key: "directLink", icon: <DirectLinkIcon />, title: __('Direct Link', 'quillbooking'), description: __("Copy the form link and share it with your audience..", 'quillbooking'), component: DirectLink },
+    { key: "shortCode", icon: <ShortCodeIcon />, title: __("Short Code", 'quillbooking'), description: __("Copy the shortcode and paste it into your post or page.", "quillbooking"), component: ShortCode },
+    { key: "embedCode", icon: <EmbedCodeIcon />, title: __("Embed Code", 'quillbooking'), description: __("Embed code is useful to share the form in an external web page. Copy the code and paste it into your external post or page.", "quillbooking"), component: EmbedCode },
+    { key: "popUp", icon: <PopUpIcon />, title: __("Pop Up", 'quillbooking'), description: __("Display your form on a popup upon clicking a designated button. Copy the short code and paste it into your post or page.", 'quillbooking'), component: PopupCode },
+    { key: "qrCode", icon: <QrIcon />, title: __("QR Code", 'quillbooking'), description: __("Share your form with others by scanning the QR code.", 'quillbooking'), component: QrCode },
 ];
 
 const ShareModal: React.FC<{ open: boolean; onClose: () => void; url: string }> = ({ open, onClose, url }) => {
@@ -32,16 +43,11 @@ const ShareModal: React.FC<{ open: boolean; onClose: () => void; url: string }> 
             aria-describedby="share-modal-description"
             className="share-modal"
             maxWidth="lg"
-            PaperProps={{
-                sx: {
-                    marginLeft: "250px",
-                    padding: '10px 8px',
-                    borderRadius: "16px"
-                }
+            sx={{
+                zIndex: 160000, // Higher than the other dialog
             }}
         >
             <DialogTitle
-                //id="qsmtp-log-dialog-title"
                 sx={{
                     backgroundColor: 'white',
                     width: "100%"
@@ -74,7 +80,14 @@ const ShareModal: React.FC<{ open: boolean; onClose: () => void; url: string }> 
                                         {icon}
                                     </div>
                                     <div className='flex flex-col'>
-                                        <span className='text-[#3F4254] text-[16px] font-semibold'>{title}</span>
+                                        <div className="flex gap-5 items-center">
+                                            <span className='text-[#3F4254] text-[16px] font-semibold'>{title}</span>
+                                            {(key === "popUp" || key === "qrCode") && (
+                                                <span className='bg-color-primary text-white rounded-lg text-[11px] pt-[3px] px-2 h-[22px]'>
+                                                    {__('NEW', 'quillbooking')}
+                                                </span>
+                                            )}
+                                        </div>
                                         <span className={`text-[12px] font-[400] ${selectedKey === key ? "text-[#505255]" : "text-[#9197A4]"
                                             }`}>{description}</span>
                                     </div>

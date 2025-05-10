@@ -47,6 +47,9 @@ class Booking_Details_URL extends Merge_Tag {
 	 * @return string
 	 */
 	public function get_value( $booking, $options = array() ) {
+		if (! ($booking instanceof Booking_Model) || ! method_exists($booking, 'getDetailsUrl')) {
+			return '';
+		}
 		return $booking->getDetailsUrl();
 	}
 }

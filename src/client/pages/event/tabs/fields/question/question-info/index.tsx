@@ -8,7 +8,7 @@ import { __ } from '@wordpress/i18n';
  */
 import { Select } from 'antd';
 import { FieldsGroup } from 'client/types';
-import TagComponent from './tag';
+import { TagComponent } from '@quillbooking/components';
 
 interface QuestionInfoProps {
 	fieldKey: string;

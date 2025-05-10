@@ -18,9 +18,11 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
+use QuillBooking\Availability_service;
 use QuillBooking\Models\Calendar_Model;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Capabilities;
+use QuillBooking\Models\User_Model;
 
 /**
  * Calendar Controller class
@@ -146,6 +148,24 @@ class REST_Calendar_Controller extends REST_Controller {
 							'items'       => array(
 								'type' => 'integer',
 							),
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)' . '/team',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item_team' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
+							'type'        => 'integer',
 						),
 					),
 				),
@@ -304,7 +324,7 @@ class REST_Calendar_Controller extends REST_Controller {
 				return new WP_Error( 'rest_calendar_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
 			}
 
-			$query = Calendar_Model::query();
+			$query = Calendar_Model::query()->with( 'user' );
 
 			if ( ! empty( $keyword ) ) {
 				$query->whereHas(
@@ -331,7 +351,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			$calendars = $query->with(
 				array(
 					'events' => function( $query ) use ( $keyword ) {
-						$query->select( 'id', 'calendar_id', 'name', 'duration', 'type', 'slug' );
+						$query->select( 'id', 'calendar_id', 'name', 'duration', 'type', 'slug', 'is_disabled' );
 						if ( $keyword ) {
 							$query->where( 'name', 'like', '%' . $keyword . '%' );
 						}
@@ -368,58 +388,49 @@ class REST_Calendar_Controller extends REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
+		global $wpdb;
+		$wpdb->query( 'START TRANSACTION' );
 		try {
-			$user_id     = $request->get_param( 'user_id' );
-			$name        = $request->get_param( 'name' );
-			$description = $request->get_param( 'description' );
-			$type        = $request->get_param( 'type' );
-			$members     = $request->get_param( 'members' );
-			$timezone    = $request->get_param( 'timezone' );
-			$user_id     = 'team' === $type ? get_current_user_id() : $user_id;
+			$name         = $request->get_param( 'name' );
+			$description  = $request->get_param( 'description' );
+			$type         = $request->get_param( 'type' );
+			$members      = $request->get_param( 'members' );
+			$timezone     = $request->get_param( 'timezone' );
+			$availability = $request->get_param( 'availability' );
 
-			if ( ! $user_id ) {
-				return new WP_Error( 'rest_calendar_error', __( 'User ID is required', 'quillbooking' ), array( 'status' => 400 ) );
+			if ( ! in_array( $type, array( 'team', 'host' ), true ) ) {
+				throw new Exception( __( 'Invalid calendar type', 'quillbooking' ), 400 );
 			}
 
-			if ( empty( $timezone ) ) {
-				return new WP_Error( 'rest_calendar_error', __( 'Calendar timezone is required', 'quillbooking' ), array( 'status' => 400 ) );
+			$user_id = $type === 'team' ? get_current_user_id() : $request->get_param( 'user_id' );
+
+			if ( $type === 'host' ) {
+				$this->validate_host_calendar( $user_id, $availability );
+			} else {
+				$this->validate_team_calendar( $members );
 			}
 
-			if ( 'team' === $type ) {
-				if ( empty( $members ) ) {
-					return new WP_Error( 'rest_calendar_error', __( 'Team members are required', 'quillbooking' ), array( 'status' => 400 ) );
-				}
-
-				$calendars = Calendar_Model::whereIn( 'ID', $members )
-							->where( 'type', 'host' )
-							->get();
-
-				if ( $calendars->count() !== count( $members ) ) {
-					return new WP_Error( 'rest_calendar_error', __( 'Please make sure that you selected the right hosts', 'quillbooking' ), array( 'status' => 400 ) );
-				}
-			}
-
-			$user_id  = ! empty( $user_id ) ? $user_id : get_current_user_id();
 			$calendar = Calendar_Model::create(
 				array(
 					'user_id'     => $user_id,
 					'name'        => $name,
 					'description' => $description,
 					'type'        => $type,
+					'timezone'    => $timezone,
 				)
 			);
 
-			if ( 'team' === $type ) {
+			if ( $type === 'team' ) {
 				$calendar->syncTeamMembers( $members );
+			} elseif ( $type === 'host' ) {
+					$this->create_availability( $user_id, $availability, $timezone );
 			}
 
-			$calendar->timezone = $timezone;
-			$calendar->save();
-
-			$calendar->team_members = $calendar->getTeamMembers();
+			$wpdb->query( 'COMMIT' );
 
 			return new WP_REST_Response( $calendar, 200 );
 		} catch ( Exception $e ) {
+			$wpdb->query( 'ROLLBACK' );
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -512,6 +523,36 @@ class REST_Calendar_Controller extends REST_Controller {
 		return Capabilities::can_read_calendar( $id );
 	}
 
+		/**
+		 * Get item team
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param WP_REST_Request $request Full data about the request.
+		 * @return WP_REST_Response|WP_Error
+		 */
+	public function get_item_team( $request ) {
+		try {
+			$id       = $request->get_param( 'id' );
+			$calendar = Calendar_Model::select( 'id' )->find( $id );
+
+			$calendar_team = $calendar->getTeamMembers();
+
+			$users = array();
+			foreach ( $calendar_team as $teamId ) {
+				$user = User_Model::where( 'ID', $teamId )->first();
+				if ( $user ) {
+					$users[] = $user;
+				}
+			}
+
+			return new WP_REST_Response( $users, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_team_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+
 	/**
 	 * Update a calendar
 	 *
@@ -534,6 +575,9 @@ class REST_Calendar_Controller extends REST_Controller {
 			$slug           = $request->get_param( 'slug' );
 
 			$calendar = Calendar_Model::find( $id );
+			if ( isset( $calendar->team_members ) ) {
+				unset( $calendar->team_members );
+			}
 
 			if ( ! $calendar ) {
 				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );
@@ -733,5 +777,63 @@ class REST_Calendar_Controller extends REST_Controller {
 	public function clone_events_permissions_check( $request ) {
 		$id = $request->get_param( 'id' );
 		return Capabilities::can_manage_calendar( $id );
+	}
+
+
+
+	/**
+	 * Validate host calendar requirements
+	 */
+	private function validate_host_calendar( $user_id, $availability ) {
+		// Check if user exists
+		if ( empty( $user_id ) || ! User_Model::where( 'ID', $user_id )->exists() ) {
+			throw new Exception( __( 'Invalid user ID. User does not exist.', 'quillbooking' ), 400 );
+		}
+
+		// Check for existing host calendar
+		if ( Calendar_Model::where( 'user_id', $user_id )->where( 'type', 'host' )->exists() ) {
+			throw new Exception( __( 'You already have a host calendar', 'quillbooking' ), 400 );
+		}
+
+		if ( empty( $availability['weekly_hours'] ) || ! is_array( $availability['weekly_hours'] ) ) {
+			throw new Exception( __( 'Valid weekly hours are required', 'quillbooking' ), 400 );
+		}
+	}
+
+	/**
+	 * Validate team calendar requirements
+	 */
+	private function validate_team_calendar( $members ) {
+		if ( empty( $members ) ) {
+			throw new Exception( __( 'Team members are required', 'quillbooking' ), 400 );
+		}
+
+		$valid_members = Calendar_Model::whereIn( 'user_id', $members )
+			->where( 'type', 'host' )
+			->pluck( 'ID' );
+
+		if ( count( $valid_members ) !== count( $members ) ) {
+			throw new Exception( __( 'Invalid team member selection', 'quillbooking' ), 400 );
+		}
+	}
+
+
+	/**
+	 * Handle availability creation
+	 */
+	private function create_availability( $user_id, $availability_data, $timezone ) {
+		$service = new Availability_Service();
+		$result  = $service->create_availability(
+			$user_id,
+			'Default Availability',
+			$availability_data['weekly_hours'],
+			$availability_data['override'] ?? array(),
+			$timezone,
+			true
+		);
+
+		if ( is_wp_error( $result ) ) {
+			throw new Exception( $result->get_error_message(), 400 );
+		}
 	}
 };

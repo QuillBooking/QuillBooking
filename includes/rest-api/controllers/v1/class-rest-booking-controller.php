@@ -1012,8 +1012,8 @@ class REST_Booking_Controller extends REST_Controller {
 				$this->apply_user_filter( $query, $user );
 			}
 
-			// Apply period filter
-			$this->apply_period_filter( $query, $period );
+			// Apply time period filter
+			$this->apply_period_filter_for_guests( $query, $period );
 
 			// Get bookings with their guests
 			$bookings = $query->with( 'guest' )->get();
@@ -1039,6 +1039,74 @@ class REST_Booking_Controller extends REST_Controller {
 			return new WP_REST_Response( $total_guests, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Apply time period filter for guest count queries
+	 *
+	 * @param mixed  $query The Booking query object
+	 * @param string $period Period to filter by
+	 * @return void
+	 */
+	protected function apply_period_filter_for_guests( $query, $period ) {
+		$now = current_time( 'mysql' );
+
+		switch ( $period ) {
+			case 'this_week':
+				// Get the current week's start (Monday) and end (Sunday)
+				$start_of_week = new DateTime( $now );
+				$start_of_week->modify( 'this week' )->setTime( 0, 0, 0 );
+
+				$end_of_week = clone $start_of_week;
+				$end_of_week->modify( '+6 days' )->setTime( 23, 59, 59 );
+
+				$query->whereBetween(
+					'start_time',
+					array(
+						$start_of_week->format( 'Y-m-d H:i:s' ),
+						$end_of_week->format( 'Y-m-d H:i:s' ),
+					)
+				);
+				break;
+
+			case 'this_month':
+				// Get the current month's start and end dates
+				$start_of_month = new DateTime( $now );
+				$start_of_month->modify( 'first day of this month' )->setTime( 0, 0, 0 );
+
+				$end_of_month = new DateTime( $now );
+				$end_of_month->modify( 'last day of this month' )->setTime( 23, 59, 59 );
+
+				$query->whereBetween(
+					'start_time',
+					array(
+						$start_of_month->format( 'Y-m-d H:i:s' ),
+						$end_of_month->format( 'Y-m-d H:i:s' ),
+					)
+				);
+				break;
+
+			case 'this_year':
+				// Get the current year's start and end dates
+				$start_of_year = new DateTime( $now );
+				$start_of_year->modify( 'first day of January this year' )->setTime( 0, 0, 0 );
+
+				$end_of_year = new DateTime( $now );
+				$end_of_year->modify( 'last day of December this year' )->setTime( 23, 59, 59 );
+
+				$query->whereBetween(
+					'start_time',
+					array(
+						$start_of_year->format( 'Y-m-d H:i:s' ),
+						$end_of_year->format( 'Y-m-d H:i:s' ),
+					)
+				);
+				break;
+
+			default:
+				// No date filtering for 'all'
+				break;
 		}
 	}
 

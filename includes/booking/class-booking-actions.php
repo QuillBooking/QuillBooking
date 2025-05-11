@@ -86,7 +86,7 @@ class Booking_Actions {
 		wp_register_script(
 			'quillbooking-page',
 			QUILLBOOKING_PLUGIN_URL . 'assets/js/booking-script.js',
-			$deps,
+			$dependencies,
 			$version,
 			true
 		);
@@ -99,7 +99,6 @@ class Booking_Actions {
 	public function init() {
 		$this->booking_actions();
 		add_action( 'template_redirect', array( $this, 'route_frontend' ) );
-		// return $this->route_frontend();
 	}
 
 	public function render_booking_page() {
@@ -305,7 +304,7 @@ class Booking_Actions {
 	 * Render cancel page
 	 */
 	protected function render_cancel_page( $booking, $fields ) {
-			return $this->render_generic_page( 'cancel', $booking, $fields );
+			return $this->render_generic_page( 'cancel', $booking, $fields, );
 	}
 
 	/**
@@ -398,11 +397,18 @@ class Booking_Actions {
 		}
 		$booking_array = $booking->toArray();
 		// Make the booking data available to the template
-		extract( array( 'booking' => $booking_array ) );
-		echo '<pre>';
-		var_export( $fields );
-		echo '</pre>';
+		extract(
+			array(
+				'booking' => $booking_array,
+				'fields'  => $fields,
+			)
+		);
+
 		// Debugging: Output the booking data for inspection
+		// echo '<pre>';
+		// print_r( $booking_array );
+		// echo '</pre>';
+
 		wp_enqueue_script( 'quillbooking-page' );
 		wp_enqueue_style( 'quillbooking-page' );
 

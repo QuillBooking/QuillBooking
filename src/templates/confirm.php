@@ -2,13 +2,13 @@
 $icons_url = plugins_url( 'src/templates/icons/', QUILLBOOKING_PLUGIN_FILE );
 ?>
 
-<div class="quillbooking-meeting-confirmation">
-	<div class="confirmation-details-container">
+<div class="quillbooking-meeting">
+	<div class="details-container">
 		<div class="profile-picture">
 			<img src="<?php echo esc_url( $icons_url . 'confirm.svg' ); ?>" alt="<?php esc_attr_e( 'confirmation', 'quillbooking' ); ?>" />
 		</div>
 
-		<h1 class="confirmation-title"><?php esc_html_e( 'Your meeting has been Scheduled', 'quillbooking' ); ?></h1>
+		<h1 class="title"><?php esc_html_e( 'Your meeting has been Scheduled', 'quillbooking' ); ?></h1>
 		<p class="calendar-info"><?php esc_html_e( 'A calendar invitation has been sent to your email address.', 'quillbooking' ); ?></p>
 
 		<div class="booking-card">

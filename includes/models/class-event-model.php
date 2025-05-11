@@ -124,6 +124,7 @@ class Event_Model extends Model {
 		'additional_settings',
 		'booking_count',
 		'connected_integrations',
+		'price',
 	);
 
 	/**
@@ -488,6 +489,35 @@ class Event_Model extends Model {
 		return $this->bookings()
 			->where( 'status', '!=', 'cancelled' )
 			->count();
+	}
+
+	/**
+	 * Get Price attribute
+	 *
+	 * @return float
+	 */
+	public function getPriceAttribute() {
+		$payments_enabled = $this->requirePayment();
+		if ( ! $payments_enabled ) {
+			return 0;
+		}
+
+		$items = $this->getItems();
+		if ( empty( $items ) ) {
+			return 0;
+		}
+
+		$total_price    = 0;
+		$multi_duration = Arr::get( $this->additional_settings, 'allow_attendees_to_select_duration', false );
+		if ( $multi_duration ) {
+			$total_price = Arr::get( $this->payments, 'multi_duration_items.0.price', 0 );
+		} else {
+			foreach ( $items as $item ) {
+				$total_price += $item['price'];
+			}
+		}
+
+		return $total_price;
 	}
 
 	/**

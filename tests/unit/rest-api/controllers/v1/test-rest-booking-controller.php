@@ -435,6 +435,12 @@ class Test_Rest_Booking_Controller extends QuillBooking_Base_Test_Case {
 		$expected_collection_key = '/' . $this->namespace . '/' . $this->rest_base; // e.g., '/qb/v1/bookings'
 		$expected_single_key     = '/' . $this->namespace . '/' . $this->rest_base . '/(?P<id>[\d]+)'; // e.g., '/qb/v1/bookings/(?P<id>[\d]+)'
 
+		$expected_counts_key    = '/' . $this->namespace . '/' . $this->rest_base . '/counts';
+		$expected_analytics_key = '/' . $this->namespace . '/' . $this->rest_base . '/analytics';
+
+		$this->assertArrayHasKey( $expected_counts_key, $routes, 'Counts route not registered' );
+		$this->assertArrayHasKey( $expected_analytics_key, $routes, 'Analytics route not registered' );
+
 		$this->assertArrayHasKey( $expected_collection_key, $routes, 'Collection route not registered (expected with leading slash)' );
 		$this->assertArrayHasKey( $expected_single_key, $routes, 'Single item route not registered (expected with leading slash)' );
 	}
@@ -1296,4 +1302,124 @@ class Test_Rest_Booking_Controller extends QuillBooking_Base_Test_Case {
 			}
 		}
 	}
+
+	public function test_get_booking_counts_as_admin() {
+		wp_set_current_user( $this->admin_user_id );
+
+		$calendar_admin = $this->create_test_calendar( $this->admin_user_id, 'Admin Cal Counts' );
+		$event_admin    = $this->create_test_event( $this->admin_user_id, $calendar_admin->id, 'Admin Event Counts' );
+		$guest1         = $this->create_test_guest( 'guest1counts@test.com' );
+
+		$calendar_sub = $this->create_test_calendar( $this->subscriber_user_id, 'Sub Cal Counts' );
+		$event_sub    = $this->create_test_event( $this->subscriber_user_id, $calendar_sub->id, 'Sub Event Counts' );
+		$guest2       = $this->create_test_guest( 'guest2counts@test.com' );
+
+		// Create bookings:
+		// 1 upcoming for admin
+		$this->create_test_booking( $event_admin->id, $calendar_admin->id, $guest1->id, gmdate( 'Y-m-d H:i:s', strtotime( '+2 days' ) ), 30, 'pending' );
+		// 1 completed for admin
+		$this->create_test_booking( $event_admin->id, $calendar_admin->id, $guest1->id, gmdate( 'Y-m-d H:i:s', strtotime( '-2 days' ) ), 30, 'completed' );
+		// 1 upcoming for subscriber
+		$this->create_test_booking( $event_sub->id, $calendar_sub->id, $guest2->id, gmdate( 'Y-m-d H:i:s', strtotime( '+3 days' ) ), 30, 'pending' );
+		// 1 cancelled for subscriber
+		$this->create_test_booking( $event_sub->id, $calendar_sub->id, $guest2->id, gmdate( 'Y-m-d H:i:s', strtotime( '+4 days' ) ), 30, 'cancelled' );
+
+		$request = new WP_REST_Request( 'GET', '/' . $this->namespace . '/' . $this->rest_base . '/counts' );
+		$request->set_param( 'user', 'all' );
+		$response = $this->server->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( 4, $data['total'] ); // Total bookings created
+		$this->assertEquals( 2, $data['upcoming'] ); // 2 pending, non-cancelled
+		$this->assertEquals( 1, $data['completed'] );
+		$this->assertEquals( 2, $data['pending'] ); // Both upcoming are pending
+		$this->assertEquals( 1, $data['cancelled'] );
+		$this->assertEquals( 0, $data['no_show'] );
+	}
+
+
+	public function test_get_booking_analytics_specific_date() {
+		wp_set_current_user( $this->admin_user_id );
+
+		$calendar = $this->create_test_calendar( $this->admin_user_id );
+		$event    = $this->create_test_event( $this->admin_user_id, $calendar->id );
+		$guest    = $this->create_test_guest();
+
+		$target_year  = '2025';
+		$target_month = '03'; // March
+		$date_param   = "March {$target_year}";
+
+		// Booking created on Mar 5th, appointment on Mar 10th (completed)
+		$this->create_test_booking_with_creation_date(
+			$event->id,
+			$calendar->id,
+			$guest->id,
+			"{$target_year}-{$target_month}-10 10:00:00", // start_time (UTC)
+			30,
+			'completed',
+			'UTC',
+			"{$target_year}-{$target_month}-05 09:00:00" // created_at (UTC)
+		);
+		// Booking created on Mar 5th, appointment on Mar 12th (cancelled)
+		$this->create_test_booking_with_creation_date(
+			$event->id,
+			$calendar->id,
+			$guest->id,
+			"{$target_year}-{$target_month}-12 11:00:00", // start_time (UTC)
+			30,
+			'cancelled',
+			'UTC',
+			"{$target_year}-{$target_month}-05 10:00:00" // created_at (UTC)
+		);
+		// Booking created on Mar 10th, appointment on Mar 15th (pending)
+		$this->create_test_booking_with_creation_date(
+			$event->id,
+			$calendar->id,
+			$guest->id,
+			"{$target_year}-{$target_month}-15 12:00:00", // start_time (UTC)
+			30,
+			'completed',
+			'UTC', // <--- CHANGED FROM 'pending' TO 'completed'
+			"{$target_year}-{$target_month}-10 11:00:00" // created_at (UTC)
+		);
+
+		$request = new WP_REST_Request( 'GET', '/' . $this->namespace . '/' . $this->rest_base . '/analytics' );
+		$request->set_param( 'user', 'all' );
+		$request->set_param( 'date', $date_param );
+		$response = $this->server->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertArrayHasKey( '5', $data, 'Day 5 should have analytics data' );
+		$this->assertEquals( 2, $data['5']['booked'] );
+		$this->assertEquals( 0, $data['5']['completed'] );
+		$this->assertEquals( 0, $data['5']['cancelled'] );
+
+		$this->assertArrayHasKey( '10', $data, 'Day 10 should have analytics data' );
+		$this->assertEquals( 1, $data['10']['booked'] );
+		$this->assertEquals( 1, $data['10']['completed'] );
+		$this->assertEquals( 0, $data['10']['cancelled'] );
+
+		$this->assertArrayHasKey( '12', $data, 'Day 12 should have analytics data' );
+		$this->assertEquals( 0, $data['12']['booked'] ); // if no booking created on 12th
+		$this->assertEquals( 0, $data['12']['completed'] );
+		$this->assertEquals( 1, $data['12']['cancelled'] );
+
+		$this->assertArrayHasKey( '15', $data, 'Day 15 should have analytics data' );
+		$this->assertEquals( 0, $data['15']['booked'], 'Booked count for day 15 should be 0 as booking was created on day 10.' );
+		$this->assertEquals( 1, $data['15']['completed'], 'Completed count for day 15 should be 1.' );
+		$this->assertEquals( 0, $data['15']['cancelled'], 'Cancelled count for day 15 should be 0.' );
+	}
+	// You'll need a helper like this for analytics tests:
+	private function create_test_booking_with_creation_date( int $event_id, int $calendar_id, int $guest_id, string $start_time_utc, int $duration, string $status = 'pending', string $timezone = 'UTC', string $created_at_utc = null ): Booking_Model {
+		$booking = $this->create_test_booking( $event_id, $calendar_id, $guest_id, $start_time_utc, $duration, $status, $timezone );
+		if ( $created_at_utc ) {
+			$booking->created_at = $created_at_utc;
+			$booking->save( array( 'timestamps' => false ) ); // Avoid updating updated_at if not desired
+		}
+		return $booking;
+	}
+
+
 } // End Class

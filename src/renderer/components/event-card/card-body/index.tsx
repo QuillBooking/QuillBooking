@@ -6,6 +6,7 @@ import Hosts from './hosts';
 import './style.scss';
 import { Dayjs } from 'dayjs';
 import QuestionsComponents from './questions';
+import ConfigAPI from '@quillbooking/config';
 
 interface CardBodyProps {
 	event: Event;
@@ -18,6 +19,7 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 		Intl.DateTimeFormat().resolvedOptions().timeZone
 	);
 	const [step, setStep] = useState<number>(1);
+	const ajax_url = ConfigAPI.getAjaxUrl();
 
 	const handleSelectedTime = (time: string) => {
 		setSelectedTime(time);
@@ -51,9 +53,11 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 		const filteredValues = { ...values };
 		delete filteredValues['name'];
 		delete filteredValues['email'];
-		delete filteredValues['location-select'];
 		delete filteredValues['field'];
 
+		if (values['location-select']) {
+			delete filteredValues['location-select'];
+		}
 		if (values['field']) {
 			filteredValues['location'] = values['field']['location-select'];
 		}
@@ -61,17 +65,16 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 		formData.append('fields', JSON.stringify(filteredValues));
 
 		try {
-			const response = await fetch('/wp-admin/admin-ajax.php', {
+			const response = await fetch(ajax_url, {
 				method: 'POST',
 				body: formData,
 			});
 			if (response.ok) {
 				const data = await response.json();
-				console.log('Booking response:', data);
 				const baseUrl =
 					window.top?.location?.origin || window.location.origin;
 				(window.top || window).location.href =
-					`${baseUrl}/?quillbooking=booking&booking_hash=${data.booking_hash}`;
+					`${baseUrl}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
 			}
 		} catch (error) {
 			console.error('Error fetching availability:', error);

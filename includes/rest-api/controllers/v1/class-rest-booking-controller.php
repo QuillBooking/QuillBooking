@@ -1008,112 +1008,169 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_revenue( $request ) {
-		// Get parameters
-		$user    = sanitize_text_field( $request->get_param( 'user' ) ?? 'own' );
+		// Get and sanitize parameters
+		$user    = $this->sanitize_user_param( $request->get_param( 'user' ) ?? 'own' );
 		$period  = sanitize_text_field( $request->get_param( 'period' ) ?? 'monthly' );
 		$year    = (int) ( $request->get_param( 'year' ) ?? date( 'Y' ) );
 		$month   = (int) ( $request->get_param( 'month' ) ?? date( 'n' ) );
 		$quarter = (int) ( $request->get_param( 'quarter' ) ?? ceil( date( 'n' ) / 3 ) );
 
-		// Set user ID
-		if ( 'own' === $user ) {
-			$user = get_current_user_id();
-		}
-
-		// Check permissions for viewing revenue data
-		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
-			return new WP_Error( 'rest_booking_error', __( 'You do not have permission to view revenue data', 'quillbooking' ), array( 'status' => 403 ) );
+		// Check permissions
+		if ( ! $this->can_view_revenue( $user ) ) {
+			return new WP_Error(
+				'rest_booking_error',
+				__( 'You do not have permission to view revenue data', 'quillbooking' ),
+				array( 'status' => 403 )
+			);
 		}
 
 		try {
-			// Start with base query
-			$query = Booking_Order_Model::query();
+			// Build and execute query
+			$query = $this->build_revenue_query( $user );
 
-			// Include only completed orders
-			$query->where( 'status', '!=', 'cancelled' )
-				  ->where( 'status', '!=', 'refunded' );
+			// Apply date filters
+			$date_range = $this->get_date_range_for_period( $period, $year, $month, $quarter );
+			$this->apply_date_filter( $query, $date_range );
 
-			// Apply user filter if specific user requested
-			if ( 'all' !== $user ) {
-				$query->whereHas(
-					'booking',
-					function( $q ) use ( $user ) {
-						$q->whereHas(
-							'event',
-							function( $q ) use ( $user ) {
-								$q->where( 'user_id', $user );
-							}
-						);
-					}
-				);
-			}
-
-			// Apply date filters based on period and explicitly pass all required parameters
-			$date_range = array();
-			switch ( $period ) {
-				case 'weekly':
-					$date_range = $this->get_date_range_for_period( 'weekly', $year, null, null );
-					break;
-				case 'monthly':
-					$date_range = $this->get_date_range_for_period( 'monthly', $year, $month, null );
-					break;
-				case 'quarterly':
-					$date_range = $this->get_date_range_for_period( 'quarterly', $year, null, $quarter );
-					break;
-				case 'yearly':
-					$date_range = $this->get_date_range_for_period( 'yearly', $year, null, null );
-					break;
-				default:
-					$date_range = $this->get_date_range_for_period( 'monthly', $year, $month, null );
-			}
-
-			$query->whereBetween(
-				'created_at',
-				array(
-					$date_range['start']->format( 'Y-m-d H:i:s' ),
-					$date_range['end']->format( 'Y-m-d H:i:s' ),
-				)
-			);
-
-			// Get the total revenue
+			// Calculate revenue totals
 			$total_revenue = (float) $query->sum( 'total' );
 			$order_count   = (int) $query->count();
 
-			// Prepare the response
-			$results = array(
-				'total_revenue' => $total_revenue,
-				'currency'      => get_option( 'quillbooking_currency', 'USD' ),
-				'order_count'   => $order_count,
-				'period'        => $period,
-				'year'          => $year,
-				'date_range'    => array(
-					'start' => $date_range['start']->format( 'Y-m-d' ),
-					'end'   => $date_range['end']->format( 'Y-m-d' ),
-				),
+			// Build response
+			$results = $this->build_revenue_response(
+				$total_revenue,
+				$order_count,
+				$period,
+				$year,
+				$month,
+				$quarter,
+				$date_range
 			);
-
-			// Add period-specific details
-			switch ( $period ) {
-				case 'monthly':
-					$results['month']      = $month;
-					$results['month_name'] = date( 'F', mktime( 0, 0, 0, $month, 1, $year ) );
-					break;
-
-				case 'quarterly':
-					$results['quarter'] = $quarter;
-					break;
-
-				case 'weekly':
-					$week_number     = date( 'W', $date_range['start']->getTimestamp() );
-					$results['week'] = (int) $week_number;
-					break;
-			}
 
 			return new WP_REST_Response( $results, 200 );
 
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_revenue_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
+	}
+
+	/**
+	 * Sanitize user parameter
+	 *
+	 * @param string $user User parameter from request
+	 * @return int|string User ID or 'all'
+	 */
+	private function sanitize_user_param( $user ) {
+		if ( 'own' === $user ) {
+			return get_current_user_id();
+		}
+		return sanitize_text_field( $user );
+	}
+
+	/**
+	 * Check if current user can view revenue for given user
+	 *
+	 * @param int|string $user User ID or 'all'
+	 * @return bool
+	 */
+	private function can_view_revenue( $user ) {
+		if ( 'all' === $user || get_current_user_id() !== $user ) {
+			return current_user_can( 'quillbooking_read_all_bookings' );
+		}
+		return true;
+	}
+
+	/**
+	 * Build query for revenue data
+	 *
+	 * @param int|string $user User ID or 'all'
+	 * @return object Query object
+	 */
+	private function build_revenue_query( $user ) {
+		$query = Booking_Order_Model::query();
+
+		// Include only completed orders
+		$query->where( 'status', '!=', 'cancelled' )
+			  ->where( 'status', '!=', 'refunded' );
+
+		// Apply user filter if specific user requested
+		if ( 'all' !== $user ) {
+			$query->whereHas(
+				'booking',
+				function( $q ) use ( $user ) {
+					$q->whereHas(
+						'event',
+						function( $q ) use ( $user ) {
+							$q->where( 'user_id', $user );
+						}
+					);
+				}
+			);
+		}
+
+		return $query;
+	}
+
+	/**
+	 * Apply date filter to query
+	 *
+	 * @param object $query Query object
+	 * @param array  $date_range Date range with start and end
+	 * @return void
+	 */
+	private function apply_date_filter( $query, $date_range ) {
+		$query->whereBetween(
+			'created_at',
+			array(
+				$date_range['start']->format( 'Y-m-d H:i:s' ),
+				$date_range['end']->format( 'Y-m-d H:i:s' ),
+			)
+		);
+	}
+
+	/**
+	 * Build revenue response data
+	 *
+	 * @param float  $total_revenue Total revenue amount
+	 * @param int    $order_count Number of orders
+	 * @param string $period Period type (weekly, monthly, quarterly, yearly)
+	 * @param int    $year Year
+	 * @param int    $month Month number
+	 * @param int    $quarter Quarter number
+	 * @param array  $date_range Date range with start and end
+	 * @return array Response data
+	 */
+	private function build_revenue_response( $total_revenue, $order_count, $period, $year, $month, $quarter, $date_range ) {
+		$results = array(
+			'total_revenue' => $total_revenue,
+			'currency'      => get_option( 'quillbooking_currency', 'USD' ),
+			'order_count'   => $order_count,
+			'period'        => $period,
+			'year'          => $year,
+			'date_range'    => array(
+				'start' => $date_range['start']->format( 'Y-m-d' ),
+				'end'   => $date_range['end']->format( 'Y-m-d' ),
+			),
+		);
+
+		// Add period-specific details
+		switch ( $period ) {
+			case 'monthly':
+				$results['month']      = $month;
+				$results['month_name'] = date( 'F', mktime( 0, 0, 0, $month, 1, $year ) );
+				break;
+
+			case 'quarterly':
+				$results['quarter'] = $quarter;
+				break;
+
+			case 'weekly':
+				$week_number     = date( 'W', $date_range['start']->getTimestamp() );
+				$results['week'] = (int) $week_number;
+				break;
+		}
+
+		return $results;
 	}
 
 	/**

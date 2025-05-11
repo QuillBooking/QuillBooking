@@ -1001,21 +1001,11 @@ class REST_Booking_Controller extends REST_Controller {
 
 		try {
 			// Parse filters
-			$filter     = $request->get_param( 'filter' ) ?? array();
-			$period     = sanitize_text_field( Arr::get( $filter, 'period', 'all' ) );
-			$event      = sanitize_text_field( Arr::get( $filter, 'event', 'all' ) );
-			$event_type = sanitize_text_field( Arr::get( $filter, 'event_type', 'all' ) );
-
-			// Validate date parameters
-			$year  = $this->validate_year( Arr::get( $filter, 'year', current_time( 'Y' ) ) );
-			$month = $this->validate_month( Arr::get( $filter, 'month', current_time( 'm' ) ) );
-			$day   = $this->validate_day( Arr::get( $filter, 'day' ) );
+			$filter = $request->get_param( 'filter' ) ?? array();
+			$period = sanitize_text_field( Arr::get( $filter, 'period', 'all' ) );
 
 			// Base query
 			$query = Booking_Model::query();
-
-			// Apply date range filter
-			$this->apply_date_range_filter( $query, $year, $month, $day );
 
 			// Apply user filter if needed
 			if ( 'all' !== $user ) {
@@ -1024,11 +1014,6 @@ class REST_Booking_Controller extends REST_Controller {
 
 			// Apply period filter
 			$this->apply_period_filter( $query, $period );
-
-			// Apply event filters
-			if ( 'all' !== $user ) {
-				$this->apply_event_filters( $query, $event, $event_type );
-			}
 
 			// Get bookings with their guests
 			$bookings = $query->with( 'guest' )->get();
@@ -1039,7 +1024,7 @@ class REST_Booking_Controller extends REST_Controller {
 			// Count additional guests from booking fields
 			$additional_guests_count = 0;
 			foreach ( $bookings as $booking ) {
-				$fields = $booking->fields;
+				$fields = $booking->get_meta( 'fields' );
 				if ( isset( $fields ) && is_array( $fields ) ) {
 					$additional_guests = Arr::get( $fields, 'additional_guests', array() );
 					if ( is_array( $additional_guests ) ) {

@@ -42,8 +42,8 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ slug, gateway }
         // Load existing settings when gateway changes
         const settings = gateway.settings || {};
         form.setFieldsValue({
-            mode: settings.mode || 'sandbox',
-            ...settings
+            ...settings,
+            mode: settings.mode || 'sandbox'
         });
     }, [gateway, form]);
 

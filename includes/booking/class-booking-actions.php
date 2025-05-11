@@ -23,6 +23,7 @@ class Booking_Actions {
 
 
 
+
 	// --- Dependency Properties ---
 	private string $calendarModelClass;
 	private string $eventModelClass;
@@ -39,11 +40,10 @@ class Booking_Actions {
 
 		add_action( 'wp_loaded', array( $this, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-
 	}
 
 	public function enqueue_scripts() {
-		$asset_file   = QUILLBOOKING_PLUGIN_DIR . 'build/renderer/index.asset.php';
+		 $asset_file  = QUILLBOOKING_PLUGIN_DIR . 'build/renderer/index.asset.php';
 		$asset        = file_exists( $asset_file ) ? require $asset_file : null;
 		$dependencies = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
 		$version      = isset( $asset['version'] ) ? $asset['version'] : QUILLBOOKING_VERSION;
@@ -93,12 +93,29 @@ class Booking_Actions {
 
 		wp_style_add_data( 'quillbooking-renderer', 'rtl', 'replace' );
 		Renderer::set_renderer();
-
 	}
 
 	public function init() {
 		$this->booking_actions();
 		add_action( 'template_redirect', array( $this, 'route_frontend' ) );
+	}
+
+	/**
+	 * Helper to render React-powered pages
+	 *
+	 * @param string $div_id ID of the root div
+	 *
+	 * @return bool
+	 */
+	private function render_react_page( string $div_id ): bool {
+		wp_enqueue_script( 'quillbooking-renderer' );
+		wp_enqueue_style( 'quillbooking-renderer' );
+
+		echo $this->get_head();
+		printf( '<div id="%s"></div>', esc_attr( $div_id ) );
+		echo $this->get_footer();
+
+		return true;
 	}
 
 	public function render_booking_page() {
@@ -108,19 +125,19 @@ class Booking_Actions {
 			return;
 		}
 
-			$calendar = $this->calendarModelClass::where( 'slug', $calendar )->first();
+		$calendar = $this->calendarModelClass::where( 'slug', $calendar )->first();
 		if ( ! $calendar ) {
 			return;
 		}
-			$event_slug = Arr::get( $_GET, 'event', null );
-			$event      = $this->eventModelClass::where( 'slug', $event_slug )
+		$event_slug = Arr::get( $_GET, 'event', null );
+		$event      = $this->eventModelClass::where( 'slug', $event_slug )
 			->where( 'calendar_id', $calendar->id )
 			->first();
 
-			$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
-			$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
+		$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
+		$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
 
-			$users = array();
+		$users = array();
 
 		foreach ( $usersId as $userId ) {
 			$user = User_Model::find( $userId );
@@ -136,10 +153,10 @@ class Booking_Actions {
 			}
 		}
 
-			$event->hosts             = $users;
-			$event->fields            = $event->getFieldsAttribute();
-			$event->availability_data = $event->getAvailabilityAttribute();
-			$event->reserve           = $event->getReserveTimesAttribute();
+		$event->hosts             = $users;
+		$event->fields            = $event->getFieldsAttribute();
+		$event->availability_data = $event->getAvailabilityAttribute();
+		$event->reserve           = $event->getReserveTimesAttribute();
 
 		if ( ! $event && $event_slug ) {
 			return;
@@ -159,12 +176,7 @@ class Booking_Actions {
 			}
 		);
 
-		echo $this->get_head();
-		?>
-		<div id="quillbooking-booking-page"></div>
-		<?php
-		echo $this->get_footer();
-		return true;
+		return $this->render_react_page( 'quillbooking-booking-page' );
 	}
 
 	public function process_booking_action( $action_type, $new_status, $log_message, $log_details ) {
@@ -279,7 +291,6 @@ class Booking_Actions {
 
 		// Dispatch to specific page
 		return $this->dispatchPage( $type, $booking, $other_fields );
-
 	}
 
 	private function isValidPageType( string $type ) {
@@ -293,7 +304,7 @@ class Booking_Actions {
 		);
 
 		if ( isset( $map[ $type ] ) && method_exists( $this, $map[ $type ] ) ) {
-				return $this->{$map[ $type ]}( $booking, $fields );
+			return $this->{$map[ $type ]}( $booking, $fields );
 		}
 
 		// Fallback
@@ -304,84 +315,76 @@ class Booking_Actions {
 	 * Render cancel page
 	 */
 	protected function render_cancel_page( $booking, $fields ) {
-			return $this->render_generic_page( 'cancel', $booking, $fields, );
+		return $this->render_generic_page( 'cancel', $booking, $fields, );
 	}
 
 	/**
 	 * Render reschedule page
 	 */
 	protected function render_reschedule_page() {
-		// $calendar = Arr::get( $_GET, 'quillbooking_calendar', null );
-		// $type     = Arr::get( $_GET, 'type', null );
+		$booking_id = Arr::get( $_GET, 'id', null );
 
-		// if ( ! $calendar ) {
-		// return;
-		// }
+		if ( ! $booking_id ) {
+			return;
+		}
+		$booking  = $this->bookingValidatorClass::validate_booking( $booking_id );
+		$calendar = $this->calendarModelClass::where( 'id', $booking->event->calendar_id )->first();
+		if ( ! $calendar ) {
+			return;
+		}
 
-		// $calendar = $this->calendarModelClass::where( 'slug', $calendar )->first();
-		// if ( ! $calendar ) {
-		// return;
-		// }
-		// $event_slug = Arr::get( $_GET, 'event', null );
-		// $event      = $this->eventModelClass::where( 'slug', $event_slug )
-		// ->where( 'calendar_id', $calendar->id )
-		// ->first();
+		$event = $booking->event;
 
-		// $usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
-		// $usersId = is_array( $usersId ) ? $usersId : array( $usersId );
+		$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
+		$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
 
-		// $users = array();
+		$users = array();
 
-		// foreach ( $usersId as $userId ) {
-		// $user = User_Model::find( $userId );
+		foreach ( $usersId as $userId ) {
+			$user = User_Model::find( $userId );
 
-		// if ( $user ) {
-		// $user_avatar_url = get_avatar_url( $user->ID );
+			if ( $user ) {
+				$user_avatar_url = get_avatar_url( $user->ID );
 
-		// $users[] = array(
-		// 'id'    => $user->ID,
-		// 'name'  => $user->display_name,
-		// 'image' => $user_avatar_url,
-		// );
-		// }
-		// }
+				$users[] = array(
+					'id'    => $user->ID,
+					'name'  => $user->display_name,
+					'image' => $user_avatar_url,
+				);
+			}
+		}
 
-		// $event->hosts             = $users;
-		// $event->fields            = $event->getFieldsAttribute();
-		// $event->availability_data = $event->getAvailabilityAttribute();
-		// $event->reserve           = $event->getReserveTimesAttribute();
+		$event->hosts             = $users;
+		$event->fields            = $event->getFieldsAttribute();
+		$event->availability_data = $event->getAvailabilityAttribute();
+		$event->reserve           = $event->getReserveTimesAttribute();
 
-		// if ( ! $event && $event_slug ) {
-		// return;
-		// }
+		if ( ! $event ) {
+			return;
+		}
 
 		wp_enqueue_script( 'quillbooking-renderer' );
 		wp_enqueue_style( 'quillbooking-renderer' );
 
-		// add_filter(
-		// 'quillbooking_config',
-		// function ( $config ) use ( $calendar, $event ) {
-		// $config['calendar'] = $calendar->toArray();
-		// if ( $event ) {
-		// $config['event'] = $event->toArray();
-		// }
-		// return $config;
-		// }
-		// );
+		add_filter(
+			'quillbooking_config',
+			function ( $config ) use ( $booking, $calendar, $event ) {
+				$config['calendar'] = $calendar->toArray();
+				$config['event']    = $event->toArray();
+				$config['booking']  = $booking->toArray();
 
-		echo $this->get_head();
-		?>
-		<div id="quillbooking-reschedule-page"></div>
-		<?php
-		echo $this->get_footer();
-		return true;
+				return $config;
+			}
+		);
+
+		return $this->render_react_page( 'quillbooking-reschedule-page' );
 	}
 
 	/**
 	 * Render confirmation page
 	 */
 	protected function render_confirmation_page( $booking ) {
-			return $this->render_generic_page( 'confirm', $booking );
+		return $this->render_generic_page( 'confirm', $booking );
 	}
 
 
@@ -403,11 +406,6 @@ class Booking_Actions {
 				'fields'  => $fields,
 			)
 		);
-
-		// Debugging: Output the booking data for inspection
-		// echo '<pre>';
-		// print_r( $booking_array );
-		// echo '</pre>';
 
 		wp_enqueue_script( 'quillbooking-page' );
 		wp_enqueue_style( 'quillbooking-page' );

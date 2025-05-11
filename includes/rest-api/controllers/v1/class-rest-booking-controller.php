@@ -20,6 +20,7 @@ use WP_REST_Response;
 use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
 use QuillBooking\Models\Booking_Model;
+use QuillBooking\Models\Booking_Order_Model;
 use Illuminate\Support\Arr;
 use QuillBooking\Booking\Booking_Validator;
 use QuillBooking\Booking_Service;
@@ -157,6 +158,73 @@ class REST_Booking_Controller extends REST_Controller {
 							'description' => __( 'Month and year in format "March 2025".', 'quillbooking' ),
 							'type'        => 'string',
 							'default'     => '', // Current month and year will be used if empty
+						),
+					),
+				),
+			)
+		);
+
+		// Total guests route
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/total-guests',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_total_guests' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'user'   => array(
+							'description' => __( 'User ID to filter guests by.', 'quillbooking' ),
+							'type'        => 'string',
+							'default'     => 'own',
+						),
+						'filter' => array(
+							'description' => __( 'Filter the results.', 'quillbooking' ),
+							'type'        => 'object',
+						),
+					),
+				),
+			)
+		);
+
+		// Revenue analytics route
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/revenue',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_revenue' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'user'    => array(
+							'description' => __( 'User ID to filter revenue by.', 'quillbooking' ),
+							'type'        => 'string',
+							'default'     => 'own',
+						),
+						'period'  => array(
+							'description' => __( 'Period to get revenue for: weekly, monthly, quarterly, or yearly.', 'quillbooking' ),
+							'type'        => 'string',
+							'default'     => 'monthly',
+							'enum'        => array( 'weekly', 'monthly', 'quarterly', 'yearly' ),
+						),
+						'year'    => array(
+							'description' => __( 'Year to get revenue for.', 'quillbooking' ),
+							'type'        => 'integer',
+							'default'     => date( 'Y' ),
+						),
+						'month'   => array(
+							'description' => __( 'Month to get revenue for (1-12). Only applicable for monthly period.', 'quillbooking' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 12,
+						),
+						'quarter' => array(
+							'description' => __( 'Quarter to get revenue for (1-4). Only applicable for quarterly period.', 'quillbooking' ),
+							'type'        => 'integer',
+							'minimum'     => 1,
+							'maximum'     => 4,
 						),
 					),
 				),
@@ -954,4 +1022,368 @@ class REST_Booking_Controller extends REST_Controller {
 		}
 	}
 
+	/**
+	 * Get total guests for a specific period
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_total_guests( $request ) {
+		$user = sanitize_text_field( $request->get_param( 'user' ) ?? 'own' );
+		if ( 'own' === $user ) {
+			$user = get_current_user_id();
+		}
+
+		// Check permissions
+		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
+			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
+		}
+
+		try {
+			// Get period from filter
+			$filter = $request->get_param( 'filter' ) ?? array();
+			$period = sanitize_text_field( Arr::get( $filter, 'period', 'all' ) );
+
+			// Initialize query and apply filters
+			$query = Booking_Model::query();
+			if ( 'all' !== $user ) {
+				$this->apply_user_filter( $query, $user );
+			}
+			$this->apply_period_filter_for_guests( $query, $period );
+
+			// Fetch bookings with guests
+			$bookings = $query->with( 'guest' )->get();
+
+			// Count primary guests (one per booking)
+			$primary_count = $bookings->count();
+
+			// Count additional guests from booking metadata
+			$additional_count = 0;
+			foreach ( $bookings as $booking ) {
+				$fields = $booking->get_meta( 'fields' );
+				if ( is_array( $fields ) && isset( $fields['additional_guests'] ) && is_array( $fields['additional_guests'] ) ) {
+					$additional_count += count( $fields['additional_guests'] );
+				}
+			}
+
+			return new WP_REST_Response( $primary_count + $additional_count, 200 );
+
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Apply time period filter for guest count queries
+	 *
+	 * @param mixed  $query The Booking query object
+	 * @param string $period Period to filter by
+	 * @return void
+	 */
+	protected function apply_period_filter_for_guests( $query, $period ) {
+		if ( 'all' === $period ) {
+			// No date filtering for 'all'
+			return;
+		}
+
+		$date_range = $this->get_period_date_range( $period );
+		if ( empty( $date_range ) ) {
+			return;
+		}
+
+		// Apply date range filter to query
+		$query->whereBetween( 'start_time', $date_range );
+	}
+
+	/**
+	 * Get date range for a given period
+	 *
+	 * @param string $period Period type (this_week, this_month, this_year)
+	 * @return array|null Array with start and end dates formatted for SQL, or null if invalid period
+	 */
+	protected function get_period_date_range( $period ) {
+		$now  = current_time( 'mysql' );
+		$date = new DateTime( $now );
+
+		switch ( $period ) {
+			case 'this_week':
+				$start = clone $date;
+				$start->modify( 'this week' )->setTime( 0, 0, 0 );
+
+				$end = clone $start;
+				$end->modify( '+6 days' )->setTime( 23, 59, 59 );
+				break;
+
+			case 'this_month':
+				$start = clone $date;
+				$start->modify( 'first day of this month' )->setTime( 0, 0, 0 );
+
+				$end = clone $date;
+				$end->modify( 'last day of this month' )->setTime( 23, 59, 59 );
+				break;
+
+			case 'this_year':
+				$start = clone $date;
+				$start->modify( 'first day of January this year' )->setTime( 0, 0, 0 );
+
+				$end = clone $date;
+				$end->modify( 'last day of December this year' )->setTime( 23, 59, 59 );
+				break;
+
+			default:
+				return null;
+		}
+
+		return array(
+			$start->format( 'Y-m-d H:i:s' ),
+			$end->format( 'Y-m-d H:i:s' ),
+		);
+	}
+
+	/**
+	 * Get total revenue for a given period
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_revenue( $request ) {
+		// Get and sanitize parameters
+		$user    = $this->sanitize_user_param( $request->get_param( 'user' ) ?? 'own' );
+		$period  = sanitize_text_field( $request->get_param( 'period' ) ?? 'monthly' );
+		$year    = (int) ( $request->get_param( 'year' ) ?? date( 'Y' ) );
+		$month   = (int) ( $request->get_param( 'month' ) ?? date( 'n' ) );
+		$quarter = (int) ( $request->get_param( 'quarter' ) ?? ceil( date( 'n' ) / 3 ) );
+
+		// Check permissions
+		if ( ! $this->can_view_revenue( $user ) ) {
+			return new WP_Error(
+				'rest_booking_error',
+				__( 'You do not have permission to view revenue data', 'quillbooking' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		try {
+			// Build and execute query
+			$query = $this->build_revenue_query( $user );
+
+			// Apply date filters
+			$date_range = $this->get_date_range_for_period( $period, $year, $month, $quarter );
+			$this->apply_date_filter( $query, $date_range );
+
+			// Calculate revenue totals
+			$total_revenue = (float) $query->sum( 'total' );
+			$order_count   = (int) $query->count();
+
+			// Build response
+			$results = $this->build_revenue_response(
+				$total_revenue,
+				$order_count,
+				$period,
+				$year,
+				$month,
+				$quarter,
+				$date_range
+			);
+
+			return new WP_REST_Response( $results, 200 );
+
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_booking_revenue_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Sanitize user parameter
+	 *
+	 * @param string $user User parameter from request
+	 * @return int|string User ID or 'all'
+	 */
+	private function sanitize_user_param( $user ) {
+		if ( 'own' === $user ) {
+			return get_current_user_id();
+		}
+		return sanitize_text_field( $user );
+	}
+
+	/**
+	 * Check if current user can view revenue for given user
+	 *
+	 * @param int|string $user User ID or 'all'
+	 * @return bool
+	 */
+	private function can_view_revenue( $user ) {
+		if ( 'all' === $user || get_current_user_id() !== $user ) {
+			return current_user_can( 'quillbooking_read_all_bookings' );
+		}
+		return true;
+	}
+
+	/**
+	 * Build query for revenue data
+	 *
+	 * @param int|string $user User ID or 'all'
+	 * @return object Query object
+	 */
+	private function build_revenue_query( $user ) {
+		$query = Booking_Order_Model::query();
+
+		// Include only completed orders
+		$query->where( 'status', '!=', 'cancelled' )
+			  ->where( 'status', '!=', 'refunded' );
+
+		// Apply user filter if specific user requested
+		if ( 'all' !== $user ) {
+			$query->whereHas(
+				'booking',
+				function( $q ) use ( $user ) {
+					$q->whereHas(
+						'event',
+						function( $q ) use ( $user ) {
+							$q->where( 'user_id', $user );
+						}
+					);
+				}
+			);
+		}
+
+		return $query;
+	}
+
+	/**
+	 * Apply date filter to query
+	 *
+	 * @param object $query Query object
+	 * @param array  $date_range Date range with start and end
+	 * @return void
+	 */
+	private function apply_date_filter( $query, $date_range ) {
+		$query->whereBetween(
+			'created_at',
+			array(
+				$date_range['start']->format( 'Y-m-d H:i:s' ),
+				$date_range['end']->format( 'Y-m-d H:i:s' ),
+			)
+		);
+	}
+
+	/**
+	 * Build revenue response data
+	 *
+	 * @param float  $total_revenue Total revenue amount
+	 * @param int    $order_count Number of orders
+	 * @param string $period Period type (weekly, monthly, quarterly, yearly)
+	 * @param int    $year Year
+	 * @param int    $month Month number
+	 * @param int    $quarter Quarter number
+	 * @param array  $date_range Date range with start and end
+	 * @return array Response data
+	 */
+	private function build_revenue_response( $total_revenue, $order_count, $period, $year, $month, $quarter, $date_range ) {
+		$results = array(
+			'total_revenue' => $total_revenue,
+			'currency'      => get_option( 'quillbooking_currency', 'USD' ),
+			'order_count'   => $order_count,
+			'period'        => $period,
+			'year'          => $year,
+			'date_range'    => array(
+				'start' => $date_range['start']->format( 'Y-m-d' ),
+				'end'   => $date_range['end']->format( 'Y-m-d' ),
+			),
+		);
+
+		// Add period-specific details
+		switch ( $period ) {
+			case 'monthly':
+				$results['month']      = $month;
+				$results['month_name'] = date( 'F', mktime( 0, 0, 0, $month, 1, $year ) );
+				break;
+
+			case 'quarterly':
+				$results['quarter'] = $quarter;
+				break;
+
+			case 'weekly':
+				$week_number     = date( 'W', $date_range['start']->getTimestamp() );
+				$results['week'] = (int) $week_number;
+				break;
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Get date range for specified period
+	 *
+	 * @param string  $period  Period type (weekly, monthly, quarterly, yearly)
+	 * @param integer $year    Year
+	 * @param integer $month   Month (1-12)
+	 * @param integer $quarter Quarter (1-4)
+	 *
+	 * @return array Date range with start and end DateTime objects
+	 */
+	protected function get_date_range_for_period( $period, $year = null, $month = null, $quarter = null ) {
+		// Set defaults if not provided
+		$year    = $year ?? (int) date( 'Y' );
+		$month   = $month ?? (int) date( 'n' );
+		$quarter = $quarter ?? (int) ceil( date( 'n' ) / 3 );
+
+		switch ( $period ) {
+			case 'weekly':
+				// Get the date for the first day of the specified week
+				$current_week = (int) date( 'W' );
+				$date         = new DateTime();
+				$date->setISODate( $year, $current_week );
+				$date->setTime( 0, 0, 0 );
+
+				$start = clone $date;
+				$end   = clone $date;
+				$end->modify( '+6 days' );
+				$end->setTime( 23, 59, 59 );
+				break;
+
+			case 'monthly':
+				$start = new DateTime( sprintf( '%d-%02d-01 00:00:00', $year, $month ) );
+				$end   = clone $start;
+				$end->modify( 'last day of this month' );
+				$end->setTime( 23, 59, 59 );
+				break;
+
+			case 'quarterly':
+				// Calculate the first and last month of the quarter
+				$first_month = ( ( $quarter - 1 ) * 3 ) + 1;
+				$last_month  = $first_month + 2;
+
+				$start = new DateTime( sprintf( '%d-%02d-01 00:00:00', $year, $first_month ) );
+				$end   = new DateTime( sprintf( '%d-%02d-01 00:00:00', $year, $last_month ) );
+				$end->modify( 'last day of this month' );
+				$end->setTime( 23, 59, 59 );
+				break;
+
+			case 'yearly':
+				$start = new DateTime( sprintf( '%d-01-01 00:00:00', $year ) );
+				$end   = new DateTime( sprintf( '%d-12-31 23:59:59', $year ) );
+				break;
+
+			default:
+				// Default to current month if invalid period
+				$current_year  = (int) date( 'Y' );
+				$current_month = (int) date( 'm' );
+				$start         = new DateTime( sprintf( '%d-%02d-01 00:00:00', $current_year, $current_month ) );
+				$end           = clone $start;
+				$end->modify( 'last day of this month' );
+				$end->setTime( 23, 59, 59 );
+		}
+
+		return array(
+			'start' => $start,
+			'end'   => $end,
+		);
+	}
 }

@@ -61,9 +61,10 @@ class Booking_Validator {
 			throw new Exception( __( 'Booking is already completed.', 'quillbooking' ) );
 		}
 
-		if ( method_exists( $booking, 'isCancelled' ) && $booking->isCancelled() ) {
-			throw new Exception( __( 'Booking is already cancelled.', 'quillbooking' ) );
-		}
+		// validation will be done in the frontend
+		// if ( method_exists( $booking, 'isCancelled' ) && $booking->isCancelled() ) {
+		// throw new Exception( __( 'Booking is already cancelled.', 'quillbooking' ) );
+		// }
 
 		return $booking;
 	}

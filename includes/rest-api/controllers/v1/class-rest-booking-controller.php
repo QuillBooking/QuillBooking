@@ -162,6 +162,30 @@ class REST_Booking_Controller extends REST_Controller {
 				),
 			)
 		);
+
+		// Total guests route
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/total-guests',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_total_guests' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'user'   => array(
+							'description' => __( 'User ID to filter guests by.', 'quillbooking' ),
+							'type'        => 'string',
+							'default'     => 'own',
+						),
+						'filter' => array(
+							'description' => __( 'Filter the results.', 'quillbooking' ),
+							'type'        => 'object',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -952,6 +976,127 @@ class REST_Booking_Controller extends REST_Controller {
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
+	}
+
+	/**
+	 * Get total guests for a specific period
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_total_guests( $request ) {
+		$user = sanitize_text_field( $request->get_param( 'user' ) ?? 'own' );
+		if ( 'own' === $user ) {
+			$user = get_current_user_id();
+		}
+
+		// Check permissions
+		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
+			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
+		}
+
+		try {
+			// Get period from filter
+			$filter = $request->get_param( 'filter' ) ?? array();
+			$period = sanitize_text_field( Arr::get( $filter, 'period', 'all' ) );
+
+			// Initialize query and apply filters
+			$query = Booking_Model::query();
+			if ( 'all' !== $user ) {
+				$this->apply_user_filter( $query, $user );
+			}
+			$this->apply_period_filter_for_guests( $query, $period );
+
+			// Fetch bookings with guests
+			$bookings = $query->with( 'guest' )->get();
+
+			// Count primary guests (one per booking)
+			$primary_count = $bookings->count();
+
+			// Count additional guests from booking metadata
+			$additional_count = 0;
+			foreach ( $bookings as $booking ) {
+				$fields = $booking->get_meta( 'fields' );
+				if ( is_array( $fields ) && isset( $fields['additional_guests'] ) && is_array( $fields['additional_guests'] ) ) {
+					$additional_count += count( $fields['additional_guests'] );
+				}
+			}
+
+			return new WP_REST_Response( $primary_count + $additional_count, 200 );
+
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Apply time period filter for guest count queries
+	 *
+	 * @param mixed  $query The Booking query object
+	 * @param string $period Period to filter by
+	 * @return void
+	 */
+	protected function apply_period_filter_for_guests( $query, $period ) {
+		if ( 'all' === $period ) {
+			// No date filtering for 'all'
+			return;
+		}
+
+		$date_range = $this->get_period_date_range( $period );
+		if ( empty( $date_range ) ) {
+			return;
+		}
+
+		// Apply date range filter to query
+		$query->whereBetween( 'start_time', $date_range );
+	}
+
+	/**
+	 * Get date range for a given period
+	 *
+	 * @param string $period Period type (this_week, this_month, this_year)
+	 * @return array|null Array with start and end dates formatted for SQL, or null if invalid period
+	 */
+	protected function get_period_date_range( $period ) {
+		$now  = current_time( 'mysql' );
+		$date = new DateTime( $now );
+
+		switch ( $period ) {
+			case 'this_week':
+				$start = clone $date;
+				$start->modify( 'this week' )->setTime( 0, 0, 0 );
+
+				$end = clone $start;
+				$end->modify( '+6 days' )->setTime( 23, 59, 59 );
+				break;
+
+			case 'this_month':
+				$start = clone $date;
+				$start->modify( 'first day of this month' )->setTime( 0, 0, 0 );
+
+				$end = clone $date;
+				$end->modify( 'last day of this month' )->setTime( 23, 59, 59 );
+				break;
+
+			case 'this_year':
+				$start = clone $date;
+				$start->modify( 'first day of January this year' )->setTime( 0, 0, 0 );
+
+				$end = clone $date;
+				$end->modify( 'last day of December this year' )->setTime( 23, 59, 59 );
+				break;
+
+			default:
+				return null;
+		}
+
+		return array(
+			$start->format( 'Y-m-d H:i:s' ),
+			$end->format( 'Y-m-d H:i:s' ),
+		);
 	}
 
 }

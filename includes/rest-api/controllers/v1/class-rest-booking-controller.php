@@ -979,7 +979,7 @@ class REST_Booking_Controller extends REST_Controller {
 	}
 
 	/**
-	 * Get total guests
+	 * Get total guests for a specific period
 	 *
 	 * @since 1.0.0
 	 *
@@ -988,55 +988,45 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_total_guests( $request ) {
-		// Get user parameter
 		$user = sanitize_text_field( $request->get_param( 'user' ) ?? 'own' );
-
 		if ( 'own' === $user ) {
 			$user = get_current_user_id();
 		}
 
+		// Check permissions
 		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_bookings' ) ) {
 			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
 		}
 
 		try {
-			// Parse filters
+			// Get period from filter
 			$filter = $request->get_param( 'filter' ) ?? array();
 			$period = sanitize_text_field( Arr::get( $filter, 'period', 'all' ) );
 
-			// Base query
+			// Initialize query and apply filters
 			$query = Booking_Model::query();
-
-			// Apply user filter if needed
 			if ( 'all' !== $user ) {
 				$this->apply_user_filter( $query, $user );
 			}
-
-			// Apply time period filter
 			$this->apply_period_filter_for_guests( $query, $period );
 
-			// Get bookings with their guests
+			// Fetch bookings with guests
 			$bookings = $query->with( 'guest' )->get();
 
-			// Count primary guests (1 per booking)
-			$primary_guests_count = $bookings->count();
+			// Count primary guests (one per booking)
+			$primary_count = $bookings->count();
 
-			// Count additional guests from booking fields
-			$additional_guests_count = 0;
+			// Count additional guests from booking metadata
+			$additional_count = 0;
 			foreach ( $bookings as $booking ) {
 				$fields = $booking->get_meta( 'fields' );
-				if ( isset( $fields ) && is_array( $fields ) ) {
-					$additional_guests = Arr::get( $fields, 'additional_guests', array() );
-					if ( is_array( $additional_guests ) ) {
-						$additional_guests_count += count( $additional_guests );
-					}
+				if ( is_array( $fields ) && isset( $fields['additional_guests'] ) && is_array( $fields['additional_guests'] ) ) {
+					$additional_count += count( $fields['additional_guests'] );
 				}
 			}
 
-			// Total guests count
-			$total_guests = $primary_guests_count + $additional_guests_count;
+			return new WP_REST_Response( $primary_count + $additional_count, 200 );
 
-			return new WP_REST_Response( $total_guests, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
@@ -1050,64 +1040,63 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return void
 	 */
 	protected function apply_period_filter_for_guests( $query, $period ) {
-		$now = current_time( 'mysql' );
+		if ( 'all' === $period ) {
+			// No date filtering for 'all'
+			return;
+		}
+
+		$date_range = $this->get_period_date_range( $period );
+		if ( empty( $date_range ) ) {
+			return;
+		}
+
+		// Apply date range filter to query
+		$query->whereBetween( 'start_time', $date_range );
+	}
+
+	/**
+	 * Get date range for a given period
+	 *
+	 * @param string $period Period type (this_week, this_month, this_year)
+	 * @return array|null Array with start and end dates formatted for SQL, or null if invalid period
+	 */
+	protected function get_period_date_range( $period ) {
+		$now  = current_time( 'mysql' );
+		$date = new DateTime( $now );
 
 		switch ( $period ) {
 			case 'this_week':
-				// Get the current week's start (Monday) and end (Sunday)
-				$start_of_week = new DateTime( $now );
-				$start_of_week->modify( 'this week' )->setTime( 0, 0, 0 );
+				$start = clone $date;
+				$start->modify( 'this week' )->setTime( 0, 0, 0 );
 
-				$end_of_week = clone $start_of_week;
-				$end_of_week->modify( '+6 days' )->setTime( 23, 59, 59 );
-
-				$query->whereBetween(
-					'start_time',
-					array(
-						$start_of_week->format( 'Y-m-d H:i:s' ),
-						$end_of_week->format( 'Y-m-d H:i:s' ),
-					)
-				);
+				$end = clone $start;
+				$end->modify( '+6 days' )->setTime( 23, 59, 59 );
 				break;
 
 			case 'this_month':
-				// Get the current month's start and end dates
-				$start_of_month = new DateTime( $now );
-				$start_of_month->modify( 'first day of this month' )->setTime( 0, 0, 0 );
+				$start = clone $date;
+				$start->modify( 'first day of this month' )->setTime( 0, 0, 0 );
 
-				$end_of_month = new DateTime( $now );
-				$end_of_month->modify( 'last day of this month' )->setTime( 23, 59, 59 );
-
-				$query->whereBetween(
-					'start_time',
-					array(
-						$start_of_month->format( 'Y-m-d H:i:s' ),
-						$end_of_month->format( 'Y-m-d H:i:s' ),
-					)
-				);
+				$end = clone $date;
+				$end->modify( 'last day of this month' )->setTime( 23, 59, 59 );
 				break;
 
 			case 'this_year':
-				// Get the current year's start and end dates
-				$start_of_year = new DateTime( $now );
-				$start_of_year->modify( 'first day of January this year' )->setTime( 0, 0, 0 );
+				$start = clone $date;
+				$start->modify( 'first day of January this year' )->setTime( 0, 0, 0 );
 
-				$end_of_year = new DateTime( $now );
-				$end_of_year->modify( 'last day of December this year' )->setTime( 23, 59, 59 );
-
-				$query->whereBetween(
-					'start_time',
-					array(
-						$start_of_year->format( 'Y-m-d H:i:s' ),
-						$end_of_year->format( 'Y-m-d H:i:s' ),
-					)
-				);
+				$end = clone $date;
+				$end->modify( 'last day of December this year' )->setTime( 23, 59, 59 );
 				break;
 
 			default:
-				// No date filtering for 'all'
-				break;
+				return null;
 		}
+
+		return array(
+			$start->format( 'Y-m-d H:i:s' ),
+			$end->format( 'Y-m-d H:i:s' ),
+		);
 	}
 
 }

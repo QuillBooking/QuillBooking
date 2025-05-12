@@ -34,7 +34,8 @@ const PaymentsTab: React.FC = () => {
                         ...prevGateways,
                         [gatewayId]: {
                             ...prevGateways[gatewayId],
-                            settings: response.settings || {}
+                            settings: response.settings || {},
+                            enabled: response.enabled || false
                         }
                     }));
                     resolve(true);
@@ -67,6 +68,29 @@ const PaymentsTab: React.FC = () => {
                 [property]: value
             }
         }));
+
+        // For enabled property, we need to save it to the server
+        if (property === 'enabled') {
+            callApi({
+                path: `payment-gateways/${gatewayId}/enabled`,
+                method: 'POST',
+                data: { enabled: value },
+                onSuccess(response) {
+                    console.log('Gateway enabled state updated successfully:', response);
+                },
+                onError(error) {
+                    console.error('Error updating gateway enabled state:', error);
+                    // Rollback the UI state change if the server update fails
+                    setPaymentGateways(prevGateways => ({
+                        ...prevGateways,
+                        [gatewayId]: {
+                            ...prevGateways[gatewayId],
+                            enabled: !value // Revert to previous state
+                        }
+                    }));
+                }
+            });
+        }
     };
 
     // Update gateway settings

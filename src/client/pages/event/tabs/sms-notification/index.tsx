@@ -12,7 +12,7 @@ import { Button, Card, Flex, Switch } from 'antd';
 /**
  * Internal dependencies
  */
-import { useApi, useNotice } from '@quillbooking/hooks';
+import { useApi, useNavigate, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import SmsNotificationCard from './sms-notification-card';
 import { NotificationType } from '@quillbooking/client';
@@ -32,15 +32,16 @@ const SmsNotificationTab = forwardRef<SmsNotificationsTabHandle, SmsNotification
     const { state: event } = useEventContext();
     const { callApi, loading } = useApi();
     const { successNotice, errorNotice } = useNotice();
+    const navigate = useNavigate();
     const [notificationSettings, setNotificationSettings] = useState<Record<
         string,
         NotificationType
     > | null>(null);
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [isNoticeVisible, setNoticeVisible] = useState(true);
-    const [connected, setConnected] = useState(false);
-    const [isConnectionVisible, setIsConnectionVisible] = useState(true);
     const [notificationsLoaded, setNotificationsLoaded] = useState(false);
+
+    console.log(event?.connected_integrations.twilio.connected)
 
     useEffect(() => {
         fetchNotificationSettings();
@@ -113,21 +114,21 @@ const SmsNotificationTab = forwardRef<SmsNotificationsTabHandle, SmsNotification
             return;
 
         return callApi({
-                path: `events/${event.id}`,
-                method: 'POST',
-                data: {
-                    [`sms_notifications`]: notificationSettings,
-                },
-                onSuccess() {
-                    successNotice(__('Notification settings saved successfully', 'quillbooking'));
-                    setDisabled(true);
-                    // Update the base notification settings with a deep copy to avoid reference issues
-                    setNotificationSettings(notificationSettings);
-                },
-                onError(error) {
-                    errorNotice(error.message);
-                },
-            });
+            path: `events/${event.id}`,
+            method: 'POST',
+            data: {
+                [`sms_notifications`]: notificationSettings,
+            },
+            onSuccess() {
+                successNotice(__('Notification settings saved successfully', 'quillbooking'));
+                setDisabled(true);
+                // Update the base notification settings with a deep copy to avoid reference issues
+                setNotificationSettings(notificationSettings);
+            },
+            onError(error) {
+                errorNotice(error.message);
+            },
+        });
     };
 
     if (loading || !notificationSettings) {
@@ -136,7 +137,7 @@ const SmsNotificationTab = forwardRef<SmsNotificationsTabHandle, SmsNotification
 
     return (
         <div className='w-full px-9'>
-            {isConnectionVisible && (
+            {!event?.connected_integrations.twilio.connected ? (
                 <Card>
                     <CardHeader title={__('Sms Notification', 'quillbooking')}
                         description={__(
@@ -150,8 +151,7 @@ const SmsNotificationTab = forwardRef<SmsNotificationsTabHandle, SmsNotification
                             <Button type="primary"
                                 size="middle"
                                 onClick={() => {
-                                    setConnected(true);
-                                    setIsConnectionVisible(false);
+                                    navigate('integrations')
                                 }}
                                 loading={loading}
                                 className='rounded-lg font-[500] text-white bg-color-primary'>
@@ -160,8 +160,7 @@ const SmsNotificationTab = forwardRef<SmsNotificationsTabHandle, SmsNotification
                         </Flex>
                     </Card>
                 </Card>
-            )}
-            {connected && (
+            ) : (
                 <div className='grid grid-cols-2 gap-5'>
                     <SmsTabs
                         isNoticeVisible={isNoticeVisible}

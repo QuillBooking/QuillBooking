@@ -14,11 +14,20 @@ import { UploadOutlined } from '@ant-design/icons';
 import { __ } from '@wordpress/i18n';
 import './style.scss';
 import DynamicLocationFields from '../dynamic-location-field';
+import getValidationRules from './validation-rules';
 
 const { TextArea, Password } = Input;
 const { Option } = Select;
 
-// Component mapping with configuration
+const isObjectOption = (option) => {
+	return (
+		typeof option === 'object' &&
+		option !== null &&
+		'label' in option &&
+		'value' in option
+	);
+};
+
 const FIELD_COMPONENTS = {
 	text: (props) => <Input {...props} />,
 	email: (props) => <Input {...props} />,
@@ -49,8 +58,6 @@ const FIELD_COMPONENTS = {
 							</Option>
 						);
 					}
-
-					// Handle string format: "Option 1"
 					return (
 						<Option key={`${option}-${index}`} value={option}>
 							{option}
@@ -69,15 +76,6 @@ const FIELD_COMPONENTS = {
 	),
 };
 
-const isObjectOption = (option) => {
-	return (
-		typeof option === 'object' &&
-		option !== null &&
-		'label' in option &&
-		'value' in option
-	);
-};
-
 const FormField = ({ field, id, form, locationFields }) => {
 	const {
 		type,
@@ -88,6 +86,7 @@ const FormField = ({ field, id, form, locationFields }) => {
 		required,
 		...otherProps
 	} = field;
+
 	const FieldComponent = FIELD_COMPONENTS[type] || FIELD_COMPONENTS.text;
 	const style = { width: '100%' };
 	let updatedOptions = options;
@@ -104,7 +103,8 @@ const FormField = ({ field, id, form, locationFields }) => {
 		...otherProps,
 	};
 
-	console.log(id, fieldProps, type);
+	const rules = getValidationRules(field);
+
 	return (
 		<>
 			<div style={{ marginBottom: '24px' }}>
@@ -124,6 +124,8 @@ const FormField = ({ field, id, form, locationFields }) => {
 					}
 					name={id}
 					key={id}
+					rules={rules}
+					validateTrigger={['onChange', 'onBlur']}
 					valuePropName={type === 'checkbox' ? 'checked' : 'value'}
 				>
 					{FieldComponent(fieldProps)}

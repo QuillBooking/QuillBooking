@@ -37,15 +37,30 @@ const FIELD_COMPONENTS = {
 			<UploadOutlined /> {__('Upload', '@quillbooking')}
 		</Upload>
 	),
-	select: (props) => (
-		<Select {...props}>
-			{props.options?.map((opt) => (
-				<Option key={opt} value={opt}>
-					{opt}
-				</Option>
-			))}
-		</Select>
-	),
+	select: (props) => {
+		const { options = [], ...restProps } = props;
+
+		return (
+			<Select {...restProps}>
+				{options.map((option, index) => {
+					if (isObjectOption(option)) {
+						return (
+							<Option key={option.value} value={option.value}>
+								{option.label}
+							</Option>
+						);
+					}
+
+					// Handle string format: "Option 1"
+					return (
+						<Option key={`${option}-${index}`} value={option}>
+							{option}
+						</Option>
+					);
+				})}
+			</Select>
+		);
+	},
 	radio: (props) => <Radio.Group {...props} />,
 	checkbox: ({ label, required, ...props }) => (
 		<Checkbox {...props}>
@@ -53,6 +68,15 @@ const FIELD_COMPONENTS = {
 			{required && <span className="required">*</span>}
 		</Checkbox>
 	),
+};
+
+const isObjectOption = (option) => {
+	return (
+		typeof option === 'object' &&
+		option !== null &&
+		'label' in option &&
+		'value' in option
+	);
 };
 
 const FormField = ({ field, id, form, locationFields }) => {
@@ -67,9 +91,14 @@ const FormField = ({ field, id, form, locationFields }) => {
 	} = field;
 	const FieldComponent = FIELD_COMPONENTS[type] || FIELD_COMPONENTS.text;
 	const style = { width: '100%' };
+	let updatedOptions = options;
+	if (field.settings?.options?.length) {
+		updatedOptions = field.settings.options;
+	}
+
 	const fieldProps = {
 		value,
-		options,
+		options: updatedOptions,
 		label,
 		required,
 		style,

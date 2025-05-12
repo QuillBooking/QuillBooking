@@ -30,7 +30,6 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 		attendee_address: fields.location.address,
 		attendee_phone: fields.location.phone,
 	};
-	console.log('all fields:', allFields);
 	const sortedFields = Object.keys(allFields).sort(
 		(a, b) => allFields[a].order - allFields[b].order
 	);

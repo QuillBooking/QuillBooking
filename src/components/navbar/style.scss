@@ -1,64 +1,93 @@
 .quillbooking-navbar {
-    width: 265px;
-    height: 100%;
+  width: 265px;
+  height: 100%;
+  transition: width 0.3s ease;
 
-    h1 {
-        font-weight: 600;
-        font-size: 18px;
-        color: #3F4254;
-    }
-    
+  // Collapsed state
+  &.collapsed {
+    width: 83px;
 
     .custom-menu {
-        width: 265px;
-        height: 100%;
-        padding: 10px 20px;
-        position: relative;
+      width: 83px;
+      padding: 0 10px;
     }
 
-    .group {
-        margin-top: 30px;
-    }
-
-    .custom-menu .ant-menu-item {
-        background: transparent;
-        transition: background 0.3s ease-in-out;
-        margin-bottom: 12px;
-    }
-
-    .custom-menu .ant-menu-item:hover,
-    .custom-menu .ant-menu-item-selected {
-        background: #953AE4 !important;
-    }
-
-    .custom-menu .ant-menu-item:hover div,
-    .custom-menu .ant-menu-item-selected div {
-        color: white !important;
-    }
-
-    .custom-menu .ant-menu-item:last-child {
-        padding-right: 0px;
+    .menu-item-title {
+      display: none;
     }
 
     .navbar-upgrade-button {
-        background-color: #B7F005 !important;
-        color: #292D32 !important;
-        font-size: 16px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        font-weight: 500;
-        padding: 10px 16px;
-        width: 100%;
-        text-decoration: none;
+      justify-content: center;
+      padding: 10px;
     }
+    .navbar-toggle-button{
 
-    .navbar-upgrade-button:hover {
-        background: transparent !important;
     }
+  }
 
-    .custom-menu .ant-menu-item:hover .navbar-upgrade-button {
-        background-color: #B7F005 !important;
-        color: #292D32 !important;
-    }
+  h1 {
+    font-weight: 600;
+    font-size: 18px;
+    color: #3F4254;
+  }
+    
+  .custom-menu {
+    width: 265px;
+    height: 100%;
+    padding: 10px 20px;
+    position: relative;
+    transition: width 0.3s ease;
+  }
+
+  .group {
+    margin-top: 30px;
+  }
+
+  .custom-menu .ant-menu-item {
+    background: transparent;
+    transition: all 0.3s ease-in-out;
+    margin-bottom: 12px;
+  }
+
+  .custom-menu .ant-menu-item:hover,
+  .custom-menu .ant-menu-item-selected {
+    background: #953AE4 !important;
+  }
+
+  .custom-menu .ant-menu-item:hover div,
+  .custom-menu .ant-menu-item-selected div {
+    color: white !important;
+  }
+
+  .custom-menu .ant-menu-item:last-child {
+    padding-right: 0px;
+  }
+
+  .navbar-upgrade-button {
+    background-color: #B7F005 !important;
+    color: #292D32 !important;
+    font-size: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    padding: 10px 16px;
+    width: 100%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .navbar-upgrade-button:hover {
+    background: transparent !important;
+  }
+
+  .custom-menu .ant-menu-item:hover .navbar-upgrade-button {
+    background-color: #B7F005 !important;
+    color: #292D32 !important;
+  }
+
+  .navbar-toggle-button {
+    transition: transform 0.3s ease;
+  }
+
 }

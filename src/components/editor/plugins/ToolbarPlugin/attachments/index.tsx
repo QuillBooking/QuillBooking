@@ -20,7 +20,7 @@ import { Button, Flex, Modal, Input } from "antd";
  * Internal dependencies
  */
 import { INSERT_IMAGE_COMMAND } from '../../../plugins/image-plugin';
-import { MergeTagModal, Header, UrlIcon } from '@quillbooking/components'
+import { MergeTagModal, Header, UrlIcon, WebhookListIcon } from '@quillbooking/components'
 
 interface AttachmentsProps {
   activeEditor: any;
@@ -159,12 +159,16 @@ export default function Attachments({ activeEditor }: AttachmentsProps) {
       destroyOnClose
     >
       <Flex vertical gap={16}>
-        <Header
-          header={__("Insert Link", 'quillbooking')}
-          subHeader={__('inset link', 'quillbooking')} />
+        <Flex gap={10} className='items-center'>
+          <span className="bg-[#EDEDED] p-2 rounded"><WebhookListIcon width={24} height={24} /></span>
+          <Header
+            header={__("Add Link", 'quillbooking')}
+            subHeader={__('Choose your Merge tags type and Select one of them related to your input.', 'quillbooking')} />
+        </Flex>
         <div className="mb-6">
           <span className="text-[#09090B] text-[16px] font-semibold">
-            {__('URL', 'quillbooking')}
+            {__('Link', 'quillbooking')}
+            <span className="text-red-500">*</span>
           </span>
           <Input
             value={linkUrl}

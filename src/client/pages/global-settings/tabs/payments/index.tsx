@@ -10,16 +10,51 @@ import { useState, useEffect } from '@wordpress/element';
 import ConfigAPI from '@quillbooking/config';
 import IntegrateCard from './integrate-card';
 import PaymentGatewayCard from './method-card';
+import { useApi } from '@quillbooking/hooks';
 
 const PaymentsTab: React.FC = () => {
     const [activeTab, setActiveTab] = useState<string | null>(null);
     const [paymentGateways, setPaymentGateways] = useState(() => ConfigAPI.getPaymentGateways());
+    const { callApi } = useApi();
 
     useEffect(() => {
         if (Object.keys(paymentGateways).length > 0 && !activeTab) {
             setActiveTab(Object.keys(paymentGateways)[0]);
         }
     }, [paymentGateways, activeTab]);
+
+    const fetchGatewaySettings = async (gatewayId: string) => {
+        return new Promise((resolve) => {
+            callApi({
+                path: `payment-gateways/${gatewayId}`,
+                method: 'GET',
+                onSuccess(response) {
+                    console.log('Settings loaded successfully:', response);
+                    setPaymentGateways(prevGateways => ({
+                        ...prevGateways,
+                        [gatewayId]: {
+                            ...prevGateways[gatewayId],
+                            settings: response.settings || {}
+                        }
+                    }));
+                    resolve(true);
+                },
+                onError(error) {
+                    console.error('Error loading settings:', error);
+                    // Consider adding a retry mechanism or user notification
+                    resolve(false);
+                }
+            });
+        });
+    };
+
+    // Fetch only the active gateway if set, otherwise fetch the first one
+    useEffect(() => {
+        if (Object.keys(paymentGateways).length > 0) {
+            const gatewayToFetch = activeTab || Object.keys(paymentGateways)[0];
+            fetchGatewaySettings(gatewayToFetch);
+        }
+    }, [activeTab]);
 
     const activeGateway = activeTab ? paymentGateways[activeTab] : null;
 

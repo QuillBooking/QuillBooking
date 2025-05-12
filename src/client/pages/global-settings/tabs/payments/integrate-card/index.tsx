@@ -64,7 +64,11 @@ const IntegrateCard: React.FC<IntegrateCardProps> = ({
                         <Card
                             key={gatewayId}
                             className={`w-full cursor-pointer ${activeTab === gatewayId ? 'bg-color-secondary border-color-primary' : ''}`}
-                            onClick={() => { setActiveTab(gatewayId); }}
+                            onClick={() => { 
+                                if (activeTab !== gatewayId) {
+                                    setActiveTab(gatewayId);
+                                }
+                            }}
                         >
                             <Flex gap={18} align="center">
                                 <img 

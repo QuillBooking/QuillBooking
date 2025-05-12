@@ -58,9 +58,12 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
     const [formMode, setFormMode] = useState(gateway.settings?.mode || 'sandbox');
 
     useEffect(() => {
-        // Only set form values if gateway settings exist
-        if (gateway.settings) {
+        // Only set form values if gateway settings exist and form exists
+        if (gateway.settings && form) {
             const settings = gateway.settings || {};
+            // Reset fields first to avoid field value persistence between different gateways
+            form.resetFields();
+            // Then set the values
             form.setFieldsValue({
                 ...settings,
                 mode: settings.mode || 'sandbox'

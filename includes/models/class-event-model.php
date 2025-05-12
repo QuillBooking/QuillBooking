@@ -125,6 +125,7 @@ class Event_Model extends Model {
 		'booking_count',
 		'connected_integrations',
 		'price',
+		'payments_settings',
 	);
 
 	/**

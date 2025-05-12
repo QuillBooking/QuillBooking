@@ -3,12 +3,19 @@ import ClockIcon from '../../../../icons/clock-icon';
 import './style.scss';
 import { __ } from '@wordpress/i18n';
 import { LocationIcon } from '../../../../../components';
+import { PriceIcon } from '../../../../../components/icons';
+import { get } from 'lodash';
 
 interface EventDetailsProps {
 	event: Event;
 	setSelectedDuration: (duration: number) => void;
 	selectedDuration: number;
 	step: number;
+}
+
+interface PaymentItem {
+	item: string;
+	price: number;
 }
 
 const EventDetails: React.FC<EventDetailsProps> = ({
@@ -19,6 +26,52 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 }) => {
 	const isMultiDurations =
 		event.additional_settings.allow_attendees_to_select_duration;
+
+	// Get currency symbol based on currency code
+	const getCurrencySymbol = (currencyCode: string) => {
+		const symbols: { [key: string]: string } = {
+			USD: '$',
+			EUR: '€',
+			GBP: '£',
+			JPY: '¥',
+			AUD: 'A$',
+			CAD: 'C$',
+			CHF: 'CHF',
+			CNY: '¥',
+			INR: '₹',
+			BRL: 'R$',
+		};
+		return symbols[currencyCode] || currencyCode;
+	};
+
+	// Format price with currency symbol
+	const formatPrice = (price: number, currencyCode: string) => {
+		const symbol = getCurrencySymbol(currencyCode);
+		return `${symbol}${price}`;
+	};
+
+	// Get price based on whether it's multi-duration or not
+	const getPrice = () => {
+		const paymentSettings = get(event, 'payments_settings', {});
+		const isPaymentEnabled = get(paymentSettings, 'enable_payment', false);
+		
+		if (!isPaymentEnabled) return null;
+		
+		if (isMultiDurations) {
+			const durationStr = selectedDuration.toString();
+			return get(paymentSettings, ['multi_duration_items', durationStr, 'price'], 0);
+		} else {
+			const items = get(paymentSettings, 'items', []) as PaymentItem[];
+			if (items.length > 0) {
+				return items[0].price;
+			}
+		}
+		
+		return 0;
+	};
+
+	const price = getPrice();
+	const currency = get(event, 'currency', 'USD');
 
 	return (
 		<div className="event-details-container">
@@ -53,6 +106,13 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 					<div className="detail-row">
 						<LocationIcon width={20} height={20} rectFill={false} />
 						<p>{event.location[0].type.split('_').join(' ')}</p>
+					</div>
+				)}
+				{/* price */}
+				{price !== null && price > 0 && (
+					<div className="detail-row">
+						<PriceIcon width={20} height={20} rectFill={false} />
+						<p>{formatPrice(price, currency)}</p>
 					</div>
 				)}
 			</div>

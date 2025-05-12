@@ -38,6 +38,20 @@ export type Event = {
         twilio: ConnectedIntegrationsFields;
         zoom: ConnectedIntegrationsFields;
     };
+    payments_settings?: {
+        enable_payment: boolean;
+        type: 'native' | 'woocommerce';
+        woo_product?: number | null;
+        enable_items_based_on_duration?: boolean;
+        items: Array<{ item: string; price: number }>;
+        multi_duration_items?: {
+            [key: string]: { item: string; price: number; duration: string };
+        };
+        payment_methods?: string[];
+        enable_paypal?: boolean;
+        enable_stripe?: boolean;
+        currency?: string;
+    };
 };
 
 

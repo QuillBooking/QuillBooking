@@ -6,20 +6,19 @@ import Hosts from './hosts';
 import './style.scss';
 import { Dayjs } from 'dayjs';
 import QuestionsComponents from './questions';
-import ConfigAPI from '@quillbooking/config';
 
 interface CardBodyProps {
 	event: Event;
+	ajax_url: string;
 }
 
-const CardBody: React.FC<CardBodyProps> = ({ event }) => {
+const CardBody: React.FC<CardBodyProps> = ({ event, ajax_url }) => {
 	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 	const [selectedTime, setSelectedTime] = useState<string | null>(null);
 	const [timeZone, setTimeZone] = useState<string>(
 		Intl.DateTimeFormat().resolvedOptions().timeZone
 	);
 	const [step, setStep] = useState<number>(1);
-	const ajax_url = ConfigAPI.getAjaxUrl();
 
 	const handleSelectedTime = (time: string) => {
 		setSelectedTime(time);
@@ -100,6 +99,7 @@ const CardBody: React.FC<CardBodyProps> = ({ event }) => {
 					timeZone={timeZone}
 					setTimeZone={setTimeZone}
 					setSelectedTime={handleSelectedTime}
+					ajax_url={ajax_url}
 				/>
 			)}
 		</div>

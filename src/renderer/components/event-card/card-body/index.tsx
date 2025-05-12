@@ -13,6 +13,7 @@ interface CardBodyProps {
 	ajax_url: string;
 	type?: string;
 	booking?: Booking;
+	url: string;
 }
 
 const CardBody: React.FC<CardBodyProps> = ({
@@ -20,6 +21,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 	ajax_url,
 	type = 'schedule',
 	booking,
+	url
 }) => {
 	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 	const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -85,10 +87,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 			});
 			if (response.ok) {
 				const data = await response.json();
-				const baseUrl =
-					window.top?.location?.origin || window.location.origin;
 				(window.top || window).location.href =
-					`${baseUrl}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
+					`${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
 			}
 		} catch (error) {
 			console.error('Error fetching availability:', error);

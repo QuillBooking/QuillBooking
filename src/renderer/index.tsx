@@ -17,7 +17,7 @@ const config = window['quillbooking_config'] as Config;
 console.log('config', config);
 
 if (schedule) {
-    createRoot(schedule).render(<EventCard event={config.event} ajax_url={config.ajax_url} />);
+    createRoot(schedule).render(<EventCard event={config.event} ajax_url={config.ajax_url} url={config.url} />);
 }
 
 if (reschedule) {

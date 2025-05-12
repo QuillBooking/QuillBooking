@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Booking, Event } from '../../../types';
 import DateTimePicker from './date-time-picker';
 import EventDetails from './event-details';
@@ -27,9 +27,16 @@ const CardBody: React.FC<CardBodyProps> = ({
 		Intl.DateTimeFormat().resolvedOptions().timeZone
 	);
 	const [step, setStep] = useState<number>(1);
+	const [selectedDuration, setSelectedDuration] = useState<number>(
+		event.duration
+	);
 
-	const handleSelectedTime = (time: string) => {
+	const handleSelectedTime = (time: string | null) => {
 		setSelectedTime(time);
+		if (!time) {
+			setStep(1);
+			return;
+		}
 		setStep(2);
 	};
 
@@ -44,7 +51,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 				' ' +
 				(selectedTime + ':00' || '')
 		);
-		formData.append('duration', event.duration.toString());
+		formData.append('duration', selectedDuration.toString());
 
 		formData.append(
 			'invitees',
@@ -88,10 +95,20 @@ const CardBody: React.FC<CardBodyProps> = ({
 		}
 	};
 
+	useEffect(() => {
+		if (event.additional_settings.allow_attendees_to_select_duration) {
+			setSelectedDuration(event.additional_settings.default_duration);
+		}
+	}, [event]);
 	return (
 		<div className="event-card-details">
 			<Hosts hosts={event.hosts} />
-			<EventDetails event={event} />
+			<EventDetails
+				event={event}
+				selectedDuration={selectedDuration}
+				setSelectedDuration={setSelectedDuration}
+				step={step}
+			/>
 			{selectedTime && step === 2 ? (
 				type === 'reschedule' ? (
 					<Reschedule
@@ -120,6 +137,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 					setTimeZone={setTimeZone}
 					setSelectedTime={handleSelectedTime}
 					ajax_url={ajax_url}
+					selectedDuration={selectedDuration}
 				/>
 			)}
 		</div>

@@ -54,35 +54,40 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
     const [formMode, setFormMode] = useState(gateway.settings?.mode || 'sandbox');
 
     useEffect(() => {
-        // Load existing settings when gateway changes
-        const settings = gateway.settings || {};
-        form.setFieldsValue({
-            ...settings,
-            mode: settings.mode || 'sandbox'
-        });
-        setFormMode(settings.mode || 'sandbox');
+        // Only set form values if gateway is enabled
+        if (gateway.enabled) {
+            const settings = gateway.settings || {};
+            form.setFieldsValue({
+                ...settings,
+                mode: settings.mode || 'sandbox'
+            });
+            setFormMode(settings.mode || 'sandbox');
+        }
     }, [gateway, form]);
 
     const handleSaveSettings = (values: any) => {
-        form.validateFields()
-            .then(() => {
-                callApi({
-                    path: `payment-gateways/${slug}`,
-                    method: 'POST',
-                    data: values,
-                    onSuccess() {
-                        successNotice(__('Payment gateway settings saved successfully', 'quillbooking'));
-                        // Update the local state with the new settings
-                        updateGatewaySettings(slug, values);
-                        setFormMode(values.mode || 'sandbox');
-                    },
-                    onError(error) {
-                        errorNotice(error.message || __('Failed to save payment gateway settings', 'quillbooking'));
-                    }
+        // Only validate if gateway is enabled
+        if (gateway.enabled) {
+            form.validateFields()
+                .then(() => {
+                    callApi({
+                        path: `payment-gateways/${slug}`,
+                        method: 'POST',
+                        data: values,
+                        onSuccess() {
+                            successNotice(__('Payment gateway settings saved successfully', 'quillbooking'));
+                            // Update the local state with the new settings
+                            updateGatewaySettings(slug, values);
+                            setFormMode(values.mode || 'sandbox');
+                        },
+                        onError(error) {
+                            errorNotice(error.message || __('Failed to save payment gateway settings', 'quillbooking'));
+                        }
+                    });
+                }).catch((error) => {
+                    errorNotice(error.message || __('Failed to save settings', 'quillbooking'));
                 });
-            }).catch((error) => {
-                errorNotice(error.message || __('Failed to save settings', 'quillbooking'));
-            });
+        }
     };
 
     const renderField = (field: any) => {
@@ -92,8 +97,7 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
                 return <Switch />;
             case 'password':
                 return (
-                    <Input
-                        type="password"
+                    <Input.Password
                         placeholder={field.placeholder || ''}
                         className='h-[48px] w-full'
                     />
@@ -106,7 +110,6 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
                         className='h-[48px] w-full'
                     />
                 );
-
             case 'text':
             default:
                 return (
@@ -164,10 +167,12 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
                             <Form.Item
                                 name="mode"
                                 className='mt-3'
+                                label={
+                                    <div className="text-[#3F4254] font-semibold text-[16px]">
+                                        {__('Payment Mode', 'quillbooking')}
+                                    </div>
+                                }
                             >
-                                <div className="text-[#3F4254] font-semibold text-[16px]">
-                                    {__('Payment Mode', 'quillbooking')}
-                                </div>
                                 <Radio.Group className="flex gap-2 mt-2 w-full">
                                     <Radio value="sandbox"
                                         className={`custom-radio border w-1/2 rounded-lg p-3 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
@@ -200,6 +205,12 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
                                                     <Flex vertical gap={10} key={fieldKey}>
                                                         <Form.Item
                                                             name={`${mode}_${fieldKey}`}
+                                                            label={
+                                                                <div className="text-[#3F4254] font-semibold text-[16px]">
+                                                                    {field.label}
+                                                                    {field.required && <span className="text-red-500">*</span>}
+                                                                </div>
+                                                            }
                                                             tooltip={field.description}
                                                             rules={[
                                                                 {
@@ -208,22 +219,7 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
                                                                 },
                                                             ]}
                                                         >
-                                                            {['checkbox', 'switch'].includes(field.type) ? (
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="text-[#3F4254] font-semibold text-[16px]">
-                                                                        {field.label}
-                                                                    </div>
-                                                                    {renderField(field)}
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex flex-col gap-1">
-                                                                    <div className="text-[#3F4254] font-semibold text-[16px]">
-                                                                        {field.label}
-                                                                        {field.required && <span className="text-red-500">*</span>}
-                                                                    </div>
-                                                                    {renderField(field)}
-                                                                </div>
-                                                            )}
+                                                            {renderField(field)}
                                                         </Form.Item>
                                                     </Flex>
                                                 ))}

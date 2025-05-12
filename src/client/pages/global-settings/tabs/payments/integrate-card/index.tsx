@@ -16,7 +16,9 @@ import {
  * Internal dependencies
  */
 import { CardHeader, IntegrationsTabIcon, NoticeComponent } from '@quillbooking/components';
+// @ts-ignore
 import paypal from '../../../../../../../assets/icons/paypal/paypal_vertical.png';
+// @ts-ignore
 import stripe from '../../../../../../../assets/icons/stripe/stripe.png';
 
 export interface IntegrateCardProps {
@@ -25,7 +27,12 @@ export interface IntegrateCardProps {
     setActiveTab: (tab: string) => void;
 }
 
-const IntegrateCard: React.FC<IntegrateCardProps> = ({ paymentGateways, activeTab, setActiveTab }) => {
+const IntegrateCard: React.FC<IntegrateCardProps> = ({ 
+    paymentGateways, 
+    activeTab, 
+    setActiveTab
+}) => {
+    // Manage notice visibility state locally since it's only used in this component
     const [isNoticeVisible, setNoticeVisible] = useState(true);
     
     // Define gateway images mapping

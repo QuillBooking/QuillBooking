@@ -14,11 +14,20 @@ import { UploadOutlined } from '@ant-design/icons';
 import { __ } from '@wordpress/i18n';
 import './style.scss';
 import DynamicLocationFields from '../dynamic-location-field';
+import getValidationRules from './validation-rules';
 
 const { TextArea, Password } = Input;
 const { Option } = Select;
 
-// Component mapping with configuration
+const isObjectOption = (option) => {
+	return (
+		typeof option === 'object' &&
+		option !== null &&
+		'label' in option &&
+		'value' in option
+	);
+};
+
 const FIELD_COMPONENTS = {
 	text: (props) => <Input {...props} />,
 	email: (props) => <Input {...props} />,
@@ -36,15 +45,28 @@ const FIELD_COMPONENTS = {
 			<UploadOutlined /> {__('Upload', '@quillbooking')}
 		</Upload>
 	),
-	select: (props) => (
-		<Select {...props}>
-			{props.options?.map((opt) => (
-				<Option key={opt} value={opt}>
-					{opt}
-				</Option>
-			))}
-		</Select>
-	),
+	select: (props) => {
+		const { options = [], ...restProps } = props;
+
+		return (
+			<Select {...restProps}>
+				{options.map((option, index) => {
+					if (isObjectOption(option)) {
+						return (
+							<Option key={option.value} value={option.value}>
+								{option.label}
+							</Option>
+						);
+					}
+					return (
+						<Option key={`${option}-${index}`} value={option}>
+							{option}
+						</Option>
+					);
+				})}
+			</Select>
+		);
+	},
 	radio: (props) => <Radio.Group {...props} />,
 	checkbox: ({ label, required, ...props }) => (
 		<Checkbox {...props}>
@@ -64,16 +86,24 @@ const FormField = ({ field, id, form, locationFields }) => {
 		required,
 		...otherProps
 	} = field;
+
 	const FieldComponent = FIELD_COMPONENTS[type] || FIELD_COMPONENTS.text;
 	const style = { width: '100%' };
+	let updatedOptions = options;
+	if (field.settings?.options?.length) {
+		updatedOptions = field.settings.options;
+	}
+
 	const fieldProps = {
 		value,
-		options,
+		options: updatedOptions,
 		label,
 		required,
 		style,
 		...otherProps,
 	};
+
+	const rules = getValidationRules(field);
 
 	return (
 		<>
@@ -94,6 +124,8 @@ const FormField = ({ field, id, form, locationFields }) => {
 					}
 					name={id}
 					key={id}
+					rules={rules}
+					validateTrigger={['onChange', 'onBlur']}
 					valuePropName={type === 'checkbox' ? 'checked' : 'value'}
 				>
 					{FieldComponent(fieldProps)}

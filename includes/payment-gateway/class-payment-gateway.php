@@ -186,6 +186,29 @@ abstract class Payment_Gateway {
 	}
 
 	/**
+	 * Check if the gateway is enabled
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return boolean
+	 */
+	public function is_enabled() {
+		return (bool) get_option( "quillbooking_{$this->slug}_enabled", false );
+	}
+
+	/**
+	 * Set gateway enabled status
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param boolean $enabled
+	 * @return void
+	 */
+	public function set_enabled( $enabled ) {
+		update_option( "quillbooking_{$this->slug}_enabled", (bool) $enabled );
+	}
+
+	/**
 	 * validate the integration
 	 *
 	 * @since 1.0.0

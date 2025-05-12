@@ -16,11 +16,13 @@ dayjs.extend(isToday);
 interface DatePickerProps {
 	event: Event;
 	selectedDate: Dayjs | null;
-	setSelectedDate: (date: Dayjs) => void;
+	setSelectedDate: (date: Dayjs | null) => void;
 	timeZone: string;
 	selectedAvailability?: any;
 	setSelectedAvailability: (availability: any) => void;
 	ajax_url: string;
+	selectedDuration: number;
+	setSelectedTime: (time: string | null) => void;
 }
 
 const DatePicker: React.FC<DatePickerProps> = ({
@@ -30,7 +32,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
 	timeZone,
 	selectedAvailability,
 	setSelectedAvailability,
-	ajax_url
+	ajax_url,
+	selectedDuration,
+	setSelectedTime
 }) => {
 	const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
 	useEffect(() => {
@@ -45,7 +49,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 		formData.append('id', value.toString());
 		formData.append('timezone', timeZone || '');
 		formData.append('start_date', new Date().toISOString());
-		formData.append('duration', event.duration.toString());
+		formData.append('duration', selectedDuration.toString());
 
 		if (calendar_id) {
 			formData.append('calendar_id', calendar_id.toString());
@@ -67,7 +71,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
 	useEffect(() => {
 		fetchAvailability(event.id, event.calendar_id);
-	}, [timeZone]);
+		setSelectedDate(null);
+		setSelectedTime(null);
+	}, [timeZone, selectedDuration]);
 
 	const renderDateCell = (value) => {
 		const isSameDay =

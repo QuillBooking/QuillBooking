@@ -52,7 +52,7 @@ export type PaymentGateway = {
 	name: string;
 	description: string;
 	settings: {
-		mode: 'saandbox' | 'live';
+		mode: 'sandbox' | 'live';
 		[key: string]: unknown;
 	};
 	fields: Fields;

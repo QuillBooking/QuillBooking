@@ -16,8 +16,9 @@ interface DateTimePickerProps {
 	timeZone: string;
 	setTimeZone: (timezone: string) => void;
 	selectedTime: string | null;
-	setSelectedTime: (time: string) => void;
+	setSelectedTime: (time: string | null) => void;
 	ajax_url: string;
+	selectedDuration: number;
 }
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
@@ -28,7 +29,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 	setTimeZone,
 	selectedTime,
 	setSelectedTime,
-	ajax_url
+	ajax_url,
+	selectedDuration,
 }) => {
 	const [selectedAvailability, setSelectedAvailability] = useState<
 		string | null
@@ -46,6 +48,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 					event={event}
 					selectedDate={selectedDate}
 					setSelectedDate={setSelectedDate}
+					selectedDuration={selectedDuration}
+					setSelectedTime={setSelectedTime}
 					timeZone={timeZone}
 					selectedAvailability={selectedAvailability}
 					setSelectedAvailability={setSelectedAvailability}

@@ -186,7 +186,12 @@ class Booking_Model extends Model {
 	 * @return Booking_Model
 	 */
 	public static function getByHashId( $hash_id ) {
-		return self::where( 'hash_id', $hash_id )->with( 'event' )->first();
+		$booking = self::where( 'hash_id', $hash_id )->with( 'event', 'guest' )->first();
+		if ( ! $booking ) {
+			return null;
+		}
+
+		return $booking;
 	}
 
 	/**

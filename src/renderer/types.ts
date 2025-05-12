@@ -5,6 +5,7 @@ export type Config = {
     lang: string;
     calendar: Calendar;
     event: Event;
+    booking: Booking;
 };
 
 export type Event = {
@@ -181,4 +182,46 @@ export type Fields = {
 
 export type FieldsGroup = {
 	[key: string]: FieldType;
+};
+
+
+export interface Booking {
+    id: number;
+    hash_id: string;
+    event_id: number;
+    calendar_id: number;
+    guest_id: number;
+    start_time: string;
+    end_time: string;
+    slot_time: number;
+    source: string;
+    status: 'scheduled' | 'cancelled' | 'completed' | 'pending';
+    cancelled_by: string | null;
+    event_url: string;
+    created_at: string;
+    updated_at: string;
+    timezone: string;
+    fields: any | null;
+    location: string;
+    event: Event;
+    meta: EventMetaData[];
+    guest: Guest;
+}
+
+export type Guest = {
+	booking_id: number;
+	create_at: string;
+	email: string;
+	id: number;
+	name: string;
+	phone?: string;
+	updated_at: string;
+	user_id: number;
+};
+
+export type Location = {
+	type: string;
+	fields: {
+		[key: string]: string;
+	};
 };

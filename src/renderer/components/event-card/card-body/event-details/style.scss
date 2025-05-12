@@ -19,16 +19,37 @@
 	padding: 10px 0;
 }
 
-.event-duration {
+.detail-row {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	font-weight: 400;
 	font-size: 16px;
+	text-transform: capitalize;
 }
 
 .event-description {
 	font-weight: 400;
 	font-size: 16px;
 	letter-spacing: 0%;
+}
+
+.event-duration-multi {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.duration-btn {
+  padding: 0.25rem 1rem;
+  border-radius: 50px;
+  border: none;
+  background-color: rgba(168, 85, 247, 0.15);
+  color: #9333ea;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.duration-btn.selected {
+  background-color: #9333ea;
+  color: white;
 }

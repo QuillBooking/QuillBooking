@@ -76,6 +76,26 @@ abstract class REST_Settings_Controller extends REST_Controller {
 				),
 			)
 		);
+
+		// Register route for enabling/disabling the payment gateway
+		register_rest_route(
+			$this->namespace,
+			"/{$this->rest_base}/enabled",
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'update_enabled_status' ),
+					'permission_callback' => array( $this, 'update_permissions_check' ),
+					'args'                => array(
+						'enabled' => array(
+							'required'    => true,
+							'type'        => 'boolean',
+							'description' => __( 'Whether the payment gateway is enabled or not', 'quillbooking' ),
+						),
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -90,10 +110,39 @@ abstract class REST_Settings_Controller extends REST_Controller {
 	public function get( $request ) {
 		try {
 			$settings = $this->payment_gateway->get_settings();
+			$enabled  = get_option( "quillbooking_{$this->payment_gateway->slug}_enabled", false );
 
 			return new WP_REST_Response(
 				array(
 					'settings' => $settings,
+					'enabled'  => (bool) $enabled,
+				),
+				200
+			);
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_invalid_request', $e->getMessage(), array( 'status' => 400 ) );
+		}
+	}
+
+	/**
+	 * Update Payment_Gateway enabled status
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function update_enabled_status( $request ) {
+		try {
+			$params  = $request->get_json_params();
+			$enabled = isset( $params['enabled'] ) ? (bool) $params['enabled'] : false;
+
+			update_option( "quillbooking_{$this->payment_gateway->slug}_enabled", $enabled );
+
+			return new WP_REST_Response(
+				array(
+					'enabled' => $enabled,
 				),
 				200
 			);

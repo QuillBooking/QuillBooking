@@ -30,17 +30,13 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 		attendee_address: fields.location.address,
 		attendee_phone: fields.location.phone,
 	};
-	console.log('all fields:', allFields);
 	const sortedFields = Object.keys(allFields).sort(
 		(a, b) => allFields[a].order - allFields[b].order
 	);
 
 	// called when the user clicks “Schedule Event”
 	const handleFinish = (values: Record<string, any>) => {
-		// values is an object keyed by your field IDs
-		console.log('handle finish:', values);
 		onSubmit(values);
-		// advance to next step if you want:
 	};
 
 	return (
@@ -55,7 +51,12 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 				<p>{__('Enter Details', '@quillbooking')}</p>
 			</div>
 			{sortedFields.length > 0 && (
-				<Form layout="vertical" onFinish={handleFinish} form={form}>
+				<Form
+					layout="vertical"
+					onFinish={handleFinish}
+					form={form}
+					requiredMark={false}
+				>
 					{sortedFields.map((fieldKey, index) => (
 						<>
 							<FormField

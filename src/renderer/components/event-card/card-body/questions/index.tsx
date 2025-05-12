@@ -51,7 +51,12 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 				<p>{__('Enter Details', '@quillbooking')}</p>
 			</div>
 			{sortedFields.length > 0 && (
-				<Form layout="vertical" onFinish={handleFinish} form={form}>
+				<Form
+					layout="vertical"
+					onFinish={handleFinish}
+					form={form}
+					requiredMark={false}
+				>
 					{sortedFields.map((fieldKey, index) => (
 						<>
 							<FormField

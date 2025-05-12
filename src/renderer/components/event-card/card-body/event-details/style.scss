@@ -19,12 +19,13 @@
 	padding: 10px 0;
 }
 
-.event-duration {
+.detail-row {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	font-weight: 400;
 	font-size: 16px;
+	text-transform: capitalize;
 }
 
 .event-description {

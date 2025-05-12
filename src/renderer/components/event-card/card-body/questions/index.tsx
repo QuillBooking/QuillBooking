@@ -36,10 +36,7 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 
 	// called when the user clicks “Schedule Event”
 	const handleFinish = (values: Record<string, any>) => {
-		// values is an object keyed by your field IDs
-		console.log('handle finish:', values);
 		onSubmit(values);
-		// advance to next step if you want:
 	};
 
 	return (

@@ -2,6 +2,7 @@ import { Event } from '../../../../types';
 import ClockIcon from '../../../../icons/clock-icon';
 import './style.scss';
 import { __ } from '@wordpress/i18n';
+import { LocationIcon } from '../../../../../components';
 
 interface EventDetailsProps {
 	event: Event;
@@ -23,7 +24,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 		<div className="event-details-container">
 			<h1 className="event-header">{event.name}</h1>
 			<div className="event-details">
-				<div className="event-duration">
+				<div className="detail-row">
 					<ClockIcon width={20} height={20} />
 					{isMultiDurations && step === 1 ? (
 						<div className="event-duration-multi">
@@ -47,6 +48,13 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 						</p>
 					)}
 				</div>
+				{/* location */}
+				{event.location.length === 1 && (
+					<div className="detail-row">
+						<LocationIcon width={20} height={20} rectFill={false} />
+						<p>{event.location[0].type.split('_').join(' ')}</p>
+					</div>
+				)}
 			</div>
 			<p className="event-description">{event.description}</p>
 		</div>

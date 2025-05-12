@@ -218,3 +218,10 @@ export type Guest = {
 	updated_at: string;
 	user_id: number;
 };
+
+export type Location = {
+	type: string;
+	fields: {
+		[key: string]: string;
+	};
+};

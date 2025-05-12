@@ -1203,28 +1203,44 @@ class REST_Event_Controller extends REST_Controller {
 			$user_id = $request->get_param( 'user_id' ) ? absint( $request->get_param( 'user_id' ) ) : null;
 			$status  = $request->get_param( 'status' ) ? sanitize_text_field( $request->get_param( 'status' ) ) : null;
 
-			$query = Event_Model::with( array( 'calendar', 'meta' ) )->orderBy( 'created_at', 'desc' );
+			// Start base query
+			$base_query = Event_Model::query();
 
-			// Apply filters if provided
+			// Apply user scoping
 			if ( $user_id ) {
-				$query->where( 'user_id', $user_id );
+				$base_query->where( 'user_id', $user_id );
 			} elseif ( ! current_user_can( 'quillbooking_read_all_calendars' ) ) {
-				$query->where( 'user_id', get_current_user_id() );
+				$base_query->where( 'user_id', get_current_user_id() );
 			}
 
+			// Clone the base query for counting enabled events
+			$count_query = clone $base_query;
+			$count_query->where( 'is_disabled', false );
+			$enabled_events_count = $count_query->count();
+
+			// Clone for retrieving paginated latest events with eager loads
+			$event_query = clone $base_query;
+			// Apply status filter if given
 			if ( $status ) {
-				$query->where( 'status', $status );
+				$event_query->where( 'status', sanitize_text_field( $status ) );
 			}
+			$events = $event_query
+			->with( array( 'calendar', 'meta' ) )
+			->orderBy( 'created_at', 'desc' )
+			->limit( $limit )
+			->get();
 
-			$events = $query->limit( $limit )->get();
+			// Format response
+			$prepared_events = array_map( array( $this, 'prepare_event_for_response' ), $events );
 
-			// Prepare events for response
-			$prepared_events = array();
-			foreach ( $events as $event ) {
-				$prepared_events[] = $this->prepare_event_for_response( $event );
-			}
+			return new WP_REST_Response(
+				array(
+					'events'               => $prepared_events,
+					'enabled_events_count' => $enabled_events_count,
+				),
+				200
+			);
 
-			return new WP_REST_Response( $prepared_events, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
 		}

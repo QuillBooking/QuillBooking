@@ -36,6 +36,7 @@ final class Payment_Gateways_Manager extends Manager {
 				'description' => 'description',
 				'settings'    => 'get_settings',
 				'fields'      => 'get_fields',
+				'enabled'     => 'is_enabled',
 			)
 		);
 	}

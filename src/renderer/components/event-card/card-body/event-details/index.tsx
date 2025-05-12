@@ -101,18 +101,18 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 						</p>
 					)}
 				</div>
-				{/* location */}
-				{event.location.length === 1 && (
-					<div className="detail-row">
-						<LocationIcon width={20} height={20} rectFill={false} />
-						<p>{event.location[0].type.split('_').join(' ')}</p>
-					</div>
-				)}
 				{/* price */}
 				{price !== null && price > 0 && (
 					<div className="detail-row">
 						<PriceIcon width={20} height={20} rectFill={false} />
 						<p>{formatPrice(price, currency)}</p>
+					</div>
+				)}
+				{/* location */}
+				{event.location.length === 1 && (
+					<div className="detail-row">
+						<LocationIcon width={20} height={20} rectFill={false} />
+						<p>{event.location[0].type.split('_').join(' ')}</p>
 					</div>
 				)}
 			</div>

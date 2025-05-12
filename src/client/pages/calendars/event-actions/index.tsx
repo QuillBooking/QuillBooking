@@ -50,7 +50,6 @@ const EventActions: React.FC<EventActionsProps> = ({
 
 	const showDisableModal = () => {
 		setIsModalDisableOpen(true);
-		// Don't close the popover yet as we're showing a modal
 	};
 
 	const handleDisable = (status: boolean) => {

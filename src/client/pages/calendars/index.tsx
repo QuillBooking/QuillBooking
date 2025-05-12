@@ -20,11 +20,11 @@ import './style.scss';
 import type { CalendarResponse, Calendar } from '@quillbooking/client';
 import CalendarEvents from './calendar-events';
 import AddCalendarModal from './add-calendar-modal';
-import CloneEventModal from './clone-event-modal';
 import {
 	useApi,
 	useNotice,
 	useNavigate,
+	useCurrentUser,
 } from '@quillbooking/hooks';
 import {
 	Header,
@@ -36,6 +36,8 @@ import {
 	HostSelect,
 	TabButtons,
 	NoticeBanner,
+	ShareIcon,
+	UpcomingCalendarIcon,
 } from '@quillbooking/components';
 import CalendarActions from './calendar-actions';
 import CreateEvent from '../create-event';
@@ -45,6 +47,7 @@ import CreateEvent from '../create-event';
  */
 const Calendars: React.FC = () => {
 	const { callApi, loading } = useApi();
+	const currentUser = useCurrentUser();
 	const [calendars, setCalendars] = useState<Calendar[] | null>(null);
 	const [allCalendars, setAllCalendars] = useState<Calendar[] | null>(null);
 	const [search, setSearch] = useState<string>('');
@@ -52,14 +55,14 @@ const Calendars: React.FC = () => {
 		type: 'host',
 	});
 	const [type, setType] = useState<string | null>(null);
-	const [cloneCalendar, setCloneCalendar] = useState<Calendar | null>(null);
 	const [update, setUpdate] = useState(false);
 	const [showCreateEventModal, setShowCreateEventModal] = useState(false);
 	const [selectedCalendarId, setSelectedCalendarId] = useState<number | null>(null);
-	const [selectedUser, setSelectedUser] = useState<number>(0);
+	const [selectedUser, setSelectedUser] = useState<number>(currentUser.isAdmin() ? 0 : currentUser.getId());
 	const [excludedUserIds, setExcludedUserIds] = useState<number[]>([]);
 	const [hostSelectKey, setHostSelectKey] = useState<number>(0);
 	const [eventStatusMessage, setEventStatusMessage] = useState<boolean>(false);
+	const [cloneMessage, setCloneMessage] = useState<boolean>(false);
 	const { errorNotice, successNotice } = useNotice();
 	const navigate = useNavigate();
 	const typesLabels = {
@@ -68,15 +71,29 @@ const Calendars: React.FC = () => {
 		'round-robin': __('Round Robin', 'quillbooking'),
 	};
 
-
 	const fetchCalendars = async (shouldUpdateExcludedUsers = true) => {
 		if (loading) return;
 
-		// Always include user_id in filters
-		const apiFilters = {
+		// Build filters for API request
+		let apiFilters = {
 			...filters,
-			user_id: selectedUser,
 		};
+
+		// Only add user_id filter if not showing all hosts (for admins only)
+		if ((selectedUser !== 0 && selectedUser !== null) || !currentUser.isAdmin()) {
+			// If not admin, always filter by current user ID
+			// Make sure selectedUser is not null before calling toString()
+			apiFilters.user_id = currentUser.isAdmin() && selectedUser !== null
+				? selectedUser.toString()
+				: currentUser.getId().toString();
+		}
+
+		// Special handling for team calendars
+		if (filters.type === 'team' && !currentUser.isAdmin()) {
+			// For non-admins, we need to fetch team calendars where user is a member
+			// This is handled by the backend, but we need to indicate we want team member filtering
+			apiFilters.team_member_id = currentUser.getId().toString();
+		}
 
 		callApi({
 			path: addQueryArgs(`calendars`, {
@@ -97,6 +114,7 @@ const Calendars: React.FC = () => {
 			callApi({
 				path: addQueryArgs(`calendars`, {
 					per_page: 99,
+					filters: { type: 'host' } // Only need host calendars for the user list
 				}),
 				onSuccess: (response: CalendarResponse) => {
 					setAllCalendars(response.data);
@@ -110,6 +128,8 @@ const Calendars: React.FC = () => {
 			});
 		}
 	};
+
+	console.log(calendars)
 
 	const deleteCalendar = async (calendar: Calendar) => {
 		await callApi({
@@ -146,7 +166,7 @@ const Calendars: React.FC = () => {
 	// Initial load and whenever dependencies change
 	useEffect(() => {
 		fetchCalendars();
-	}, [search, filters, update]);
+	}, [search, filters, update, selectedUser]);
 
 	const handleSaved = () => {
 		fetchCalendars();
@@ -158,19 +178,28 @@ const Calendars: React.FC = () => {
 		setUpdate((prev) => !prev);
 	};
 
-
 	const handleUserChange = (userId: number) => {
-		setSelectedUser(userId);
+		setSelectedUser(userId !== null && userId !== undefined ? userId : 0);
 	};
 
 	// Function to filter calendars based on selected filters
 	const getFilteredCalendars = () => {
 		if (!calendars) return [];
 
-		return calendars.filter((calendar) =>
-			calendar.type === filters.type &&
-			(selectedUser === 0 || calendar.user_id === selectedUser)
+		let filteredCalendars = calendars.filter(calendar =>
+			calendar.type === filters.type
 		);
+
+		// For host calendars, apply user filtering if a specific user is selected (not "All")
+		const currentSelectedUser = selectedUser !== null && selectedUser !== undefined ? selectedUser : 0;
+
+		if (filters.type === 'host' && currentSelectedUser !== 0) {
+			filteredCalendars = filteredCalendars.filter(
+				calendar => calendar.user_id === currentSelectedUser
+			);
+		}
+
+		return filteredCalendars;
 	};
 
 	const handleCreateEvent = (calendarId: number) => {
@@ -255,14 +284,14 @@ const Calendars: React.FC = () => {
 							className="w-[280px]"
 						/>
 						{filters.type === 'host' && (
-
 							<HostSelect
 								key={hostSelectKey} // Add key to force re-render when changed
 								value={selectedUser}
 								onChange={handleUserChange}
 								placeholder={__('Filter by User', 'quillbooking')}
-								defaultValue={0}
-								selectFirstHost={true}
+								defaultValue={currentUser.isAdmin() ? 0 : currentUser.getId()} // Default to All for admins, current user for non-admins
+								selectFirstHost={!currentUser.isAdmin()} // Only auto-select first host for non-admins
+								showAllOption={currentUser.isAdmin()} // Only show "All" option for admins
 							/>
 						)}
 					</Flex>
@@ -274,130 +303,204 @@ const Calendars: React.FC = () => {
 				<div>
 					{eventStatusMessage && (
 						<NoticeBanner
-						notice={{
-						  type: 'success',
-						  title: __('Successfully Disabled', 'quillbooking'),
-						  message: __('The Event has been Disabled successfully.', 'quillbooking')
-						}}
-						closeNotice={() => setEventStatusMessage(false)}
-					  />
+							notice={{
+								type: 'success',
+								title: __('Successfully Disabled', 'quillbooking'),
+								message: __('The Event has been Disabled successfully.', 'quillbooking')
+							}}
+							closeNotice={() => setEventStatusMessage(false)}
+						/>
 					)}
-					{filters.type === 'host' ? (
-						<Card className="bg-[#FDFDFD]">
-							<Flex vertical gap={20}>
-								{getFilteredCalendars().map((calendar) => (
-									<CalendarEvents
-										key={calendar.id}
-										calendar={calendar}
-										typesLabels={typesLabels}
-										updateCalendarEvents={updateEvents}
-										setStatusMessage={setEventStatusMessage}
-									/>
-								))}
+					{cloneMessage && (
+						<NoticeBanner
+							notice={{
+								type: 'success',
+								title: __('Success', 'quillbooking'),
+								message: __('The Event has been cloned successfully.', 'quillbooking')
+							}}
+							closeNotice={() => setCloneMessage(false)}
+						/>
+					)}
+					{getFilteredCalendars().length === 0 ? (
+						<Flex vertical gap={30} justify='center' align='center' className='py-10'>
+							<div className='border rounded-full p-7 bg-[#F4F5FA] border-[#E1E2E9] text-[#BEC0CA]'>
+								<UpcomingCalendarIcon width={60} height={60} />
+							</div>
+							<Flex vertical gap={5} justify='center' align='center'>
+								<span className='text-[20px] font-medium text-black'>
+									{search ? __('No matching events found', 'quillbooking') : __('No events available', 'quillbooking')}
+								</span>
+								{filters.type === 'team' && (
+									<Button
+										type="primary"
+										className="mt-4"
+										onClick={() => setType('team')}
+										icon={<PlusOutlined />}
+									>
+										{__('Create Team Event', 'quillbooking')}
+									</Button>
+								)}
 							</Flex>
-						</Card>
+						</Flex>
 					) : (
-						<Flex gap={15} wrap>
-							{/* {getFilteredCalendars().map((teamCalendar) => { */}
-							{calendars
-								.filter((calendar) => calendar.type === 'team')
-								.map((teamCalendar) => {
-									return (
-										<Card
-											key={teamCalendar.id}
-											title={teamCalendar.name}
-											className="bg-[#FDFDFD] w-[377px]"
-											headStyle={{
-												backgroundColor: '#FFFFFF',
-												textTransform: 'uppercase',
-											}}
-											extra={
-												<div>
-													<Popover
-														trigger={['click']}
-														content={
-															<CalendarActions
-																calendar={
-																	teamCalendar
-																}
-																onEdit={(id) =>
-																	navigate(
-																		`calendars/${id}/general`
-																	)
-																}
-																onDelete={(
-																	id
-																) =>
-																	deleteCalendar(
-																		{
-																			id: id,
-																		} as Calendar
-																	)
-																}
-															/>
-														}
-													>
-														<Button
-															type="text"
-															icon={
-																<SlOptions className="text-color-primary-text text-[18px]" />
-															}
-															className="border-[#EDEBEB]"
-														/>
-													</Popover>
-												</div>
-											}
-										>
+						<>
+							{filters.type === 'host' ? (
+								<>
+									{getFilteredCalendars().map((calendar) => (
+										<Card key={calendar.id} className="bg-[#FDFDFD] mb-4">
 											<Flex vertical gap={20}>
-												{filters.type === 'team' && (
-													<Button
-														className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] flex items-center justify-center h-[56px] w-[310px] text-[16px]"
-														onClick={() => handleCreateEvent(teamCalendar.id)}
-													>
-														<PlusOutlined className="text-color-primary" />
-														<span className="pt-[8.5px]">
-															{__('Create New Event', 'quillbooking')}
-														</span>
-													</Button>
-												)}
+												<Card className='bg-white'>
+													<Flex justify="space-between" align="center">
+														<Flex vertical>
+															<div className="text-[#313131] text-base font-semibold">
+																{calendar.name}
+															</div>
+															<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium">
+																{__('View My Landing Page', 'quillbooking')}
+																<ShareIcon width={16} height={16} />
+															</div>
+														</Flex>
+														<div>
+															<Popover
+																trigger={['click']}
+																content={
+																	<CalendarActions
+																		calendar={calendar}
+																		setCloneMessage={setCloneMessage}
+																		onSaved={handleSaved}
+																		onEdit={(id) =>
+																			navigate(
+																				`calendars/${id}/general`
+																			)
+																		}
+																		onDelete={(id) =>
+																			deleteCalendar(
+																				{
+																					id: id,
+																				} as Calendar
+																			)
+																		}
+																	/>
+																}
+															>
+																<Button
+																	type="text"
+																	icon={
+																		<SlOptions className="text-color-primary-text text-[18px]" />
+																	}
+																	className="border-[#EDEBEB]"
+																/>
+															</Popover>
+														</div>
+													</Flex>
+												</Card>
 												<CalendarEvents
-													key={teamCalendar.id}
-													calendar={teamCalendar}
+													calendar={calendar}
 													typesLabels={typesLabels}
 													updateCalendarEvents={updateEvents}
 													setStatusMessage={setEventStatusMessage}
 												/>
 											</Flex>
 										</Card>
-									);
-								})}
-						</Flex>
+									))}
+								</>
+							) : (
+								<Flex gap={15} wrap>
+									{getFilteredCalendars().map((teamCalendar) => {
+										// For non-admins, this will already be filtered to only include teams they're members of
+										return (
+											<Card
+												key={teamCalendar.id}
+												title={
+													<Flex vertical>
+														<div className="text-[#313131] text-base font-semibold">
+															{teamCalendar.name}
+														</div>
+														<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium">
+															{__('View My Landing Page', 'quillbooking')}
+															<ShareIcon width={16} height={16} />
+														</div>
+													</Flex>
+												}
+												className="bg-[#FDFDFD] w-[377px]"
+												headStyle={{
+													backgroundColor: '#FFFFFF',
+													textTransform: 'capitalize',
+													paddingTop: '20px ',
+													paddingBottom: '20px'
+												}}
+												extra={
+													<div>
+														<Popover
+															trigger={['click']}
+															content={
+																<CalendarActions
+																	calendar={teamCalendar}
+																	setCloneMessage={setCloneMessage}
+																	onSaved={handleSaved}
+																	onEdit={(id) =>
+																		navigate(
+																			`calendars/${id}/general`
+																		)
+																	}
+																	onDelete={(id) =>
+																		deleteCalendar(
+																			{
+																				id: id,
+																			} as Calendar
+																		)
+																	}
+																/>
+															}
+														>
+															<Button
+																type="text"
+																icon={
+																	<SlOptions className="text-color-primary-text text-[18px]" />
+																}
+																className="border-[#EDEBEB]"
+															/>
+														</Popover>
+													</div>
+												}
+											>
+												<Flex vertical gap={20}>
+													{filters.type === 'team' && (
+														<Button
+															className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] flex items-center justify-center h-[56px] w-[310px] text-[16px]"
+															onClick={() => handleCreateEvent(teamCalendar.id)}
+														>
+															<PlusOutlined className="text-color-primary" />
+															<span className="pt-[8.5px]">
+																{__('Create New Event', 'quillbooking')}
+															</span>
+														</Button>
+													)}
+													<CalendarEvents
+														calendar={teamCalendar}
+														typesLabels={typesLabels}
+														updateCalendarEvents={updateEvents}
+														setStatusMessage={setEventStatusMessage}
+													/>
+												</Flex>
+											</Card>
+										);
+									})}
+								</Flex>
+							)}
+						</>
 					)}
 				</div>
 			)}
-			{
-				type && (
-					<AddCalendarModal
-						open={!!type}
-						type={type}
-						onClose={() => setType(null)}
-						excludedUsers={excludedUserIds}
-						onSaved={handleSaved}
-					/>
-				)
-			}
-			{
-				cloneCalendar && (
-					<CloneEventModal
-						open={!!cloneCalendar}
-						calendar={cloneCalendar}
-						onClose={() => setCloneCalendar(null)}
-						excludedEvents={map(cloneCalendar.events, 'id')}
-						onSaved={handleSaved}
-					/>
-				)
-			}
-
+			{type && (
+				<AddCalendarModal
+					open={!!type}
+					type={type}
+					onClose={() => setType(null)}
+					excludedUsers={excludedUserIds}
+					onSaved={handleSaved}
+				/>
+			)}
 			{showCreateEventModal && selectedCalendarId && (
 				<CreateEvent
 					visible={showCreateEventModal}

@@ -44,6 +44,7 @@ import {
 	SmsNotiIcon,
 	TrashRedIcon,
 	WebhookIcon,
+	ShareModal
 } from '@quillbooking/components';
 import { Provider } from './state/context';
 import Calendar from '../calendar';
@@ -56,7 +57,6 @@ import {
 	SmsNotificationTab,
 	AvailabilityLimits
 } from './tabs';
-import ShareModal from '../calendars/share-modal';
 import EventFieldsTab from './tabs/fields';
 
 interface NoticeType {
@@ -76,16 +76,18 @@ const Event: React.FC = () => {
 
 	const childRef = useRef<any>(null);
 	const siteUrl = ConfigAPI.getSiteUrl();
-	const { callApi, loading } = useApi();
+	const { callApi } = useApi();
 	const { errorNotice, successNotice } = useNotice();
 	const [event, setEvent] = useState<EventType | null>(null);
 	const [open, setOpen] = useState(!!id);
-	const [checked, setChecked] = useState(true);
 	const [modalShareId, setModalShareId] = useState<string | null>(null);
 	const [saveDisabled, setSaveDisabled] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 	const location = useLocation();
 	const [notice, setNotice] = useState<NoticeType | null>(null);
+	const [isEventDisabled, setIsEventDisabled] = useState(event?.is_disabled || false);
+	const [isSwitchLoading, setIsSwitchLoading] = useState(false);
+	const [activeTab, setActiveTab] = useState(tab || 'details');
 
 	useEffect(() => {
 		if (location.state?.notice) {
@@ -93,6 +95,12 @@ const Event: React.FC = () => {
 			window.history.replaceState({}, document.title);
 		}
 	}, [location.state]);
+
+	useEffect(() => {
+		if (event) {
+			setIsEventDisabled(event.is_disabled || false);
+		}
+	}, [event]);
 
 	const navigate = useNavigate();
 	const setBreadcrumbs = useBreadcrumbs();
@@ -175,6 +183,38 @@ const Event: React.FC = () => {
 		});
 	};
 
+	// Function to toggle disabled status directly
+	const toggleEventStatus = async () => {
+		if (!event?.id || isSwitchLoading) return;
+
+		const newStatus = !isEventDisabled;
+		setIsSwitchLoading(true);
+
+		try {
+			await callApi({
+				path: `events/${event.id}/disable-status`,
+				method: 'PUT',
+				data: {
+					status: newStatus,
+				},
+			});
+
+			successNotice(
+				newStatus
+					? __('Event disabled successfully', 'quillbooking')
+					: __('Event enabled successfully', 'quillbooking')
+			);
+
+			// Only update state after successful API call
+			setIsEventDisabled(newStatus);
+			setEvent(prev => prev ? { ...prev, is_disabled: newStatus } : null);
+		} catch (error) {
+			errorNotice(error.message);
+			// Don't update state if API call fails
+		} finally {
+			setIsSwitchLoading(false);
+		}
+	};
 	// const saveSettings = () => {
 	// 	//if (!validate() || loading) return;
 	// 	callApi({
@@ -199,10 +239,6 @@ const Event: React.FC = () => {
 			setOpen(false);
 			navigate('calendars');
 		}
-	};
-
-	const handleChange = (checked: boolean) => {
-		setChecked(checked);
 	};
 
 	const handleSave = async () => {
@@ -316,7 +352,6 @@ const Event: React.FC = () => {
 		// 	icon: <IntegrationsIcon />,
 		// },
 	];
-	const [activeTab, setActiveTab] = useState(tab || 'details');
 
 	useEffect(() => {
 		if (tab) {
@@ -393,10 +428,12 @@ const Event: React.FC = () => {
 						<Flex gap={24} className="items-center">
 							<Flex gap={16} className="items-center">
 								<Switch
-									checked={checked}
-									onChange={handleChange}
+									checked={!isEventDisabled}
+									onChange={toggleEventStatus}
+									loading={isSwitchLoading}
+									disabled={isSwitchLoading}
 									className={
-										checked
+										!isEventDisabled
 											? 'bg-color-primary'
 											: 'bg-gray-400'
 									}

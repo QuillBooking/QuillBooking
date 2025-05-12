@@ -25,11 +25,11 @@ import {
 	CalendarAddIcon,
 	BookingNumIcon,
 	UpcomingCalendarIcon,
+	ShareModal
 } from '@quillbooking/components';
 import {
 	useCopyToClipboard,
 } from '@quillbooking/hooks';
-import ShareModal from '../share-modal';
 import EventActions from '../event-actions';
 import CreateEvent from '../../create-event';
 
@@ -290,10 +290,16 @@ const CalendarEvents: React.FC<{
 			) : (
 				<div className="quillbooking-calendar-no-events">
 					{calendar.type == 'team' && (
-						<Empty
-							image={Empty.PRESENTED_IMAGE_SIMPLE}
-							description={__('No events found', 'quillbooking')}
-						/>
+						<>
+							<Flex vertical gap={30} justify='center' align='center' className='py-10'>
+								<div className='border rounded-full p-7 bg-[#F4F5FA] border-[#E1E2E9] text-[#BEC0CA]'>
+									<UpcomingCalendarIcon width={60} height={60} />
+								</div>
+								<Flex vertical gap={5} justify='center' align='center'>
+									<span className='text-[20px] font-medium text-black'>{__('No Events Added Yet?', 'quillbooking')}</span>
+								</Flex>
+							</Flex>
+						</>
 					)}
 					{calendar.type == 'host' && (
 						<>

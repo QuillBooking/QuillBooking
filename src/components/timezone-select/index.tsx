@@ -35,6 +35,7 @@ const TimezoneSelect: React.FC<TimezoneSelectProps> = ({ value, onChange, ...res
 			options={options}
 			{...rest}
 			className='h-[48px] rounded-lg'
+			getPopupContainer={(trigger) => trigger.parentElement}
 		/>
 	);
 };

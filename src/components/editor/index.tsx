@@ -9,12 +9,11 @@ import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { $getRoot, TextNode } from 'lexical';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
+import { TextNode } from 'lexical';
 import { Flex } from 'antd';
 
 /**
@@ -28,7 +27,6 @@ import HtmlSerializer from './html-serializer';
 import InitialContentPlugin from './plugins/initial-content-plugin';
 import WordCountPlugin from './word-count';
 import "./style.scss";
-
 
 const theme = {
   paragraph: 'editor-paragraph',
@@ -81,35 +79,24 @@ export default function Editor({ message, onChange, type }: EditorProps) {
     ],
   };
 
-  const handleEditorChange = (editorState: any) => {
-    editorState.read(() => {
-      const root = $getRoot();
-      const content = root.getTextContent();
-      const words = content.split(/\s+/).filter(word => word.length > 0);
-      setWordCount(words.length);
-    });
-  };
-
   const handleHtmlChange = (html: string) => {
     if (onChange) onChange(html);
-    console.log(html)
   };
 
-  const countWordsInHtml = (html: string) => {
-    if (!html) return 0;
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    const text = tempDiv.textContent || tempDiv.innerText || '';
-    const words = text.split(/\s+/).filter(word => word.length > 0);
-    return words.length;
+  const handleWordCountChange = (count: number) => {
+    setWordCount(count);
   };
 
+  // Set initial word count from initial message
   useEffect(() => {
-    if (!editorActive) {
-      const count = countWordsInHtml(message);
-      setWordCount(count);
+    if (initialLoadRef.current) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = message || '';
+      const text = tempDiv.textContent || tempDiv.innerText || '';
+      const words = text.split(/\s+/).filter(word => word.length > 0);
+      setWordCount(words.length);
     }
-  }, [editorActive, message]);
+  }, [message]);
 
   // Check if message was changed externally (not from this editor's onChange)
   useEffect(() => {
@@ -123,6 +110,13 @@ export default function Editor({ message, onChange, type }: EditorProps) {
     // and the editor is not currently focused/active
     if (!editorActive && message !== initialMessageRef.current) {
       initialMessageRef.current = message;
+      
+      // Update word count for the new external message
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = message || '';
+      const text = tempDiv.textContent || tempDiv.innerText || '';
+      const words = text.split(/\s+/).filter(word => word.length > 0);
+      setWordCount(words.length);
     }
   }, [message, editorActive]);
 
@@ -148,8 +142,7 @@ export default function Editor({ message, onChange, type }: EditorProps) {
                 </div>
               )}
             />
-            <OnChangePlugin onChange={handleEditorChange} />
-            <HtmlSerializer onChange={handleHtmlChange} />
+            <HtmlSerializer onChange={handleHtmlChange} onWordCountChange={handleWordCountChange} />
             <HistoryPlugin />
             {type === 'email' && (
               <>

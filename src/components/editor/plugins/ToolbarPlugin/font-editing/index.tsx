@@ -72,7 +72,7 @@ export default function FontEditing({
           getPopupContainer={(trigger) => trigger.parentElement}
           value={paragraphFormat}
           onChange={handleFormatChange}
-          className='rounded-md border-none outline-none px-2 bg-[#F4F4F5] cursor-pointer custom-ant-select w-fit'
+          className='rounded-md border-none outline-none px-2 bg-[#F1F1F2] cursor-pointer custom-ant-select w-fit'
         />
       </Flex>
 

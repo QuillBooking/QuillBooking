@@ -21,5 +21,5 @@ if (schedule) {
 }
 
 if (reschedule) {
-    createRoot(reschedule).render(<ReschedulePage event={config.event} ajax_url={config.ajax_url}/>);
+    createRoot(reschedule).render(<ReschedulePage event={config.event} ajax_url={config.ajax_url} type="reschedule" booking={config.booking}/>);
 }

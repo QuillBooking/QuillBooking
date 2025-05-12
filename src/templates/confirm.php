@@ -58,9 +58,9 @@ $icons_url = plugins_url( 'src/templates/icons/', QUILLBOOKING_PLUGIN_FILE );
 	<div class="confirmation-footer">
 		<div class="change-options">
 			<p><?php esc_html_e( 'Need to make a change?', 'quillbooking' ); ?>
-				<a href="/?quillbooking=booking&id=<?php echo $booking_array['hash_id']; ?>&type=cancel" class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
+				<a href="?quillbooking=booking&id=<?php echo $booking_array['hash_id']; ?>&type=cancel" class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
 				<?php esc_html_e( 'or', 'quillbooking' ); ?>
-				<a href="/?quillbooking=booking&id=<?php echo $booking_array['hash_id']; ?>&type=reschedule" class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
+				<a href="?quillbooking=booking&id=<?php echo $booking_array['hash_id']; ?>&type=reschedule" class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
 			</p>
 		</div>
 

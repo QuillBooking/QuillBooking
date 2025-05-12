@@ -1,18 +1,26 @@
 import { useState } from 'react';
-import { Event } from '../../../types';
+import { Booking, Event } from '../../../types';
 import DateTimePicker from './date-time-picker';
 import EventDetails from './event-details';
 import Hosts from './hosts';
 import './style.scss';
 import { Dayjs } from 'dayjs';
 import QuestionsComponents from './questions';
+import Reschedule from '../../reschedule';
 
 interface CardBodyProps {
 	event: Event;
 	ajax_url: string;
+	type?: string;
+	booking?: Booking;
 }
 
-const CardBody: React.FC<CardBodyProps> = ({ event, ajax_url }) => {
+const CardBody: React.FC<CardBodyProps> = ({
+	event,
+	ajax_url,
+	type = 'schedule',
+	booking,
+}) => {
 	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 	const [selectedTime, setSelectedTime] = useState<string | null>(null);
 	const [timeZone, setTimeZone] = useState<string>(
@@ -85,11 +93,23 @@ const CardBody: React.FC<CardBodyProps> = ({ event, ajax_url }) => {
 			<Hosts hosts={event.hosts} />
 			<EventDetails event={event} />
 			{selectedTime && step === 2 ? (
-				<QuestionsComponents
-					fields={event.fields}
-					setStep={setStep}
-					onSubmit={handleSave}
-				/>
+				type === 'reschedule' ? (
+					<Reschedule
+						ajax_url={ajax_url}
+						setStep={setStep}
+						fields={event.fields}
+						booking={booking ?? null}
+						selectedDate={selectedDate}
+						selectedTime={selectedTime}
+						timezone={timeZone}
+					/>
+				) : (
+					<QuestionsComponents
+						fields={event.fields}
+						setStep={setStep}
+						onSubmit={handleSave}
+					/>
+				)
 			) : (
 				<DateTimePicker
 					selectedTime={selectedTime}

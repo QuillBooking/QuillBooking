@@ -45,7 +45,7 @@ $status              = $booking_array['status'] ?? '';
 				</div>
 
 				<div class="calendar-buttons-container" id="buttons_container">
-					<a href="/?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=confirm" class="cancel-btn nevermind-btn"><?php esc_html_e( 'Nevermind', 'quillbooking' ); ?></a>
+					<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=confirm" class="cancel-btn nevermind-btn"><?php esc_html_e( 'Nevermind', 'quillbooking' ); ?></a>
 					<button class="cancel-btn" id="cancel_booking_button"><?php esc_html_e( 'Cancel Booking', 'quillbooking' ); ?></button>
 				</div>
 			</div>

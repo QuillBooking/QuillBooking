@@ -15,6 +15,7 @@ import { useApi } from '@quillbooking/hooks';
 const PaymentsTab: React.FC = () => {
     const [activeTab, setActiveTab] = useState<string | null>(null);
     const [paymentGateways, setPaymentGateways] = useState(() => ConfigAPI.getPaymentGateways());
+    const [isLoading, setIsLoading] = useState(true);
     const { callApi } = useApi();
 
     useEffect(() => {
@@ -24,6 +25,7 @@ const PaymentsTab: React.FC = () => {
     }, [paymentGateways, activeTab]);
 
     const fetchGatewaySettings = async (gatewayId: string) => {
+        setIsLoading(true);
         return new Promise((resolve) => {
             callApi({
                 path: `payment-gateways/${gatewayId}`,
@@ -38,9 +40,11 @@ const PaymentsTab: React.FC = () => {
                             enabled: response.enabled || false
                         }
                     }));
+                    setIsLoading(false);
                     resolve(true);
                 },
                 onError(error) {
+                    setIsLoading(false);
                     console.error('Error loading settings:', error);
                     // Consider adding a retry mechanism or user notification
                     resolve(false);
@@ -113,6 +117,7 @@ const PaymentsTab: React.FC = () => {
                 paymentGateways={paymentGateways}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
+                isLoading={isLoading}
             />
             {activeTab && activeGateway && (
                 <PaymentGatewayCard 
@@ -122,6 +127,7 @@ const PaymentsTab: React.FC = () => {
                         updateGatewayProperty(activeTab, property, value)
                     }
                     updateGatewaySettings={updateGatewaySettings}
+                    isLoading={isLoading}
                 />
             )}
         </div>

@@ -17,6 +17,8 @@ import {
     Radio,
     Switch,
     Checkbox,
+    Skeleton,
+    Spin,
 } from 'antd';
 
 /**
@@ -39,17 +41,19 @@ export interface PaymentGatewayCardProps {
     gateway: ExtendedPaymentGateway;
     updateGatewayProperty: (property: string, value: any) => void;
     updateGatewaySettings: (gatewayId: string, settings: any) => void;
+    isLoading?: boolean;
 }
 
 const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ 
     slug, 
     gateway, 
     updateGatewayProperty,
-    updateGatewaySettings 
+    updateGatewaySettings,
+    isLoading = false
 }) => {
     if (!slug) return null;
     const [form] = Form.useForm();
-    const { callApi, loading } = useApi();
+    const { callApi, loading: isSaving } = useApi();
     const { successNotice, errorNotice } = useNotice();
     const [formMode, setFormMode] = useState(gateway.settings?.mode || 'sandbox');
 
@@ -129,126 +133,142 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 
     return (
         <Card className="rounded-lg mb-6 w-full">
-            <Flex align='center' gap={16} className="p-0 text-color-primary-text border-b pb-5">
-                <img src={logo} alt={`${slug}.png`} className={logoClass} />
-                <div>
-                    <p className="text-[#09090B] font-bold text-2xl">{__(title, 'quillbooking')}</p>
-                    <p className="text-[#71717A] font-medium text-sm">
-                        {__(`${title} Information`, "quillbooking")}
-                    </p>
-                </div>
-            </Flex>
-            <Flex vertical gap={15} className='mt-5'>
-                <div style={{ flexGrow: 1 }}>
-                    <Flex vertical gap={4}>
-                        <div className="font-semibold text-[16px]">
-                            {__('Status', 'quillbooking')}
+            {isLoading ? (
+                <Flex vertical gap={20}>
+                    <Skeleton.Avatar size={64} active />
+                    <Skeleton active paragraph={{ rows: 4 }} />
+                </Flex>
+            ) : (
+                <>
+                    <Flex align='center' gap={16} className="p-0 text-color-primary-text border-b pb-5">
+                        <img src={logo} alt={`${slug}.png`} className={logoClass} />
+                        <div>
+                            <p className="text-[#09090B] font-bold text-2xl">{__(title, 'quillbooking')}</p>
+                            <p className="text-[#71717A] font-medium text-sm">
+                                {__(`${title} Information`, "quillbooking")}
+                            </p>
                         </div>
-                        <Checkbox
-                            className="custom-check text-[#3F4254] font-semibold"
-                            checked={gateway.enabled}
-                            onChange={(e) => updateGatewayProperty('enabled', e.target.checked)}
-                        >
-                            {__(`Enable ${title} payment for booking payment`, 'quillbooking')}
-                        </Checkbox>
                     </Flex>
-                    {gateway.enabled && (
-                        <Form
-                            form={form}
-                            layout="vertical"
-                            onFinish={handleSaveSettings}
-                            initialValues={{ mode: 'sandbox' }}
-                            onValuesChange={(changedValues) => {
-                                if (changedValues.mode) {
-                                    setFormMode(changedValues.mode);
-                                }
-                            }}
-                        >
-                            <Form.Item
-                                name="mode"
-                                className='mt-3'
-                                label={
-                                    <div className="text-[#3F4254] font-semibold text-[16px]">
-                                        {__('Payment Mode', 'quillbooking')}
-                                    </div>
-                                }
-                            >
-                                <Radio.Group className="flex gap-2 mt-2 w-full">
-                                    <Radio value="sandbox"
-                                        className={`custom-radio border w-1/2 rounded-lg p-3 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                        ${formMode === 'sandbox'
-                                                ? 'bg-color-secondary border-color-primary'
-                                                : 'border'
-                                            }`}
+                    <Flex vertical gap={15} className='mt-5'>
+                        <div style={{ flexGrow: 1 }}>
+                            <Flex vertical gap={4}>
+                                <div className="font-semibold text-[16px]">
+                                    {__('Status', 'quillbooking')}
+                                </div>
+                                <Checkbox
+                                    className="custom-check text-[#3F4254] font-semibold"
+                                    checked={gateway.enabled}
+                                    onChange={(e) => updateGatewayProperty('enabled', e.target.checked)}
+                                    disabled={isLoading}
+                                >
+                                    {__(`Enable ${title} payment for booking payment`, 'quillbooking')}
+                                </Checkbox>
+                            </Flex>
+                            {gateway.enabled && (
+                                <Form
+                                    form={form}
+                                    layout="vertical"
+                                    onFinish={handleSaveSettings}
+                                    initialValues={{ mode: 'sandbox' }}
+                                    onValuesChange={(changedValues) => {
+                                        if (changedValues.mode) {
+                                            setFormMode(changedValues.mode);
+                                        }
+                                    }}
+                                    disabled={isLoading}
+                                >
+                                    <Form.Item
+                                        name="mode"
+                                        className='mt-3'
+                                        label={
+                                            <div className="text-[#3F4254] font-semibold text-[16px]">
+                                                {__('Payment Mode', 'quillbooking')}
+                                            </div>
+                                        }
                                     >
-                                        {__('Sandbox (Testing)', 'quillbooking')}
-                                    </Radio>
-                                    <Radio value="live"
-                                        className={`custom-radio border w-1/2 rounded-lg p-3 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                        ${formMode === 'live'
-                                                ? 'bg-color-secondary border-color-primary'
-                                                : 'border'
-                                            }`}
-                                    >
-                                        {__('Live (Production)', 'quillbooking')}
-                                    </Radio>
-                                </Radio.Group>
-                            </Form.Item>
+                                        <Radio.Group className="flex gap-2 mt-2 w-full">
+                                            <Radio value="sandbox"
+                                                className={`custom-radio border w-1/2 rounded-lg p-3 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
+                                                ${formMode === 'sandbox'
+                                                        ? 'bg-color-secondary border-color-primary'
+                                                        : 'border'
+                                                    }`}
+                                            >
+                                                {__('Sandbox (Testing)', 'quillbooking')}
+                                            </Radio>
+                                            <Radio value="live"
+                                                className={`custom-radio border w-1/2 rounded-lg p-3 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
+                                                ${formMode === 'live'
+                                                        ? 'bg-color-secondary border-color-primary'
+                                                        : 'border'
+                                                    }`}
+                                            >
+                                                {__('Live (Production)', 'quillbooking')}
+                                            </Radio>
+                                        </Radio.Group>
+                                    </Form.Item>
 
-                            <Form.Item shouldUpdate>
-                                {({ getFieldValue }) => {
-                                    const mode = getFieldValue('mode') || 'sandbox';
-                                    return (
-                                        <>
-                                            <Flex vertical gap={10}>
-                                                {Object.entries(gatewayFields).map(([fieldKey, field]) => (
-                                                    <Flex vertical gap={10} key={fieldKey}>
-                                                        <Form.Item
-                                                            name={`${mode}_${fieldKey}`}
-                                                            label={
-                                                                <div className="text-[#3F4254] font-semibold text-[16px]">
-                                                                    {field.label}
-                                                                    {field.required && <span className="text-red-500">*</span>}
-                                                                </div>
-                                                            }
-                                                            tooltip={field.description}
-                                                            rules={[
-                                                                {
-                                                                    required: field.required,
-                                                                    message: __('This field is required', 'quillbooking'),
-                                                                },
-                                                            ]}
-                                                        >
-                                                            {renderField(field)}
-                                                        </Form.Item>
-                                                    </Flex>
-                                                ))}
-                                            </Flex>
-                                            <Divider />
-                                            {slug === 'paypal' && (
-                                                <span className='text-[#71717A] italic'>
-                                                    {__('If you are unable to use Payment Data Transfer and payments are not getting marked as complete, then check this box. This forces the site to use a slightly less secure method of verifying purchases.', 'quillbooking')}
-                                                </span>
-                                            )}
-                                            <Form.Item className='mt-4'>
-                                                <Flex justify='flex-end'>
-                                                    <Button
-                                                        type="primary"
-                                                        htmlType="submit"
-                                                        loading={loading}
-                                                    >
-                                                        {__('Save Settings', 'quillbooking')}
-                                                    </Button>
-                                                </Flex>
-                                            </Form.Item>
-                                        </>
-                                    );
-                                }}
-                            </Form.Item>
-                        </Form>
-                    )}
-                </div>
-            </Flex>
+                                    <Form.Item shouldUpdate>
+                                        {({ getFieldValue }) => {
+                                            const mode = getFieldValue('mode') || 'sandbox';
+                                            return (
+                                                <>
+                                                    {isLoading ? (
+                                                        <Skeleton active paragraph={{ rows: 4 }} />
+                                                    ) : (
+                                                        <Flex vertical gap={10}>
+                                                            {Object.entries(gatewayFields).map(([fieldKey, field]) => (
+                                                                <Flex vertical gap={10} key={fieldKey}>
+                                                                    <Form.Item
+                                                                        name={`${mode}_${fieldKey}`}
+                                                                        label={
+                                                                            <div className="text-[#3F4254] font-semibold text-[16px]">
+                                                                                {field.label}
+                                                                                {field.required && <span className="text-red-500">*</span>}
+                                                                            </div>
+                                                                        }
+                                                                        tooltip={field.description}
+                                                                        rules={[
+                                                                            {
+                                                                                required: field.required,
+                                                                                message: __('This field is required', 'quillbooking'),
+                                                                            },
+                                                                        ]}
+                                                                    >
+                                                                        {renderField(field)}
+                                                                    </Form.Item>
+                                                                </Flex>
+                                                            ))}
+                                                        </Flex>
+                                                    )}
+                                                    <Divider />
+                                                    {slug === 'paypal' && (
+                                                        <span className='text-[#71717A] italic'>
+                                                            {__('If you are unable to use Payment Data Transfer and payments are not getting marked as complete, then check this box. This forces the site to use a slightly less secure method of verifying purchases.', 'quillbooking')}
+                                                        </span>
+                                                    )}
+                                                    <Form.Item className='mt-4'>
+                                                        <Flex justify='flex-end'>
+                                                            <Button
+                                                                type="primary"
+                                                                htmlType="submit"
+                                                                loading={isSaving || isLoading}
+                                                                disabled={isLoading}
+                                                            >
+                                                                {__('Save Settings', 'quillbooking')}
+                                                            </Button>
+                                                        </Flex>
+                                                    </Form.Item>
+                                                </>
+                                            );
+                                        }}
+                                    </Form.Item>
+                                </Form>
+                            )}
+                        </div>
+                    </Flex>
+                </>
+            )}
         </Card>
     );
 };

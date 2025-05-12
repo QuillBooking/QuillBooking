@@ -1203,35 +1203,37 @@ class REST_Event_Controller extends REST_Controller {
 			$user_id = $request->get_param( 'user_id' ) ? absint( $request->get_param( 'user_id' ) ) : null;
 			$status  = $request->get_param( 'status' ) ? sanitize_text_field( $request->get_param( 'status' ) ) : null;
 
-			// Start base query
-			$base_query = Event_Model::query();
+			$query = Event_Model::with( array( 'calendar', 'meta' ) )->orderBy( 'created_at', 'desc' );
 
-			// Apply user scoping
+			// Apply filters if provided
 			if ( $user_id ) {
-				$base_query->where( 'user_id', $user_id );
+				$query->where( 'user_id', $user_id );
 			} elseif ( ! current_user_can( 'quillbooking_read_all_calendars' ) ) {
-				$base_query->where( 'user_id', get_current_user_id() );
+				$query->where( 'user_id', get_current_user_id() );
+				$user_id = get_current_user_id(); // Set user_id for count query
 			}
 
-			// Clone the base query for counting enabled events
-			$count_query = clone $base_query;
-			$count_query->where( 'is_disabled', false );
-			$enabled_events_count = $count_query->count();
-
-			// Clone for retrieving paginated latest events with eager loads
-			$event_query = clone $base_query;
-			// Apply status filter if given
 			if ( $status ) {
-				$event_query->where( 'status', sanitize_text_field( $status ) );
+				$query->where( 'status', $status );
 			}
-			$events = $event_query
-			->with( array( 'calendar', 'meta' ) )
-			->orderBy( 'created_at', 'desc' )
-			->limit( $limit )
-			->get();
 
-			// Format response
-			$prepared_events = array_map( array( $this, 'prepare_event_for_response' ), $events );
+			$events = $query->limit( $limit )->get();
+
+			// Count enabled events based on user
+			$enabled_events_count_query = Event_Model::where( 'is_disabled', false );
+
+			// If user_id is set, filter enabled events by user
+			if ( $user_id ) {
+				$enabled_events_count_query->where( 'user_id', $user_id );
+			}
+
+			$enabled_events_count = $enabled_events_count_query->count();
+
+			// Prepare events for response
+			$prepared_events = array();
+			foreach ( $events as $event ) {
+				$prepared_events[] = $this->prepare_event_for_response( $event );
+			}
 
 			return new WP_REST_Response(
 				array(
@@ -1240,7 +1242,6 @@ class REST_Event_Controller extends REST_Controller {
 				),
 				200
 			);
-
 		} catch ( Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
 		}

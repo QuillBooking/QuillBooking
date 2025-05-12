@@ -1,3 +1,4 @@
+import type { Rule } from 'antd/es/form';
 import {
 	Form,
 	Input,
@@ -75,6 +76,57 @@ const FormField = ({ field, id, form, locationFields }) => {
 		...otherProps,
 	};
 
+	const rules: Rule[] = [];
+
+	// Required validation
+	if (required) {
+		rules.push({
+			required: true,
+			message: __(`${label} is required`, '@quillbooking'),
+		});
+	}
+
+	if (type === 'email') {
+		rules.push({
+			type: 'email',
+			message: __('Please enter a valid email address', '@quillbooking'),
+		});
+	}
+
+	if (type === 'phone') {
+		rules.push({
+			pattern: field.pattern || /^[0-9+\-\s()]*$/,
+			message: __('Please enter a valid phone number', '@quillbooking'),
+		});
+	}
+
+	if (type === 'number') {
+		if (field.settings?.min) {
+			rules.push({
+				type: 'number',
+				min: field.settings.min,
+				message: __(
+					`${label} must be at least ${field.settings.min}`,
+					'@quillbooking'
+				),
+			});
+		}
+		if (field.settings?.max) {
+			rules.push({
+				type: 'number',
+				max: field.settings.max,
+				message: __(
+					`${label} must be at most ${field.settings.max}`,
+					'@quillbooking'
+				),
+			});
+		}
+		rules.push({
+			type: 'number',
+			message: __('Please enter a valid number', '@quillbooking'),
+		});
+	}
+
 	return (
 		<>
 			<div style={{ marginBottom: '24px' }}>
@@ -94,6 +146,8 @@ const FormField = ({ field, id, form, locationFields }) => {
 					}
 					name={id}
 					key={id}
+					rules={rules}
+					validateTrigger={['onChange', 'onBlur']}
 					valuePropName={type === 'checkbox' ? 'checked' : 'value'}
 				>
 					{FieldComponent(fieldProps)}

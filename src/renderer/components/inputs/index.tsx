@@ -1,4 +1,3 @@
-import type { Rule } from 'antd/es/form';
 import {
 	Form,
 	Input,
@@ -15,11 +14,20 @@ import { UploadOutlined } from '@ant-design/icons';
 import { __ } from '@wordpress/i18n';
 import './style.scss';
 import DynamicLocationFields from '../dynamic-location-field';
+import getValidationRules from './validation-rules';
 
 const { TextArea, Password } = Input;
 const { Option } = Select;
 
-// Component mapping with configuration
+const isObjectOption = (option) => {
+	return (
+		typeof option === 'object' &&
+		option !== null &&
+		'label' in option &&
+		'value' in option
+	);
+};
+
 const FIELD_COMPONENTS = {
 	text: (props) => <Input {...props} />,
 	email: (props) => <Input {...props} />,
@@ -50,8 +58,6 @@ const FIELD_COMPONENTS = {
 							</Option>
 						);
 					}
-
-					// Handle string format: "Option 1"
 					return (
 						<Option key={`${option}-${index}`} value={option}>
 							{option}
@@ -70,15 +76,6 @@ const FIELD_COMPONENTS = {
 	),
 };
 
-const isObjectOption = (option) => {
-	return (
-		typeof option === 'object' &&
-		option !== null &&
-		'label' in option &&
-		'value' in option
-	);
-};
-
 const FormField = ({ field, id, form, locationFields }) => {
 	const {
 		type,
@@ -89,6 +86,7 @@ const FormField = ({ field, id, form, locationFields }) => {
 		required,
 		...otherProps
 	} = field;
+
 	const FieldComponent = FIELD_COMPONENTS[type] || FIELD_COMPONENTS.text;
 	const style = { width: '100%' };
 	let updatedOptions = options;
@@ -105,56 +103,7 @@ const FormField = ({ field, id, form, locationFields }) => {
 		...otherProps,
 	};
 
-	const rules: Rule[] = [];
-
-	// Required validation
-	if (required) {
-		rules.push({
-			required: true,
-			message: __(`${label} is required`, '@quillbooking'),
-		});
-	}
-
-	if (type === 'email') {
-		rules.push({
-			type: 'email',
-			message: __('Please enter a valid email address', '@quillbooking'),
-		});
-	}
-
-	if (type === 'phone') {
-		rules.push({
-			pattern: field.pattern || /^[0-9+\-\s()]*$/,
-			message: __('Please enter a valid phone number', '@quillbooking'),
-		});
-	}
-
-	if (type === 'number') {
-		if (field.settings?.min) {
-			rules.push({
-				type: 'number',
-				min: field.settings.min,
-				message: __(
-					`${label} must be at least ${field.settings.min}`,
-					'@quillbooking'
-				),
-			});
-		}
-		if (field.settings?.max) {
-			rules.push({
-				type: 'number',
-				max: field.settings.max,
-				message: __(
-					`${label} must be at most ${field.settings.max}`,
-					'@quillbooking'
-				),
-			});
-		}
-		rules.push({
-			type: 'number',
-			message: __('Please enter a valid number', '@quillbooking'),
-		});
-	}
+	const rules = getValidationRules(field);
 
 	return (
 		<>

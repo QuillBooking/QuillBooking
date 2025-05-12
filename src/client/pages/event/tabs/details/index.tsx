@@ -136,8 +136,8 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
                     <NoticeBanner
                         notice={{
                             type: 'success',
-                            title: __('Successfully Disabled', 'quillbooking'),
-                            message: __('The Event has been Disabled successfully.', 'quillbooking')
+                            title: notice.title,
+                            message: notice.message
                         }}
                         closeNotice={clearNotice}
                     />

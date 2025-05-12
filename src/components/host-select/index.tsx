@@ -15,7 +15,7 @@ import { isObject, map, debounce } from 'lodash';
  * Internal dependencies
  */
 import type { CalendarResponse } from '@quillbooking/client';
-import { useApi } from '@quillbooking/hooks';
+import { useApi, useCurrentUser } from '@quillbooking/hooks';
 
 interface HostSelectProps {
     value: number | number[];
@@ -25,6 +25,7 @@ interface HostSelectProps {
     exclude?: number[];
     defaultValue?: number;
     selectFirstHost?: boolean;
+    showAllOption?: boolean; // Admin-only feature
 }
 
 // Define type for the mapped host object
@@ -54,11 +55,16 @@ const HostSelect: React.FC<HostSelectProps> = ({
     placeholder, 
     exclude,
     defaultValue,
-    selectFirstHost = false
+    selectFirstHost = false,
+    showAllOption = false
 }) => {
     const [hosts, setHosts] = useState<Host[]>([]);
     const [isInitialized, setIsInitialized] = useState(false);
     const { callApi } = useApi();
+    const { isAdmin } = useCurrentUser(); // Get user role to check if admin
+
+    // Only show All Hosts option if the user is an admin and showAllOption prop is true
+    const shouldShowAllOption = isAdmin() && showAllOption;
 
     const fetchHosts = async (input = '', ids: number[] = []): Promise<MappedHost[]> => {
         const data: Record<string, any> = {};
@@ -82,15 +88,32 @@ const HostSelect: React.FC<HostSelectProps> = ({
                         setHosts(prevHosts => [...prevHosts, ...newHosts]);
                     }
                     
-                    const mappedHosts = map(response.data, (host) => ({
+                    let mappedHosts = map(response.data, (host) => ({
                         value: host.user_id,
                         label: host.user?.display_name || host.name,
                         disabled: exclude?.includes(host.id),
                     }));
+
+                    // Add "All Hosts" option only for admins
+                    if (shouldShowAllOption && input === '') {
+                        mappedHosts = [
+                            {
+                                value: 0, label: __('All Hosts', 'quillbooking'),
+                                disabled: undefined
+                            },
+                            ...mappedHosts
+                        ];
+                    }
+                    
                     resolve(mappedHosts as MappedHost[]);
                 },
                 onError: () => {
-                    resolve([]);
+                    // If shouldShowAllOption is true, at least return the "All" option
+                    if (shouldShowAllOption && input === '') {
+                        resolve([{ value: 0, label: __('All Hosts', 'quillbooking') }]);
+                    } else {
+                        resolve([]);
+                    }
                 },
             });
         });
@@ -102,12 +125,16 @@ const HostSelect: React.FC<HostSelectProps> = ({
     }, 300);
 
     const handleChange = (selected: any) => {
-        if (multiple) {
-            onChange(map(selected, 'value'));
-        } else {
-            onChange(selected?.value || null);
-        }
-    };
+    if (multiple) {
+        // Ensure we return an array of numbers, defaulting to empty array
+        onChange(selected ? map(selected, 'value') : []);
+    } else {
+        // Ensure we're passing a number (0 for "All Hosts" or the defaultValue) rather than null
+        const selectedValue = selected?.value !== undefined ? selected.value : (defaultValue || 0);
+        onChange(selectedValue);
+    }
+};
+
 
     // Fetch first host when component mounts
     useEffect(() => {
@@ -115,12 +142,22 @@ const HostSelect: React.FC<HostSelectProps> = ({
             if (selectFirstHost && (!value || (Array.isArray(value) && value.length === 0))) {
                 const response = await fetchHosts();
                 if (Array.isArray(response) && response.length > 0) {
-                    const firstHost = response[0];
-                    if (firstHost && !firstHost.disabled) {
+                    // If shouldShowAllOption is true and first option is "All", select it
+                    if (shouldShowAllOption && response[0].value === 0) {
                         if (multiple) {
-                            onChange([firstHost.value]);
+                            onChange([0]);
                         } else {
-                            onChange(firstHost.value);
+                            onChange(0);
+                        }
+                    } else {
+                        // Otherwise select first non-disabled host
+                        const firstHost = response.find(host => !host.disabled);
+                        if (firstHost) {
+                            if (multiple) {
+                                onChange([firstHost.value]);
+                            } else {
+                                onChange(firstHost.value);
+                            }
                         }
                     }
                 }
@@ -167,19 +204,25 @@ const HostSelect: React.FC<HostSelectProps> = ({
     }, [value, defaultValue, isInitialized]);
 
     const getValue = () => {
-        if (multiple && Array.isArray(value)) {
-            return map(value, (userId) => {
-                const host = hosts.find((h) => h.user_id === userId);
-                if (host && isObject(host)) {
-                    return { 
-                        value: host.user_id, 
-                        label: host.user?.display_name || host.name 
-                    };
-                }
-                return null;
-            }).filter(Boolean);
-        } else {
-            const host = hosts.find((h) => h.user_id === value);
+    // Handle null/undefined values
+    if (value === null || value === undefined) {
+        // Return default value or "All Hosts" option if applicable
+        return shouldShowAllOption ? { value: 0, label: __('All Hosts', 'quillbooking') } : null;
+    }
+    
+    // Handle the special case for "All" option
+    if (value === 0) {
+        return { value: 0, label: __('All Hosts', 'quillbooking') };
+    }
+    
+    if (multiple && Array.isArray(value)) {
+        return map(value, (userId) => {
+            // Special case for "All" option in multiple selection mode
+            if (userId === 0) {
+                return { value: 0, label: __('All Hosts', 'quillbooking') };
+            }
+            
+            const host = hosts.find((h) => h.user_id === userId);
             if (host && isObject(host)) {
                 return { 
                     value: host.user_id, 
@@ -187,8 +230,18 @@ const HostSelect: React.FC<HostSelectProps> = ({
                 };
             }
             return null;
+        }).filter(Boolean);
+    } else {
+        const host = hosts.find((h) => h.user_id === value);
+        if (host && isObject(host)) {
+            return { 
+                value: host.user_id, 
+                label: host.user?.display_name || host.name 
+            };
         }
+        return null;
     }
+};
 
     return (
         <div className="host-select">

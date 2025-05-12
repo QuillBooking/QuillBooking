@@ -30,3 +30,4 @@ export { default as NoticeBanner } from './notice-banner';
 export { default as TabButtons } from './tab-buttons';
 export { default as Locations } from './locations';
 export {default as ColorSelector} from './color-selector';
+export {default as ShareModal} from './share-modal';

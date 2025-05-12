@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 
 /**
  * External dependencies
@@ -22,21 +22,36 @@ import {
 /**
  * Internal dependencies
  */
+// @ts-ignore
 import paypal from '../../../../../../../assets/icons/paypal/paypal_vertical.png';
+// @ts-ignore
 import stripe from '../../../../../../../assets/icons/stripe/stripe.png';
 import type { PaymentGateway } from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 
-export interface PaymentGatewayCardProps {
-    slug: string | null;
-    gateway: PaymentGateway;
+// Extend the PaymentGateway type for our component needs
+interface ExtendedPaymentGateway extends PaymentGateway {
+    enabled?: boolean;
 }
 
-const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ slug, gateway }) => {
+export interface PaymentGatewayCardProps {
+    slug: string | null;
+    gateway: ExtendedPaymentGateway;
+    updateGatewayProperty: (property: string, value: any) => void;
+    updateGatewaySettings: (gatewayId: string, settings: any) => void;
+}
+
+const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ 
+    slug, 
+    gateway, 
+    updateGatewayProperty,
+    updateGatewaySettings 
+}) => {
     if (!slug) return null;
     const [form] = Form.useForm();
     const { callApi, loading } = useApi();
     const { successNotice, errorNotice } = useNotice();
+    const [formMode, setFormMode] = useState(gateway.settings?.mode || 'sandbox');
 
     useEffect(() => {
         // Load existing settings when gateway changes
@@ -45,6 +60,7 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ slug, gateway }
             ...settings,
             mode: settings.mode || 'sandbox'
         });
+        setFormMode(settings.mode || 'sandbox');
     }, [gateway, form]);
 
     const handleSaveSettings = (values: any) => {
@@ -56,6 +72,9 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ slug, gateway }
                     data: values,
                     onSuccess() {
                         successNotice(__('Payment gateway settings saved successfully', 'quillbooking'));
+                        // Update the local state with the new settings
+                        updateGatewaySettings(slug, values);
+                        setFormMode(values.mode || 'sandbox');
                     },
                     onError(error) {
                         errorNotice(error.message || __('Failed to save payment gateway settings', 'quillbooking'));
@@ -125,7 +144,7 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ slug, gateway }
                         <Checkbox
                             className="custom-check text-[#3F4254] font-semibold"
                             checked={gateway.enabled}
-                            onChange={(e) => { gateway.enabled = e.target.checked }}
+                            onChange={(e) => updateGatewayProperty('enabled', e.target.checked)}
                         >
                             {__(`Enable ${title} payment for booking payment`, 'quillbooking')}
                         </Checkbox>
@@ -136,6 +155,11 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ slug, gateway }
                             layout="vertical"
                             onFinish={handleSaveSettings}
                             initialValues={{ mode: 'sandbox' }}
+                            onValuesChange={(changedValues) => {
+                                if (changedValues.mode) {
+                                    setFormMode(changedValues.mode);
+                                }
+                            }}
                         >
                             <Form.Item
                                 name="mode"
@@ -145,9 +169,9 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ slug, gateway }
                                     {__('Payment Mode', 'quillbooking')}
                                 </div>
                                 <Radio.Group className="flex gap-2 mt-2 w-full">
-                                    <Radio value="saandbox"
+                                    <Radio value="sandbox"
                                         className={`custom-radio border w-1/2 rounded-lg p-3 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                        ${gateway.settings.mode === 'saandbox'
+                                        ${formMode === 'sandbox'
                                                 ? 'bg-color-secondary border-color-primary'
                                                 : 'border'
                                             }`}
@@ -156,7 +180,7 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({ slug, gateway }
                                     </Radio>
                                     <Radio value="live"
                                         className={`custom-radio border w-1/2 rounded-lg p-3 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                        ${gateway.settings.mode === 'live'
+                                        ${formMode === 'live'
                                                 ? 'bg-color-secondary border-color-primary'
                                                 : 'border'
                                             }`}

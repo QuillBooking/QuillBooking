@@ -10,13 +10,14 @@ import { useState, useEffect, useCallback } from '@wordpress/element';
 import ConfigAPI from '@quillbooking/config';
 import IntegrateCard from './integrate-card';
 import PaymentGatewayCard from './method-card';
-import { useApi } from '@quillbooking/hooks';
+import { useApi, useNotice } from '@quillbooking/hooks';
 
 const PaymentsTab: React.FC = () => {
     const [activeTab, setActiveTab] = useState<string | null>(null);
     const [paymentGateways, setPaymentGateways] = useState(() => ConfigAPI.getPaymentGateways());
     const [isLoading, setIsLoading] = useState(false);
     const { callApi } = useApi();
+    const { successNotice, errorNotice } = useNotice();
 
     useEffect(() => {
         if (Object.keys(paymentGateways).length > 0 && !activeTab) {
@@ -31,7 +32,6 @@ const PaymentsTab: React.FC = () => {
                 path: `payment-gateways/${gatewayId}`,
                 method: 'GET',
                 onSuccess(response) {
-                    console.log('Settings loaded successfully:', response);
                     setPaymentGateways(prevGateways => ({
                         ...prevGateways,
                         [gatewayId]: {
@@ -45,13 +45,12 @@ const PaymentsTab: React.FC = () => {
                 },
                 onError(error) {
                     setIsLoading(false);
-                    console.error('Error loading settings:', error);
-                    // Consider adding a retry mechanism or user notification
+                    errorNotice(error.message || __('Failed to load payment gateway settings', 'quillbooking'));
                     resolve(false);
                 }
             });
         });
-    }, [callApi]);
+    }, [callApi, errorNotice]);
 
     // Fetch gateway settings on initial load and when activeTab changes
     useEffect(() => {
@@ -94,10 +93,14 @@ const PaymentsTab: React.FC = () => {
                 method: 'POST',
                 data: { enabled: value },
                 onSuccess(response) {
-                    console.log('Gateway enabled state updated successfully:', response);
+                    successNotice(
+                        value 
+                            ? __('Payment gateway enabled successfully', 'quillbooking') 
+                            : __('Payment gateway disabled successfully', 'quillbooking')
+                    );
                 },
                 onError(error) {
-                    console.error('Error updating gateway enabled state:', error);
+                    errorNotice(error.message || __('Failed to update payment gateway status', 'quillbooking'));
                     // Rollback the UI state change if the server update fails
                     setPaymentGateways(prevGateways => ({
                         ...prevGateways,

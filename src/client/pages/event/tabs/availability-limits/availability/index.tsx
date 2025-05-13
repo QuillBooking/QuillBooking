@@ -416,7 +416,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 				/>
 			</Card>
 
-			<Card className="mt-6">
+			{/* <Card className="mt-6">
 				<Flex className="items-center">
 					<Flex vertical gap={1}>
 						<div className="text-[#09090B] text-[20px]">
@@ -437,7 +437,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 						}
 					/>
 				</Flex>
-			</Card>
+			</Card> */}
 		</Card>
 	);
 };

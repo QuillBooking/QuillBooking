@@ -1,14 +1,19 @@
 import { Event } from '../../../../types';
 import ClockIcon from '../../../../icons/clock-icon';
+import LocationIcon from '../../../../icons/location-icon';
 import './style.scss';
+import { Dayjs } from 'dayjs';
+import dayjs from 'dayjs'; // import dayjs
 import { __ } from '@wordpress/i18n';
-import { LocationIcon } from '../../../../../components';
+import CalendarIcon from '../../../../icons/calendar-icon';
 
 interface EventDetailsProps {
 	event: Event;
 	setSelectedDuration: (duration: number) => void;
 	selectedDuration: number;
 	step: number;
+	selectedDate: Dayjs | null;
+	selectedTime: string | null; // time string like '14:30'
 }
 
 const EventDetails: React.FC<EventDetailsProps> = ({
@@ -16,9 +21,20 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 	setSelectedDuration,
 	selectedDuration,
 	step,
+	selectedDate,
+	selectedTime,
 }) => {
 	const isMultiDurations =
 		event.additional_settings.allow_attendees_to_select_duration;
+
+	let timeRangeText = '';
+	if (selectedDate && selectedTime) {
+		const time = dayjs(selectedTime, 'HH:mm'); // parse string
+		const endTime = time.add(selectedDuration, 'minute');
+		timeRangeText = `${time.format('HH:mm')} - ${endTime.format(
+			'HH:mm'
+		)}, ${selectedDate.format('dddd, MMMM DD, YYYY')}`;
+	}
 
 	return (
 		<div className="event-details-container">
@@ -48,11 +64,18 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 						</p>
 					)}
 				</div>
-				{/* location */}
+
 				{event.location.length === 1 && (
 					<div className="detail-row">
-						<LocationIcon width={20} height={20} rectFill={false} />
+						<LocationIcon height={20} width={20} />
 						<p>{event.location[0].type.split('_').join(' ')}</p>
+					</div>
+				)}
+
+				{timeRangeText && (
+					<div className="detail-row">
+						<CalendarIcon height={20} width={20} />
+						<p>{timeRangeText}</p>
 					</div>
 				)}
 			</div>

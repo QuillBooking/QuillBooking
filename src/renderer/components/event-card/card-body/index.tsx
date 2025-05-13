@@ -21,7 +21,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 	ajax_url,
 	type = 'schedule',
 	booking,
-	url
+	url,
 }) => {
 	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 	const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -76,6 +76,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 		}
 		if (values['field']) {
 			filteredValues['location'] = values['field']['location-select'];
+		} else {
+			formData.set('location', event.location[0].type);
 		}
 
 		formData.append('fields', JSON.stringify(filteredValues));
@@ -108,6 +110,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 				selectedDuration={selectedDuration}
 				setSelectedDuration={setSelectedDuration}
 				step={step}
+				selectedDate={selectedDate}
+				selectedTime={selectedTime}
 			/>
 			{selectedTime && step === 2 ? (
 				type === 'reschedule' ? (

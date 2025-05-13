@@ -20,14 +20,20 @@ $icons_url = plugins_url( 'src/templates/icons/', QUILLBOOKING_PLUGIN_FILE );
 				<span>
 					<img src="<?php echo esc_url( $icons_url . 'profile.svg' ); ?>" alt="Outlook" />
 				</span>
-				<?php echo esc_html( $booking_array['event']['host'] ?? '' ); ?>
+				<?php if ( ! empty( $booking_array['hosts'] ) && is_array( $booking_array['hosts'] ) ) : ?>
+					<?php foreach ( $booking_array['hosts'] as $host ) : ?>
+						<?php if ( ! empty( $host['name'] ) ) : ?>
+							<span><?php echo esc_html( $host['name'] ); ?></span>
+						<?php endif; ?>
+					<?php endforeach; ?>
+				<?php endif; ?>
 			</p>
 			<p>
 				<span>
 					<img src="<?php echo esc_url( $icons_url . 'calendar.svg' ); ?>" alt="Outlook" />
 				</span>
 
-				<?php echo esc_html( $booking_array['start_time'] ?? '' ); ?>
+				<?php echo esc_html( $booking_array['formatted_time_range'] ?? '' ); ?>
 			</p>
 			<p>
 				<span>

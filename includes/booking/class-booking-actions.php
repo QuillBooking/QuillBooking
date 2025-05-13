@@ -12,6 +12,9 @@
 
 namespace QuillBooking\Booking;
 
+use DateTime;
+use DateTimeZone;
+use Exception;
 use QuillBooking\Booking\Booking_Validator;
 use QuillBooking\Models\Calendar_Model;
 use QuillBooking\Models\Event_Model;
@@ -134,26 +137,7 @@ class Booking_Actions {
 			->where( 'calendar_id', $calendar->id )
 			->first();
 
-		$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
-		$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
-
-		$users = array();
-
-		foreach ( $usersId as $userId ) {
-			$user = User_Model::find( $userId );
-
-			if ( $user ) {
-				$user_avatar_url = get_avatar_url( $user->ID );
-
-				$users[] = array(
-					'id'    => $user->ID,
-					'name'  => $user->display_name,
-					'image' => $user_avatar_url,
-				);
-			}
-		}
-
-		$event->hosts             = $users;
+		$event->hosts             = $this->getEventHosts( $event );
 		$event->fields            = $event->getFieldsAttribute();
 		$event->availability_data = $event->getAvailabilityAttribute();
 		$event->reserve           = $event->getReserveTimesAttribute();
@@ -335,26 +319,7 @@ class Booking_Actions {
 
 		$event = $booking->event;
 
-		$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
-		$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
-
-		$users = array();
-
-		foreach ( $usersId as $userId ) {
-			$user = User_Model::find( $userId );
-
-			if ( $user ) {
-				$user_avatar_url = get_avatar_url( $user->ID );
-
-				$users[] = array(
-					'id'    => $user->ID,
-					'name'  => $user->display_name,
-					'image' => $user_avatar_url,
-				);
-			}
-		}
-
-		$event->hosts             = $users;
+		$event->hosts             = $this->getEventHosts( $event );
 		$event->fields            = $event->getFieldsAttribute();
 		$event->availability_data = $event->getAvailabilityAttribute();
 		$event->reserve           = $event->getReserveTimesAttribute();
@@ -392,13 +357,47 @@ class Booking_Actions {
 	 * Generic renderer for cancel/reschedule/confirm pages
 	 */
 	protected function render_generic_page( string $page, $booking, $fields = array() ) {
-		// echo QUILLBOOKING_PLUGIN_DIR . "templates/{$page}.php";
 		$template_path = QUILLBOOKING_PLUGIN_DIR . "src/templates/{$page}.php";
 
 		if ( ! file_exists( $template_path ) ) {
 			return false;
 		}
 		$booking_array = $booking->toArray();
+
+		// Format the booking time range string
+		if (
+		! empty( $booking_array['start_time'] ) &&
+		! empty( $booking_array['timezone'] ) &&
+		! empty( $booking_array['slot_time'] )
+		) {
+			try {
+				$timezone = new DateTimeZone( $booking_array['timezone'] );
+				$start    = new DateTime( $booking_array['start_time'], $timezone );
+				$end      = clone $start;
+				$end->modify( "+{$booking_array['slot_time']} minutes" );
+
+				$formatted_time_range = sprintf(
+					'%s - %s, %s',
+					$start->format( 'H:i' ),
+					$end->format( 'H:i' ),
+					$start->format( 'l, F d, Y' )
+				);
+
+				$booking_array['formatted_time_range'] = $formatted_time_range;
+			} catch ( Exception $e ) {
+				$booking_array['formatted_time_range'] = '';
+			}
+		} else {
+			$booking_array['formatted_time_range'] = '';
+		}
+
+		// Split location on underscore if it exists and rejoin on space
+		if ( ! empty( $booking_array['location'] ) && strpos( $booking_array['location'], '_' ) !== false ) {
+			$booking_array['location'] = implode( ' ', explode( '_', $booking_array['location'] ) );
+		}
+
+		$booking_array['hosts'] = $this->getEventHosts( $booking->event );
+
 		// Make the booking data available to the template
 		extract(
 			array(
@@ -417,5 +416,32 @@ class Booking_Actions {
 		echo $this->get_footer();
 
 		return true;
+	}
+
+
+		/**
+		 * Fetches host users attached to an event.
+		 *
+		 * @param Event_Model \ $event
+		 * @return array<int, array{id: int, name: string, image: string}>
+		 */
+	private function getEventHosts( Event_Model $event ): array {
+		$ids   = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
+		$ids   = is_array( $ids ) ? $ids : array( $ids );
+		$hosts = array();
+
+		foreach ( $ids as $userId ) {
+			$user = User_Model::find( $userId );
+			if ( ! $user ) {
+				continue;
+			}
+			$hosts[] = array(
+				'id'    => $user->ID,
+				'name'  => $user->display_name,
+				'image' => get_avatar_url( $user->ID ),
+			);
+		}
+
+		return $hosts;
 	}
 }

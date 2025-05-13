@@ -51,8 +51,8 @@ class Booking_Service {
 			$booking              = new Booking_Model();
 			$booking->event_id    = $event->id;
 			$booking->calendar_id = $calendar_id;
-			$booking->start_time  = $start_date->format( 'Y-m-d H:i:s' );
-			$booking->end_time    = $end_date->format( 'Y-m-d H:i:s' );
+			$booking->start_time  = $start_date->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+			$booking->end_time    = $end_date->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
 			$booking->status      = $status;
 			$booking->event_url   = home_url();
 			$booking->source      = 'event-page';

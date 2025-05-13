@@ -17,8 +17,16 @@ $status              = $booking_array['status'] ?? '';
 
 		<div class="booking-card">
 			<h2 class="event-title"><?php echo esc_html( $booking_array['event']['name'] ?? '' ); ?></h2>
-			<p><span><img src="<?php echo esc_url( $icons_url . 'profile.svg' ); ?>" alt="Host" /></span><?php echo esc_html( $booking_array['event']['host'] ?? '' ); ?></p>
-			<p><span><img src="<?php echo esc_url( $icons_url . 'calendar.svg' ); ?>" alt="Time" /></span><?php echo esc_html( $booking_array['start_time'] ?? '' ); ?></p>
+			<p><span><img src="<?php echo esc_url( $icons_url . 'profile.svg' ); ?>" alt="Host" /></span> <?php if ( ! empty( $booking_array['hosts'] ) && is_array( $booking_array['hosts'] ) ) : ?>
+					<?php foreach ( $booking_array['hosts'] as $host ) : ?>
+						<?php if ( ! empty( $host['name'] ) ) : ?>
+							<span><?php echo esc_html( $host['name'] ); ?></span>
+						<?php endif; ?>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</p>
+			<p><span><img src="<?php echo esc_url( $icons_url . 'calendar.svg' ); ?>" alt="Time" /></span><?php echo esc_html( $booking_array['formatted_time_range'] ?? '' ); ?>
+			</p>
 			<p><span><img src="<?php echo esc_url( $icons_url . 'icon.svg' ); ?>" alt="Timezone" /></span><?php echo esc_html( $booking_array['timezone'] ?? '' ); ?></p>
 			<p><span><img src="<?php echo esc_url( $icons_url . 'location.svg' ); ?>" alt="Location" /></span><?php echo esc_html( $booking_array['location'] ?? '' ); ?></p>
 		</div>

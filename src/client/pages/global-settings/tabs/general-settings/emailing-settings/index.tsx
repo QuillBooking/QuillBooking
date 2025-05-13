@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
+import { useEffect, useState } from 'react';
 
 /**
  * External dependencies
@@ -24,6 +25,21 @@ import {
 
 
 const EmailingSettings = ({ settings, updateSettings }) => {
+    // Create a local state to manage the footer content properly
+    const [footerContent, setFooterContent] = useState(settings?.footer || '');
+
+    // Update local state when settings change from external source
+    useEffect(() => {
+        if (settings?.footer !== undefined) {
+            setFooterContent(settings.footer);
+        }
+    }, [settings?.footer]);
+
+    // Handle footer content change
+    const handleFooterChange = (value) => {
+        setFooterContent(value);
+        updateSettings('footer', value);
+    };
 
     return (
         <Card>
@@ -144,9 +160,10 @@ const EmailingSettings = ({ settings, updateSettings }) => {
                         </span>
                     </div>
                     <Editor
-                        message={settings.footer || ''}
-                        onChange={(value) => updateSettings('footer', value)}
+                        message={footerContent}
+                        onChange={handleFooterChange}
                         type='email'
+                        key={`footer-editor-${footerContent ? 'has-content' : 'empty'}`}
                     />
                     <div className="text-[#3F4254]">
                         {__('You may include your business name, address etc here, for example:', 'quillbooking')}

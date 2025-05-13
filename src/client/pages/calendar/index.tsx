@@ -68,6 +68,8 @@ const Calendar: React.FC = () => {
     const saveSettings = () => {
         if (!calendar) return;
 
+        console.log(calendar)
+
         // Validate
         if (!calendar.name) {
             errorNotice(__('Please enter a name for the calendar.', 'quillbooking'));
@@ -78,6 +80,7 @@ const Calendar: React.FC = () => {
             errorNotice(__('Please select a timezone.', 'quillbooking'));
             return;
         }
+        
 
         // Save settings
         callApi({

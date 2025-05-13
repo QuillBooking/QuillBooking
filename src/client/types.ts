@@ -39,10 +39,12 @@ export type Calendar = {
 		location: Location[];
 		is_disabled: boolean;
 		booking_count: number;
+		created_at: string;
 	}[];
 	created_at: string;
 	updated_at: string;
 	user?: User;
+	team_members:number[];
 };
 
 export type CalendarResponse = Response & {
@@ -66,6 +68,8 @@ export type Event = {
 	type: EventTypes;
 	duration: number;
 	color: string;
+	booking_count: number;
+	is_disabled:boolean;
 	visibility: 'public' | 'private';
 	dynamic_duration: boolean;
 	location: Location[];

@@ -152,12 +152,12 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		}
 		return selectedAvailability
 			? selectedAvailability[date.format('YYYY-MM-DD')].map(
-					(slot: { start: string; end: string }) => {
-						const timeString = slot.start.split(' ')[1];
-						const time = timeString.split(':');
-						return `${time[0]}:${time[1]}`;
-					}
-				)
+				(slot: { start: string; end: string }) => {
+					const timeString = slot.start.split(' ')[1];
+					const time = timeString.split(':');
+					return `${time[0]}:${time[1]}`;
+				}
+			)
 			: [];
 	};
 
@@ -329,14 +329,16 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 										label={calendar.name}
 										key={calendar.name}
 									>
-										{calendar.events.map((event) => (
-											<Option
-												value={event.id}
-												key={event.id}
-											>
-												{event.name}
-											</Option>
-										))}
+										{calendar.events
+											.filter(event => !event.is_disabled)
+											.map((event) => (
+												<Option
+													value={event.id}
+													key={event.id}
+												>
+													{event.name}
+												</Option>
+											))}
 									</Select.OptGroup>
 								) : null
 							)}
@@ -366,8 +368,8 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 								filterOption={(input, option) =>
 									(typeof option?.children === 'string'
 										? (
-												option.children as string
-											).toLowerCase()
+											option.children as string
+										).toLowerCase()
 										: ''
 									).includes(input.toLowerCase())
 								}
@@ -529,30 +531,30 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 						/>
 					</Form.Item>
 
-				<Form.Item
-					name="email"
-					rules={[{ required: true }]}
-					label={__("Attendee's Gmail", 'quillbooking')}
-				>
-					<Input />
-				</Form.Item>
-				{selectedEvent && selectedEvent.location.length > 1 && (
 					<Form.Item
-						name="location"
-						label={__('Location', 'quillbooking')}
+						name="email"
 						rules={[{ required: true }]}
+						label={__("Attendee's Gmail", 'quillbooking')}
 					>
-						<Select
-							placeholder={__('Select Location', 'quillbooking')}
-							options={
-								selectedEvent.location.map((location) => ({
-									label: locationTypes[location.type].title,
-									value: location.type,
-								})) || []
-							}
-						/>
+						<Input />
 					</Form.Item>
-				)}
+					{selectedEvent && selectedEvent.location.length > 1 && (
+						<Form.Item
+							name="location"
+							label={__('Location', 'quillbooking')}
+							rules={[{ required: true }]}
+						>
+							<Select
+								placeholder={__('Select Location', 'quillbooking')}
+								options={
+									selectedEvent.location.map((location) => ({
+										label: locationTypes[location.type].title,
+										value: location.type,
+									})) || []
+								}
+							/>
+						</Form.Item>
+					)}
 				</Flex>
 				<Form.Item shouldUpdate>
 					{({ getFieldValue }) => {

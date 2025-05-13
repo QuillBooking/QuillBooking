@@ -13,7 +13,7 @@ import { Flex, Button, Modal } from 'antd';
  * Internal dependencies
  */
 import { useApi, useNotice } from '@quillbooking/hooks';
-import { EventSelect, FieldWrapper } from '@quillbooking/components';
+import { CardHeader, EventSelect, FieldWrapper, UpcomingCalendarOutlinedIcon } from '@quillbooking/components';
 import type { Calendar } from '@quillbooking/client';
 
 interface CloneEventModalProps {
@@ -22,12 +22,13 @@ interface CloneEventModalProps {
     onSaved: () => void;
     calendar: Calendar;
     excludedEvents: number[];
+    setCloneMessage: (message: boolean) => void;
 };
 
 /**
  * Calendar Events Component.
  */
-const CloneEventModal: React.FC<CloneEventModalProps> = ({ open, onClose, calendar, excludedEvents, onSaved }) => {
+const CloneEventModal: React.FC<CloneEventModalProps> = ({ open, onClose, calendar, excludedEvents, onSaved, setCloneMessage }) => {
     const { callApi, loading } = useApi();
     const [event, setEvent] = useState<number | null>(null);
 
@@ -46,6 +47,7 @@ const CloneEventModal: React.FC<CloneEventModalProps> = ({ open, onClose, calend
                 closeHandler();
                 onSaved();
                 successNotice(__('Calendar saved successfully.', 'quillbooking'));
+                setCloneMessage(true);
             },
             onError: (error) => {
                 errorNotice(error.message);
@@ -54,8 +56,6 @@ const CloneEventModal: React.FC<CloneEventModalProps> = ({ open, onClose, calend
     };
 
     const validate = () => {
-
-
         return true;
     };
 
@@ -66,31 +66,35 @@ const CloneEventModal: React.FC<CloneEventModalProps> = ({ open, onClose, calend
 
     return (
         <Modal
-            title={__('Clone Calendar Event', 'quillbooking')}
             open={open}
             onCancel={closeHandler}
             footer={[
-                <Button key="cancel" onClick={onClose}>
-                    {__('Cancel', 'quillbooking')}
-                </Button>,
-                <Button key="clone" type="primary" loading={loading} onClick={saveCalendar}>
-                    {__('Clone', 'quillbooking')}
+                <Button key="clone" type="primary" loading={loading} onClick={saveCalendar} className='w-full border-none shadow-none'>
+                    {__('Clone Event', 'quillbooking')}
                 </Button>,
             ]}
         >
-            <Flex vertical gap={20}>
-                <FieldWrapper
-                    label={__('Event', 'quillbooking')}
-                    description={__('Select the event you want to clone.', 'quillbooking')}
-                >
-                    <EventSelect
-                        value={event || 0}
-                        onChange={setEvent}
-                        exclude={excludedEvents}
-                        placeholder={__('Select Event', 'quillbooking')}
-                        type={calendar.type}
-                    />
-                </FieldWrapper>
+            <CardHeader
+                title={__('Clone Calendar Event', 'quillbooking')}
+                description={__(
+                    'Select Calendar to make an exact copy of Calendar Event.',
+                    'quillbooking'
+                )}
+                icon={<UpcomingCalendarOutlinedIcon />}
+                border={false}
+            />
+            <Flex vertical>
+                <div className="text-[#09090B] text-[16px]">
+                    {__('Select Calendar Event', 'quillbooking')}
+                    <span className="text-red-500">*</span>
+                </div>
+                <EventSelect
+                    value={event || 0}
+                    onChange={setEvent}
+                    exclude={excludedEvents}
+                    placeholder={__('Select Event', 'quillbooking')}
+                    type={calendar.type}
+                />
             </Flex>
         </Modal>
     );

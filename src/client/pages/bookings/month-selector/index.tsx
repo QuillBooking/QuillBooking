@@ -36,7 +36,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 	const handleNextYear = () => setYear((year) => year + 1);
 
 	return (
-		<div className="w-full mx-auto p-4 rounded-md border flex flex-col items-center">
+		<div className="w-full mx-auto p-4 rounded-md border flex flex-col items-center overflow-x-auto">
 			<div className="w-full flex items-center justify-between mb-4">
 				<button
 					onClick={handlePrevYear}
@@ -45,7 +45,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 					<LeftOutlined />
 				</button>
 
-				<div className="font-semibold text-xl">{year}</div>
+				<div className="font-semibold text-xl text-[#09090B]">{year}</div>
 
 				<button
 					onClick={handleNextYear}
@@ -56,7 +56,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 			</div>
 
 			{/* Months row */}
-			<div className="flex gap-4">
+			<div className="flex gap-4 border-t pt-4">
 				{MONTHS.map((month, index) => {
 					const monthNumber = index + 1;
 					const isActive = monthNumber === selectedMonth;
@@ -65,7 +65,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 						<button
 							key={month}
 							onClick={() => setSelectedMonth(monthNumber)}
-							className={`px-4 py-2 rounded-md transition-colors ${
+							className={`px-4 py-2 rounded-md transition-colors text-base font-semibold ${
 								isActive
 									? 'bg-color-primary text-white'
 									: 'bg-transparent text-color-primary-text hover:bg-gray-100'

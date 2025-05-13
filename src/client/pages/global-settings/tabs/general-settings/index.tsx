@@ -22,7 +22,7 @@ import ThemeSettings from './theme-settings';
  * General Settings Component
  */
 const GeneralSettings = () => {
-    const { callApi, loading } = useApi();
+    const { callApi } = useApi();
     const { callApi: saveApi, loading: saveLoading } = useApi();
     const { successNotice, errorNotice } = useNotice();
 

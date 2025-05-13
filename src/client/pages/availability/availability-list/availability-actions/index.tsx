@@ -13,7 +13,7 @@ import { filter } from 'lodash';
  * Internal dependencies
  */
 import { Availability } from 'client/types';
-import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
+import { useApi, useNavigate } from '@quillbooking/hooks';
 import { NavLink as Link } from '@quillbooking/navigation';
 import {
 	ConfirmationModal,
@@ -29,26 +29,37 @@ interface AvailabilityActionsProps {
 	setAvailabilities: (availabilities: Partial<Availability>[]) => void;
 	isAvailabilityDefault: boolean;
 	eventsCount: number;
+	setNotice: (
+		notice: {
+			type: 'success' | 'error';
+			title: string;
+			message: string;
+		} | null
+	) => void;
 }
+
 const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 	availabilityId,
 	availabilities,
 	setAvailabilities,
 	isAvailabilityDefault,
 	eventsCount,
+	setNotice,
 }) => {
 	const navigate = useNavigate();
-	const { successNotice, errorNotice } = useNotice();
 	const { callApi } = useApi();
 	const [showConfirmation, setShowConfirmation] = useState(false);
+
 	const deleteAvailability = async (availabilityId: string) => {
 		if (isAvailabilityDefault) {
-			errorNotice(
-				__(
+			setNotice({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message: __(
 					'You cannot delete the default availability. Please set another availability as default first.',
 					'quillbooking'
-				)
-			);
+				),
+			});
 			return;
 		}
 		await callApi({
@@ -60,10 +71,18 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 					(a) => a.id !== availabilityId
 				);
 				setAvailabilities(updatedAvailability);
-				successNotice(__('Calendar deleted', 'quillbooking'));
+				setNotice({
+					type: 'success',
+					title: __('Success', 'quillbooking'),
+					message: __('Calendar deleted', 'quillbooking'),
+				});
 			},
 			onError: () => {
-				errorNotice(__('Failed to delete calendar', 'quillbooking'));
+				setNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message: __('Failed to delete calendar', 'quillbooking'),
+				});
 			},
 		});
 	};
@@ -74,10 +93,18 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 			method: 'POST',
 			onSuccess: (data) => {
 				navigate(`availability/${data.id}`);
-				successNotice(__('Calendar duplicated', 'quillbooking'));
+				setNotice({
+					type: 'success',
+					title: __('Success', 'quillbooking'),
+					message: __('Calendar duplicated', 'quillbooking'),
+				});
 			},
 			onError: () => {
-				errorNotice(__('Failed to duplicate calendar', 'quillbooking'));
+				setNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message: __('Failed to duplicate calendar', 'quillbooking'),
+				});
 			},
 		});
 	};

@@ -395,7 +395,14 @@ class REST_Team_Controller extends REST_Controller {
 			}
 
 			delete_user_meta( $id, 'quillbooking_team_member' );
-			return new WP_REST_Response( null, 200 );
+			return new WP_REST_Response( 
+				array(
+					'success' => true,
+					'message' => __( 'Team member removed successfully', 'quillbooking' ),
+					'id' => $id
+				), 
+				200 
+			);
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_team_error', $e->getMessage(), array( 'status' => 500 ) );
 		}

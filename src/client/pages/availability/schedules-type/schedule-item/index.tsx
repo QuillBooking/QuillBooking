@@ -21,7 +21,7 @@ const ScheduleItem: React.FC<ScheduleItemProps> = ({
 }) => {
 	return (
 		<div
-			className={`${active ? 'text-color-primary bg-color-tertiary' : 'text-[#A1A5B7]'} flex items-center gap-2 py-2 px-4 rounded-md cursor-pointer hover:bg-color-tertiary hover:text-color-primary`}
+			className={`font-semibold ${active ? 'text-color-primary bg-color-tertiary' : 'text-[#A1A5B7]'} flex items-center gap-2 py-2 px-4 rounded-md cursor-pointer hover:bg-color-tertiary hover:text-color-primary`}
 			{...rest}
 		>
 			<ClockIcon />

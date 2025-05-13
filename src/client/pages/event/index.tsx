@@ -44,7 +44,8 @@ import {
 	SmsNotiIcon,
 	TrashRedIcon,
 	WebhookIcon,
-	ShareModal
+	ShareModal,
+	NoticeBanner,
 } from '@quillbooking/components';
 import { Provider } from './state/context';
 import Calendar from '../calendar';
@@ -55,13 +56,14 @@ import {
 	WebhookFeeds,
 	EmailNotificationTab,
 	SmsNotificationTab,
-	AvailabilityLimits
+	AvailabilityLimits,
 } from './tabs';
 import EventFieldsTab from './tabs/fields';
 
 interface NoticeType {
 	title: string;
 	message: string;
+	type?: 'success' | 'error';
 }
 
 const Event: React.FC = () => {
@@ -85,9 +87,20 @@ const Event: React.FC = () => {
 	const [isSaving, setIsSaving] = useState(false);
 	const location = useLocation();
 	const [notice, setNotice] = useState<NoticeType | null>(null);
-	const [isEventDisabled, setIsEventDisabled] = useState(event?.is_disabled || false);
+	const [isEventDisabled, setIsEventDisabled] = useState(
+		event?.is_disabled || false
+	);
 	const [isSwitchLoading, setIsSwitchLoading] = useState(false);
 	const [activeTab, setActiveTab] = useState(tab || 'details');
+	const [showSavedBanner, setShowSavedBanner] = useState(false);
+	const [showErrorBanner, setShowErrorBanner] = useState(false);
+	const [errorMessage, setErrorMessage] = useState('');
+	const [showStatusBanner, setShowStatusBanner] = useState(false);
+	const [statusMessage, setStatusMessage] = useState<{
+		title: string;
+		message: string;
+		type: 'success' | 'error';
+	}>({ title: '', message: '', type: 'success' });
 
 	useEffect(() => {
 		if (location.state?.notice) {
@@ -183,12 +196,12 @@ const Event: React.FC = () => {
 		});
 	};
 
-	// Function to toggle disabled status directly
 	const toggleEventStatus = async () => {
 		if (!event?.id || isSwitchLoading) return;
 
 		const newStatus = !isEventDisabled;
 		setIsSwitchLoading(true);
+		setShowStatusBanner(false);
 
 		try {
 			await callApi({
@@ -199,40 +212,39 @@ const Event: React.FC = () => {
 				},
 			});
 
-			successNotice(
-				newStatus
-					? __('Event disabled successfully', 'quillbooking')
-					: __('Event enabled successfully', 'quillbooking')
-			);
+			const title = newStatus
+				? __('Event Disabled', 'quillbooking')
+				: __('Event Enabled', 'quillbooking');
+			const message = newStatus
+				? __('Event has been disabled successfully.', 'quillbooking')
+				: __('Event has been enabled successfully.', 'quillbooking');
+
+			setStatusMessage({
+				title,
+				message,
+				type: 'success'
+			});
+			setShowStatusBanner(true);
+			setTimeout(() => setShowStatusBanner(false), 5000);
 
 			// Only update state after successful API call
 			setIsEventDisabled(newStatus);
-			setEvent(prev => prev ? { ...prev, is_disabled: newStatus } : null);
-		} catch (error) {
-			errorNotice(error.message);
-			// Don't update state if API call fails
+			setEvent((prev) =>
+				prev ? { ...prev, is_disabled: newStatus } : null
+			);
+		} catch (error: unknown) {
+			const errorMsg = error instanceof Error ? error.message : __('Failed to update event status. Please try again.', 'quillbooking');
+			setStatusMessage({
+				title: __('Status Update Failed', 'quillbooking'),
+				message: errorMsg,
+				type: 'error'
+			});
+			setShowStatusBanner(true);
+			setTimeout(() => setShowStatusBanner(false), 5000);
 		} finally {
 			setIsSwitchLoading(false);
 		}
 	};
-	// const saveSettings = () => {
-	// 	//if (!validate() || loading) return;
-	// 	callApi({
-	// 		path: `events/${event.id}`,
-	// 		method: 'PUT',
-	// 		data: event,
-	// 		onSuccess: () => {
-	// 			successNotice(
-	// 				__('Event settings saved successfully', 'quillbooking')
-	// 			);
-	// 			setOpen(false);
-	// 			navigate('calendars');
-	// 		},
-	// 		onError: (error: string) => {
-	// 			errorNotice(error);
-	// 		},
-	// 	});
-	// };
 
 	const handleClose = () => {
 		if (discardChanges()) {
@@ -245,11 +257,24 @@ const Event: React.FC = () => {
 		if (!childRef.current || isSaving) return; // Prevent multiple clicks
 
 		setIsSaving(true); // Disable button immediately
+		setShowErrorBanner(false); // Reset error state
 
 		try {
 			await childRef.current.saveSettings(); // Wait for save to complete
-		}
-		finally {
+			setShowSavedBanner(true);
+			setTimeout(() => setShowSavedBanner(false), 5000);
+		} catch (error: unknown) {
+			const errorMsg =
+				error instanceof Error
+					? error.message
+					: __(
+							'Failed to save changes. Please try again.',
+							'quillbooking'
+						);
+			setErrorMessage(errorMsg);
+			setShowErrorBanner(true);
+			setTimeout(() => setShowErrorBanner(false), 5000);
+		} finally {
 			setIsSaving(false); // Re-enable button
 		}
 	};
@@ -258,7 +283,7 @@ const Event: React.FC = () => {
 		{
 			key: 'details',
 			label: __('Event Details', 'quillbooking'),
-			children:
+			children: (
 				<EventDetails
 					onKeepDialogOpen={() => setOpen(true)}
 					ref={childRef}
@@ -267,7 +292,7 @@ const Event: React.FC = () => {
 					notice={notice}
 					clearNotice={() => setNotice(null)}
 				/>
-			,
+			),
 			icon: <CalendarsIcon />,
 		},
 		{
@@ -285,64 +310,73 @@ const Event: React.FC = () => {
 		{
 			key: 'question',
 			label: __('Question Settings', 'quillbooking'),
-			children:
+			children: (
 				<EventFieldsTab
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
-				/>,
+				/>
+			),
 			icon: <QuestionIcon />,
 		},
 		{
 			key: 'email-notifications',
 			label: __('Email Notification', 'quillbooking'),
-			children: <EmailNotificationTab
-				ref={childRef}
-				disabled={saveDisabled}
-				setDisabled={setSaveDisabled}
-			/>,
+			children: (
+				<EmailNotificationTab
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			),
 			icon: <EmailNotiIcon />,
 		},
 		{
 			key: 'sms-notifications',
 			label: __('SMS Notification', 'quillbooking'),
-			children: <SmsNotificationTab
-				ref={childRef}
-				disabled={saveDisabled}
-				setDisabled={setSaveDisabled}
-			/>,
+			children: (
+				<SmsNotificationTab
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			),
 			icon: <SmsNotiIcon />,
 		},
 		{
 			key: 'advanced-settings',
 			label: __('Advanced Settings', 'quillbooking'),
-			children:
+			children: (
 				<AdvancedSettings
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
-				/>,
+				/>
+			),
 			icon: <SettingsIcon />,
 		},
 		{
 			key: 'payment-settings',
 			label: __('Payments Settings', 'quillbooking'),
-			children:
+			children: (
 				<Payments
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
-				/>,
+				/>
+			),
 			icon: <PaymentSettingsIcon />,
 		},
 		{
 			key: 'webhooks-feeds',
 			label: __('Webhooks Feeds', 'quillbooking'),
-			children: <WebhookFeeds
-				ref={childRef}
-				disabled={saveDisabled}
-				setDisabled={setSaveDisabled}
-			/>,
+			children: (
+				<WebhookFeeds
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			),
 			icon: <WebhookIcon />,
 		},
 		// {
@@ -389,6 +423,8 @@ const Event: React.FC = () => {
 
 		if (discardChanges()) {
 			setSaveDisabled(true);
+			setShowErrorBanner(false);
+			setShowSavedBanner(false);
 			setActiveTab(newValue);
 			navigate(`calendars/${calendarId}/events/${id}/${newValue}`);
 		}
@@ -467,10 +503,11 @@ const Event: React.FC = () => {
 								onClick={handleSave}
 								loading={isSaving}
 								disabled={saveDisabled || isSaving}
-								className={`rounded-lg font-[500] text-white ${saveDisabled || isSaving
-									? 'bg-gray-400 cursor-not-allowed'
-									: 'bg-color-primary '
-									}`}
+								className={`rounded-lg font-[500] text-white ${
+									saveDisabled || isSaving
+										? 'bg-gray-400 cursor-not-allowed'
+										: 'bg-color-primary '
+								}`}
 							>
 								{__('Save Changes', 'quillbooking')}
 							</Button>
@@ -528,8 +565,58 @@ const Event: React.FC = () => {
 							))}
 						</Tabs>
 					</Box>
-
-					<div style={{ padding: '20px' }}>
+					<div className="p-5">
+						{showSavedBanner && (
+							<div className="px-9">
+								<NoticeBanner
+									notice={{
+										type: 'success',
+										title: __(
+											'Successfully Saved',
+											'quillbooking'
+										),
+										message: __(
+											'Your changes have been saved successfully.',
+											'quillbooking'
+										),
+									}}
+									closeNotice={() =>
+										setShowSavedBanner(false)
+									}
+								/>
+							</div>
+						)}
+						{showErrorBanner && (
+							<div className="px-9">
+								<NoticeBanner
+									notice={{
+										type: 'error',
+										title: __(
+											'Save Failed',
+											'quillbooking'
+										),
+										message: errorMessage,
+									}}
+									closeNotice={() =>
+										setShowErrorBanner(false)
+									}
+								/>
+							</div>
+						)}
+						{showStatusBanner && (
+							<div className="px-9">
+								<NoticeBanner
+									notice={{
+										type: statusMessage.type,
+										title: statusMessage.title,
+										message: statusMessage.message,
+									}}
+									closeNotice={() =>
+										setShowStatusBanner(false)
+									}
+								/>
+							</div>
+						)}
 						{tabs.find((t) => t.key === activeTab)?.children || (
 							<p>No content available</p>
 						)}

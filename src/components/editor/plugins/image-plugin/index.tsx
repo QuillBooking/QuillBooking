@@ -8,28 +8,36 @@ import { useEffect } from 'react';
 /**
  *  Internal dependencies
  */
-import { $createImageNode, ImagePayload, ImageNode } from '../../nodes/img-node';
+import {
+	$createImageNode,
+	ImagePayload,
+	ImageNode,
+} from '../../nodes/img-node';
 
-export const INSERT_IMAGE_COMMAND = createCommand<ImagePayload>('INSERT_IMAGE_COMMAND');
+export const INSERT_IMAGE_COMMAND = createCommand<ImagePayload>(
+	'INSERT_IMAGE_COMMAND'
+);
 
 export function ImagePlugin(): null {
-  const [editor] = useLexicalComposerContext();
+	const [editor] = useLexicalComposerContext();
 
-  useEffect(() => {
-    if (!editor.hasNodes([ImageNode])) {
-      throw new Error('ImagePlugin: ImageNode is not registered on the editor');
-    }
+	useEffect(() => {
+		if (!editor.hasNodes([ImageNode])) {
+			throw new Error(
+				'ImagePlugin: ImageNode is not registered on the editor'
+			);
+		}
 
-    return editor.registerCommand<ImagePayload>(
-      INSERT_IMAGE_COMMAND,
-      (payload) => {
-        const imageNode = $createImageNode(payload);
-        $insertNodeToNearestRoot(imageNode);
-        return true;
-      },
-      COMMAND_PRIORITY_EDITOR
-    );
-  }, [editor]);
+		return editor.registerCommand<ImagePayload>(
+			INSERT_IMAGE_COMMAND,
+			(payload) => {
+				const imageNode = $createImageNode(payload);
+				$insertNodeToNearestRoot(imageNode);
+				return true;
+			},
+			COMMAND_PRIORITY_EDITOR
+		);
+	}, [editor]);
 
-  return null;
+	return null;
 }

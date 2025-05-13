@@ -7,15 +7,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import {
-	Card,
-	Button,
-	Modal,
-	Input,
-	InputNumber,
-	Select,
-	Flex,
-} from 'antd';
+import { Card, Button, Modal, Input, InputNumber, Select, Flex } from 'antd';
 import { ReactMultiEmail } from 'react-multi-email';
 import 'react-multi-email/dist/style.css';
 /**
@@ -30,7 +22,6 @@ import {
 	UrlIcon,
 	Editor,
 } from '@quillbooking/components';
-
 
 type EmailNotificationCardProps = {
 	notifications: Record<string, NotificationType>;
@@ -93,7 +84,10 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 
 	// Handle adding a new time
 	const handleAddTime = () => {
-		const newTimes = [...(notification.times || []), { value: 15, unit: 'minutes' }];
+		const newTimes = [
+			...(notification.times || []),
+			{ value: 15, unit: 'minutes' },
+		];
 		updateNotification({ times: newTimes });
 	};
 
@@ -179,7 +173,7 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 						<Editor
 							message={notification.template?.message || ''}
 							onChange={handleMessageChange}
-							type='email'
+							type="email"
 						/>
 					</div>
 				</div>
@@ -234,7 +228,10 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 									<InputNumber
 										value={time.value}
 										onChange={(value) =>
-											handleTimeValueChange(index, value as number)
+											handleTimeValueChange(
+												index,
+												value as number
+											)
 										}
 										className="h-[48px] rounded-lg pt-2 w-16"
 									/>
@@ -244,7 +241,9 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 											handleTimeUnitChange(index, unit)
 										}
 										className="h-[48px] rounded-lg w-44"
-										getPopupContainer={(trigger) => trigger.parentElement}
+										getPopupContainer={(trigger) =>
+											trigger.parentElement
+										}
 										options={[
 											{
 												value: 'minutes',
@@ -285,7 +284,9 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 									{/* Only show Remove button if it's NOT the first item */}
 									{index > 0 && (
 										<Button
-											onClick={() => handleRemoveTime(index)}
+											onClick={() =>
+												handleRemoveTime(index)
+											}
 											danger
 											className="border-none shadow-none p-0"
 										>

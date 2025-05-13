@@ -8,7 +8,7 @@ import { addQueryArgs } from '@wordpress/url';
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Popover, Skeleton } from 'antd';
+import { Card, Flex, Button, Popover } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { map, filter, uniq } from 'lodash';
 import { SlOptions } from 'react-icons/sl';
@@ -20,9 +20,10 @@ import './style.scss';
 import type { CalendarResponse, Calendar } from '@quillbooking/client';
 import CalendarEvents from './calendar-events';
 import AddCalendarModal from './add-calendar-modal';
+import CalendarSkeleton from './shimmer/calendar-skeleton';
+import TeamCalendarSkeleton from './shimmer/team-calendar-skeleton';
 import {
 	useApi,
-	useNotice,
 	useNavigate,
 	useCurrentUser,
 } from '@quillbooking/hooks';
@@ -57,19 +58,47 @@ const Calendars: React.FC = () => {
 	const [type, setType] = useState<string | null>(null);
 	const [update, setUpdate] = useState(false);
 	const [showCreateEventModal, setShowCreateEventModal] = useState(false);
-	const [selectedCalendarId, setSelectedCalendarId] = useState<number | null>(null);
-	const [selectedUser, setSelectedUser] = useState<number>(currentUser.isAdmin() ? 0 : currentUser.getId());
+	const [selectedCalendarId, setSelectedCalendarId] = useState<number | null>(
+		null
+	);
+	const [selectedUser, setSelectedUser] = useState<number>(
+		currentUser.isAdmin() ? 0 : currentUser.getId()
+	);
 	const [excludedUserIds, setExcludedUserIds] = useState<number[]>([]);
 	const [hostSelectKey, setHostSelectKey] = useState<number>(0);
 	const [eventStatusMessage, setEventStatusMessage] = useState<boolean>(false);
+	const [deleteEventMessage, setDeleteEventMessage] = useState<boolean>(false);
+	const [deleteCalendarMessage, setDeleteCalendarMessage] = useState<boolean>(false);
+	const [createCalendarMessage, setCreateCalendarMessage] = useState<boolean>(false);
 	const [cloneMessage, setCloneMessage] = useState<boolean>(false);
-	const { errorNotice, successNotice } = useNotice();
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const navigate = useNavigate();
 	const typesLabels = {
 		'one-to-one': __('One to One', 'quillbooking'),
 		group: __('Group', 'quillbooking'),
 		'round-robin': __('Round Robin', 'quillbooking'),
 	};
+
+	// Add useEffect for handling notice timeouts
+	useEffect(() => {
+		const messages = [
+			{ state: eventStatusMessage, setState: setEventStatusMessage as (value: boolean | null) => void },
+			{ state: deleteEventMessage, setState: setDeleteEventMessage as (value: boolean | null) => void },
+			{ state: deleteCalendarMessage, setState: setDeleteCalendarMessage as (value: boolean | null) => void },
+			{ state: createCalendarMessage, setState: setCreateCalendarMessage as (value: boolean | null) => void },
+			{ state: cloneMessage, setState: setCloneMessage as (value: boolean | null) => void },
+			{ state: errorMessage, setState: setErrorMessage }
+		];
+
+		messages.forEach(({ state, setState }) => {
+			if (state) {
+				const timer = setTimeout(() => {
+					setState(null);
+				}, 5000); // Hide after 3 seconds
+				return () => clearTimeout(timer);
+			}
+		});
+	}, [eventStatusMessage, deleteEventMessage, deleteCalendarMessage, createCalendarMessage, cloneMessage, errorMessage]);
 
 	const fetchCalendars = async (shouldUpdateExcludedUsers = true) => {
 		if (loading) return;
@@ -80,12 +109,16 @@ const Calendars: React.FC = () => {
 		};
 
 		// Only add user_id filter if not showing all hosts (for admins only)
-		if ((selectedUser !== 0 && selectedUser !== null) || !currentUser.isAdmin()) {
+		if (
+			(selectedUser !== 0 && selectedUser !== null) ||
+			!currentUser.isAdmin()
+		) {
 			// If not admin, always filter by current user ID
 			// Make sure selectedUser is not null before calling toString()
-			apiFilters.user_id = currentUser.isAdmin() && selectedUser !== null
-				? selectedUser.toString()
-				: currentUser.getId().toString();
+			apiFilters.user_id =
+				currentUser.isAdmin() && selectedUser !== null
+					? selectedUser.toString()
+					: currentUser.getId().toString();
 		}
 
 		// Special handling for team calendars
@@ -105,7 +138,7 @@ const Calendars: React.FC = () => {
 				setCalendars(response.data);
 			},
 			onError: (error) => {
-				errorNotice(error.message);
+				setErrorMessage(error.message);
 			},
 		});
 
@@ -114,7 +147,7 @@ const Calendars: React.FC = () => {
 			callApi({
 				path: addQueryArgs(`calendars`, {
 					per_page: 99,
-					filters: { type: 'host' } // Only need host calendars for the user list
+					filters: { type: 'host' }, // Only need host calendars for the user list
 				}),
 				onSuccess: (response: CalendarResponse) => {
 					setAllCalendars(response.data);
@@ -123,13 +156,12 @@ const Calendars: React.FC = () => {
 					setExcludedUserIds(userIds);
 				},
 				onError: (error) => {
-					errorNotice(error.message);
+					setErrorMessage(error.message);
 				},
 			});
 		}
 	};
 
-	console.log(calendars)
 
 	const deleteCalendar = async (calendar: Calendar) => {
 		await callApi({
@@ -155,10 +187,9 @@ const Calendars: React.FC = () => {
 					setExcludedUserIds(userIds);
 				}
 
-				successNotice(__('Calendar deleted successfully', 'quillbooking'));
 			},
 			onError: (error) => {
-				errorNotice(error.message);
+				setErrorMessage(error.message);
 			},
 		});
 	};
@@ -171,7 +202,7 @@ const Calendars: React.FC = () => {
 	const handleSaved = () => {
 		fetchCalendars();
 		// Update host select key to force re-render of the component
-		setHostSelectKey(prevKey => prevKey + 1);
+		setHostSelectKey((prevKey) => prevKey + 1);
 	};
 
 	const updateEvents = () => {
@@ -186,16 +217,19 @@ const Calendars: React.FC = () => {
 	const getFilteredCalendars = () => {
 		if (!calendars) return [];
 
-		let filteredCalendars = calendars.filter(calendar =>
-			calendar.type === filters.type
+		let filteredCalendars = calendars.filter(
+			(calendar) => calendar.type === filters.type
 		);
 
 		// For host calendars, apply user filtering if a specific user is selected (not "All")
-		const currentSelectedUser = selectedUser !== null && selectedUser !== undefined ? selectedUser : 0;
+		const currentSelectedUser =
+			selectedUser !== null && selectedUser !== undefined
+				? selectedUser
+				: 0;
 
 		if (filters.type === 'host' && currentSelectedUser !== 0) {
 			filteredCalendars = filteredCalendars.filter(
-				calendar => calendar.user_id === currentSelectedUser
+				(calendar) => calendar.user_id === currentSelectedUser
 			);
 		}
 
@@ -288,8 +322,15 @@ const Calendars: React.FC = () => {
 								key={hostSelectKey} // Add key to force re-render when changed
 								value={selectedUser}
 								onChange={handleUserChange}
-								placeholder={__('Filter by User', 'quillbooking')}
-								defaultValue={currentUser.isAdmin() ? 0 : currentUser.getId()} // Default to All for admins, current user for non-admins
+								placeholder={__(
+									'Filter by User',
+									'quillbooking'
+								)}
+								defaultValue={
+									currentUser.isAdmin()
+										? 0
+										: currentUser.getId()
+								} // Default to All for admins, current user for non-admins
 								selectFirstHost={!currentUser.isAdmin()} // Only auto-select first host for non-admins
 								showAllOption={currentUser.isAdmin()} // Only show "All" option for admins
 							/>
@@ -298,17 +339,85 @@ const Calendars: React.FC = () => {
 				</Flex>
 			</Card>
 			{loading || !calendars ? (
-				<Skeleton active />
+				<div>
+					{filters.type === 'host' ? (
+						<>
+							<CalendarSkeleton />
+							<CalendarSkeleton />
+							<CalendarSkeleton />
+						</>
+					) : (
+						<Flex gap={15} wrap>
+							<TeamCalendarSkeleton />
+							<TeamCalendarSkeleton />
+							<TeamCalendarSkeleton />
+						</Flex>
+					)}
+				</div>
 			) : (
 				<div>
+					{createCalendarMessage && (
+						<NoticeBanner
+							notice={{
+								type: 'success',
+								title: __(
+									'Successfully Created',
+									'quillbooking'
+								),
+								message: __(
+									'The Calendar has been created successfully.',
+									'quillbooking'
+								),
+							}}
+							closeNotice={() => setCreateCalendarMessage(false)}
+						/>
+					)}
 					{eventStatusMessage && (
 						<NoticeBanner
 							notice={{
 								type: 'success',
-								title: __('Successfully Disabled', 'quillbooking'),
-								message: __('The Event has been Disabled successfully.', 'quillbooking')
+								title: __(
+									'Successfully Disabled',
+									'quillbooking'
+								),
+								message: __(
+									'The Event has been Disabled successfully.',
+									'quillbooking'
+								),
 							}}
 							closeNotice={() => setEventStatusMessage(false)}
+						/>
+					)}
+					{deleteEventMessage && (
+						<NoticeBanner
+							notice={{
+								type: 'success',
+								title: __(
+									'Successfully Deleted',
+									'quillbooking'
+								),
+								message: __(
+									'The Event has been deleted successfully.',
+									'quillbooking'
+								),
+							}}
+							closeNotice={() => setDeleteEventMessage(false)}
+						/>
+					)}
+					{deleteCalendarMessage && (
+						<NoticeBanner
+							notice={{
+								type: 'success',
+								title: __(
+									'Successfully Deleted',
+									'quillbooking'
+								),
+								message: __(
+									'The Calendar has been deleted successfully.',
+									'quillbooking'
+								),
+							}}
+							closeNotice={() => setDeleteCalendarMessage(false)}
 						/>
 					)}
 					{cloneMessage && (
@@ -316,19 +425,51 @@ const Calendars: React.FC = () => {
 							notice={{
 								type: 'success',
 								title: __('Success', 'quillbooking'),
-								message: __('The Event has been cloned successfully.', 'quillbooking')
+								message: __(
+									'The Event has been cloned successfully.',
+									'quillbooking'
+								),
 							}}
 							closeNotice={() => setCloneMessage(false)}
 						/>
 					)}
+					{errorMessage && (
+						<NoticeBanner
+							notice={{
+								type: 'error',
+								title: __('Error', 'quillbooking'),
+								message: errorMessage,
+							}}
+							closeNotice={() => setErrorMessage(null)}
+						/>
+					)}
 					{getFilteredCalendars().length === 0 ? (
-						<Flex vertical gap={30} justify='center' align='center' className='py-10'>
-							<div className='border rounded-full p-7 bg-[#F4F5FA] border-[#E1E2E9] text-[#BEC0CA]'>
+						<Flex
+							vertical
+							gap={30}
+							justify="center"
+							align="center"
+							className="py-10"
+						>
+							<div className="border rounded-full p-7 bg-[#F4F5FA] border-[#E1E2E9] text-[#BEC0CA]">
 								<UpcomingCalendarIcon width={60} height={60} />
 							</div>
-							<Flex vertical gap={5} justify='center' align='center'>
-								<span className='text-[20px] font-medium text-black'>
-									{search ? __('No matching events found', 'quillbooking') : __('No events available', 'quillbooking')}
+							<Flex
+								vertical
+								gap={5}
+								justify="center"
+								align="center"
+							>
+								<span className="text-[20px] font-medium text-black">
+									{search
+										? __(
+												'No matching events found',
+												'quillbooking'
+											)
+										: __(
+												'No Calendars available',
+												'quillbooking'
+											)}
 								</span>
 								{filters.type === 'team' && (
 									<Button
@@ -337,7 +478,10 @@ const Calendars: React.FC = () => {
 										onClick={() => setType('team')}
 										icon={<PlusOutlined />}
 									>
-										{__('Create Team Event', 'quillbooking')}
+										{__(
+											'Create Team Event',
+											'quillbooking'
+										)}
 									</Button>
 								)}
 							</Flex>
@@ -347,38 +491,68 @@ const Calendars: React.FC = () => {
 							{filters.type === 'host' ? (
 								<>
 									{getFilteredCalendars().map((calendar) => (
-										<Card key={calendar.id} className="bg-[#FDFDFD] mb-4">
+										<Card
+											key={calendar.id}
+											className="bg-[#FDFDFD] mb-4"
+										>
 											<Flex vertical gap={20}>
-												<Card className='bg-white'>
-													<Flex justify="space-between" align="center">
+												<Card className="bg-white">
+													<Flex
+														justify="space-between"
+														align="center"
+													>
 														<Flex vertical>
 															<div className="text-[#313131] text-base font-semibold">
 																{calendar.name}
 															</div>
-															<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium">
-																{__('View My Landing Page', 'quillbooking')}
-																<ShareIcon width={16} height={16} />
+															<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium cursor-pointer">
+																{__(
+																	'View My Landing Page',
+																	'quillbooking'
+																)}
+																<ShareIcon
+																	width={16}
+																	height={16}
+																/>
 															</div>
 														</Flex>
 														<div>
 															<Popover
-																trigger={['click']}
+																trigger={[
+																	'click',
+																]}
 																content={
 																	<CalendarActions
-																		calendar={calendar}
-																		setCloneMessage={setCloneMessage}
-																		onSaved={handleSaved}
-																		onEdit={(id) =>
+																		calendar={
+																			calendar
+																		}
+																		setCloneMessage={
+																			setCloneMessage
+																		}
+																		onSaved={
+																			handleSaved
+																		}
+																		onEdit={(
+																			id
+																		) =>
 																			navigate(
 																				`calendars/${id}/general`
 																			)
 																		}
-																		onDelete={(id) =>
+																		onDelete={(
+																			id
+																		) =>
 																			deleteCalendar(
 																				{
 																					id: id,
 																				} as Calendar
 																			)
+																		}
+																		setDeleteCalendarMessage={
+																			setDeleteCalendarMessage
+																		}
+																		setErrorMessage={
+																			setErrorMessage
 																		}
 																	/>
 																}
@@ -397,8 +571,21 @@ const Calendars: React.FC = () => {
 												<CalendarEvents
 													calendar={calendar}
 													typesLabels={typesLabels}
-													updateCalendarEvents={updateEvents}
-													setStatusMessage={setEventStatusMessage}
+													updateCalendarEvents={
+														updateEvents
+													}
+													setStatusMessage={
+														setEventStatusMessage
+													}
+													setDeleteMessage={
+														setDeleteEventMessage
+													}
+													setCloneMessage={
+														setCloneMessage
+													}
+													setErrorMessage={
+														setErrorMessage
+													}
 												/>
 											</Flex>
 										</Card>
@@ -406,86 +593,141 @@ const Calendars: React.FC = () => {
 								</>
 							) : (
 								<Flex gap={15} wrap>
-									{getFilteredCalendars().map((teamCalendar) => {
-										// For non-admins, this will already be filtered to only include teams they're members of
-										return (
-											<Card
-												key={teamCalendar.id}
-												title={
-													<Flex vertical>
-														<div className="text-[#313131] text-base font-semibold">
-															{teamCalendar.name}
-														</div>
-														<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium">
-															{__('View My Landing Page', 'quillbooking')}
-															<ShareIcon width={16} height={16} />
-														</div>
-													</Flex>
-												}
-												className="bg-[#FDFDFD] w-[377px]"
-												headStyle={{
-													backgroundColor: '#FFFFFF',
-													textTransform: 'capitalize',
-													paddingTop: '20px ',
-													paddingBottom: '20px'
-												}}
-												extra={
-													<div>
-														<Popover
-															trigger={['click']}
-															content={
-																<CalendarActions
-																	calendar={teamCalendar}
-																	setCloneMessage={setCloneMessage}
-																	onSaved={handleSaved}
-																	onEdit={(id) =>
-																		navigate(
-																			`calendars/${id}/general`
-																		)
-																	}
-																	onDelete={(id) =>
-																		deleteCalendar(
-																			{
-																				id: id,
-																			} as Calendar
-																		)
-																	}
-																/>
-															}
-														>
-															<Button
-																type="text"
-																icon={
-																	<SlOptions className="text-color-primary-text text-[18px]" />
+									{getFilteredCalendars().map(
+										(teamCalendar) => {
+											// For non-admins, this will already be filtered to only include teams they're members of
+											return (
+												<Card
+													key={teamCalendar.id}
+													title={
+														<Flex vertical>
+															<div className="text-[#313131] text-base font-semibold">
+																{
+																	teamCalendar.name
 																}
-																className="border-[#EDEBEB]"
-															/>
-														</Popover>
-													</div>
-												}
-											>
-												<Flex vertical gap={20}>
-													{filters.type === 'team' && (
-														<Button
-															className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] flex items-center justify-center h-[56px] w-[310px] text-[16px]"
-															onClick={() => handleCreateEvent(teamCalendar.id)}
-														>
-															<PlusOutlined className="text-color-primary" />
-															<span className="pt-[8.5px]">
-																{__('Create New Event', 'quillbooking')}
-															</span>
-														</Button>
-													)}
-													<CalendarEvents
-														calendar={teamCalendar}
-														typesLabels={typesLabels}
-														updateCalendarEvents={updateEvents}
-														setStatusMessage={setEventStatusMessage}
-													/>
-												</Flex>
-											</Card>
-										);
-									})}
+															</div>
+															<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium">
+																{__(
+																	'View My Landing Page',
+																	'quillbooking'
+																)}
+																<ShareIcon
+																	width={16}
+																	height={16}
+																/>
+															</div>
+														</Flex>
+													}
+													className="bg-[#FDFDFD] w-[377px]"
+													headStyle={{
+														backgroundColor:
+															'#FFFFFF',
+														textTransform:
+															'capitalize',
+														paddingTop: '20px ',
+														paddingBottom: '20px',
+													}}
+													extra={
+														<div>
+															<Popover
+																trigger={[
+																	'click',
+																]}
+																content={
+																	<CalendarActions
+																		calendar={
+																			teamCalendar
+																		}
+																		setCloneMessage={
+																			setCloneMessage
+																		}
+																		onSaved={
+																			handleSaved
+																		}
+																		onEdit={(
+																			id
+																		) =>
+																			navigate(
+																				`calendars/${id}/general`
+																			)
+																		}
+																		onDelete={(
+																			id
+																		) =>
+																			deleteCalendar(
+																				{
+																					id: id,
+																				} as Calendar
+																			)
+																		}
+																		setDeleteCalendarMessage={
+																			setDeleteCalendarMessage
+																		}
+																		setErrorMessage={
+																			setErrorMessage
+																		}
+																	/>
+																}
+															>
+																<Button
+																	type="text"
+																	icon={
+																		<SlOptions className="text-color-primary-text text-[18px]" />
+																	}
+																	className="border-[#EDEBEB]"
+																/>
+															</Popover>
+														</div>
+													}
+												>
+													<Flex vertical gap={20}>
+														{filters.type ===
+															'team' && (
+															<Button
+																className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] flex items-center justify-center h-[56px] w-[310px] text-[16px]"
+																onClick={() =>
+																	handleCreateEvent(
+																		teamCalendar.id
+																	)
+																}
+															>
+																<PlusOutlined className="text-color-primary" />
+																<span>
+																	{__(
+																		'Create New Event',
+																		'quillbooking'
+																	)}
+																</span>
+															</Button>
+														)}
+														<CalendarEvents
+															calendar={
+																teamCalendar
+															}
+															typesLabels={
+																typesLabels
+															}
+															updateCalendarEvents={
+																updateEvents
+															}
+															setStatusMessage={
+																setEventStatusMessage
+															}
+															setDeleteMessage={
+																setDeleteEventMessage
+															}
+															setCloneMessage={
+																setCloneMessage
+															}
+															setErrorMessage={
+																setErrorMessage
+															}
+														/>
+													</Flex>
+												</Card>
+											);
+										}
+									)}
 								</Flex>
 							)}
 						</>
@@ -499,6 +741,8 @@ const Calendars: React.FC = () => {
 					onClose={() => setType(null)}
 					excludedUsers={excludedUserIds}
 					onSaved={handleSaved}
+					setCreateCalendarMessage={setCreateCalendarMessage}
+					setErrorMessage={setErrorMessage}
 				/>
 			)}
 			{showCreateEventModal && selectedCalendarId && (

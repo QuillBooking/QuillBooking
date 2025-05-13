@@ -8,7 +8,7 @@ import { useState } from '@wordpress/element';
  * Internal dependencies
  */
 import type { Availability, Calendar } from '@quillbooking/client';
-import { useApi, useNotice } from '@quillbooking/hooks';
+import { useApi } from '@quillbooking/hooks';
 import { getCurrentTimezone } from '@quillbooking/utils';
 import HostCalendar from './host-calendar';
 import TeamCalendar from './team-calendar';
@@ -20,6 +20,8 @@ interface AddCalendarModalProps {
 	onSaved: () => void;
 	type: string;
 	excludedUsers: number[];
+	setCreateCalendarMessage: (message: boolean) => void;
+	setErrorMessage?: (message: string | null) => void;
 }
 
 interface CalendarWithAvailability extends Calendar {
@@ -35,6 +37,8 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 	type,
 	excludedUsers,
 	onSaved,
+	setCreateCalendarMessage,
+	setErrorMessage,
 }) => {
 	const getDefaultAvailability = (): Availability => ({
 		id: 'default',
@@ -58,10 +62,9 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 	const updateFormData = (key: keyof typeof formData, value: any) => {
 		setFormData((prev) => ({ ...prev, [key]: value }));
 	};
-	const { successNotice, errorNotice } = useNotice();
 
 	const saveCalendar = async () => {
-		if (!validate())  return;
+		if (!validate()) return;
 
 		callApi({
 			path: `calendars`,
@@ -70,38 +73,42 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 			onSuccess: () => {
 				closeHandler();
 				onSaved();
-				successNotice(
-					__('Calendar saved successfully.', 'quillbooking')
-				);
+				setCreateCalendarMessage(true);
 			},
 			onError: (error) => {
-				errorNotice(error.message);
+				if (setErrorMessage) {
+					setErrorMessage(error.message);
+				}
 			},
 		});
 	};
 
-
 	const validate = (): boolean => {
 		if (!formData.name) {
-			errorNotice(
-				__('Please enter a name for the calendar.', 'quillbooking')
-			);
+			if (setErrorMessage) {
+				setErrorMessage(__('Please enter a name for the calendar.', 'quillbooking'));
+			}
 			return false;
 		}
 
 		if (type === 'host' && !formData.user_id) {
-			errorNotice(__('Please select a user.', 'quillbooking'));
+			if (setErrorMessage) {
+				setErrorMessage(__('Please select a user.', 'quillbooking'));
+			}
 			return false;
 		}
 
 		if (type === 'host' && !formData.availability) {
-			errorNotice(__('Please select availability.', 'quillbooking'));
+			if (setErrorMessage) {
+				setErrorMessage(__('Please select availability.', 'quillbooking'));
+			}
 			return false;
 		}
 
-
 		if (type === 'team' && (!formData.members || formData.members.length === 0)) {
-			errorNotice(__('Please select team members.', 'quillbooking'));
+			if (setErrorMessage) {
+				setErrorMessage(__('Please select team members.', 'quillbooking'));
+			}
 			return false;
 		}
 

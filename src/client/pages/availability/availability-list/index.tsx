@@ -101,9 +101,9 @@ const AvailabilityList: React.FC<AvailabilityListProps> = ({
 								}
 								description={
 									<>
-										<div className="flex gap-2 mb-2">
+										{/* <div className="flex gap-2 mb-2">
 											<ClockIcon />
-										</div>
+										</div> */}
 										<div className="flex gap-2 mb-2">
 											<GlobalIcon />
 											{availability.timezone}

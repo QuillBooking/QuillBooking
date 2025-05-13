@@ -127,15 +127,19 @@ class REST_Settings_Controller extends Abstract_REST_Settings_Controller {
 		}
 
 		// ensure publishable key format.
-		if ( substr( $publishable_key, 0, 8 ) !== "pk_{$mode}_" ) {
+		if ( substr( $publishable_key, 0, 8 ) !== "pk_{$mode}_" &&
+			 ! ( $mode === 'sandbox' && substr( $publishable_key, 0, 8 ) === 'pk_test_' ) &&
+			 ! ( $mode === 'live' && substr( $publishable_key, 0, 8 ) === 'pk_live_' ) ) {
 			/* translators: %s: Key prefix. */
-			return new WP_Error( 'quillbooking_stripe_settings_update', sprintf( esc_html__( 'Publishable key must start with %s', 'quillbooking' ), "pk_{$mode}_" ) );
+			return new WP_Error( 'quillbooking_stripe_settings_update', sprintf( esc_html__( 'Publishable key must start with %s', 'quillbooking' ), "pk_{$mode}_ or " . ( $mode === 'sandbox' ? 'pk_test_' : 'pk_live_' ) ) );
 		}
 
 		// ensure secret key format.
-		if ( ! in_array( substr( $secret_key, 0, 8 ), array( "sk_{$mode}_", "rk_{$mode}_" ), true ) ) {
+		if ( ! in_array( substr( $secret_key, 0, 8 ), array( "sk_{$mode}_", "rk_{$mode}_" ), true ) &&
+			 ! ( $mode === 'sandbox' && ( substr( $secret_key, 0, 8 ) === 'sk_test_' || substr( $secret_key, 0, 8 ) === 'rk_test_' ) ) &&
+			 ! ( $mode === 'live' && ( substr( $secret_key, 0, 8 ) === 'sk_live_' || substr( $secret_key, 0, 8 ) === 'rk_live_' ) ) ) {
 			/* translators: %s: Key prefix. */
-			return new WP_Error( 'quillbooking_stripe_settings_update', sprintf( esc_html__( 'Secret key must start with %s', 'quillbooking' ), "sk_{$mode}_ or rk_{$mode}_" ) );
+			return new WP_Error( 'quillbooking_stripe_settings_update', sprintf( esc_html__( 'Secret key must start with %s', 'quillbooking' ), "sk_{$mode}_, rk_{$mode}_, " . ( $mode === 'sandbox' ? 'sk_test_, rk_test_' : 'sk_live_, rk_live_' ) ) );
 		}
 
 		// check if keys aren't changed.

@@ -62,7 +62,9 @@ const EmailTabs: React.FC<EmailTabsProps> = ({
 									noticationKey={key}
 									changedKey={editingKey}
 									setEditingKey={(key: string | null) => {
-										key && editingKey !== key && onSelect(key)
+										key &&
+											editingKey !== key &&
+											onSelect(key);
 									}}
 									notification={
 										notification as NotificationType

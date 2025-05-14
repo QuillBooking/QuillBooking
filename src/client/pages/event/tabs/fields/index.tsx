@@ -23,13 +23,30 @@ import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import './style.scss';
 import { CardHeader, QuestionOutlineIcon } from '@quillbooking/components';
-import {
-	EventTabHandle,
-	EventTabProps,
-	Fields,
-	FieldType,
-} from 'client/types';
+import { EventTabHandle, EventTabProps, Fields, FieldType } from 'client/types';
 import Question from './question';
+
+const LoadingSkeleton = () => (
+	<Card>
+		<Skeleton active paragraph={{ rows: 2 }} />
+		<Card className="mt-4">
+			<Skeleton.Input active size="large" block className="mb-4" />
+			<Skeleton.Input active size="small" block className="mb-2" />
+			{[1, 2].map((i) => (
+				<Card key={i} className="mt-4">
+					<Skeleton active paragraph={{ rows: 3 }} />
+				</Card>
+			))}
+		</Card>
+		<Card className="mt-4">
+			<Skeleton.Input active size="large" block className="mb-4" />
+			<Skeleton.Input active size="small" block className="mb-2" />
+			<Card className="mt-4">
+				<Skeleton active paragraph={{ rows: 2 }} />
+			</Card>
+		</Card>
+	</Card>
+);
 
 const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 	(props, ref) => {
@@ -88,7 +105,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 			props.setDisabled(false);
 		};
 
-		const saveFields = async(fields: Fields) => {
+		const saveFields = async (fields: Fields) => {
 			if (!event) return;
 			return saveApi({
 				path: `events/${event.id}`,
@@ -115,7 +132,8 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 				Object.keys(fields?.location || {}).length +
 				Object.keys(fields?.custom || {}).length +
 				1;
-			const defaultLabel = __('New Question', 'quillbooking') + ' ' + order;
+			const defaultLabel =
+				__('New Question', 'quillbooking') + ' ' + order;
 			const newFieldKey = slugify(defaultLabel, { lower: true });
 			const newField: FieldType = {
 				label: defaultLabel,
@@ -133,7 +151,6 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 			};
 			setFields(updatedFields);
 			props.setDisabled(false);
-
 		};
 
 		const removeField = async (
@@ -195,7 +212,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		};
 
 		if (loading || !fields) {
-			return <Skeleton active />;
+			return <LoadingSkeleton />;
 		}
 
 		const allFields = fields

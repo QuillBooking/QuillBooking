@@ -678,18 +678,18 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function updateFields( $fields ) {
-		$current_fields = $this->fields ?? array();
+		$current_fields = $fields ?? array();
 
 		foreach ( $fields as $group => $group_fields ) {
 			foreach ( $group_fields as $field_key => $field ) {
 				if ( in_array( $group, array( 'system', 'location' ), true ) ) {
-					// Keep existing fields and update only label, helper_text, and placeholder
+					// Keep existing fields and update only label, helpText, and placeholder
 					if ( isset( $current_fields[ $group ][ $field_key ] ) ) {
 						$current_fields[ $group ][ $field_key ] = array_merge(
 							$current_fields[ $group ][ $field_key ],
 							array_intersect_key(
 								$field,
-								array_flip( array( 'label', 'helper_text', 'placeholder', 'hidden' ) )
+								array_flip( array( 'label', 'helpText', 'placeholder', 'hidden' ) )
 							)
 						);
 					}
@@ -705,7 +705,6 @@ class Event_Model extends Model {
 				}
 			}
 		}
-
 		$this->update_meta( 'fields', $current_fields );
 	}
 

@@ -58,16 +58,8 @@ const QuestionInfo: React.FC<QuestionInfoProps> = ({
 							label: __('Radio', 'quillbooking'),
 						},
 						{
-							value: 'date',
-							label: __('Date', 'quillbooking'),
-						},
-						{
 							value: 'time',
 							label: __('Time', 'quillbooking'),
-						},
-						{
-							value: 'datetime',
-							label: __('Datetime', 'quillbooking'),
 						},
 						{
 							value: 'number',
@@ -76,18 +68,6 @@ const QuestionInfo: React.FC<QuestionInfoProps> = ({
 						{
 							value: 'multiple_select',
 							label: __('Multiple Select', 'quillbooking'),
-						},
-						{
-							value: 'file',
-							label: __('File', 'quillbooking'),
-						},
-						{
-							value: 'hidden',
-							label: __('Hidden', 'quillbooking'),
-						},
-						{
-							value: 'checkbox_group',
-							label: __('Checkbox Group', 'quillbooking'),
 						},
 						{
 							value: 'terms',

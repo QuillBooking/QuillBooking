@@ -58,7 +58,7 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 					requiredMark={false}
 				>
 					{sortedFields.map((fieldKey, index) => (
-						<>
+						(!allFields[fieldKey].hidden || allFields[fieldKey].hidden === undefined) && (
 							<FormField
 								key={index}
 								id={fieldKey}
@@ -66,7 +66,7 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 								form={form}
 								locationFields={locationFields}
 							/>
-						</>
+						)
 					))}
 					<Form.Item className="schedule-btn-container">
 						<button className="schedule-btn" type="submit">

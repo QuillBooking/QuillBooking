@@ -95,8 +95,19 @@ class Booking_Ajax {
 				throw new \Exception( __( 'You have selected an invalid slot', 'quillbooking' ) );
 			}
 
+			$status = 'scheduled';
+
+			if ( isset( $_POST['status'] ) ) {
+				$status = sanitize_text_field( $_POST['status'] );
+			}
+
+			$fields = array();
+			if ( isset( $_POST['fields'] ) ) {
+				$fields = sanitize_text_field( $_POST['fields'] );
+			}
+
 			$calendar_id = $event->calendar_id;
-			$booking     = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location );
+			$booking     = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields );
 
 			do_action(
 				'quillbooking_after_booking_created',

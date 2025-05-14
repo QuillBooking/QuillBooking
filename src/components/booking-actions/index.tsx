@@ -11,8 +11,8 @@ import { Button, Flex, Input, Modal, Popover } from 'antd';
 /**
  * Internal dependencies
  */
-import { useApi, useNotice } from '@quillbooking/hooks';
-import type { Booking } from '@quillbooking/client';
+import { useApi } from '@quillbooking/hooks';
+import type { Booking, NoticeMessage } from '@quillbooking/client';
 import { useState } from '@wordpress/element';
 import AddBookingModal from '../../client/pages/bookings/add-booking-modal';
 import {
@@ -78,7 +78,8 @@ const statues = {
 interface BookingActionsProps {
 	booking: Booking;
 	type: 'popover' | 'button';
-	onStatusUpdated: () => void;
+	onStatusUpdated: (action?: string) => void;
+	onNotice: (notice: NoticeMessage) => void;
 }
 
 const { TextArea } = Input;
@@ -87,9 +88,9 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 	booking,
 	onStatusUpdated,
 	type,
+	onNotice,
 }) => {
 	const { callApi } = useApi();
-	const { successNotice } = useNotice();
 
 	// State to handle modals
 	const [cancelModalVisible, setCancelModalVisible] =
@@ -110,9 +111,11 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 			method: 'PUT',
 			data,
 			onSuccess: () => {
-				successNotice(
-					__('Booking status updated successfully', 'quillbooking')
-				);
+				onNotice({
+					type: 'success',
+					title: __('Success', 'quillbooking'),
+					message: __('Booking status updated successfully', 'quillbooking'),
+				});
 				onStatusUpdated();
 			},
 		});
@@ -123,10 +126,12 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 			path: `bookings/${booking.id}`,
 			method: 'DELETE',
 			onSuccess: () => {
-				successNotice(
-					__('Booking deleted successfully', 'quillbooking')
-				);
-				onStatusUpdated();
+				onNotice({
+					type: 'success',
+					title: __('Success', 'quillbooking'),
+					message: __('Booking deleted successfully', 'quillbooking'),
+				});
+				onStatusUpdated('delete');
 			},
 		});
 	};
@@ -161,7 +166,10 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 		// Open modals for cancel and delete
 		cancel: handleCancelClick,
 		delete: handleDeleteClick,
-		mark_as_completed: () => updateStatus('completed'),
+		mark_as_completed: () => {
+			updateStatus('completed');
+			onStatusUpdated('mark_as_completed');
+		},
 	};
 
 	// Function to render each action button
@@ -221,7 +229,7 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 	return (
 		<>
 			{type === 'button' && (
-				<Flex gap={10} align="center">
+				<Flex gap={10} align="center" className="flex-nowrap">
 					{statues[booking.status].map((actionKey) =>
 						renderActionButton(actionKey)
 					)}
@@ -253,7 +261,9 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 			{open && (
 				<AddBookingModal
 					booking={booking}
-					onClose={() => setOpen(false)}
+					onClose={() => {
+						setOpen(false);
+					}}
 					onSaved={() => {
 						setOpen(false);
 						onStatusUpdated();
@@ -266,6 +276,7 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 			<Modal
 				footer={null}
 				closable={false}
+				getContainer={false}
 				title={
 					<div className="gap-2">
 						<div className="flex flex-col justify-center items-center mb-4">
@@ -335,6 +346,7 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 			<Modal
 				footer={null}
 				closable={false}
+				getContainer={false}
 				title={
 					<div className="gap-2">
 						<div className="flex flex-col justify-center items-center mb-4">

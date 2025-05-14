@@ -67,7 +67,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	const locationTypes = ConfigAPI.getLocations();
 	const [ignoreAvailability, setIgnoreAvailability] = useState(false);
 
-	const { callApi } = useApi();
+	const { callApi, loading } = useApi();
 	const { errorNotice, successNotice } = useNotice();
 
 	const fetchCalendar = () => {
@@ -191,7 +191,6 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					ignore_availability: ignoreAvailability,
 				},
 				onSuccess: () => {
-					successNotice('Booking added successfully');
 					onSaved();
 					onClose();
 				},
@@ -260,6 +259,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 
 	return (
 		<Modal
+			getContainer={false}
 			title={
 				<div className="flex gap-4 items-center">
 					<div className="rounded-lg p-2 bg-[#EDEDED] text-color-primary-text">
@@ -284,6 +284,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			footer={[
 				<Button
 					className="bg-color-primary text-white text-center w-full"
+					loading={loading}
 					size="large"
 					key="submit"
 					type="primary"
@@ -313,6 +314,9 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							placeholder={__('Select Event', 'quillbooking')}
 							showSearch
 							size="large"
+							getPopupContainer={(trigger) =>
+								trigger.parentElement
+							}
 							filterOption={(input, option) =>
 								(typeof option?.children === 'string'
 									? (option.children as string).toLowerCase()
@@ -364,6 +368,9 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							<Select
 								placeholder={__('Select Host', 'quillbooking')}
 								showSearch
+								getPopupContainer={(trigger) =>
+									trigger.parentElement
+								}
 								size="large"
 								filterOption={(input, option) =>
 									(typeof option?.children === 'string'
@@ -419,6 +426,9 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							placeholder={__('Select Duration', 'quillbooking')}
 							disabled={!selectedEvent}
 							size="large"
+							getPopupContainer={(trigger) =>
+								trigger.parentElement
+							}
 						>
 							{selectedEvent && (
 								<Option value={selectedEvent.duration}>
@@ -475,6 +485,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							disabled={!selectedEvent}
 							disabledDate={disabledDate}
 							onChange={handleDateChange}
+							getPopupContainer={(trigger) => trigger.parentElement || document.body}
 						/>
 					</Form.Item>
 					<Form.Item
@@ -487,6 +498,9 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							size="large"
 							disabled={!form.getFieldValue('selectDate')}
 							placeholder={__('Select Time', 'quillbooking')}
+							getPopupContainer={(trigger) =>
+								trigger.parentElement
+							}
 						>
 							{timeOptions.map((time) => (
 								<Select.Option key={time} value={time}>
@@ -502,7 +516,11 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					label={__('Status', 'quillbooking')}
 					rules={[{ required: true }]}
 				>
-					<Select disabled={!selectedEvent} size="large">
+					<Select disabled={!selectedEvent} size="large"
+					getPopupContainer={(trigger) =>
+						trigger.parentElement
+					}
+					>
 						<Option value="scheduled">
 							{__('Scheduled', 'quillbooking')}
 						</Option>
@@ -536,7 +554,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 						rules={[{ required: true }]}
 						label={__("Attendee's Gmail", 'quillbooking')}
 					>
-						<Input />
+						<Input size='large'/>
 					</Form.Item>
 					{selectedEvent && selectedEvent.location.length > 1 && (
 						<Form.Item
@@ -552,6 +570,10 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 										value: location.type,
 									})) || []
 								}
+								getPopupContainer={(trigger) =>
+									trigger.parentElement
+								}
+								size='large'
 							/>
 						</Form.Item>
 					)}

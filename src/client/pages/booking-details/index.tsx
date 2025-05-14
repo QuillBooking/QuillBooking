@@ -9,24 +9,69 @@ import { addQueryArgs } from '@wordpress/url';
  * External dependencies
  */
 import { Flex } from 'antd';
+import { Dialog } from '@mui/material';
 
 /**
  * Internal dependencies
  */
 import { useParams } from '@quillbooking/navigation';
-import { useApi, useNotice } from '@quillbooking/hooks';
-import type { Booking } from '@quillbooking/client';
+import { useApi } from '@quillbooking/hooks';
+import { useNavigate } from '@quillbooking/navigation';
+import type { Booking, NoticeMessage } from '@quillbooking/client';
 import { groupBookingsByDate } from '@quillbooking/utils';
 import AddBookingModal from '../bookings/add-booking-modal';
 import BookingList from './booking-list';
 import MeetingInformation from './meeting-information';
 import InviteeInformation from './invitee-information';
 import MeetingActivities from './booking-activities';
-import { CancelIcon, UpcomingCalendarIcon } from '@quillbooking/components';
+import { CancelIcon, UpcomingCalendarIcon, NoticeBanner } from '@quillbooking/components';
 import { BookingActions } from '@quillbooking/components';
 import BookingQuestion from './booking-question';
 
+interface DayInfo {
+	weekday: string;
+	dayOfMonth: string;
+	month: number;
+	year: number;
+}
+
+function getNextTenDays(): DayInfo[] {
+	const days: DayInfo[] = [];
+	for (let i = 0; i < 10; i++) {
+		const date = new Date();
+		date.setDate(date.getDate() + i);
+		days.push({
+			weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
+			dayOfMonth: date.getDate().toString().padStart(2, '0'),
+			month: date.getMonth() + 1,
+			year: date.getFullYear(),
+		});
+	}
+	return days;
+}
+
 const days = getNextTenDays();
+
+const ShimmerLoader = () => (
+	<div className="animate-pulse">
+		<Flex justify="space-between" className="border-b border-[#E5E5E5] p-4 pb-7">
+			<div className="h-8 w-48 bg-gray-200 rounded"></div>
+			<div className="h-8 w-32 bg-gray-200 rounded"></div>
+		</Flex>
+		<Flex gap={40} align="start" className="p-16 pt-8">
+			<Flex vertical gap={20} className="flex-1">
+				<div className="h-40 bg-gray-200 rounded-lg w-full"></div>
+				<div className="h-32 bg-gray-200 rounded-lg w-full"></div>
+				<div className="h-48 bg-gray-200 rounded-lg w-full"></div>
+			</Flex>
+			<div className="flex flex-col flex-2 gap-4">
+				<div className="h-32 bg-gray-200 rounded-lg w-full"></div>
+				<div className="h-48 bg-gray-200 rounded-lg w-full"></div>
+				<div className="h-64 bg-gray-200 rounded-lg w-full"></div>
+			</div>
+		</Flex>
+	</div>
+);
 
 const BookingDetails: React.FC = () => {
 	// Destructure params at the top.
@@ -43,24 +88,66 @@ const BookingDetails: React.FC = () => {
 	const [bookingId, setBookingId] = useState<string | number>(
 		bookingIdParam || ''
 	);
+	const [isLoading, setIsLoading] = useState(true);
 
 	const { callApi } = useApi();
-	const { errorNotice } = useNotice();
+	const [notice, setNotice] = useState<NoticeMessage | null>(null);
+	const [isDialogOpen, setIsDialogOpen] = useState(true);
+	const navigate = useNavigate();
+	const [isDeleted, setIsDeleted] = useState(false);
 
-	const handleStatusUpdated = () => {
-		setRefresh((prev) => !prev);
+	const handleStatusUpdated = (action?: string) => {
+		console.log('Action received:', action); // Add logging to debug
+		
+		switch (action) {
+			case 'delete':
+				handleClose();
+				break;
+			case 'rebook':
+				if (!open) { // Only open if not already open
+					setOpen(true);
+				}
+				break;
+			default:
+				// For other actions like mark_as_completed, just refresh the data
+				fetchBooking();
+				setRefresh((prev) => !prev);
+		}
+	};
+
+	const handleNotice = (noticeMsg: NoticeMessage) => {
+		setNotice(noticeMsg);
+		// Auto-hide notice after 3 seconds
+		setTimeout(() => setNotice(null), 3000);
+	};
+
+	const handleClose = () => {
+		setIsDialogOpen(false);
+		window.history.back();
 	};
 
 	const fetchBooking = async () => {
+		if (isDeleted) return; // Don't fetch if booking is deleted
+		setIsLoading(true);
+		
 		callApi({
 			path: `bookings/${bookingId}`,
 			method: 'GET',
 			onSuccess: (response) => {
 				console.log('Booking details:', response);
 				setBooking(response);
+				setIsLoading(false);
 			},
 			onError: (error) => {
 				console.error(error);
+				if (!isDeleted) {
+					handleNotice({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message: error.message || __('Error fetching booking details', 'quillbooking')
+					});
+				}
+				setIsLoading(false);
 			},
 		});
 	};
@@ -86,16 +173,20 @@ const BookingDetails: React.FC = () => {
 				setBookings(bookings);
 			},
 			onError: () => {
-				errorNotice(__('Error fetching bookings', 'quillbooking'));
+				handleNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message: __('Error fetching bookings', 'quillbooking')
+				});
 			},
 		});
 	};
 
 	useEffect(() => {
-		if (bookingId) {
+		if (bookingId && !isDeleted) {
 			fetchBooking();
 		}
-	}, [bookingId]);
+	}, [bookingId, refresh]);
 
 	useEffect(() => {
 		fetchUpcomingBookings(
@@ -129,92 +220,100 @@ const BookingDetails: React.FC = () => {
 		: '';
 
 	return (
-		<>
-			<Flex
-				justify="space-between"
-				className="border-b border-[#E5E5E5] p-4 pb-7"
-			>
-				<div>
-					<Flex gap={10} align="center">
-						<div className="text-color-primary-text cursor-pointer">
-							<CancelIcon width={30} height={30} />
+		<Dialog
+			open={isDialogOpen}
+			onClose={handleClose}
+			fullScreen
+			className='z-[160000]'
+		>
+			{isLoading ? (
+				<ShimmerLoader />
+			) : (
+				<>
+					<Flex
+						justify="space-between"
+						className="border-b border-[#E5E5E5] p-4 pb-7 w-full"
+					>
+						<div>
+							<Flex gap={10} align="center">
+								<div 
+									className="text-color-primary-text cursor-pointer"
+									onClick={handleClose}
+								>
+									<CancelIcon width={30} height={30} />
+								</div>
+								<p className="text-2xl text-[#09090B] font-medium">
+									{__('Booking Details', 'quillbooking')}
+								</p>
+							</Flex>
 						</div>
-						<p className="text-2xl text-[#09090B] font-medium">
-							{__('Booking Details', 'quillbooking')}
-						</p>
+						{booking && (
+							<div className="flex justify-end">
+								<BookingActions
+									booking={booking}
+									type="button"
+									onStatusUpdated={handleStatusUpdated}
+									onNotice={handleNotice}
+								/>
+							</div>
+						)}
 					</Flex>
-				</div>
-				{booking && (
-					<BookingActions
-						booking={booking}
-						type="button"
-						onStatusUpdated={handleStatusUpdated}
-					/>
-				)}
-			</Flex>
-			<Flex gap={40} align="start" className="p-16 pt-8">
-				{booking && (
-					<Flex vertical gap={20} className="flex-1">
-						<MeetingInformation booking={booking} />
-						<BookingQuestion booking={booking} />
-						<InviteeInformation
-							booking={booking}
-							handleStatusUpdated={handleStatusUpdated}
+					{notice && (
+					<div className='mt-4 mx-16'>
+						<NoticeBanner
+							notice={notice}
+							closeNotice={() => setNotice(null)}
 						/>
-					</Flex>
-				)}
+						</div>
+					)}
+					<Flex gap={40} align="start" className="p-16 pt-8">
+						{booking && (
+							<Flex vertical gap={20} className="flex-1">
+								<MeetingInformation booking={booking} />
+								<BookingQuestion booking={booking} />
+								<InviteeInformation
+									booking={booking}
+									handleStatusUpdated={handleStatusUpdated}
+								/>
+							</Flex>
+						)}
 
-				<div className="flex flex-col flex-2 gap-4">
-					<div className="bg-color-primary p-8 rounded-2xl text-white">
-						<UpcomingCalendarIcon width={60} height={60} />
-						<p className="text-lg font-normal my-1">
-							{__('Event Date/Time', 'quillbooking')}
-						</p>
-						<p className="text-2xl font-medium">
-							{formattedDate} - {formattedStartTime} -{' '}
-							{formattedEndTime}
-						</p>
-					</div>
-					{booking && <MeetingActivities booking={booking} />}
-					<BookingList
-						bookings={Object.values(bookings)[0] || []}
-						setSelectedDate={setSelectedDate}
-						days={days}
-						selectedDate={selectedDate}
-						setBookingId={setBookingId}
-					/>
-				</div>
-			</Flex>
-			{open && (
-				<AddBookingModal
-					open={open}
-					onClose={() => setOpen(false)}
-					onSaved={() => setOpen(false)}
-					booking={booking || undefined}
-				/>
+						<div className="flex flex-col flex-2 gap-4">
+							<div className="bg-color-primary p-8 rounded-2xl text-white">
+								<UpcomingCalendarIcon width={60} height={60} />
+								<p className="text-lg font-normal my-1">
+									{__('Event Date/Time', 'quillbooking')}
+								</p>
+								<p className="text-2xl font-medium">
+									{formattedDate} - {formattedStartTime} -{' '}
+									{formattedEndTime}
+								</p>
+							</div>
+							{booking && <MeetingActivities booking={booking} />}
+							<BookingList
+								bookings={Object.values(bookings)[0] || []}
+								setSelectedDate={setSelectedDate}
+								days={days}
+								selectedDate={selectedDate}
+								setBookingId={setBookingId}
+							/>
+						</div>
+					</Flex>
+					{open && (
+						<AddBookingModal
+							open={open}
+							onClose={() => setOpen(false)}
+							onSaved={() => {
+								setOpen(false);
+								handleClose();
+							}}
+							booking={booking || undefined}
+						/>
+					)}
+				</>
 			)}
-		</>
+		</Dialog>
 	);
 };
 
 export default BookingDetails;
-
-function getNextTenDays() {
-	const days: {
-		weekday: string;
-		dayOfMonth: string;
-		month: number;
-		year: number;
-	}[] = [];
-	for (let i = 0; i < 10; i++) {
-		const date = new Date();
-		date.setDate(date.getDate() + i);
-		days.push({
-			weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
-			dayOfMonth: date.getDate().toString().padStart(2, '0'),
-			month: date.getMonth() + 1,
-			year: date.getFullYear(),
-		});
-	}
-	return days;
-}

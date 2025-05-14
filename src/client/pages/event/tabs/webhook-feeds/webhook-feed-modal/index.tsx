@@ -285,6 +285,7 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 								addHeader();
 							}
 						}}
+						className='flex w-full'
 					>
 						<Radio
 							value={false}
@@ -391,7 +392,7 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 					</Flex>
 				)}
 
-				<Flex align="center" gap={28} className="w-full mt-7">
+				<Flex align="center" gap={20} className="w-full mt-7">
 					<Flex gap={2} vertical className="w-1/2">
 						<label className="text-[#09090B] text-[16px] font-semibold">
 							{__('Request Method', 'quillbooking')}
@@ -462,6 +463,7 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 								addBodyField();
 							}
 						}}
+						className='flex w-full'
 					>
 						<Radio
 							value={false}

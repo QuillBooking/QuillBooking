@@ -28,58 +28,58 @@ const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 	const copyToClipboard = useCopyToClipboard();
 
 	return (
-		<Flex gap={100}>
-			<div>
+		<Flex gap={12} wrap="wrap" className="flex-1 min-w-0">
+			<div className="flex-1 min-w-[200px] max-w-[400px]">
 				<Link to={`bookings/${booking.id}/${period}`}>
-					<p className="text-xl font-bold text-color-primary-text py-1">
+					<p className="text-lg font-bold text-color-primary-text py-1 break-words">
 						{booking.event.name}
 					</p>
 				</Link>
-				<Flex gap={5} align="center" className="my-1">
+				<Flex gap={3} align="center" className="my-1">
 					<ClockIcon />
-					<p>
+					<p className="break-words text-sm">
 						{`${booking.event.duration} ${__('min', 'quillbooking')} `}{' '}
 						{booking.time_span}
 					</p>
 				</Flex>
-				<Flex gap={5} align="center">
-					<LocationIcon rectFill={false} width={20} height={20} />
+				<Flex gap={3} align="center">
+					<LocationIcon rectFill={false} width={18} height={18} />
 					{booking.event.location.length > 0 &&
 						booking.event.location.map((location, index) => (
-							<p key={index}>{location.type}</p>
+							<p key={index} className="break-words text-sm">{location.type}</p>
 						))}
 				</Flex>
 			</div>
 
-			<div>
-				<Flex gap={10} align="center">
-					<PriceIcon width={20} height={21} rectFill={false} />
-					<span className="text-[#71717A] text-[12px]">
+			<div className="flex-1 min-w-[200px] max-w-[400px]">
+				<Flex gap={6} align="center">
+					<PriceIcon width={18} height={18} rectFill={false} />
+					<span className="text-[#71717A] text-xs">
 						{__('Price', 'quillbooking')}
 					</span>
-					<span className="text-[#007AFF] text-[14px] font-[500] capitalize">
+					<span className="text-[#007AFF] text-sm font-[500] capitalize">
 						{__('Free', 'quillbooking')}
 					</span>
 				</Flex>
 
-				<Flex gap={5} align="center" className="my-1">
+				<Flex gap={3} align="center" className="my-1">
 					<span className="text-color-primary-text">
-						<AttendeeIcon />
+						<AttendeeIcon width={18} height={18} />
 					</span>
-					<p>
+					<p className="text-sm">
 						{__('Attendees', 'quillbooking')} 1
 						{__('person', 'quillbooking')}
 					</p>
 				</Flex>
-				<Flex gap={5} align="center">
-					<span className="text-color-primary-text">
-						<LinkIcon width={24} height={24} />
+				<Flex gap={3} align="center" className="overflow-hidden">
+					<span className="text-color-primary-text flex-shrink-0">
+						<LinkIcon width={18} height={18} />
 					</span>
-					<a target="_blank" href={booking.event_url}>
+					<a target="_blank" href={booking.event_url} className="truncate text-sm">
 						{booking.event_url}
 					</a>
 					<span
-						className="flex items-center gap-1 ml-2 text-color-primary cursor-pointer"
+						className="flex items-center gap-1 ml-1 text-color-primary cursor-pointer flex-shrink-0 text-sm"
 						onClick={() =>
 							copyToClipboard(
 								booking.event_url,
@@ -87,7 +87,7 @@ const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 							)
 						}
 					>
-						<CopyWhiteIcon width={16} height={16} />
+						<CopyWhiteIcon width={14} height={14} />
 						{__('Copy', 'quillbooking')}
 					</span>
 				</Flex>

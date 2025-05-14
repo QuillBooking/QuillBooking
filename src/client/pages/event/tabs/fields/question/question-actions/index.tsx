@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Switch, Popconfirm } from 'antd';
+import { Switch } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 
 /**
@@ -90,9 +90,14 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
 				</div>
 			)}
 
-			<Popconfirm
-				title={__('Are you sure to delete this field?', 'quillbooking')}
-				onConfirm={() =>
+			<div
+				className={`${
+					allFields[fieldKey].group === 'system' ||
+					allFields[fieldKey].group === 'other'
+						? 'text-[#D1D5DB] cursor-not-allowed'
+						: 'text-[#EF4444] cursor-pointer'
+				}`}
+				onClick={() =>
 					removeField(
 						fieldKey,
 						allFields[fieldKey].group as
@@ -102,24 +107,9 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
 							| 'other'
 					)
 				}
-				okText={__('Yes', 'quillbooking')}
-				cancelText={__('No', 'quillbooking')}
-				disabled={allFields[fieldKey].group === 'system'}
-				getPopupContainer={(trigger) =>
-					document.getElementById(`card-${fieldKey}`) || trigger
-				}
 			>
-				<div
-					className={`${
-						allFields[fieldKey].group === 'system' ||
-						allFields[fieldKey].group === 'other'
-							? 'text-[#D1D5DB] cursor-not-allowed'
-							: 'text-[#EF4444] cursor-pointer'
-					}`}
-				>
-					<TrashIcon width={24} height={24} />
-				</div>
-			</Popconfirm>
+				<TrashIcon width={24} height={24} />
+			</div>
 		</div>
 	);
 };

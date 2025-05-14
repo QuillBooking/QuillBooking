@@ -132,21 +132,21 @@ registerAdminPage('settings', {
 	),
 });
 
-registerAdminPage('help', {
-	path: 'help',
-	component: () => <Help />,
-	label: (
-		<Navmenu icon={<HelpIcon width={24} height={24}/>} title={__('Help and Support', 'quillbooking')} />
-	),
-});
+// registerAdminPage('help', {
+// 	path: 'help',
+// 	component: () => <Help />,
+// 	label: (
+// 		<Navmenu icon={<HelpIcon width={24} height={24}/>} title={__('Help and Support', 'quillbooking')} />
+// 	),
+// });
 
-registerAdminPage('logout', {
-	path: 'logout',
-	component: () => <Logout />,
-	label: (
-		<Navmenu icon={<LogoutIcon />} title={__('Logout', 'quillbooking')} />
-	),
-});
+// registerAdminPage('logout', {
+// 	path: 'logout',
+// 	component: () => <Logout />,
+// 	label: (
+// 		<Navmenu icon={<LogoutIcon />} title={__('Logout', 'quillbooking')} />
+// 	),
+// });
 
 registerAdminPage('availability', {
 	path: 'availability',

@@ -216,8 +216,9 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		}
 
 		const allFields = fields
-			? { ...fields.system, ...fields.location, ...fields.custom }
+			? { ...fields.system, location: fields.location['location-select'], ...fields.custom }
 			: {};
+		
 		const sortedFields = Object.keys(allFields).sort(
 			(a, b) => allFields[a].order - allFields[b].order
 		);

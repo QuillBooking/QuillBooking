@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Checkbox, Form, Input, InputNumber } from 'antd';
+import { Checkbox, Form, InputNumber } from 'antd';
 
 /**
  * Internal dependencies
@@ -36,18 +36,11 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 
 	const onChange = () => {
 		form.validateFields().then((values) => {
-			// Get current settings from allFields and merge with new values
-			const currentSettings = allFields[fieldKey]?.settings || {};
-			const newSettings = values.settings || {};
-
 			// Update with merged settings to preserve all fields
 			onUpdate(
 				{
 					...allFields[fieldKey],
-					settings: {
-						...currentSettings,
-						...newSettings,
-					},
+					...values,
 				},
 				fieldKey
 			);
@@ -255,17 +248,6 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 									/>
 								</Form.Item>
 							</div>
-							<Form.Item
-								name={['settings', 'format']}
-								label={__('Format', 'quillbooking')}
-							>
-								<Input
-									placeholder={__(
-										'Enter format',
-										'quillbooking'
-									)}
-								/>
-							</Form.Item>
 						</>
 					) : null}
 

@@ -36,22 +36,31 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 
 	const onChange = () => {
 		form.validateFields().then((values) => {
-			// Update with merged settings to preserve all fields
+			console.log('values', values);
+			// values might be { label, helpText, settings: { min? number, max? number, … } }
+			const updatedSettings = {
+				...allFields[fieldKey].settings, // keep all existing min/max/…
+				...values.settings, // overwrite only the bits that changed
+			};
+
 			onUpdate(
 				{
 					...allFields[fieldKey],
 					...values,
+					settings: updatedSettings,
 				},
 				fieldKey
 			);
 		});
 	};
+
 	return (
 		<Form
 			form={form}
 			layout="vertical"
 			initialValues={allFields[fieldKey]}
 			onValuesChange={onChange}
+			requiredMark={false}
 		>
 			<div className="flex gap-4">
 				<Form.Item className="flex-1" name="label">
@@ -200,13 +209,21 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 						</Form.Item>
 					)}
 
-					{type === 'number' ? (
+					{type === 'number' && (
 						<>
 							<div className="flex gap-4">
 								<Form.Item
+									initialValue={1}
 									className="flex-1"
 									name={['settings', 'min']}
-									label={__('Min Value', 'quillbooking')}
+									label={
+										<>
+											{__('Min Value', 'quillbooking')}
+											<span className="text-[#EF4444]">
+												*
+											</span>
+										</>
+									}
 									rules={[
 										{
 											required: true,
@@ -218,6 +235,7 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 									]}
 								>
 									<InputNumber
+										size="large"
 										style={{ width: '100%' }}
 										placeholder={__(
 											'Enter minimum value',
@@ -226,9 +244,17 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 									/>
 								</Form.Item>
 								<Form.Item
+									initialValue={100}
 									className="flex-1"
 									name={['settings', 'max']}
-									label={__('Max Value', 'quillbooking')}
+									label={
+										<>
+											{__('Max Value', 'quillbooking')}
+											<span className="text-[#EF4444]">
+												*
+											</span>
+										</>
+									}
 									rules={[
 										{
 											required: true,
@@ -240,6 +266,7 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 									]}
 								>
 									<InputNumber
+										size="large"
 										style={{ width: '100%' }}
 										placeholder={__(
 											'Enter maximum value',
@@ -249,7 +276,7 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 								</Form.Item>
 							</div>
 						</>
-					) : null}
+					)}
 
 					{(type === 'date' || type === 'datetime') && (
 						<>

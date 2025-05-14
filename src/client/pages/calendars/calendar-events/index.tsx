@@ -27,7 +27,11 @@ import {
 	UpcomingCalendarIcon,
 	ShareModal,
 } from '@quillbooking/components';
-import { useCopyToClipboard } from '@quillbooking/hooks';
+import {
+	useCopyToClipboard,
+	useNavigate,
+} from '@quillbooking/hooks';
+import { map } from 'lodash';
 import EventActions from '../event-actions';
 import CreateEvent from '../../create-event';
 
@@ -177,7 +181,7 @@ const CalendarEvents: React.FC<{
 									</Flex>
 									<Flex vertical justify="center" gap={10}>
 										<Flex gap={10} className="items-center">
-											<LocationIcon />
+											<LocationIcon/>
 											<div className="flex flex-col">
 												<span className="text-[#71717A] text-[12px]">
 													{__(

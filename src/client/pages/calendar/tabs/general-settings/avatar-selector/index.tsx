@@ -41,7 +41,7 @@ const AvatarSelector: React.FC<{
                         className='relative cursor-pointer w-[120px] h-[120px]'
                     >
                         <Avatar
-                            size={120}
+                            size={126}
                             src={value ? value.url : undefined}
                             className='bg-color-secondary'
                         />

@@ -388,11 +388,14 @@ class REST_Booking_Controller extends REST_Controller {
 				$this->apply_search_filter( $query, $search );
 			}
 
-			$bookings = $query->with( 'event', 'event.calendar', 'guest', 'calendar.user' )->paginate( $per_page, array( '*' ), 'page', $page );
+			$bookings = $query->with( 'event', 'event.calendar', 'guest', 'calendar.user' )->get();
 
+			// The 'bookings' array data is designed to compensate for pagination when it gets added.
 			return new WP_REST_Response(
 				array(
-					'bookings'        => $bookings,
+					'bookings'        => array(
+						'data' => $bookings,
+					),
 					'pending_count'   => $status_counts[ $this->STATUS_PENDING ] ?? 0,
 					'cancelled_count' => $status_counts[ $this->STATUS_CANCELLED ] ?? 0,
 					'noshow_count'    => $status_counts[ $this->STATUS_NO_SHOW ] ?? 0,

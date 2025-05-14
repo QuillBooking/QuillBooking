@@ -833,11 +833,13 @@ class REST_Event_Controller extends REST_Controller {
 				'email_notifications' => $email_notifications,
 				'sms_notifications'   => $sms_notifications,
 				'payments_settings'   => $payments_settings,
-				'webhook_feeds'       => $webhook_feeds,
 				'dynamic_duration'    => $dynamic_duration,
 			);
 
 			$event->setReserveTimesAttribute( $reserve_times );
+			if ( isset( $webhook_feeds ) ) {
+				$event->setWebhookFeedsAttribute( $webhook_feeds );
+			}
 
 			if ( ! empty( $slug ) ) {
 				$exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();

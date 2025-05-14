@@ -52,6 +52,7 @@
     "react-router": "^7.1.1",
     "react-router-dom": "^7.1.1",
     "react-select": "^5.10.1",
+    "react-shimmer-effects": "^1.0.4",
     "recharts": "^2.15.3",
     "slate": "^0.114.0",
     "slate-history": "^0.113.1",

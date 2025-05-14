@@ -30,6 +30,7 @@ import {
 	SingleIcon,
 	Locations,
 	ColorSelector,
+	NoticeBanner,
 } from '@quillbooking/components';
 import {
 	useApi,
@@ -37,7 +38,12 @@ import {
 	useNavigate,
 	useCurrentUser,
 } from '@quillbooking/hooks';
-import type { Event, AdditionalSettings, Host } from '@quillbooking/client';
+import type {
+	Event,
+	AdditionalSettings,
+	Host,
+	NoticeMessage,
+} from '@quillbooking/client';
 import './style.scss';
 
 /**
@@ -94,11 +100,17 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 		members: false,
 	});
 
+	const [errorBanner, setErrorBanner] = useState<NoticeMessage | null>(null);
+
 	const next = () => {
 		// For step 1 (current === 0), we only need to check event.type
 		if (current === 0) {
 			if (!event.type) {
-				errorNotice(__('Please select an event type', 'quillbooking'));
+				setErrorBanner({
+					type: 'error',
+					title: __('Validation Error', 'quillbooking'),
+					message: __('Please select an event type', 'quillbooking'),
+				});
 				return;
 			}
 
@@ -107,9 +119,14 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				(!event.hosts || event.hosts.length === 0)
 			) {
 				setValidationErrors((prev) => ({ ...prev, members: true }));
-				errorNotice(
-					__('Please select at least one team member', 'quillbooking')
-				);
+				setErrorBanner({
+					type: 'error',
+					title: __('Validation Error', 'quillbooking'),
+					message: __(
+						'Please select at least one team member',
+						'quillbooking'
+					),
+				});
 				return;
 			}
 		}
@@ -123,8 +140,18 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 			};
 
 			setValidationErrors(errors);
+
+			if (errors.name) {
+				setErrorBanner({
+					type: 'error',
+					title: __('Validation Error', 'quillbooking'),
+					message: __('Please enter an event name', 'quillbooking'),
+				});
+				return;
+			}
 		}
 
+		setErrorBanner(null);
 		setCurrent((prev) => prev + 1);
 	};
 	const prev = () => setCurrent((prev) => prev - 1);
@@ -188,6 +215,15 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				location: !event.location || event.location.length === 0,
 				members: !event.hosts,
 			});
+
+			setErrorBanner({
+				type: 'error',
+				title: __('Validation Error', 'quillbooking'),
+				message: __(
+					'Please fill in all required fields',
+					'quillbooking'
+				),
+			});
 			return;
 		}
 
@@ -214,7 +250,11 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				});
 			},
 			onError: (error: string) => {
-				errorNotice(error);
+				setErrorBanner({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message: error,
+				});
 			},
 		});
 	};
@@ -445,7 +485,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 												)}
 											</span>
 											{__(
-												'for a Scheduled event with',
+												'for a Ccheduled event with',
 												'quillbooking'
 											)}
 											<span className="font-semibold ml-1">
@@ -745,6 +785,12 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 						)}
 					/>
 				</Flex>
+				{errorBanner && (
+					<NoticeBanner
+						notice={errorBanner}
+						closeNotice={() => setErrorBanner(null)}
+					/>
+				)}
 				<Steps
 					current={current}
 					size="small"
@@ -761,6 +807,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 					{current > 0 && (
 						<Button
 							onClick={prev}
+							loading={loading}
 							className="bg-[#FBF9FC] text-color-primary text-[16px] px-16 font-semibold rounded-lg border-none"
 						>
 							{__('Back', 'quillbooking')}
@@ -768,9 +815,9 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 					)}
 					{current < steps.length - 1 ? (
 						<Button
-							size="large"
 							type="primary"
 							onClick={next}
+							loading={loading}
 							disabled={
 								(current === 0 && !event.type) ||
 								(current === 1 && !event.name) ||
@@ -786,9 +833,9 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 						</Button>
 					) : (
 						<Button
-							size="large"
 							type="primary"
 							onClick={handleSubmit}
+							loading={loading}
 							disabled={
 								!event.location || event.location.length === 0
 							}

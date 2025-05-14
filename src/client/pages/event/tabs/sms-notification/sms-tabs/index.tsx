@@ -50,21 +50,23 @@ const SmsTabs: React.FC<SmsTabsProps> = ({
 				/>
 
 				{notificationSettings &&
-					Object.entries(notificationSettings).map(([key, notification]) => (
-						<NotificationRow
-							key={key}
-							description={__(
-								'This SMS will be sent to the attendee if phone number is provided during booking.',
-								'quillbooking'
-							)}
-							noticationKey={key}
-							changedKey={editingKey}
-							setEditingKey={(key: string | null) => {
-								key && editingKey !== key && onSelect(key)
-							}}
-							notification={notification as NotificationType}
-						/>
-					))}
+					Object.entries(notificationSettings).map(
+						([key, notification]) => (
+							<NotificationRow
+								key={key}
+								description={__(
+									'This SMS will be sent to the attendee if phone number is provided during booking.',
+									'quillbooking'
+								)}
+								noticationKey={key}
+								changedKey={editingKey}
+								setEditingKey={(key: string | null) => {
+									key && editingKey !== key && onSelect(key);
+								}}
+								notification={notification as NotificationType}
+							/>
+						)
+					)}
 			</div>
 		</Card>
 	);

@@ -66,6 +66,7 @@ const AddAvailabilityScheduleModal: React.FC<AddAvailabilityModalProps> = ({
 			data: formData,
 			onSuccess: (respone) => {
 				closeHandler();
+				sessionStorage.setItem('showNewScheduleNotice', 'true');
 				navigate(`availability/${respone.data.id}`);
 			},
 			onError: () => {
@@ -115,6 +116,7 @@ const AddAvailabilityScheduleModal: React.FC<AddAvailabilityModalProps> = ({
 				<Button
 					className={`${isDisabled ? 'bg-color-secondary border-0 text-white' : 'bg-color-primary'} w-full`}
 					disabled={isDisabled}
+					loading={loading}
 					size="large"
 					key="save"
 					type="primary"

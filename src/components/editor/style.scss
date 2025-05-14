@@ -1,142 +1,142 @@
 .email-body-editor {
-  font-family: Arial, sans-serif;
-  
-  .editor-container {
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    overflow: hidden;
+	font-family: Arial, sans-serif;
 
-    h1 {
-      font-size: 2rem;
-      font-weight: bold;
-      margin-top: 1rem;
-    }
-    
-    h2 {
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin-top: 0.75rem;
-    }
-    
-    h3 {
-      font-size: 1.25rem;
-      font-weight: bold;
-      margin-top: 0.5rem;
-    }
-    
-    blockquote {
-      border-left: 4px solid #ccc;
-      margin-left: 0;
-      padding-left: 16px;
-      font-style: italic;
-    }
-    a{
-      color:#0066ff;
-      text-decoration: underline;
-    }
-    & [style="font-family: Arial"] {
-      font-family: Arial, sans-serif !important;
-    }
-    
-    & [style="font-family: Times New Roman"] {
-      font-family: "Times New Roman", Times, serif !important;
-    }
-    
-    & [style="font-family: Courier New"] {
-      font-family: "Courier New", Courier, monospace !important;
-    }
-    
-    & [style="font-family: Georgia"] {
-      font-family: Georgia, serif !important;
-    }
-  }
+	.editor-container {
+		border: 1px solid #ddd;
+		border-radius: 6px;
+		margin-bottom: 20px;
+		overflow: hidden;
 
-  .editor-inner {
-    position: relative;
-    padding: 10px;
-    min-height: 150px;
-  }
+		h1 {
+			font-size: 2rem;
+			font-weight: bold;
+			margin-top: 1rem;
+		}
 
-  .editor-input {
-    width: 100%;
-    height: 100%;
-    min-height: 150px;
-    resize: none;
-    font-size: 16px;
-    padding: 17px 0px;
-    outline: none;
-    position: relative;
-    tab-size: 1;
-    line-height: 1.5;
-  }
+		h2 {
+			font-size: 1.5rem;
+			font-weight: bold;
+			margin-top: 0.75rem;
+		}
 
-  .editor-placeholder {
-    color: #999;
-    overflow: hidden;
-    position: absolute;
-    text-overflow: ellipsis;
-    top: 25px;
-    font-size: 16px;
-    pointer-events: none;
-  }
+		h3 {
+			font-size: 1.25rem;
+			font-weight: bold;
+			margin-top: 0.5rem;
+		}
+
+		blockquote {
+			border-left: 4px solid #ccc;
+			margin-left: 0;
+			padding-left: 16px;
+			font-style: italic;
+		}
+		a {
+			color: #0066ff;
+			text-decoration: underline;
+		}
+		& [style="font-family: Arial"] {
+			font-family: Arial, sans-serif !important;
+		}
+
+		& [style="font-family: Times New Roman"] {
+			font-family: "Times New Roman", Times, serif !important;
+		}
+
+		& [style="font-family: Courier New"] {
+			font-family: "Courier New", Courier, monospace !important;
+		}
+
+		& [style="font-family: Georgia"] {
+			font-family: Georgia, serif !important;
+		}
+	}
+
+	.editor-inner {
+		position: relative;
+		padding: 10px;
+		min-height: 150px;
+	}
+
+	.editor-input {
+		width: 100%;
+		height: 100%;
+		min-height: 150px;
+		resize: none;
+		font-size: 16px;
+		padding: 17px 0px;
+		outline: none;
+		position: relative;
+		tab-size: 1;
+		line-height: 1.5;
+	}
+
+	.editor-placeholder {
+		color: #999;
+		overflow: hidden;
+		position: absolute;
+		text-overflow: ellipsis;
+		top: 25px;
+		font-size: 16px;
+		pointer-events: none;
+	}
 }
 
 /* Rich Text Format Styles */
 .editor-paragraph {
-  margin: 0;
-  margin-bottom: 8px;
-  position: relative;
+	margin: 0;
+	margin-bottom: 8px;
+	position: relative;
 }
 
 .editor-text-bold {
-  font-weight: bold;
+	font-weight: bold;
 }
 
 .editor-text-italic {
-  font-style: italic;
+	font-style: italic;
 }
 
 .editor-text-underline {
-  text-decoration: underline;
+	text-decoration: underline;
 }
 
-.editor-text-linethrough{
-  text-decoration: line-through;
+.editor-text-linethrough {
+	text-decoration: line-through;
 }
 
 .editor-list-ol {
-  padding: 0;
-  margin: 0;
-  margin-left: 16px;
-  list-style-type: decimal;
+	padding: 0;
+	margin: 0;
+	margin-left: 16px;
+	list-style-type: decimal;
 }
 
 .editor-list-ul {
-  padding: 0;
-  margin: 0;
-  margin-left: 16px;
-  list-style-type: disc ;
+	padding: 0;
+	margin: 0;
+	margin-left: 16px;
+	list-style-type: disc;
 }
 
 .editor-list-checklist li {
-  display: flex;
-  align-items: flex-start;
-  margin-left: 0;
+	display: flex;
+	align-items: flex-start;
+	margin-left: 0;
 }
 
 .editor-list-checklist li:before {
-  content: '☑';
-  margin-right: 8px;
+	content: "☑";
+	margin-right: 8px;
 }
 
 /* Preview Styles */
 .rendered-html-preview {
-  min-height: 150px;
+	min-height: 150px;
 }
 
 .custom-ant-select .ant-select-selector {
-  background-color: #F4F4F5 !important;
-  border: none !important;
-  box-shadow: none !important;
+	background-color: #f4f4f5 !important;
+	border: none !important;
+	box-shadow: none !important;
 }

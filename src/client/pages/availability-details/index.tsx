@@ -7,7 +7,7 @@ import { useState, useEffect } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Flex, Card, Input, Switch, Button } from 'antd';
+import { Flex, Card, Input, Switch, Button, Skeleton } from 'antd';
 import { Dialog, DialogActions, DialogTitle } from '@mui/material';
 import { IoCloseSharp } from 'react-icons/io5';
 
@@ -46,7 +46,8 @@ const AvailabilityDetails: React.FC = () => {
 		useState<string>('');
 	const [isDefault, setIsDefault] = useState<boolean>(false);
 	const [dateOverrides, setDateOverrides] = useState<DateOverrides | {}>({});
-	const [loading, setLoading] = useState<boolean>(false);
+	const [initialLoading, setInitialLoading] = useState<boolean>(true);
+	const [savingChanges, setSavingChanges] = useState<boolean>(false);
 	const [isSaveBtnDisabled, setIsSaveBtnDisabled] = useState<boolean>(true);
 	const [showNotice, setShowNotice] = useState<boolean>(false);
 	const [noticeMessage, setNoticeMessage] = useState<NoticeMessage>({
@@ -57,8 +58,10 @@ const AvailabilityDetails: React.FC = () => {
 
 	const { callApi } = useApi();
 	const navigate = useNavigate();
+	const { state } = useNavigate();
 
 	const fetchAvailabilityDetails = () => {
+		setInitialLoading(true);
 		callApi({
 			path: `availabilities/${availabilityId}`,
 			method: 'GET',
@@ -68,6 +71,7 @@ const AvailabilityDetails: React.FC = () => {
 				setAvailabilityTimezone(data.timezone);
 				setDateOverrides(data.override);
 				setIsDefault(data.is_default ?? false);
+				setInitialLoading(false);
 			},
 			onError: () => {
 				setNoticeMessage({
@@ -79,11 +83,26 @@ const AvailabilityDetails: React.FC = () => {
 					),
 				});
 				setShowNotice(true);
+				setInitialLoading(false);
 			},
 		});
 	};
 
 	useEffect(fetchAvailabilityDetails, []);
+	useEffect(() => {
+		// Show success notice if redirected from creation
+		const showSuccessNotice = sessionStorage.getItem('showNewScheduleNotice');
+		if (showSuccessNotice) {
+			setNoticeMessage({
+				type: 'success',
+				title: __('Success', 'quillbooking'),
+				message: __('New availability schedule created successfully', 'quillbooking'),
+			});
+			setShowNotice(true);
+			sessionStorage.removeItem('showNewScheduleNotice');
+		}
+	}, []);
+
 	const { id: availabilityId } = useParams<{ id: string }>();
 	if (!availabilityId) return null;
 
@@ -124,7 +143,7 @@ const AvailabilityDetails: React.FC = () => {
 			setShowNotice(true);
 			return;
 		}
-		setLoading(true);
+		setSavingChanges(true);
 		try {
 			if (isDefault) {
 				await setDefault(availabilityDetails as Availability);
@@ -170,7 +189,7 @@ const AvailabilityDetails: React.FC = () => {
 			});
 			setShowNotice(true);
 		} finally {
-			setLoading(false);
+			setSavingChanges(false);
 			setIsSaveBtnDisabled(true);
 		}
 	};
@@ -199,7 +218,7 @@ const AvailabilityDetails: React.FC = () => {
 	};
 
 	return (
-		<Dialog open={true} fullScreen className="z-[1000000000000000000]">
+		<Dialog open={true} fullScreen className="z-[160000]">
 			<DialogTitle
 				className="border-b mb-4"
 				sx={{ padding: '10px 16px' }}
@@ -224,7 +243,7 @@ const AvailabilityDetails: React.FC = () => {
 							type="primary"
 							size="middle"
 							onClick={handleAvailabilitySave}
-							loading={loading}
+							loading={savingChanges}
 							disabled={isSaveBtnDisabled}
 							className={`rounded-lg font-[500] text-white ${
 								isSaveBtnDisabled
@@ -239,93 +258,116 @@ const AvailabilityDetails: React.FC = () => {
 			</DialogTitle>
 
 			{showNotice && (
-				<div className="p-4">
+				<div className="py-4 px-9">
 					<NoticeBanner
 						closeNotice={() => setShowNotice(false)}
 						notice={noticeMessage}
 					/>
 				</div>
 			)}
-			<Flex gap={20}>
-				<Card className="w-2/3">
-					<Flex gap={20} vertical>
-						{(availabilityDetails.events_count ?? 0) > 0 && (
-							<InfoComponent
-								eventsNumber={
-									availabilityDetails.events_count ?? 0
-								}
-							/>
-						)}
-						<Card>
-							<label className="font-normal text-sm">
-								<div className="pb-1">
-									{__('Availability Name', 'quillbooking')}
-									<span className="text-[#EF4444]">*</span>
-								</div>
-								<Input
-									size="large"
-									value={availabilityName}
-									onChange={(e) => {
-										setAvailabilityName(e.target.value);
-										setIsSaveBtnDisabled(false);
-									}}
-									placeholder={__(
-										'Enter a name for the availability',
-										'quillbooking'
-									)}
-								/>
-							</label>
-
-							<div className="flex justify-end">
-								<div className="flex gap-2 items-center pt-4">
-									<Switch
-										checked={isDefault}
-										onChange={async () => {
-											setIsDefault(!isDefault);
-											setIsSaveBtnDisabled(false);
-										}}
-										className={
-											isDefault
-												? 'bg-color-primary'
-												: 'bg-gray-400'
+			<Flex gap={20} className='px-9 mb-4'>
+				{initialLoading ? (
+					<>
+						<Card className="w-2/3">
+							<Flex gap={20} vertical>
+								<Card>
+									<Skeleton active paragraph={{ rows: 1 }} />
+								</Card>
+								<Card>
+									<Skeleton active paragraph={{ rows: 4 }} />
+								</Card>
+								<Card>
+									<Skeleton active paragraph={{ rows: 8 }} />
+								</Card>
+							</Flex>
+						</Card>
+						<Card className="w-1/3">
+							<Skeleton active paragraph={{ rows: 6 }} />
+						</Card>
+					</>
+				) : (
+					<>
+						<Card className="w-2/3">
+							<Flex gap={20} vertical>
+								{(availabilityDetails.events_count ?? 0) > 0 && (
+									<InfoComponent
+										eventsNumber={
+											availabilityDetails.events_count ?? 0
 										}
 									/>
-									<p className="text-color-primary-text font-bold">
-										{__('Set as Default', 'quillbooking')}
-									</p>
-								</div>
-							</div>
-						</Card>
+								)}
+								<Card>
+									<label className="font-normal text-sm">
+										<div className="pb-1">
+											{__('Availability Name', 'quillbooking')}
+											<span className="text-[#EF4444]">*</span>
+										</div>
+										<Input
+											size="large"
+											value={availabilityName}
+											onChange={(e) => {
+												setAvailabilityName(e.target.value);
+												setIsSaveBtnDisabled(false);
+											}}
+											placeholder={__(
+												'Enter a name for the availability',
+												'quillbooking'
+											)}
+										/>
+									</label>
 
-						<Card>
-							<Schedule
-								availability={
-									availabilityDetails as Availability
-								}
-								onCustomAvailabilityChange={
-									onCustomAvailabilityChange
-								}
-							/>
-						</Card>
+									<div className="flex justify-end">
+										<div className="flex gap-2 items-center pt-4">
+											<Switch
+												checked={isDefault}
+												onChange={async () => {
+													setIsDefault(!isDefault);
+													setIsSaveBtnDisabled(false);
+												}}
+												className={
+													isDefault
+														? 'bg-color-primary'
+														: 'bg-gray-400'
+												}
+											/>
+											<p className="text-color-primary-text font-bold">
+												{__('Set as Default', 'quillbooking')}
+											</p>
+										</div>
+									</div>
+								</Card>
 
-						<Card>
-							<SelectTimezone
-								timezone={availabilityTimezone}
-								handleChange={(value) => {
-									setAvailabilityTimezone(value);
-									setIsSaveBtnDisabled(false);
-								}}
-							/>
+								<Card>
+									<Schedule
+										availability={
+											availabilityDetails as Availability
+										}
+										onCustomAvailabilityChange={
+											onCustomAvailabilityChange
+										}
+									/>
+								</Card>
+
+								<Card>
+									<SelectTimezone
+										timezone={availabilityTimezone}
+										handleChange={(value) => {
+											setAvailabilityTimezone(value);
+											setIsSaveBtnDisabled(false);
+										}}
+									/>
+								</Card>
+							</Flex>
 						</Card>
-					</Flex>
-				</Card>
-				<div className="w-1/3">
-					<OverrideSection
-						dateOverrides={dateOverrides || {}}
-						setDateOverrides={setDateOverrides}
-						setDisabled={() => setIsSaveBtnDisabled(false)}
-					/>
-				</div>
+						<div className="w-1/3">
+							<OverrideSection
+								dateOverrides={dateOverrides || {}}
+								setDateOverrides={setDateOverrides}
+								setDisabled={() => setIsSaveBtnDisabled(false)}
+							/>
+						</div>
+					</>
+				)}
 			</Flex>
 		</Dialog>
 	);

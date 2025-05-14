@@ -121,7 +121,7 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {
-				if (event){
+				if (event) {
 					return saveEventDetails();
 				}
 				return Promise.resolve();

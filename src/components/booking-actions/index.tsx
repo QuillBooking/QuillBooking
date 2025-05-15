@@ -90,7 +90,7 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 	type,
 	onNotice,
 }) => {
-	const { callApi } = useApi();
+	const { callApi, loading } = useApi();
 
 	// State to handle modals
 	const [cancelModalVisible, setCancelModalVisible] =
@@ -328,6 +328,7 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 						</Button>
 						<Button
 							disabled={!cancelReason.trim()}
+							loading={loading}
 							size="large"
 							className="text-white bg-[#EF4444] w-1/2"
 							onClick={() => {
@@ -381,6 +382,7 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 						{__('Back', 'quillbooking')}
 					</Button>
 					<Button
+						loading={loading}
 						size="large"
 						className="text-white bg-[#EF4444] w-1/2"
 						onClick={() => {

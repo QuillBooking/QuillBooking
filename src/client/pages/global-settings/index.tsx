@@ -16,7 +16,6 @@ import { useNavigate, useCurrentUser, useNotice } from '@quillbooking/hooks';
 import {
 	GeneralSettingsTab,
 	TeamTab,
-	PaymentsTab,
 	LicenseTab,
 	AdvancedModulesTab,
 } from './tabs';
@@ -25,7 +24,6 @@ import {
 	Header,
 	LicenseIcon,
 	SettingsIcon,
-	SettingsPaymentIcon,
 	SettingsTeamIcon,
 	TabButtons,
 } from '@quillbooking/components';
@@ -71,8 +69,6 @@ const GlobalSettings: React.FC = () => {
 				return <LicenseTab />;
 			case 'advanced':
 				return <AdvancedModulesTab />;
-			case 'payments':
-				return <PaymentsTab />;
 			default:
 				return <GeneralSettingsTab />;
 		}
@@ -98,11 +94,6 @@ const GlobalSettings: React.FC = () => {
 			key: 'advanced',
 			label: __('Advanced Modules', 'quillbooking'),
 			icon: <AdvancedModulesIcon />,
-		},
-		{
-			key: 'payments',
-			label: __('Payments', 'quillbooking'),
-			icon: <SettingsPaymentIcon />,
 		},
 	];
 

@@ -87,5 +87,8 @@
 
 	.navbar-toggle-button {
 		transition: transform 0.3s ease;
+		&:hover{
+			background-color: #953ae4 !important;
+		}
 	}
 }

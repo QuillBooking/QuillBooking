@@ -1,3 +1,13 @@
+/**
+ * Wordpress dependencies
+ */
+/**
+ * External dependencies
+ */
+/**
+ * Internal dependencies
+ */
+
 const Login: React.FC = () => {
 
     return (

@@ -1,6 +1,11 @@
 <?php
+
 /**
- * App class.
+ * Modified App class for QuillBooking WordPress plugin
+ *
+ * This version of the App class supports both direct authentication with custom
+ * client credentials and a secure proxy for authentication to prevent exposing
+ * client credentials in the plugin code.
  *
  * @since 1.0.0
  * @package QuillBooking
@@ -18,12 +23,20 @@ use QuillBooking\Models\Calendar_Model;
  */
 class App {
 
+
 	/**
 	 * Provider
 	 *
 	 * @var Integration
 	 */
 	protected $integration;
+
+	/**
+	 * Auth proxy URL - Update this to point to your secure proxy server
+	 *
+	 * @var string
+	 */
+	protected $auth_proxy_url = 'http://localhost/quillbooking/OutlookAuthProxy.php';
 
 	/**
 	 * Constructor.
@@ -44,34 +57,64 @@ class App {
 	 * @param int   $host_id Host ID.
 	 * @param array $app_credentials App credentials.
 	 *
-	 * @return void
+	 * @return string|WP_Error Auth URL or error.
 	 */
 	public function get_auth_uri( $host_id, $app_credentials = array() ) {
 		if ( empty( $host_id ) ) {
 			return new \WP_Error( 'no_host_id', esc_html__( 'No host ID found!', 'quillbooking' ) );
 		}
 
-		if ( empty( $app_credentials ) ) {
-			$app_credentials = $this->get_app_credentials();
+		// Check if we have custom app credentials
+		$custom_credentials = $this->get_app_credentials();
+		$use_custom_app     = ! empty( $custom_credentials );
+
+		if ( $use_custom_app ) {
+			// Use direct authentication with custom credentials
+			$auth_url = add_query_arg(
+				array(
+					'response_type' => 'code',
+					'access_type'   => 'offline',
+					'client_id'     => $custom_credentials['client_id'],
+					'redirect_uri'  => urlencode( $this->get_redirect_uri() ),
+					'state'         => "quillbooking-ms-{$host_id}",
+					'scope'         => urlencode( 'openid profile offline_access User.Read Calendars.ReadWrite' ),
+				),
+				'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
+			);
+
+			return $auth_url;
+		} else {
+			// Use the secure proxy
+			$response = wp_remote_post(
+				$this->auth_proxy_url,
+				array(
+					'headers' => array(
+						'Content-Type' => 'application/json',
+					),
+					'body'    => json_encode(
+						array(
+							'action'       => 'get_auth_url',
+							'host_id'      => $host_id,
+							'redirect_uri' =>  $this->get_redirect_uri() ,
+							'scope'        => 'openid profile offline_access User.Read Calendars.ReadWrite',
+							'state'        => "quillbooking-ms-{$host_id}",
+						)
+					),
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				return new \WP_Error( 'proxy_error', esc_html__( 'Error connecting to authentication server!', 'quillbooking' ) );
+			}
+
+			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+			if ( empty( $body ) || isset( $body['error'] ) ) {
+				return new \WP_Error( 'proxy_error', isset( $body['error'] ) ? $body['error'] : esc_html__( 'Unknown error from authentication server!', 'quillbooking' ) );
+			}
+
+			return $body['auth_url'];
 		}
-
-		if ( empty( $app_credentials ) ) {
-			return new \WP_Error( 'no_app_credentials', esc_html__( 'No app credentials found!', 'quillbooking' ) );
-		}
-
-		$auth_url = add_query_arg(
-			array(
-				'response_type' => 'code',
-				'access_type'   => 'offline',
-				'client_id'     => $app_credentials['client_id'],
-				'redirect_uri'  => urlencode( $this->get_redirect_uri() ),
-				'state'         => "quillbooking-ms-{$host_id}",
-				'scope'         => urlencode( 'openid profile offline_access User.Read Calendars.ReadWrite' ),
-			),
-			'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
-		);
-
-		return $auth_url;
 	}
 
 	/**
@@ -98,20 +141,50 @@ class App {
 			exit;
 		}
 
-		$app_credentials = $this->get_app_credentials();
+		// Check if we have custom app credentials
+		$custom_credentials = $this->get_app_credentials();
+		$use_custom_app     = ! empty( $custom_credentials );
 
-		// get tokens.
-		$tokens = $this->get_tokens(
-			array(
-				'grant_type'    => 'authorization_code',
-				'code'          => $code,
-				'client_id'     => $app_credentials['client_id'],
-				'client_secret' => $app_credentials['client_secret'],
-				'redirect_uri'  => $this->get_redirect_uri(),
-			)
-		);
+		$tokens = array();
 
-		if ( empty( $tokens ) ) {
+		if ( $use_custom_app ) {
+			// Use direct token exchange with custom credentials
+			$tokens = $this->get_tokens(
+				array(
+					'grant_type'    => 'authorization_code',
+					'code'          => $code,
+					'client_id'     => $custom_credentials['client_id'],
+					'client_secret' => $custom_credentials['client_secret'],
+					'redirect_uri'  => $this->get_redirect_uri(),
+				)
+			);
+		} else {
+			// Request tokens from the secure proxy
+			$response = wp_remote_post(
+				$this->auth_proxy_url,
+				array(
+					'headers' => array(
+						'Content-Type' => 'application/json',
+					),
+					'body'    => json_encode(
+						array(
+							'action'       => 'get_tokens',
+							'code'         => $code,
+							'redirect_uri' => $this->get_redirect_uri(),
+						)
+					),
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				echo esc_html__( 'Error connecting to authentication server!', 'quillbooking' );
+				exit;
+			}
+
+			$tokens = json_decode( wp_remote_retrieve_body( $response ), true );
+		}
+
+		if ( empty( $tokens ) || isset( $tokens['error'] ) || empty( $tokens['access_token'] ) ) {
 			echo esc_html__( 'Error, Cannot get tokens!', 'quillbooking' );
 			exit;
 		}
@@ -163,17 +236,47 @@ class App {
 			return false;
 		}
 
-		$app_credentials = $this->get_app_credentials();
-		$refeshed_tokens = $this->get_tokens(
-			array(
-				'client_id'     => Arr::get( $app_credentials, 'client_id' ),
-				'client_secret' => Arr::get( $app_credentials, 'client_secret' ),
-				'grant_type'    => 'refresh_token',
-				'refresh_token' => $refresh_token,
-			)
-		);
+		// Check if we have custom app credentials
+		$custom_credentials = $this->get_app_credentials();
+		$use_custom_app     = ! empty( $custom_credentials );
 
-		if ( empty( $refeshed_tokens ) ) {
+		$refeshed_tokens = array();
+
+		if ( $use_custom_app ) {
+			// Use direct token refresh with custom credentials
+			$refeshed_tokens = $this->get_tokens(
+				array(
+					'client_id'     => $custom_credentials['client_id'],
+					'client_secret' => $custom_credentials['client_secret'],
+					'grant_type'    => 'refresh_token',
+					'refresh_token' => $refresh_token,
+				)
+			);
+		} else {
+			// Request token refresh from the secure proxy
+			$response = wp_remote_post(
+				$this->auth_proxy_url,
+				array(
+					'headers' => array(
+						'Content-Type' => 'application/json',
+					),
+					'body'    => json_encode(
+						array(
+							'action'        => 'refresh_tokens',
+							'refresh_token' => $refresh_token,
+						)
+					),
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				return false;
+			}
+
+			$refeshed_tokens = json_decode( wp_remote_retrieve_body( $response ), true );
+		}
+
+		if ( empty( $refeshed_tokens ) || isset( $refeshed_tokens['error'] ) || empty( $refeshed_tokens['access_token'] ) ) {
 			return false;
 		}
 
@@ -212,7 +315,6 @@ class App {
 		$tokens = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( empty( $tokens['access_token'] ) ) {
-
 			// log in case of first request.
 			if ( $query['grant_type'] === 'authorization_code' && empty( $tokens['refresh_token'] ) ) {
 				return false;
@@ -227,15 +329,21 @@ class App {
 	/**
 	 * Get app credentials
 	 *
-	 * @return array|false Array of client_id & client_secret. false on failure.
+	 * @return array|false Array of client_id & client_secret. false if not configured.
 	 */
 	public function get_app_credentials() {
-		$app_settings = $this->integration->get_setting( 'app' ) ?? array();
-		if ( empty( $app_settings['client_id'] ) || empty( $app_settings['client_secret'] ) ) {
-			return false;
-		} else {
-			return $app_settings;
+		 $app_settings = $this->integration->get_setting( 'app' ) ?? array();
+
+		if ( ! empty( $app_settings['use_custom_app'] ) && $app_settings['use_custom_app'] ) {
+			if ( ! empty( $app_settings['client_id'] ) && ! empty( $app_settings['client_secret'] ) ) {
+				return array(
+					'client_id'     => $app_settings['client_id'],
+					'client_secret' => $app_settings['client_secret'],
+				);
+			}
 		}
+
+		return false;
 	}
 
 	/**
@@ -246,5 +354,4 @@ class App {
 	public function get_redirect_uri() {
 		return admin_url( 'admin.php' ); // TODO: use https schema?
 	}
-
 }

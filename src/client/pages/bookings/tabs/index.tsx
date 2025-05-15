@@ -20,6 +20,7 @@ import {
 	LatestCalendarIcon,
 	PendingCalendarIcon,
 	UpcomingCalendarIcon,
+	TabButtons,
 } from '@quillbooking/components';
 import { IconType } from 'react-icons';
 import React from 'react';
@@ -102,28 +103,19 @@ const BookingsTabs: React.FC<BookingsTabsProps> = ({
 					<div
 						key={tab.value}
 						onClick={() => setPeriod(tab.value)}
-						className={`group flex items-center space-y-1 gap-2 cursor-pointer p-3 rounded-md font-bold transition-colors duration-200 ${
-							isActive
-								? 'bg-color-tertiary text-color-primary'
-								: 'text-gray-400'
+						className={`cursor-pointer p-3 rounded-md transition-colors duration-200 ${
+							isActive ? 'bg-color-tertiary' : ''
 						}`}
 					>
-						<span
-							className={`${
-								isActive
-									? 'text-color-primary'
-									: 'text-color-primary-text'
-							} group-hover:text-color-primary`}
-						>
-							{React.createElement(tab.icon, {
+						<TabButtons
+							label={tab.label}
+							icon={React.createElement(tab.icon, {
 								style: {
 									fill: 'currentColor',
 								},
 							})}
-						</span>
-						<span className="group-hover:text-color-primary">
-							{tab.label}
-						</span>
+							isActive={isActive}
+						/>
 					</div>
 				);
 			})}

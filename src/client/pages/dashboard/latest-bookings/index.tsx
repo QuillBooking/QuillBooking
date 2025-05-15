@@ -178,7 +178,7 @@ const LatestBookings: React.FC = () => {
 																<Flex
 																	align="center"
 																	gap={8}
-																	className="text-[#A0A6B1] text-base font-medium"
+																	className="text-[#A0A6B1] text-base font-medium flex-wrap"
 																>
 																	<p>
 																		{
@@ -191,35 +191,34 @@ const LatestBookings: React.FC = () => {
 																		.length >
 																		0 && (
 																		<>
-																			{
-																				' • '
-																			}
-																			{booking.event.location.map(
-																				(
-																					location,
-																					index
-																				) => (
-																					<span
-																						key={
-																							index
-																						}
-																					>
-																						{
-																							location.type
-																						}
-																						{index <
-																							booking
-																								.event
-																								.location
-																								.length -
-																								1 &&
-																							', '}
-																					</span>
-																				)
-																			)}
-																			{
-																				' • '
-																			}
+																			<span>•</span>
+																			<div className="flex flex-wrap gap-1">
+																				{booking.event.location.map(
+																					(
+																						location,
+																						index
+																					) => (
+																						<span
+																							key={
+																								index
+																							}
+																							className="max-w-[150px] truncate"
+																						>
+																							{
+																								location.type
+																							}
+																							{index <
+																								booking
+																									.event
+																									.location
+																									.length -
+																									1 &&
+																								', '}
+																						</span>
+																					)
+																				)}
+																			</div>
+																			<span>•</span>
 																		</>
 																	)}
 																	<p>

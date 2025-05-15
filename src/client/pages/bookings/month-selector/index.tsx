@@ -36,11 +36,13 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 	const handleNextYear = () => setYear((year) => year + 1);
 
 	return (
-		<div className="w-full mx-auto p-4 rounded-md border flex flex-col items-center overflow-x-auto">
+		<div className="w-full p-4 rounded-md border">
 			<div className="w-full flex items-center justify-between mb-4">
 				<button
 					onClick={handlePrevYear}
 					className="border p-2 rounded hover:bg-gray-100"
+					title="Previous Year"
+					aria-label="Previous Year"
 				>
 					<LeftOutlined />
 				</button>
@@ -50,34 +52,39 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 				<button
 					onClick={handleNextYear}
 					className="border p-2 rounded hover:bg-gray-100"
+					title="Next Year"
+					aria-label="Next Year"
 				>
 					<RightOutlined />
 				</button>
 			</div>
 
 			{/* Months row */}
-			<div className="flex gap-4 border-t pt-4">
-				{MONTHS.map((month, index) => {
-					const monthNumber = index + 1;
-					const isActive = monthNumber === selectedMonth;
+			<div className="border-t pt-4">
+				<div className="flex overflow-x-auto gap-2 justify-center">
+					{MONTHS.map((month, index) => {
+						const monthNumber = index + 1;
+						const isActive = monthNumber === selectedMonth;
 
-					return (
-						<button
-							key={month}
-							onClick={() => setSelectedMonth(monthNumber)}
-							className={`px-4 py-2 rounded-md transition-colors text-base font-semibold ${
-								isActive
-									? 'bg-color-primary text-white'
-									: 'bg-transparent text-color-primary-text hover:bg-gray-100'
-							}`}
-						>
-							{month}
-						</button>
-					);
-				})}
+						return (
+							<button
+								key={month}
+								onClick={() => setSelectedMonth(monthNumber)}
+								className={`px-3 py-1.5 rounded-md transition-colors text-sm font-semibold ${
+									isActive
+										? 'bg-color-primary text-white'
+										: 'bg-transparent text-color-primary-text hover:bg-gray-100'
+								}`}
+							>
+								{month}
+							</button>
+						);
+					})}
+				</div>
 			</div>
 		</div>
 	);
 };
 
 export default MonthSelector;
+

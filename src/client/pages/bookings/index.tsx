@@ -9,7 +9,7 @@ import { PlusOutlined } from '@ant-design/icons';
 /**
  * External dependencies
  */
-import { Button, Flex } from 'antd';
+import { Button, Flex, Card } from 'antd';
 
 /**
  * Internal dependencies
@@ -19,6 +19,7 @@ import {
 	BookingsTabsTypes,
 	Event,
 	GeneralOptions,
+	NoticeMessage,
 } from 'client/types';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import BookingsHeader from './header';
@@ -28,7 +29,44 @@ import { groupBookingsByDate } from '@quillbooking/utils';
 import BookingList from './booking-list';
 import AddBookingModal from './add-booking-modal';
 import MonthSelector from './month-selector';
-import { UpcomingCalendarIcon } from '@quillbooking/components';
+import { NoticeBanner, UpcomingCalendarIcon } from '@quillbooking/components';
+
+const BookingsShimmer = () => {
+	return (
+		<div className="space-y-4">
+			{[1, 2, 3].map((date) => (
+				<Card key={date} className="rounded-xl">
+					<div className="animate-pulse">
+						<div className="h-6 w-48 bg-gray-200 rounded mb-4" />
+						<div className="space-y-4">
+							{[1, 2].map((booking) => (
+								<div
+									key={booking}
+									className="border rounded-lg p-4"
+								>
+									<Flex
+										justify="space-between"
+										align="center"
+									>
+										<Flex gap={4} vertical>
+											<div className="h-5 w-64 bg-gray-200 rounded" />
+											<div className="h-4 w-48 bg-gray-200 rounded" />
+											<div className="h-4 w-32 bg-gray-200 rounded mt-2" />
+										</Flex>
+										<Flex gap={3}>
+											<div className="w-8 h-8 bg-gray-200 rounded" />
+											<div className="w-8 h-8 bg-gray-200 rounded" />
+										</Flex>
+									</Flex>
+								</div>
+							))}
+						</div>
+					</div>
+				</Card>
+			))}
+		</div>
+	);
+};
 
 /**
  * Main Bookings Component.
@@ -43,6 +81,8 @@ const Bookings: React.FC = () => {
 	const [cancelledBookingCount, setCancelledBookingCount] =
 		useState<number>(0);
 	const [noShowCount, setNoShowCount] = useState<number>(0);
+	const [loading, setLoading] = useState<boolean>(true);
+	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 
 	const [bookings, setBookings] = useState<Record<string, Booking[]>>({});
 	const [eventsOptions, setEventsOptions] = useState<GeneralOptions[]>([
@@ -69,12 +109,17 @@ const Bookings: React.FC = () => {
 				setEventsOptions((prevOptions) => [...prevOptions, ...events]);
 			},
 			onError: () => {
-				errorNotice(__('Error fetching events', 'quillbooking'));
+				setNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message: __('Error fetching events', 'quillbooking'),
+				});
 			},
 		});
 	};
 
 	const fetchBookings = (search?: string) => {
+		setLoading(true);
 		callApi({
 			path: addQueryArgs('bookings', {
 				filter: {
@@ -95,15 +140,29 @@ const Bookings: React.FC = () => {
 				setPendingBookingCount(res.pending_count);
 				setCancelledBookingCount(res.cancelled_count);
 				setNoShowCount(res.noshow_count);
+				setLoading(false);
 			},
 			onError: () => {
-				errorNotice(__('Error fetching bookings', 'quillbooking'));
+				setNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message: __('Error fetching bookings', 'quillbooking'),
+				});
+				setLoading(false);
 			},
 		});
 	};
 
 	const handleSearch = (val: string) => {
 		fetchBookings(val);
+	};
+
+	const handleNotice = (newNotice: NoticeMessage) => {
+		setNotice(newNotice);
+		// Auto-hide notice after 3 seconds
+		setTimeout(() => {
+			setNotice(null);
+		}, 3000);
 	};
 
 	useEffect(() => {
@@ -153,11 +212,23 @@ const Bookings: React.FC = () => {
 				setSelectedMonth={setSelectedMonth}
 			/>
 
-			{Object.keys(bookings).length > 0 ? (
+			{notice && (
+				<div className="mt-4">
+					<NoticeBanner
+						notice={notice}
+						closeNotice={() => setNotice(null)}
+					/>
+				</div>
+			)}
+
+			{loading ? (
+				<BookingsShimmer />
+			) : Object.keys(bookings).length > 0 ? (
 				<BookingList
 					bookings={bookings}
 					period={period}
 					onStatusUpdated={() => setUpdateStatus((prev) => !prev)}
+					onNotice={handleNotice}
 				/>
 			) : (
 				<div className="flex flex-col gap-4 justify-center items-center mt-4 h-full border border-solid borderColor-[#DEDEDE] rounded-xl p-4 my-6 py-6 bg-[#FDFDFD]">
@@ -197,6 +268,14 @@ const Bookings: React.FC = () => {
 					onSaved={() => {
 						setOpen(false);
 						setUpdateStatus((prev) => !prev);
+						handleNotice({
+							type: 'success',
+							title: __('Success', 'quillbooking'),
+							message: __(
+								'Booking added successfully',
+								'quillbooking'
+							),
+						});
 					}}
 				/>
 			)}

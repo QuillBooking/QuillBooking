@@ -16,7 +16,7 @@ import { useState, useEffect } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { MenuProps, Menu } from 'antd';
+import { MenuProps, Menu, Button } from 'antd';
 import { LuArrowRightToLine } from 'react-icons/lu';
 
 /**
@@ -86,8 +86,6 @@ const NavBar: React.FC = () => {
 	}
 
 	const onClick = (e) => {
-		if (e.key === 'toggle-button') return;
-
 		const page = pages[e.key];
 		const path = getToLink(page.path);
 		setSelectedKey(e.key);
@@ -101,6 +99,36 @@ const NavBar: React.FC = () => {
 
 	return (
 		<div className={`quillbooking-navbar ${collapsed ? 'collapsed' : ''}`}>
+			{/* Custom Toggle Button outside of Menu component */}
+			<Button 
+				onClick={toggleCollapsed}
+				className="navbar-toggle-button"
+				style={{
+					cursor: 'pointer',
+					width: !collapsed ? '32px' : '30px',
+					height: '32px',
+					padding: '5px',
+					border: '1px solid #F1F1F2',
+					position: 'absolute',
+					top: '85px',
+					left: !collapsed ? '18.3%' : '68px',
+					backgroundColor: 'white',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					zIndex: 10,
+				}}
+			>
+				{collapsed ? (
+					<LuArrowRightToLine
+						size={18}
+						className="text-[#A1A5B7]"
+					/>
+				) : (
+					<ToggleIcon />
+				)}
+			</Button>
+			
 			<Menu
 				className="custom-menu"
 				onClick={onClick}
@@ -108,37 +136,6 @@ const NavBar: React.FC = () => {
 				mode="inline"
 				//inlineCollapsed={collapsed}
 				items={[
-					{
-						key: 'toggle-button',
-						label: (
-							<span onClick={toggleCollapsed}>
-								{collapsed ? (
-									<LuArrowRightToLine
-										size={18}
-										className="text-[#A1A5B7]"
-									/>
-								) : (
-									<ToggleIcon />
-								)}
-							</span>
-						),
-						style: {
-							cursor: 'pointer',
-							width: !collapsed ? '32px' : '30px',
-							height: '32px',
-							paddingLeft: '5px',
-							paddingRight: '5px',
-							paddingTop: !collapsed ? '' : '5px',
-							paddingBottom: !collapsed ? '' : '5px',
-							border: '1px solid #F1F1F2',
-							position: 'absolute',
-							top: !collapsed ? '' : '5px',
-							right: !collapsed ? '-20px' : '',
-							left: !collapsed ? '' : '64px',
-							backgroundColor: 'white',
-						},
-						className: 'navbar-toggle-button',
-					},
 					{
 						key: 'group',
 						type: 'group',

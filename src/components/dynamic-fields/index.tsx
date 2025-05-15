@@ -37,13 +37,13 @@ const DynamicFormField: React.FC<DynamicFormFieldProps> = ({
 	const renderField = () => {
 		switch (field.type) {
 			case 'text':
-				return <Input placeholder={field.desc} />;
+				return <Input placeholder={field.desc} size='large' />;
 			case 'checkbox':
 				return <Checkbox>{field.desc}</Checkbox>;
 			case 'url':
-				return <Input type="url" placeholder={field.desc} />;
+				return <Input type="url" placeholder={field.desc} size='large' />;
 			default:
-				return <Input placeholder={field.desc} />;
+				return <Input placeholder={field.desc} size='large' />;
 		}
 	};
 

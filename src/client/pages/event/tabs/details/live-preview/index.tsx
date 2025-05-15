@@ -32,7 +32,7 @@ const LivePreview: React.FC<LivePreviewProps> = ({
 	locations,
 }) => {
 	return (
-		<Card className="rounded-lg shadow-none border border-[#e5e7eb] border-[0.1px]">
+		<Card className="rounded-lg shadow-none border-[#e5e7eb] border-[0.1px]">
 			<CardContent className="p-0">
 				<Flex className="justify-between items-center bg-color-primary px-[30px] py-5">
 					<div className="text-white text-[24px] font-[700]">

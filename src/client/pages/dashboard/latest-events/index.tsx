@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
+import { sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 import { addQueryArgs } from '@wordpress/url';
 
@@ -81,7 +82,7 @@ const LatestEvents: React.FC = () => {
 	const siteUrl = ConfigAPI.getSiteUrl();
 	const copyToClipboard = useCopyToClipboard();
 	const [loading, setLoading] = useState(true);
-	const [enabledEventsCount, setEnabledEventsCount] = useState(0);
+	const [enabledEventsCount, setEnabledEventsCount] = useState<number>(0);
 
 	// Function to get random background color based on event name
 	const getInitialBackgroundColor = (name: string): string => {
@@ -141,9 +142,10 @@ const LatestEvents: React.FC = () => {
 						{__('Latest Events', 'quillbooking')}
 					</div>
 					<div className="text-[#A1A5B7] font-semibold">
-						{__(
-							`${enabledEventsCount} Events Running`,
-							'quillbooking'
+						{sprintf(
+							/* translators: %d: number of running events */
+							__('%d Events Running', 'quillbooking'),
+							enabledEventsCount || 0
 						)}
 					</div>
 				</Flex>

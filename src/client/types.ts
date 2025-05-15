@@ -331,8 +331,8 @@ export type FieldType = {
 	enabled?: boolean;
 	settings?: {
 		options?: string[];
-		min?: string;
-		max?: string;
+		min?: number;
+		max?: number;
 		format?: string;
 		maxFileSize?: number;
 		maxFileCount?: number;

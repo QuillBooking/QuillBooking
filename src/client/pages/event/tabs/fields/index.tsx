@@ -116,13 +116,11 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 					fields,
 				},
 				onSuccess() {
-					successNotice(
-						__('Fields saved successfully', 'quillbooking')
-					);
 					props.setDisabled(true);
+					
 				},
 				onError(error) {
-					errorNotice(error.message);
+					throw new Error(error.message);
 				},
 			});
 		};

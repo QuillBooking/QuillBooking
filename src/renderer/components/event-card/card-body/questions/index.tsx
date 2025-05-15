@@ -58,7 +58,7 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 					requiredMark={false}
 				>
 					{sortedFields.map((fieldKey, index) => (
-						(!allFields[fieldKey].hidden || allFields[fieldKey].hidden === undefined) && (
+						(allFields[fieldKey].enabled || allFields[fieldKey].enabled === undefined) && (
 							<FormField
 								key={index}
 								id={fieldKey}

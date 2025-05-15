@@ -86,6 +86,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		};
 
 		const handleUpdate = (values: any, editingFieldKey: string) => {
+			console.log('Updating field', values, editingFieldKey);
 			if (!fields || !editingFieldKey) return;
 			const updatedFields = { ...fields };
 			const group = updatedFields.system[editingFieldKey]
@@ -106,6 +107,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		};
 
 		const saveFields = async (fields: Fields) => {
+			console.log('Saving fields', fields);
 			if (!event) return;
 			return saveApi({
 				path: `events/${event.id}`,
@@ -144,6 +146,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 				placeholder: '',
 				order: order,
 				settings: {},
+				enabled: true,
 			};
 			const updatedFields = {
 				...fields,
@@ -216,7 +219,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		}
 
 		const allFields = fields
-			? { ...fields.system, location: fields.location['location-select'], ...fields.custom }
+			? { ...fields.system, ...fields.location, ...fields.custom }
 			: {};
 		
 		const sortedFields = Object.keys(allFields).sort(

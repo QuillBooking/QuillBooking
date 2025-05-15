@@ -354,7 +354,7 @@ class Booking_Actions {
 
 
 	/**
-	 * Generic renderer for cancel/reschedule/confirm pages
+	 * Generic renderer for cancel/confirm pages
 	 */
 	protected function render_generic_page( string $page, $booking, $fields = array() ) {
 		$template_path = QUILLBOOKING_PLUGIN_DIR . "src/templates/{$page}.php";
@@ -371,9 +371,10 @@ class Booking_Actions {
 		! empty( $booking_array['slot_time'] )
 		) {
 			try {
-				$timezone = new DateTimeZone( $booking_array['timezone'] );
-				$start    = new DateTime( $booking_array['start_time'], $timezone );
-				$end      = clone $start;
+				$start = new DateTime( $booking_array['start_time'], new DateTimeZone( 'UTC' ) );
+				$start->setTimezone( new DateTimeZone( $booking_array['timezone'] ) );
+
+				$end = clone $start;
 				$end->modify( "+{$booking_array['slot_time']} minutes" );
 
 				$formatted_time_range = sprintf(

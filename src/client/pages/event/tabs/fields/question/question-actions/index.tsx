@@ -41,16 +41,16 @@ const QuestionActions: React.FC<QuestionActionsProps> = ({
 				fieldKey === 'message' ||
 				fieldKey === 'guest') && (
 				<Switch
-					checked={allFields[fieldKey].hidden}
+					checked={allFields[fieldKey].enabled}
 					onChange={(checked) => {
 						const updatedField = {
 							...allFields[fieldKey],
-							hidden: checked,
+							enabled: checked,
 						};
 						onUpdate(updatedField, fieldKey);
 					}}
 					className={
-						allFields[fieldKey].hidden
+						allFields[fieldKey].enabled
 							? 'bg-color-primary'
 							: 'bg-gray-400'
 					}

@@ -55,6 +55,7 @@ class Event_Fields {
 				'event_location' => 'all',
 				'placeholder'    => __( 'Enter your message', 'quillbooking' ),
 				'order'          => 3,
+				'enabled' 			 => true,
 			),
 		);
 
@@ -76,6 +77,7 @@ class Event_Fields {
 				'event_location' => 'all',
 				'placeholder'    => __( 'Why are you cancelling?', 'quillbooking' ),
 				'order'          => 1,
+				'enabled' 			 => true,
 			),
 			'rescheduling_reason' => array(
 				'label'          => __( 'Reason for reschedule', 'quillbooking' ),
@@ -85,6 +87,7 @@ class Event_Fields {
 				'event_location' => 'all',
 				'placeholder'    => __( 'Let others know why you need to reschedule', 'quillbooking' ),
 				'order'          => 2,
+				'enabled' 			 => true,
 			),
 		);
 

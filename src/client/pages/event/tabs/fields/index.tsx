@@ -146,6 +146,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 				placeholder: '',
 				order: order,
 				settings: {},
+				enabled: true,
 			};
 			const updatedFields = {
 				...fields,

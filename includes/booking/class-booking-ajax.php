@@ -171,14 +171,20 @@ class Booking_Ajax {
 		// check_ajax_referer( 'quillbooking', 'nonce' );
 
 		try {
-			$id      = isset( $_POST['id'] ) ? sanitize_text_field( $_POST['id'] ) : null;
-			$booking = $this->bookingValidatorClass::validate_booking( $id );
+			$id                  = isset( $_POST['id'] ) ? sanitize_text_field( $_POST['id'] ) : null;
+			$booking             = $this->bookingValidatorClass::validate_booking( $id );
+			$cancellation_reason = isset( $_POST['cancellation_reason'] ) ? sanitize_text_field( $_POST['cancellation_reason'] ) : null;
 
 			if ( $booking->isCompleted() ) {
 				throw new \Exception( __( 'Booking is already completed', 'quillbooking' ) );
 			}
 
-			$booking->status = 'cancelled';
+			if ( $cancellation_reason ) {
+				$booking->update_meta( 'cancellation_reason', $cancellation_reason );
+			}
+
+			$booking->cancelled_by = 'attendee';
+			$booking->status       = 'cancelled';
 			$booking->save();
 
 			$booking->logs()->create(
@@ -207,8 +213,9 @@ class Booking_Ajax {
 		// check_ajax_referer( 'quillbooking', 'nonce' );
 
 		try {
-			$id      = isset( $_POST['id'] ) ? sanitize_text_field( $_POST['id'] ) : null;
-			$booking = $this->bookingValidatorClass::validate_booking( $id );
+			$id                = isset( $_POST['id'] ) ? sanitize_text_field( $_POST['id'] ) : null;
+			$booking           = $this->bookingValidatorClass::validate_booking( $id );
+			$reschedule_reason = isset( $_POST['reschedule_reason'] ) ? sanitize_text_field( $_POST['reschedule_reason'] ) : null;
 
 			$start_date = isset( $_POST['start_date'] ) ? sanitize_text_field( $_POST['start_date'] ) : null;
 			if ( ! $start_date ) {
@@ -244,8 +251,13 @@ class Booking_Ajax {
 			$end_date = clone $start_date;
 			$end_date->modify( "+{$duration} minutes" );
 
-			$booking->start_time = $start_date->format( 'Y-m-d H:i:s' );
-			$booking->end_time   = $end_date->format( 'Y-m-d H:i:s' );
+			$booking->start_time = $start_date->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+			$booking->end_time   = $end_date->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+
+			if ( $reschedule_reason ) {
+				$booking->update_meta( 'reschedule_reason', $reschedule_reason );
+			}
+
 			$booking->save();
 
 			$booking->logs()->create(

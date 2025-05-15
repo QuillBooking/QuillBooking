@@ -161,7 +161,7 @@ export type FieldType = {
 	event_location: string;
 	placeholder: string;
 	order: number;
-	hidden?: boolean;
+	enabled?: boolean;
 	settings?: {
 		options?: string[];
 		min?: string;
@@ -171,6 +171,7 @@ export type FieldType = {
 		maxFileCount?: number;
 		allowedFiles?: string[];
 	};
+    helpText?: string;
 };
 
 export type Fields = {

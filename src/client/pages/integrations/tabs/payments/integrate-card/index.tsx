@@ -13,8 +13,6 @@ import { Card, Flex, Skeleton } from 'antd';
  * Internal dependencies
  */
 import {
-	CardHeader,
-	IntegrationsTabIcon,
 	NoticeComponent,
 } from '@quillbooking/components';
 // @ts-ignore
@@ -46,18 +44,7 @@ const IntegrateCard: React.FC<IntegrateCardProps> = ({
 
 	return (
 		<Card className="rounded-lg mb-6 w-full">
-			<CardHeader
-				title={__(
-					'Integrate Quill Booking, boost productivity',
-					'quillbooking'
-				)}
-				description={__(
-					'Connect Quill Booking to your tools and apps to enhance your scheduling automations.',
-					'quillbooking'
-				)}
-				icon={<IntegrationsTabIcon />}
-			/>
-			<Flex vertical gap={8} className="mt-6">
+			<Flex vertical gap={15}>
 				<NoticeComponent
 					isNoticeVisible={isNoticeVisible}
 					setNoticeVisible={setNoticeVisible}

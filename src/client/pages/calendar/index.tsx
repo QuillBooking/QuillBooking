@@ -7,7 +7,7 @@ import { useState, useEffect } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Button, Flex, Skeleton } from 'antd';
+import { Button, Flex, Skeleton, Card } from 'antd';
 import { IoCloseSharp } from 'react-icons/io5';
 import { Box, Dialog, DialogActions, DialogTitle } from '@mui/material';
 
@@ -24,15 +24,38 @@ import {
 } from '@quillbooking/hooks';
 import { useParams } from '@quillbooking/navigation';
 import { Provider } from './state/context';
-import { GeneralSettings } from './tabs';
-import { ShareIcon } from '@quillbooking/components';
+import { GeneralSettings, Integrations } from './tabs';
+import {
+	ShareIcon,
+	SettingsIcon,
+	UpcomingCalendarIcon,
+	TabButtons,
+} from '@quillbooking/components';
 import { NoticeBanner } from '@quillbooking/components';
+
+export const UnifiedShimmerLoader = () => (
+	<div className="space-y-6 w-full">
+		<Card className="p-6">
+			<div className="grid grid-cols-2 gap-6">
+				<div>
+					<Skeleton active paragraph={{ rows: 2 }} />
+					<div className="mt-4">
+						<Skeleton active paragraph={{ rows: 1 }} />
+					</div>
+				</div>
+				<div>
+					<Skeleton active paragraph={{ rows: 4 }} />
+				</div>
+			</div>
+		</Card>
+	</div>
+);
 
 /**
  * Main Calendars Component.
  */
 const Calendar: React.FC = () => {
-	const { id, tab } = useParams<{ id: string; tab: string }>();
+	const { id } = useParams<{ id: string }>();
 	const { callApi, loading } = useApi();
 	const { errorNotice } = useNotice();
 	const [calendar, setCalendar] = useState<CalendarType | null>(null);
@@ -44,6 +67,7 @@ const Calendar: React.FC = () => {
 	const [showSavedBanner, setShowSavedBanner] = useState(false);
 	const [showErrorBanner, setShowErrorBanner] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
+	const [activeTab, setActiveTab] = useState('general');
 	const navigate = useNavigate();
 	const setBreadcrumbs = useBreadcrumbs();
 	if (!id) {
@@ -102,11 +126,11 @@ const Calendar: React.FC = () => {
 	const saveSettings = () => {
 		if (!calendar) return;
 
-		console.log(calendar);
-
 		// Validate
 		if (!calendar.name) {
-			setErrorMessage(__('Please enter a name for the calendar.', 'quillbooking'));
+			setErrorMessage(
+				__('Please enter a name for the calendar.', 'quillbooking')
+			);
 			setShowErrorBanner(true);
 			setTimeout(() => setShowErrorBanner(false), 5000);
 			return;
@@ -131,13 +155,40 @@ const Calendar: React.FC = () => {
 				setOriginalCalendar(calendar);
 			},
 			onError: (error) => {
-				setErrorMessage(error.message || __('Failed to save settings.', 'quillbooking'));
+				setErrorMessage(
+					error.message ||
+					__('Failed to save settings.', 'quillbooking')
+				);
 				setShowErrorBanner(true);
 				setTimeout(() => setShowErrorBanner(false), 5000);
 				setSaveDisabled(false);
 			},
 		});
 	};
+
+	const renderTabContent = () => {
+		switch (activeTab) {
+			case 'general':
+				return <GeneralSettings />;
+			case 'integrations':
+				return <Integrations />;
+			default:
+				return <GeneralSettings />;
+		}
+	};
+
+	const tabItems = [
+		{
+			key: 'general',
+			label: __('General Host Settings', 'quillbooking'),
+			icon: <SettingsIcon width={20} height={20} />,
+		},
+		{
+			key: 'integrations',
+			label: __('Remote Calendars and Conferencing', 'quillbooking'),
+			icon: <UpcomingCalendarIcon width={20} height={20} />,
+		},
+	];
 
 	return (
 		<Provider
@@ -166,7 +217,7 @@ const Calendar: React.FC = () => {
 									<IoCloseSharp />
 								</DialogActions>
 								<div className="text-[#09090B] text-[24px] font-[500]">
-									{__('Host Settings', 'quillbooking')}
+									{__('Calendar Settings', 'quillbooking')}
 								</div>
 							</DialogActions>
 						</Flex>
@@ -192,41 +243,71 @@ const Calendar: React.FC = () => {
 					</Flex>
 				</DialogTitle>
 				<div className="quillbooking-event">
-					<Box className="px-14 py-5">
-						{showSavedBanner && (
-							<NoticeBanner
-								notice={{
-									type: 'success',
-									title: __(
-										'Successfully Updated',
-										'quillbooking'
-									),
-									message: __(
-										'The Calendar settings have been updated successfully.',
-										'quillbooking'
-									),
-								}}
-								closeNotice={() => setShowSavedBanner(false)}
-							/>
-						)}
-						{showErrorBanner && (
-							<NoticeBanner
-								notice={{
-									type: 'error',
-									title: __('Error', 'quillbooking'),
-									message: errorMessage,
-								}}
-								closeNotice={() => setShowErrorBanner(false)}
-							/>
-						)}
+					<Box className="px-20 py-5">
+						<Card className="mb-5">
+							<Flex
+								gap={15}
+								align="center"
+								justify="flex-start"
+							>
+								{tabItems.map(
+									({ key, label, icon }) => (
+										<Button
+											key={key}
+											type="text"
+											onClick={() =>
+												setActiveTab(key)
+											}
+											className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
+										>
+											<TabButtons
+												label={label}
+												icon={icon}
+												isActive={
+													activeTab === key
+												}
+											/>
+										</Button>
+									)
+								)}
+							</Flex>
+						</Card>
 						{isLoading ? (
-							<div className="space-y-6">
-								<Skeleton active paragraph={{ rows: 4 }} />
-								<Skeleton active paragraph={{ rows: 3 }} />
-								<Skeleton active paragraph={{ rows: 2 }} />
-							</div>
+							<UnifiedShimmerLoader />
 						) : (
-							<GeneralSettings />
+							<>
+								{showSavedBanner && (
+									<NoticeBanner
+										notice={{
+											type: 'success',
+											title: __(
+												'Successfully Updated',
+												'quillbooking'
+											),
+											message: __(
+												'The Calendar settings have been updated successfully.',
+												'quillbooking'
+											),
+										}}
+										closeNotice={() =>
+											setShowSavedBanner(false)
+										}
+									/>
+								)}
+								{showErrorBanner && (
+									<NoticeBanner
+										notice={{
+											type: 'error',
+											title: __('Error', 'quillbooking'),
+											message: errorMessage,
+										}}
+										closeNotice={() =>
+											setShowErrorBanner(false)
+										}
+									/>
+								)}
+								{renderTabContent()}
+							</>
 						)}
 					</Box>
 				</div>

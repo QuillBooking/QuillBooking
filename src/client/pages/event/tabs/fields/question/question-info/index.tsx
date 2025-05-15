@@ -80,6 +80,24 @@ const QuestionInfo: React.FC<QuestionInfoProps> = ({
 							...allFields[fieldKey],
 							type: value,
 						};
+
+						if(value === 'number') {
+							updatedField.settings = {
+								...updatedField.settings,
+								min: 0,
+								max: 100,
+							}
+						}
+
+						if (value === 'select' || value === 'multiple_select' || value === 'radio' ) {
+							updatedField.settings = {
+								...updatedField.settings,
+								options: [
+									"Option 1",
+									"Option 2"
+								]
+							}
+						}
 						setType(value);
 						onUpdate(updatedField, fieldKey);
 					}}

@@ -91,7 +91,7 @@ const LicenseTab: React.FC = () => {
 				<CardHeader
 					title={__('License Management', 'quillbooking')}
 					description={__(
-						'Grant Team Members Access to FluentBookings for Calendar and Booking Management.',
+						'Grant Team Members Access to QuillBooking for Calendar and Booking Management.',
 						'quillbooking'
 					)}
 					icon={<LicenseTabIcon />}

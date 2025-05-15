@@ -10,14 +10,15 @@ interface ReschedulePageProps {
   ajax_url: string;
   type: string;
   booking: Booking;
+  url: string;
 }
 
-const ReschedulePage: React.FC<ReschedulePageProps> = ({ event, ajax_url, type, booking }) => {
+const ReschedulePage: React.FC<ReschedulePageProps> = ({ event, ajax_url, type, booking, url }) => {
   return (
     <div className="event-card-container">
       <div className="event-card-wrapper">
         <Header />
-        <CardBody event={event} ajax_url={ajax_url} type={type} booking={booking}/>
+        <CardBody event={event} ajax_url={ajax_url} type={type} booking={booking} url={url}/>
       </div>
     </div>
   );

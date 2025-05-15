@@ -13,9 +13,9 @@ import { Button, Card, Flex, Switch } from 'antd';
  * Internal dependencies
  */
 import { CardHeader, PluginsIcon } from '@quillbooking/components';
-import quillforms from '../../../../../../../assets/icons/quillforms/quillforms.png';
-import quillcrm from '../../../../../../../assets/icons/quillcrm/quillcrm.png';
-import woocommerce from '../../../../../../../assets/icons/woocommerce/woocommerce.png';
+import quillforms from '@quillbooking/assets/icons/quillforms/quillforms.png';
+import quillcrm from '@quillbooking/assets/icons/quillcrm/quillcrm.png';
+import woocommerce from '@quillbooking/assets/icons/woocommerce/woocommerce.png';
 import { useApi } from '@quillbooking/hooks';
 
 type PluginStatus = 'install' | 'disabled' | 'enabled';
@@ -39,7 +39,7 @@ const PluginsCard: React.FC = () => {
 	return (
 		<Card>
 			<CardHeader
-				title={__('Recommended Plugins and Addons', 'quillbooking')}
+				title={__('Recommended Plugins', 'quillbooking')}
 				description={__(
 					'Plugins that will extend your Quill Booking Functionalities',
 					'quillbooking'

@@ -37,20 +37,25 @@ $status              = $booking_array['status'] ?? '';
 			</div>
 		<?php else : ?>
 			<div class="cancellation-container">
-				<div class="cancellation-input-container">
-					<label for="cancellation_reason">
-						<?php echo esc_attr( $cancellation_reason['label'] ); ?>
-						<?php if ( ! empty( $cancellation_reason['required'] ) ) : ?>
-							<span class="required">*</span>
+				<?php if ( $cancellation_reason['enabled'] ) : ?>
+					<div class="cancellation-input-container">
+						<label for="cancellation_reason">
+							<?php echo esc_attr( $cancellation_reason['label'] ); ?>
+							<?php if ( $cancellation_reason['required'] ) : ?>
+								<span class="required">*</span>
+							<?php endif; ?>
+						</label>
+						<div class="validation-message" id="validation_message" aria-live="polite"></div>
+						<textarea class="cancellation-reason" name="cancellation_reason" id="cancellation_reason" rows="4" placeholder="<?php echo esc_attr( $cancellation_reason['placeholder'] ); ?>"
+							<?php
+							if ( $cancellation_reason['required'] ) :
+								?>
+							required<?php endif; ?>></textarea>
+					</div>
+					<?php if ( $cancellation_reason['helpText'] ) : ?>
+						<p class="help-text"><?php echo $cancellation_reason['helpText']; ?></p>
 						<?php endif; ?>
-					</label>
-					<div class="validation-message" id="validation_message" aria-live="polite"></div>
-					<textarea class="cancellation-reason" name="cancellation_reason" id="cancellation_reason" rows="4" placeholder="<?php echo esc_attr( $cancellation_reason['placeholder'] ); ?>"
-						<?php
-						if ( ! empty( $cancellation_reason['required'] ) ) :
-							?>
-						required<?php endif; ?>></textarea>
-				</div>
+				<?php endif; ?>
 
 				<div class="calendar-buttons-container" id="buttons_container">
 					<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=confirm" class="cancel-btn nevermind-btn"><?php esc_html_e( 'Nevermind', 'quillbooking' ); ?></a>
@@ -68,9 +73,11 @@ $status              = $booking_array['status'] ?? '';
 		event.preventDefault();
 		const textarea = document.getElementById('cancellation_reason');
 		const validation = document.getElementById('validation_message');
-		validation.textContent = '';
+		if (validation) {
+			validation.textContent = '';
+		}
 
-		if (!textarea.value.trim() && <?php echo json_encode( ! empty( $cancellation_reason['required'] ) ); ?>) {
+		if (textarea && !textarea.value.trim() && <?php echo json_encode( $cancellation_reason['required'] ); ?> && <?php echo json_encode( $cancellation_reason['enabled'] ); ?>) {
 			validation.textContent = '<?php echo esc_js( __( 'This field is required.', 'quillbooking' ) ); ?>';
 			textarea.classList.add('error');
 			return;
@@ -78,7 +85,9 @@ $status              = $booking_array['status'] ?? '';
 
 		const formData = new FormData();
 		formData.append('id', '<?php echo esc_js( $booking_array['hash_id'] ); ?>');
-		formData.append('cancellation_reason', textarea.value);
+		if (textarea) {
+			formData.append('cancellation_reason', textarea.value);
+		}
 		formData.append('action', 'quillbooking_cancel_booking');
 
 		fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {

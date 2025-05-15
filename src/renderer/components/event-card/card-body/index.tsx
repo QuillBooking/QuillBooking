@@ -123,6 +123,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 						selectedDate={selectedDate}
 						selectedTime={selectedTime}
 						timezone={timeZone}
+						url={url}
 					/>
 				) : (
 					<QuestionsComponents

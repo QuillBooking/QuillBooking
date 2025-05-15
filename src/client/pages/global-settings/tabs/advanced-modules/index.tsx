@@ -6,7 +6,7 @@ import { useState, useEffect } from '@wordpress/element';
 /**
  * Internal dependencies
  */
-import AdvancedModulesCard from './advanced-modules-card';
+// import AdvancedModulesCard from './advanced-modules-card';
 import PluginsCard from './plugins-card';
 import { Card, Flex } from 'antd';
 
@@ -55,8 +55,8 @@ const AdvancedModulesTab: React.FC = () => {
 	}
 
 	return (
-		<div className="quillbooking-modules-settings grid grid-cols-2 gap-5 w-full">
-			<AdvancedModulesCard />
+		<div className="quillbooking-modules-settings w-full">
+			{/* <AdvancedModulesCard /> */}
 			<PluginsCard />
 		</div>
 	);

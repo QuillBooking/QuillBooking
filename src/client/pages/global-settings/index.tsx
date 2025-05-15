@@ -92,7 +92,7 @@ const GlobalSettings: React.FC = () => {
 		},
 		{
 			key: 'advanced',
-			label: __('Advanced Modules', 'quillbooking'),
+			label: __('Recommended Plugins', 'quillbooking'),
 			icon: <AdvancedModulesIcon />,
 		},
 	];

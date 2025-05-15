@@ -8,7 +8,7 @@ import { useState } from '@wordpress/element';
  * External dependencies
  */
 import { Button, Card, Checkbox, Flex, Radio, Select } from 'antd';
-import { CiShare1 } from 'react-icons/ci';
+// import { CiShare1 } from 'react-icons/ci';
 
 /**
  * Internal dependencies
@@ -24,7 +24,7 @@ interface FormData {
 
 const AdvancedModulesCard: React.FC = () => {
 	const { loading } = useApi();
-	const [message, setMessage] = useState<boolean>(false);
+	// const [message, setMessage] = useState<boolean>(false);
 	const [formData, setFormData] = useState<FormData>({
 		enableFrontendPortal: false,
 		shortcodeType: '',
@@ -67,7 +67,7 @@ const AdvancedModulesCard: React.FC = () => {
 								</span>
 							</li>
 						</ul>
-						{message && (
+						{/* {message && (
 							<Flex
 								vertical
 								gap={10}
@@ -89,7 +89,7 @@ const AdvancedModulesCard: React.FC = () => {
 									<CiShare1 className="text-[20px]" />
 								</Flex>
 							</Flex>
-						)}
+						)} */}
 					</Flex>
 					<div className="text-[#3F4254] text-[18px] font-semibold">
 						{__(

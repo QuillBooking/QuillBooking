@@ -24,6 +24,8 @@ module.exports = {
             "@quillbooking/constants": path.resolve(__dirname, 'src/constants'),
             "@quillbooking/utils": path.resolve(__dirname, 'src/utils'),
             "@quillbooking/hooks": path.resolve(__dirname, 'src/hooks'),
+            "@quillbooking/assets": path.resolve(__dirname, 'assets'),
+
         },
     },
     plugins: [

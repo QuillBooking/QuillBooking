@@ -19,6 +19,7 @@ import { TrashIcon } from '../../../../../../../components';
 import CommonNumberInput from './common-number-input';
 import CommonDatepicker from './common-datepicker';
 import { Editor as EmailEditor } from '@quillbooking/components';
+import { debounce } from 'lodash';
 
 interface QuestionInputsProps {
 	fieldKey: string;
@@ -34,24 +35,52 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 }) => {
 	const [form] = Form.useForm();
 
-	const onChange = () => {
-		form.validateFields().then((values) => {
-			console.log('values', values);
-			// values might be { label, helpText, settings: { min? number, max? number, … } }
-			const updatedSettings = {
-				...allFields[fieldKey].settings, // keep all existing min/max/…
-				...values.settings, // overwrite only the bits that changed
-			};
+	const debouncedValidateAndUpdate = debounce(
+		(formInstance, fieldKey, allFields, onUpdate) => {
+			formInstance
+				.validateFields()
+				.then((values) => {
+					console.log('values', values);
 
-			onUpdate(
-				{
-					...allFields[fieldKey],
-					...values,
-					settings: updatedSettings,
-				},
-				fieldKey
-			);
-		});
+					const updatedSettings = {
+						...allFields[fieldKey].settings,
+						...(values.settings || {}),
+					};
+
+					if (
+						updatedSettings.min !== undefined &&
+						updatedSettings.max !== undefined
+					) {
+						const minValue = Number(updatedSettings.min);
+						const maxValue = Number(updatedSettings.max);
+
+						if (minValue >= maxValue) {
+							console.error('Min must be less than max');
+							return;
+						}
+
+						updatedSettings.min = minValue;
+						updatedSettings.max = maxValue;
+					}
+
+					onUpdate(
+						{
+							...allFields[fieldKey],
+							...values,
+							settings: updatedSettings,
+						},
+						fieldKey
+					);
+				})
+				.catch((errorInfo) => {
+					console.log('Validation failed:', errorInfo);
+				});
+		},
+		300
+	); 
+
+	const onChange = () => {
+		debouncedValidateAndUpdate(form, fieldKey, allFields, onUpdate);
 	};
 
 	return (
@@ -128,9 +157,9 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 							<Form.List
 								name={['settings', 'options']}
 								initialValue={
-									!allFields[fieldKey].settings?.options
-										? ['Option 1', 'Option 2']
-										: undefined
+									allFields[fieldKey].settings?.options
+										? allFields[fieldKey].settings?.options
+										: []
 								}
 							>
 								{(fields, { add, remove }) => (
@@ -167,17 +196,31 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 																)}
 															/>
 														</Form.Item>
-														<div
-															className="text-[#EF4444] cursor-pointer"
-															onClick={() =>
-																remove(name)
-															}
-														>
-															<TrashIcon
-																width={24}
-																height={24}
-															/>
-														</div>
+														{allFields[fieldKey]
+															.settings
+															?.options &&
+															allFields[fieldKey]
+																.settings
+																.options
+																.length > 1 && (
+																<div
+																	className="text-[#EF4444] cursor-pointer"
+																	onClick={() =>
+																		remove(
+																			name
+																		)
+																	}
+																>
+																	<TrashIcon
+																		width={
+																			24
+																		}
+																		height={
+																			24
+																		}
+																	/>
+																</div>
+															)}
 													</div>
 												)
 											)}
@@ -213,8 +256,10 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 						<>
 							<div className="flex gap-4">
 								<Form.Item
-									initialValue={1}
 									className="flex-1"
+									initialValue={
+										allFields[fieldKey].settings?.min
+									}
 									name={['settings', 'min']}
 									label={
 										<>
@@ -232,6 +277,13 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 												'quillbooking'
 											),
 										},
+										{
+											type: 'number',
+											message: __(
+												'Min value must be a number',
+												'quillbooking'
+											),
+										},
 									]}
 								>
 									<InputNumber
@@ -244,8 +296,10 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 									/>
 								</Form.Item>
 								<Form.Item
-									initialValue={100}
 									className="flex-1"
+									initialValue={
+										allFields[fieldKey].settings?.max
+									}
 									name={['settings', 'max']}
 									label={
 										<>
@@ -262,6 +316,38 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 												'Max value is required',
 												'quillbooking'
 											),
+										},
+										{
+											type: 'number',
+											message: __(
+												'Max value must be a number',
+												'quillbooking'
+											),
+										},
+										{
+											validator: (_, value) => {
+												const minValue =
+													form.getFieldValue([
+														'settings',
+														'min',
+													]);
+												if (
+													minValue !== undefined &&
+													value !== undefined &&
+													Number(value) <=
+														Number(minValue)
+												) {
+													return Promise.reject(
+														new Error(
+															__(
+																'Max value must be greater than min value',
+																'quillbooking'
+															)
+														)
+													);
+												}
+												return Promise.resolve();
+											},
 										},
 									]}
 								>
@@ -441,7 +527,20 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 							label={__('Terms and Conditions', 'quillbooking')}
 						>
 							{/* update the message  */}
-							<EmailEditor message={''} onChange={onChange} />
+							<EmailEditor
+								message={
+									allFields[fieldKey].settings?.termsText ?? ''
+								}
+								onChange={(html: string) => {
+									form.setFieldsValue({
+										settings: {
+											...form.getFieldValue('settings'),
+											termsText: html,
+										},
+									});
+								}}
+								type="email"
+							/>
 						</Form.Item>
 					)}
 				</>

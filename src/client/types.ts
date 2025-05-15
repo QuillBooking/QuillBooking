@@ -337,6 +337,7 @@ export type FieldType = {
 		maxFileSize?: number;
 		maxFileCount?: number;
 		allowedFiles?: string[];
+		termsText?: string;
 	};
 };
 

@@ -332,15 +332,20 @@ class App {
 	 * @return array|false Array of client_id & client_secret. false if not configured.
 	 */
 	public function get_app_credentials() {
-		 $app_settings = $this->integration->get_setting( 'app' ) ?? array();
+		$app_settings = $this->integration->get_setting( 'app' ) ?? array();
 
-		if ( ! empty( $app_settings['use_custom_app'] ) && $app_settings['use_custom_app'] ) {
-			if ( ! empty( $app_settings['client_id'] ) && ! empty( $app_settings['client_secret'] ) ) {
-				return array(
-					'client_id'     => $app_settings['client_id'],
-					'client_secret' => $app_settings['client_secret'],
-				);
-			}
+		// Early return if app is empty
+		if (empty($app_settings) || !isset($app_settings['client_id']) || !isset($app_settings['client_secret']) ||
+			(isset($app_settings['app']) && empty($app_settings['app']))) {
+			return false;
+		}
+
+		// Return credentials if both client_id and client_secret are provided
+		if (!empty($app_settings['client_id']) && !empty($app_settings['client_secret'])) {
+			return array(
+				'client_id'     => $app_settings['client_id'],
+				'client_secret' => $app_settings['client_secret'],
+			);
 		}
 
 		return false;

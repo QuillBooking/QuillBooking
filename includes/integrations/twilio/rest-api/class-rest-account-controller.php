@@ -132,19 +132,33 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 			}
 
 			$this->integration->set_host( $host_id );
-			$this->integration->accounts->add_account(
-				$account_sid,
-				array(
-					'name'        => Arr::get( $data, 'data.friendly_name' ),
-					'credentials' => array(
-						'sms_number'      => $sms_number,
-						'whatsapp_number' => $whatsapp_number,
-						'account_sid'     => $account_sid,
-						'auth_token'      => $auth_token,
-					),
-					'config'      => array(),
-				)
+			
+			// Get existing accounts
+			$existing_accounts = $this->integration->accounts->get_accounts();
+			
+			// Account data to save
+			$account_data = array(
+				'name'        => Arr::get( $data, 'data.friendly_name' ),
+				'credentials' => array(
+					'sms_number'      => $sms_number,
+					'whatsapp_number' => $whatsapp_number,
+					'account_sid'     => $account_sid,
+					'auth_token'      => $auth_token,
+				),
+				'config'      => array(),
 			);
+			
+			// If an account exists, update it instead of removing and adding
+			if ( ! empty( $existing_accounts ) ) {
+				// Get the first account ID (we only want one account)
+				$existing_account_id = array_key_first( $existing_accounts );
+				
+				// Update the existing account
+				$this->integration->accounts->update_account( $existing_account_id, $account_data );
+			} else {
+				// No existing account, add a new one
+				$this->integration->accounts->add_account( $account_sid, $account_data );
+			}
 
 			return new WP_REST_Response( $data, 200 );
 		} catch ( Exception $e ) {

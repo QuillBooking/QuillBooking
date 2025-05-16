@@ -313,7 +313,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			$keyword  = $request->get_param( 'keyword' ) ? $request->get_param( 'keyword' ) : '';
 			$filter   = $request->get_param( 'filters' ) ? $request->get_param( 'filters' ) : array();
 			$type     = Arr::get( $filter, 'type', 'all' );
-			$user     = current_user_can( 'quillbooking_read_all_calendars' ) ? 'all' : 'own';
+			$user = $request->get_param('user') ?? (current_user_can('quillbooking_read_all_calendars') ? 'all' : 'own');
 			$ids      = $request->get_param( 'ids' ) ? $request->get_param( 'ids' ) : array();
 
 			if ( 'own' === $user ) {

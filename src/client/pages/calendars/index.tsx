@@ -536,7 +536,7 @@ const Calendars: React.FC = () => {
 																			id
 																		) =>
 																			navigate(
-																				`calendars/${id}/general`
+																				`calendars/${id}`
 																			)
 																		}
 																		onDelete={(
@@ -648,7 +648,7 @@ const Calendars: React.FC = () => {
 																			id
 																		) =>
 																			navigate(
-																				`calendars/${id}/general`
+																				`calendars/${id}`
 																			)
 																		}
 																		onDelete={(

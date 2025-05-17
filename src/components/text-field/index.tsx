@@ -27,6 +27,7 @@ const TextField: React.FC<TextFieldProps> = ({ label, description, type, value, 
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
                 required={required}
+                className='h-[48px] rounded-lg'
             />
         </FieldWrapper>
     );

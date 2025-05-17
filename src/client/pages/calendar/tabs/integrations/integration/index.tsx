@@ -8,8 +8,25 @@ import { addQueryArgs } from '@wordpress/url';
 /**
  * External dependencies
  */
-import { Button, Card, Typography, List, Flex, Modal, Popconfirm, Tooltip, Checkbox } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+    Button,
+    Card,
+    Typography,
+    List,
+    Flex,
+    Modal,
+    Popconfirm,
+    Tooltip,
+    Checkbox,
+    Divider,
+    Select,
+    Spin,
+} from 'antd';
+import {
+    PlusSquareOutlined,
+    DeleteOutlined,
+    PlusOutlined,
+} from '@ant-design/icons';
 import { filter, isEmpty, map } from 'lodash';
 
 /**
@@ -17,9 +34,9 @@ import { filter, isEmpty, map } from 'lodash';
  */
 import type { Integration } from '@quillbooking/config';
 import { TextField } from '@quillbooking/components';
-import { useApi, useNotice, useBreadcrumbs, useNavigate } from '@quillbooking/hooks';
+import { useApi, useNotice } from '@quillbooking/hooks';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface Props {
     integration: Integration;
@@ -34,26 +51,24 @@ interface Account {
     calendars: any[];
 }
 
-const IntegrationDetailsPage: React.FC<Props> = ({ integration, calendarId, slug }) => {
+const IntegrationDetailsPage: React.FC<Props> = ({
+    integration,
+    calendarId,
+    slug,
+}) => {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [formValues, setFormValues] = useState<Record<string, string>>({});
     const [visible, setVisible] = useState(false);
     const { callApi, loading } = useApi();
     const { callApi: connectApi, loading: connectLoading } = useApi();
-    const { callApi: toggleCalendarApi, loading: toggleCalendarLoading } = useApi();
+    const { callApi: toggleCalendarApi, loading: toggleCalendarLoading } =
+        useApi();
     const { callApi: deleteApi } = useApi();
     const { errorNotice, successNotice } = useNotice();
-    const setBreadcrumbs = useBreadcrumbs();
-    const navigate = useNavigate();
+
+    console.log(integration);
 
     useEffect(() => {
-        setBreadcrumbs([
-            {
-                path: `calendars/${calendarId}/integrations/${slug}`,
-                title: integration.name,
-            },
-        ]);
-
         fetchAccounts();
     }, []);
 
@@ -80,12 +95,14 @@ const IntegrationDetailsPage: React.FC<Props> = ({ integration, calendarId, slug
             method: 'DELETE',
             onSuccess() {
                 successNotice(__('Account deleted', 'quillbooking'));
-                setAccounts((prev) => prev.filter((account) => account.id !== accountId));
+                setAccounts((prev) =>
+                    prev.filter((account) => account.id !== accountId)
+                );
             },
             onError() {
                 errorNotice(__('Failed to delete account', 'quillbooking'));
-            }
-        })
+            },
+        });
     };
 
     const handleConnectOAuth = () => {
@@ -111,7 +128,7 @@ const IntegrationDetailsPage: React.FC<Props> = ({ integration, calendarId, slug
             method: 'POST',
             data: {
                 app_credentials: formValues,
-                config: []
+                config: [],
             },
             onSuccess() {
                 setVisible(false);
@@ -125,11 +142,22 @@ const IntegrationDetailsPage: React.FC<Props> = ({ integration, calendarId, slug
     };
 
     const validate = () => {
-        const requiredFields = filter(Object.keys(integration.fields), (field) => integration.fields[field].required);
+        const requiredFields = filter(
+            Object.keys(integration.fields),
+            (field) => integration.fields[field].required
+        );
 
         for (const field of requiredFields) {
             if (!formValues[field]) {
-                errorNotice(sprintf(__('Please enter a value for %s.', 'quillbooking'), __(integration.fields[field].label || field, 'quillbooking')));
+                errorNotice(
+                    sprintf(
+                        __('Please enter a value for %s.', 'quillbooking'),
+                        __(
+                            integration.fields[field].label || field,
+                            'quillbooking'
+                        )
+                    )
+                );
                 return false;
             }
         }
@@ -144,7 +172,11 @@ const IntegrationDetailsPage: React.FC<Props> = ({ integration, calendarId, slug
         }));
     };
 
-    const handleCalendarSelection = (accountId: string, calId: string, checked: boolean) => {
+    const handleCalendarSelection = (
+        accountId: string,
+        calId: string,
+        checked: boolean
+    ) => {
         const newAccounts = accounts.map((account) => {
             if (account.id === accountId) {
                 return {
@@ -153,7 +185,10 @@ const IntegrationDetailsPage: React.FC<Props> = ({ integration, calendarId, slug
                         ...account.config,
                         calendars: checked
                             ? [...account.config.calendars, calId]
-                            : filter(account.config.calendars, (id) => id !== calId),
+                            : filter(
+                                account.config.calendars,
+                                (id) => id !== calId
+                            ),
                     },
                 };
             }
@@ -166,7 +201,9 @@ const IntegrationDetailsPage: React.FC<Props> = ({ integration, calendarId, slug
             method: 'PUT',
             data: {
                 config: {
-                    calendars: newAccounts.find((account) => account.id === accountId)?.config.calendars || [],
+                    calendars:
+                        newAccounts.find((account) => account.id === accountId)
+                            ?.config.calendars || [],
                 },
             },
             onSuccess() {
@@ -178,121 +215,338 @@ const IntegrationDetailsPage: React.FC<Props> = ({ integration, calendarId, slug
         });
     };
 
-    const canAddAccount = () => (!integration.has_accounts && accounts.length === 0) || integration.has_accounts;
+    const canAddAccount = () => integration.has_accounts && visible == false;
 
-    return (
-        <div className="integration-details-page">
-            <Flex vertical gap={20} style={{ width: '100%' }}>
-                <Flex>
-                    <Button onClick={() => navigate(`calendars/${calendarId}/integrations`)}>{__('Back', 'quillbooking')}</Button>
-                </Flex>
-                <Flex vertical gap={10} style={{ alignItems: 'center' }}>
-                    <div className="quillbooking-integration-icon">
-                        <img src={integration.icon} alt={integration.name} width={40} />
-                    </div>
-                    <Title level={3} style={{ margin: 0 }}>{integration.name}</Title>
-                    <Text type="secondary">{integration.description}</Text>
-                </Flex>
-                <Card
-                    title={integration.has_accounts ? __(
-                        'My Calendar Accounts',
+    const renderAccountList = () => (
+        <Flex vertical gap={20} className='w-full'>
+            <Flex vertical>
+                <div className="text-[#3F4254] font-semibold text-[16px]">
+                    {__('Remote Calendar', 'quillbooking')}
+                    <span className="text-[#E53E3E]">
+                        {__('*', 'quillbooking')}
+                    </span>
+                </div>
+                <Select
+                    placeholder={__(
+                        'Select a Remote Calendar',
                         'quillbooking'
-                    ) : __('My Account', 'quillbooking')}
-                    extra={
-                        <>
-                            {canAddAccount() && (
-                                <Button
-                                    onClick={() =>
-                                        integration.auth_type === 'oauth' ? handleConnectOAuth() : setVisible(true)
-                                    }
-                                    icon={<PlusOutlined />}
-                                    loading={connectLoading}
-                                >
-                                    {!integration.has_accounts ? __('Connect Account', 'quillbooking') : integration.auth_type === 'oauth' ? __('Connect New Account', 'quillbooking') : __('Add New Account', 'quillbooking')}
-                                </Button>
-                            )}
-                        </>
-                    }
-                >
-                    <List
-                        dataSource={accounts}
-                        loading={loading}
-                        renderItem={(account) => (
-                            <List.Item
-                                actions={[
-                                    <Popconfirm
-                                        title={__('Are you sure you want to delete this account?', 'quillbooking')}
-                                        onConfirm={() => handleDeleteAccount(account.id)}
-                                        okText={__('Yes', 'quillbooking')}
-                                        cancelText={__('No', 'quillbooking')}
-                                    >
-                                        <Tooltip title={__('Delete Account', 'quillbooking')}>
-                                            <Button danger icon={<DeleteOutlined />} />
-                                        </Tooltip>
-                                    </Popconfirm>,
-                                ]}
+                    )}
+                    className="w-full h-[48px] rounded-lg mb-2"
+                />
+                <div className="text-[#71717A] italic">
+                    {__(
+                        'Select remote calendar in where to add new events to when you`re booked.',
+                        'quillbooking'
+                    )}
+                </div>
+            </Flex>
+            <Flex vertical gap={20}>
+                {loading ? (
+                    <Spin spinning={true} />
+                ) : (
+                    accounts.map((account) => (
+                        <Card key={account.id}>
+                            <Flex
+                                align="center"
+                                gap={16}
+                                className="p-0 text-color-primary-text border-b pb-5 mb-5"
                             >
-                                <Flex vertical gap={10} style={{ width: '100%' }}>
-                                    <Text strong>{account.name}</Text>
-                                    {integration.is_calendar && (
-                                        <>
-                                            <Text type="secondary">{__('Enable the calendars you want to check for conflicts to prevent double bookings.', 'quillbooking')}</Text>
-                                            {!isEmpty(account.calendars) ? (
-                                                <List
-                                                    loading={toggleCalendarLoading}
-                                                    dataSource={account.calendars}
-                                                    renderItem={(calendar) => (
-                                                        <Checkbox
-                                                            checked={!isEmpty(account.config) ? account.config.calendars.includes(calendar.id) : false}
-                                                            onChange={(e) =>
-                                                                handleCalendarSelection(account.id, calendar.id, e.target.checked)
-                                                            }
-                                                        >
-                                                            {calendar.name}
-                                                        </Checkbox>
-                                                    )}
-                                                />
-                                            ) : __('No calendars found.', 'quillbooking')}
-                                        </>
+                                <img
+                                    src={integration.icon}
+                                    alt={integration.name}
+                                    className="size-8"
+                                />
+                                <Flex
+                                    justify="space-between"
+                                    align="center"
+                                >
+                                    <div>
+                                        <Text className="text-[#09090B] font-bold text-2xl block">
+                                            {account.name}
+                                            <span className="text-[#0EA473] text-xs font-medium italic ml-3">
+                                                {__(
+                                                    'Connected',
+                                                    'quillbooking'
+                                                )}
+                                            </span>
+                                        </Text>
+                                        <Text className="text-[#3F4254] italic font-medium">
+                                            {account.config.email}
+                                        </Text>
+                                    </div>
+                                    <Popconfirm
+                                        title={__(
+                                            'Are you sure you want to delete this account?',
+                                            'quillbooking'
+                                        )}
+                                        onConfirm={() =>
+                                            handleDeleteAccount(account.id)
+                                        }
+                                        okText={__('Yes', 'quillbooking')}
+                                        cancelText={__(
+                                            'No',
+                                            'quillbooking'
+                                        )}
+                                    >
+                                        <Tooltip
+                                            title={__(
+                                                'Delete Account',
+                                                'quillbooking'
+                                            )}
+                                        >
+                                            <Button
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                            />
+                                        </Tooltip>
+                                    </Popconfirm>
+                                </Flex>
+                            </Flex>
+                            {integration.is_calendar && (
+                                <Flex vertical gap={10} className='w-full border-b pb-4 mb-4'>
+                                    <Text type="secondary" className="text-[#9197A4]">
+                                        {__(
+                                            'Enable the calendars you want to check for conflicts to prevent double bookings.',
+                                            'quillbooking'
+                                        )}
+                                    </Text>
+                                    {!isEmpty(account.calendars) ? (
+                                        <Flex vertical gap={8}>
+                                            {account.calendars.map(
+                                                (calendar) => (
+                                                    <Checkbox
+                                                        key={calendar.id}
+                                                        checked={
+                                                            !isEmpty(
+                                                                account.config
+                                                            )
+                                                                ? account.config.calendars.includes(
+                                                                    calendar.id
+                                                                )
+                                                                : false
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleCalendarSelection(
+                                                                account.id,
+                                                                calendar.id,
+                                                                e.target
+                                                                    .checked
+                                                            )
+                                                        }
+                                                        className="custom-checkbox text-color-primary-text font-semibold"
+                                                    >
+                                                        {calendar.name}
+                                                    </Checkbox>
+                                                )
+                                            )}
+                                        </Flex>
+                                    ) : (
+                                        <Text type="secondary">
+                                            {__(
+                                                'No calendars found.',
+                                                'quillbooking'
+                                            )}
+                                        </Text>
                                     )}
                                 </Flex>
-                            </List.Item>
-                        )}
-                    />
-                </Card>
-                <Modal
-                    open={visible}
-                    onCancel={() => setVisible(false)}
-                    title={__('Add Account', 'quillbooking')}
-                    footer={null}
-                >
-                    <Flex vertical gap={20}>
-                        <Flex vertical gap={20}>
+                            )}
+                            <Flex vertical gap={10} className='w-full'>
+                                <Text type="secondary" className="text-[#9197A4]">
+                                    {__(
+                                        'Additional Settings',
+                                        'quillbooking'
+                                    )}
+                                </Text>
+                                <Checkbox.Group>
+                                    <Checkbox className="custom-check text-base font-semibold text-color-primary-text">
+                                        {__(
+                                            `Enable ${integration.name} Calendar Notification`,
+                                            'quillbooking'
+                                        )}
+                                    </Checkbox>
+                                    <Checkbox className="custom-check text-base font-semibold text-color-primary-text">
+                                        {__(
+                                            'Guests Can See other Guests of the Slot',
+                                            'quillbooking'
+                                        )}
+                                    </Checkbox>
+                                </Checkbox.Group>
+                            </Flex>
+                        </Card>
+                    ))
+                )}
+            </Flex>
+        </Flex>
+    );
+
+    return (
+        <Card className="integration-details-page h-fit">
+            <Flex
+                align="center"
+                gap={16}
+                className="p-0 text-color-primary-text border-b pb-5 mb-5"
+            >
+                <img
+                    src={integration.icon}
+                    alt={integration.name}
+                    className="size-12"
+                />
+                <Flex justify="space-between" align="center">
+                    <div>
+                        <Text className="text-[#09090B] font-bold text-2xl block">
+                            {integration.name}
+                        </Text>
+                        <Text type="secondary" className="text-sm">
+                            {integration.description}
+                        </Text>
+                    </div>
+                    {canAddAccount() && (
+                        <Button
+                            onClick={() =>
+                                integration.auth_type === 'oauth'
+                                    ? handleConnectOAuth()
+                                    : setVisible(true)
+                            }
+                            icon={<PlusSquareOutlined />}
+                            loading={connectLoading}
+                            className="border-none shadow-none text-color-primary text-base font-medium"
+                        >
+                            {__('Add New', 'quillbooking')}
+                        </Button>
+                    )}
+                </Flex>
+            </Flex>
+            {!integration.has_accounts ? (
+                <>
+                    <div className="zoom-fields">
+                        <Flex vertical gap={10} className="w-full">
+                            <div className="text-[#71717A] italic">
+                                {__('Please read the', 'quillbooking')}
+                                <span className="cursor-pointer font-semibold underline mx-1">
+                                    {__('documentation here', 'quillbooking')}
+                                </span>
+                                {__(
+                                    'for step by step guide to know how you can get credentials from Zoom Account',
+                                    'quillbooking'
+                                )}
+                            </div>
                             {map(integration.fields, (field, fieldKey) => (
                                 <TextField
                                     key={fieldKey}
-                                    label={__(field.label || fieldKey, 'quillbooking')}
-                                    description={__(field.description || '', 'quillbooking')}
+                                    label={
+                                        <div className="text-[#3F4254] font-semibold text-[16px]">
+                                            {field.label}
+                                        </div>
+                                    }
+                                    description={__(
+                                        field.description || '',
+                                        'quillbooking'
+                                    )}
                                     type={field.type || 'text'}
                                     value={formValues[fieldKey] || ''}
-                                    onChange={(value) => handleFieldChange(fieldKey, value)}
+                                    onChange={(value) =>
+                                        handleFieldChange(fieldKey, value)
+                                    }
                                     required={field.required}
                                     placeholder={field.placeholder || ''}
                                 />
                             ))}
+
+                            <Divider />
+
+                            <div className="text-[#71717A] italic">
+                                {__(
+                                    ' The above app secret key will be encrypted and stored securely.',
+                                    'quillbooking'
+                                )}
+                            </div>
                         </Flex>
-                        <Button
-                            type="primary"
-                            onClick={handleConnectBasic}
-                            loading={connectLoading}
-                            style={{ marginTop: '10px' }}
-                        >
-                            {connectLoading ? __('Connecting...', 'quillbooking') : __('Connect Account', 'quillbooking')}
-                        </Button>
-                    </Flex>
-                </Modal>
-            </Flex>
-        </div>
+                        <div className="flex justify-end">
+                            <Button
+                                type="primary"
+                                onClick={handleConnectBasic}
+                                loading={connectLoading}
+                                style={{ marginTop: '10px' }}
+                            >
+                                {connectLoading
+                                    ? __(
+                                        'Saving & Validating...',
+                                        'quillbooking'
+                                    )
+                                    : __(
+                                        'Save & Validate Credentials',
+                                        'quillbooking'
+                                    )}
+                            </Button>
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    {visible ? (
+                        <Flex vertical gap={10} className="w-full">
+                            <div className="text-[#71717A] italic">
+                                {__(
+                                    'To connect to Apple Server, please enter your Apple Email and app specific password. Generate App Specific Password at',
+                                    'quillbooking'
+                                )}
+                                <span className="cursor-pointer font-semibold underline mx-1">
+                                    {__(
+                                        'https://appleid.apple.com/account/manage',
+                                        'quillbooking'
+                                    )}
+                                </span>
+                                {__(
+                                    'Your credentials will be stored as encrypted.',
+                                    'quillbooking'
+                                )}
+                            </div>
+                            {map(integration.fields, (field, fieldKey) => (
+                                <TextField
+                                    key={fieldKey}
+                                    label={
+                                        <div className="text-[#3F4254] font-semibold text-[16px]">
+                                            {field.label}
+                                        </div>
+                                    }
+                                    description={__(
+                                        field.description || '',
+                                        'quillbooking'
+                                    )}
+                                    type={field.type || 'text'}
+                                    value={formValues[fieldKey] || ''}
+                                    onChange={(value) =>
+                                        handleFieldChange(fieldKey, value)
+                                    }
+                                    required={field.required}
+                                    placeholder={field.placeholder || ''}
+                                />
+                            ))}
+                            <div className="flex justify-end">
+                                <Button
+                                    type="primary"
+                                    onClick={() => {
+                                        handleConnectBasic();
+                                        setVisible(false);
+                                    }}
+                                    loading={connectLoading}
+                                    style={{ marginTop: '10px' }}
+                                >
+                                    {connectLoading
+                                        ? __('Connecting...', 'quillbooking')
+                                        : __(
+                                            'Connect with Apple Calendar',
+                                            'quillbooking'
+                                        )}
+                                </Button>
+                            </div>
+                        </Flex>
+                    ) : (
+                        renderAccountList()
+                    )}
+                </>
+            )}
+        </Card>
     );
 };
 

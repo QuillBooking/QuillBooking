@@ -106,7 +106,7 @@ class Event_Fields {
 	public function get_default_additional_settings( $event_type ) {
 		$values = array(
 			'allow_attendees_to_select_duration' => false,
-			'default_duration'                   => '',
+			'default_duration'                   => 15,
 			'selectable_durations'               => array(
 				15,
 			),

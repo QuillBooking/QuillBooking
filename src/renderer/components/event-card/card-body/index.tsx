@@ -38,6 +38,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 	// Calculate total price from items if payments are enabled
 	const totalPrice = event.payments_settings?.items?.reduce((sum, item) => sum + item.price, 0) || 0;
 	const requiresPayment = event.payments_settings?.enable_payment && totalPrice > 0;
+	const hasPaymentGateways = (event.payments_settings?.enable_stripe || event.payments_settings?.enable_paypal);
 
 	const handleSelectedTime = (time: string | null) => {
 		setSelectedTime(time);
@@ -64,9 +65,16 @@ const CardBody: React.FC<CardBodyProps> = ({
 			);
 			formData.append('duration', selectedDuration.toString());
 
-			// Add payment_method if payment is required
-			if (requiresPayment) {
-				formData.append('payment_method', 'stripe');
+			// If payment is required, we need to include a payment method
+			// Add default payment method if available, to be selected properly in payment step
+			if (requiresPayment && hasPaymentGateways) {
+				// Default to the first available payment method
+				const defaultMethod = event.payments_settings?.enable_stripe ? 'stripe' : 
+				                     (event.payments_settings?.enable_paypal ? 'paypal' : null);
+				
+				if (defaultMethod) {
+					formData.append('payment_method', defaultMethod);
+				}
 			}
 
 			formData.append(
@@ -104,9 +112,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 
 			console.log('AJAX URL:', ajax_url);
 			console.log('Booking formData prepared');
-			if (requiresPayment) {
-				console.log('Payment required, including payment_method: stripe');
-			}
 			
 			const response = await fetch(ajax_url, {
 				method: 'POST',
@@ -124,8 +129,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 				throw new Error(data.data?.message || 'Unknown error occurred');
 			}
 			
-			// If payment is required, go to payment step
-			if (requiresPayment) {
+			// If payment is required and we have payment gateways, go to payment step
+			if (requiresPayment && hasPaymentGateways) {
 				console.log('Payment required, transitioning to payment step', { 
 					requiresPayment, 
 					bookingData: data.data.booking 
@@ -134,7 +139,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 				setStep(3); // Payment step
 			} else {
 				// Otherwise redirect to confirmation
-				console.log('No payment required, redirecting to confirmation');
+				console.log('No payment required or no payment gateways configured, redirecting to confirmation');
 				const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
 				console.log('Redirect URL:', redirectUrl);
 				(window.top || window).location.href = redirectUrl;
@@ -180,7 +185,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 						onSubmit={handleSave}
 					/>
 				)
-			) : step === 3 && requiresPayment && bookingData ? (
+			) : step === 3 && requiresPayment && hasPaymentGateways && bookingData ? (
 				<Payment
 					ajax_url={ajax_url}
 					setStep={setStep}

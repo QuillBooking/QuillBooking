@@ -13,6 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Include AJAX handler
+require_once dirname( __FILE__ ) . '/ajax-handler.php';
+
 /**
  * Process PayPal payment
  *

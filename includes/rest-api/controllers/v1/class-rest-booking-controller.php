@@ -600,7 +600,7 @@ class REST_Booking_Controller extends REST_Controller {
 
 			if ( 'cancelled' === $status ) {
 				$booking_data['cancelled_by'] = array(
-					'type' => 'user',
+					'type' => 'host',
 					'id'   => get_current_user_id(),
 				);
 				$booking->update_meta( 'cancellation_reason', $cancellation_reason );

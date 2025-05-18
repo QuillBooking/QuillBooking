@@ -41,6 +41,7 @@ export type Calendar = {
 		booking_count: number;
 		created_at: string;
 		payments_settings: PaymentsSettings;
+		additional_settings: AdditionalSettings;
 	}[];
 	created_at: string;
 	updated_at: string;

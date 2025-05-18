@@ -236,7 +236,7 @@ const CalendarEvents: React.FC<{
 										</Flex>
 
 										{/* static */}
-										<EventPrice payments_settings={event.payments_settings} duration={event.duration} />
+										<EventPrice payments_settings={event.payments_settings} duration={event.additional_settings.default_duration} />
 									</Flex>
 									<Flex
 										justify="space-between"

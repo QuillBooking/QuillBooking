@@ -506,34 +506,13 @@ class REST_Event_Controller extends REST_Controller {
 
 			// Validate payment settings if provided
 			if ( $payments_settings ) {
-				// Only validate if payments are enabled and there are items
-				$enable_payment = isset($payments_settings['enable_payment']) ? $payments_settings['enable_payment'] : false;
-				$has_items = !empty($payments_settings['items']);
+				// Use Payment_Validator to validate payment settings
+				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
 				
-				if ($enable_payment && $has_items) {
-					// Check if payment gateways are registered in the system
-					$payment_gateways_manager = \QuillBooking\Managers\Payment_Gateways_Manager::instance();
-					$payment_gateways = $payment_gateways_manager->get_items();
-					
-					// If no payment gateways are registered, add a warning but proceed
-					if (empty($payment_gateways)) {
-						error_log('QuillBooking REST API: Payment is enabled but no payment gateways are registered in the system.');
-					} else {
-						// Check if at least one payment gateway is enabled
-						$gateway_enabled = false;
-						foreach ($payment_gateways as $gateway) {
-							if (isset($payments_settings['enable_' . $gateway->slug]) && $payments_settings['enable_' . $gateway->slug]) {
-								$gateway_enabled = true;
-								break;
-							}
-						}
-						
-						if (!$gateway_enabled) {
-							error_log('QuillBooking REST API: Payment is enabled but no payment gateway is selected.');
-							// Instead of returning an error, we'll add a warning to the response
-							header('X-QuillBooking-Warning: Payment is enabled but no payment gateway is selected');
-						}
-					}
+				// If validation fails, add a warning header but proceed (since we don't want to block event creation)
+				if ( is_wp_error( $validation_result ) ) {
+					error_log( 'QuillBooking REST API: ' . $validation_result->get_error_message() );
+					header( 'X-QuillBooking-Warning: ' . $validation_result->get_error_message() );
 				}
 			}
 
@@ -833,34 +812,13 @@ class REST_Event_Controller extends REST_Controller {
 
 			// Validate payment settings
 			if ( $payments_settings ) {
-				// Only validate if payments are enabled and there are items
-				$enable_payment = isset($payments_settings['enable_payment']) ? $payments_settings['enable_payment'] : false;
-				$has_items = !empty($payments_settings['items']);
+				// Use Payment_Validator to validate payment settings
+				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
 				
-				if ($enable_payment && $has_items) {
-					// Check if payment gateways are registered in the system
-					$payment_gateways_manager = \QuillBooking\Managers\Payment_Gateways_Manager::instance();
-					$payment_gateways = $payment_gateways_manager->get_items();
-					
-					// If no payment gateways are registered, add a warning but proceed
-					if (empty($payment_gateways)) {
-						error_log('QuillBooking REST API: Payment is enabled but no payment gateways are registered in the system.');
-					} else {
-						// Check if at least one payment gateway is enabled
-						$gateway_enabled = false;
-						foreach ($payment_gateways as $gateway) {
-							if (isset($payments_settings['enable_' . $gateway->slug]) && $payments_settings['enable_' . $gateway->slug]) {
-								$gateway_enabled = true;
-								break;
-							}
-						}
-						
-						if (!$gateway_enabled) {
-							error_log('QuillBooking REST API: Payment is enabled but no payment gateway is selected.');
-							// Instead of returning an error, we'll add a warning to the response
-							header('X-QuillBooking-Warning: Payment is enabled but no payment gateway is selected');
-						}
-					}
+				// If validation fails, add a warning header but proceed (since we don't want to block event updates)
+				if ( is_wp_error( $validation_result ) ) {
+					error_log( 'QuillBooking REST API: ' . $validation_result->get_error_message() );
+					header( 'X-QuillBooking-Warning: ' . $validation_result->get_error_message() );
 				}
 			}
 

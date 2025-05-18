@@ -113,7 +113,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       
       <div className="payment-amount">
         <div className="info-icon">ℹ️</div>
-        <p>You are now about to pay {formatPrice(totalPrice)} to attend the event under the name <strong>{event.title || 'Sprint Planning Meeting'} - For {event.duration || '30'} Minutes</strong> as the online booking fees.</p>
+        <p>You are now about to pay {formatPrice(totalPrice)} to attend the event under the name <strong>{event.title} - For {event.duration} Minutes</strong> as the online booking fees.</p>
       </div>
       
       {hasEnabledPaymentMethods ? (

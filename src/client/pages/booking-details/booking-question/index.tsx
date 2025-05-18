@@ -13,16 +13,18 @@ interface BookingQuestionProps {
 }
 
 type FieldItem = {
-	label: string;
-	value: string;
+	[key: string]: string;
 };
 
 const BookingQuestion: React.FC<BookingQuestionProps> = ({ booking }) => {
-	const [fields, setFields] = useState<FieldItem[]>([]);
-
+	const [fields, setFields] = useState<FieldItem>({});
+	console.log(Object.entries(fields));
 	useEffect(() => {
 		if (booking && booking.fields) setFields(booking.fields);
 	}, [booking]);
+
+	if (Object.entries(fields).length === 0)  return null;
+	
 	return (
 		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
 			<CardHeader
@@ -35,17 +37,17 @@ const BookingQuestion: React.FC<BookingQuestionProps> = ({ booking }) => {
 			/>
 
 			<div>
-				{fields.map((field: FieldItem, index) => (
-					<div key={index}>
+				{Object.entries(fields).map(([key, value], index) => (
+					<div key={key || index} className="mb-6">
 						<div className="flex gap-3 items-center pb-2">
 							<QuestionIcon />
 							<p className="text-xl text-color-primary-text font-medium">
-								{field.label}
+								{key}
 							</p>
 						</div>
 						<div>
 							<p className="text-[#71717A] text-base pl-9">
-								{field.value}
+								{value}
 							</p>
 						</div>
 					</div>

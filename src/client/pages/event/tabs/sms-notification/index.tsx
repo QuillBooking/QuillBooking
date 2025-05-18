@@ -187,7 +187,7 @@ const SmsNotificationTab = forwardRef<
 
 	return (
 		<div className="w-full px-9">
-			{!event?.connected_integrations.twilio.connected ? (
+			{false ? (
 				<Card>
 					<CardHeader
 						title={__('Sms Notification', 'quillbooking')}

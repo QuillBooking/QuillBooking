@@ -2,89 +2,95 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 
 /**
  * External dependencies
  */
-import { Card, Typography, Badge, Flex, Tooltip } from 'antd';
-import { map, isEmpty } from 'lodash';
+import { Card } from 'antd';
 import { useParams } from 'react-router-dom';
 
 /**
  * Internal dependencies
  */
 import './style.scss';
-import { useNavigate, useBreadcrumbs } from '@quillbooking/hooks';
-import { useCalendarContext } from '../../state/context';
+import { useApi } from '@quillbooking/hooks';
 import ConfigAPI from '@quillbooking/config';
 import IntegrationDetailsPage from './integration';
-
-const { Title, Text } = Typography;
+import {
+	AdvancedSettingsIcon,
+	CardHeader,
+	NoticeBanner,
+} from '@quillbooking/components';
+import { NoticeMessage } from '@quillbooking/client';
+import SelectionCard from '../../../integrations/tabs/conferencing-calendars/selection-card';
 
 const IntegrationCards: React.FC = () => {
-    const { id, subtab } = useParams<{ id: string; tab: string, subtab: string }>();
-    const navigate = useNavigate();
-    const { state } = useCalendarContext();
-    const setBreadcrumbs = useBreadcrumbs();
-    const integrations = ConfigAPI.getIntegrations();
+	const { id } = useParams<{
+		id: string;
+	}>();
+	const [activeTab, setActiveTab] = useState<string | null>(null);
+	const integrations = Object.entries(ConfigAPI.getIntegrations())
+		.filter(([key]) => key !== 'twilio')
+		.map(([key, integration]) => ({
+			id: key,
+			...integration,
+		}));
+	const { loading } = useApi();
+	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 
-    useEffect(() => {
-        if (!state) {
-            return;
-        }
+	useEffect(() => {
+		if (integrations.length > 0 && !activeTab) {
+			setActiveTab(integrations[0].id);
+		}
+	}, [integrations, activeTab]);
 
-        setBreadcrumbs([
-            {
-                path: `calendars/${state.id}/integrations`,
-                title: __('Integrations', 'quillbooking')
-            }
-        ]);
-    }, [state]);
+	// Find the active integration
+	const activeIntegration = activeTab 
+		? integrations.find(int => int.id === activeTab) 
+		: null;
 
-    if (subtab && id) {
-        return <IntegrationDetailsPage integration={integrations[subtab]} calendarId={id} slug={subtab} />;
-    }
-
-    return (
-        <div className='quillbooking-integrations'>
-            <div className='quillbooking-integrations-cards'>
-                {map(integrations, (integration, index) => !integration.is_global ? (
-                    <Card
-                        style={{
-                            flex: '1',
-                            cursor: 'pointer',
-                        }}
-                        key={index}
-                        onClick={() => navigate(`calendars/${id}/integrations/${index}`)}
-                        loading={!state}
-                    >
-                        <Flex
-                            vertical
-                            gap={10}
-                        >
-                            <Flex justify='space-between'>
-                                <div className="quillbooking-integration-icon">
-                                    <img src={integration.icon} alt={integration.name} width={40} />
-                                </div>
-                                <Tooltip title={!isEmpty(integration.settings) ? __('Connected', 'quillbooking') : __('Not connected', 'quillbooking')}>
-                                    <Badge
-                                        status={!isEmpty(integration.settings) ? 'success' : 'default'}
-                                    />
-                                </Tooltip>
-                            </Flex>
-                            <Title level={4} style={{ margin: 0 }}>
-                                {integration.name}
-                            </Title>
-                            <Text type="secondary" style={{ fontSize: '14px' }}>
-                                {integration.description}
-                            </Text>
-                        </Flex>
-                    </Card>
-                ) : null)}
-            </div>
-        </div>
-    );
+	return (
+		<div className="quillbooking-integrations">
+			<Card>
+				<CardHeader
+					title={__(
+						'Remote Calendar & Conferencing Sync Settings.',
+						'quillbooking'
+					)}
+					description={__(
+						'Set the Zoom account to create meeting when a event is booked and calendars to check for conflicts to prevent double bookings and add events to your remote calendar.',
+						'quillbooking'
+					)}
+					icon={<AdvancedSettingsIcon />}
+					border={false}
+				/>
+				<div className="quillbooking-conferencing-calendars grid grid-cols-2 gap-5 w-full">
+					{notice && (
+						<div className="col-span-2">
+							<NoticeBanner
+								notice={notice}
+								closeNotice={() => setNotice(null)}
+							/>
+						</div>
+					)}
+					<SelectionCard
+						integrations={integrations}
+						activeTab={activeTab}
+						setActiveTab={setActiveTab}
+						isLoading={loading}
+					/>
+					{activeTab && activeIntegration && id && (
+						<IntegrationDetailsPage
+							integration={activeIntegration}
+							calendarId={id}
+							slug={activeTab}
+						/>
+					)}
+				</div>
+			</Card>
+		</div>
+	);
 };
 
 export default IntegrationCards;

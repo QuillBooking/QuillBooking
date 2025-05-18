@@ -71,7 +71,7 @@ registerAdminPage('calendars', {
 });
 
 registerAdminPage('calendar', {
-	path: 'calendars/:id/:tab?/:subtab?',
+	path: 'calendars/:id',
 	component: () => <Calendar />,
 	label: __('Calendar', 'quillbooking'),
 	hidden: true,

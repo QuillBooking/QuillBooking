@@ -54,7 +54,7 @@ const GeneralSettings: React.FC = () => {
 	return (
 		<Card className="quillbooking-calendar-settings">
 			<CardHeader
-				title={__('General Settings', 'quillbooking')}
+				title={__('General Host Settings', 'quillbooking')}
 				description={__(
 					'Manage general settings for this calendar.',
 					'quillbooking'

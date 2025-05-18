@@ -7,11 +7,11 @@
  * @package QuillBooking
  */
 
-namespace QuillBooking\Payment_Gateways\PayPal;
+namespace QuillBooking\Payment_Gateways\Paypal;
 
 use Illuminate\Support\Arr;
 use QuillBooking\Models\Booking_Model;
-use QuillBooking\Payment_Gateways\PayPal\Payment_Gateway;
+use QuillBooking\Payment_Gateways\Paypal\Payment_Gateway;
 
 /**
  * Webhook class.

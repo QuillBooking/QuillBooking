@@ -108,6 +108,7 @@ class QuillBooking {
 		Booking::instance();
 		WooCommerce::instance();
 		Webhook_Feeds::instance();
+		
 	}
 
 	/**

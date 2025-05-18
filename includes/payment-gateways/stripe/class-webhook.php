@@ -11,7 +11,7 @@ namespace QuillBooking\Payment_Gateways\Stripe;
 
 use Illuminate\Support\Arr;
 use QuillBooking\Models\Booking_Model;
-use QuillBooking\Payment_Gateways\PayPal\Payment_Gateway;
+use QuillBooking\Payment_Gateways\Stripe\Payment_Gateway;
 use Stripe\StripeClient;
 use Stripe\Webhook as StripeWebhook;
 
@@ -54,7 +54,7 @@ class Webhook {
 	}
 
 	/**
-	 * Processes the PayPal webhook.
+	 * Processes the Stripe webhook.
 	 *
 	 * @return void
 	 */
@@ -86,9 +86,135 @@ class Webhook {
 			);
 
 			error_log( 'Webhook Event Data: ' . wp_json_encode( $event ) );
-		} catch ( Throwable $e ) {
-			$this->respond( 400 );
+			
+			// Process the webhook event
+			$this->process_webhook_event($event);
+			
+		} catch ( \Throwable $e ) {
+			error_log('Stripe Webhook Error: ' . $e->getMessage());
+			$this->respond( 400, $e->getMessage() );
 		}
+		
+		// If we got here, everything went well
+		$this->respond( 200, 'Webhook processed successfully' );
+	}
+	
+	/**
+	 * Process webhook event
+	 *
+	 * @param \Stripe\Event $event Stripe event.
+	 * @return void
+	 */
+	private function process_webhook_event($event) {
+		switch ($event->type) {
+			case 'payment_intent.succeeded':
+				$payment_intent = $event->data->object;
+				$this->process_payment_intent_succeeded($payment_intent);
+				break;
+			
+			case 'payment_intent.payment_failed':
+				$payment_intent = $event->data->object;
+				$this->process_payment_intent_failed($payment_intent);
+				break;
+				
+			// Handle other webhook events as needed
+		}
+	}
+
+	/**
+	 * Process a successful payment intent
+	 *
+	 * @param object $payment_intent The payment intent object from Stripe
+	 */
+	private function process_payment_intent_succeeded($payment_intent) {
+		// Find booking by payment intent ID
+		$booking = $this->find_booking_by_payment_intent($payment_intent->id);
+		
+		if (!$booking) {
+			return;
+		}
+		
+		// Update booking payment status
+		$booking->setPaymentStatus('completed');
+		
+		// Log the payment
+		$booking->logs()->create([
+			'type' => 'info',
+			'message' => __('Payment processed', 'quillbooking'),
+			'details' => sprintf(
+				__('Payment of %s %s processed successfully via Stripe', 'quillbooking'),
+				$payment_intent->amount / 100,
+				strtoupper($payment_intent->currency)
+			),
+		]);
+		
+		// Create order if it doesn't exist
+		if (!$booking->order) {
+			$booking->order()->create([
+				'items' => $booking->event->getItems(),
+				'total' => $payment_intent->amount / 100,
+				'currency' => strtoupper($payment_intent->currency),
+				'payment_method' => 'stripe',
+				'status' => 'completed',
+			]);
+		} else {
+			$booking->order->status = 'completed';
+			$booking->order->save();
+		}
+	}
+
+	/**
+	 * Process a failed payment intent
+	 *
+	 * @param object $payment_intent The payment intent object from Stripe
+	 */
+	private function process_payment_intent_failed($payment_intent) {
+		// Find booking by payment intent ID
+		$booking = $this->find_booking_by_payment_intent($payment_intent->id);
+		
+		if (!$booking) {
+			return;
+		}
+		
+		// Update booking payment status
+		$booking->setPaymentStatus('failed');
+		
+		// Log the payment failure
+		$booking->logs()->create([
+			'type' => 'error',
+			'message' => __('Payment failed', 'quillbooking'),
+			'details' => sprintf(
+				__('Payment of %s %s failed: %s', 'quillbooking'),
+				$payment_intent->amount / 100,
+				strtoupper($payment_intent->currency),
+				$payment_intent->last_payment_error ? $payment_intent->last_payment_error->message : 'Unknown error'
+			),
+		]);
+	}
+
+	/**
+	 * Find booking by payment intent ID
+	 *
+	 * @param string $payment_intent_id The payment intent ID
+	 * @return \QuillBooking\Models\Booking_Model|null
+	 */
+	private function find_booking_by_payment_intent($payment_intent_id) {
+		global $wpdb;
+		
+		$table_name = $wpdb->prefix . 'quillbooking_booking_meta';
+		
+		$query = $wpdb->prepare(
+			"SELECT booking_id FROM {$table_name} WHERE meta_key = 'stripe_payment_intent_id' AND meta_value = %s LIMIT 1",
+			$payment_intent_id
+		);
+		
+		$booking_id = $wpdb->get_var($query);
+		
+		if (!$booking_id) {
+			return null;
+		}
+		
+		return \QuillBooking\Models\Booking_Model::find($booking_id);
 	}
 
 	/**

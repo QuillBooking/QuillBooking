@@ -241,13 +241,14 @@ class REST_Settings_Controller extends REST_Controller {
 		// Validate payment settings if they're being updated
 		if ( isset( $settings['payments'] ) ) {
 			$payments_settings = $settings['payments'];
-
-			// If there are event-specific payment settings being updated
-			if ( isset( $payments_settings['enable_payment'] ) ) {
-				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
-				if ( is_wp_error( $validation_result ) ) {
-					return $validation_result;
-				}
+			
+			// Use Payment_Validator to validate payment settings
+			$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+			
+			// If validation fails, add a warning header but proceed (since we don't want to block settings update)
+			if ( is_wp_error( $validation_result ) ) {
+				error_log( 'QuillBooking Settings API: ' . $validation_result->get_error_message() );
+				header( 'X-QuillBooking-Warning: ' . $validation_result->get_error_message() );
 			}
 		}
 

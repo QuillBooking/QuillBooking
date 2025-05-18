@@ -6,20 +6,20 @@
  * @package QuillBooking
  */
 
-namespace QuillBooking\Payment_Gateways\PayPal;
+namespace QuillBooking\Payment_Gateways\Paypal;
 
 use QuillBooking\Payment_Gateways\Paypal\Payment_Gateway;
-use QuillBooking\Payment_Gateways\PayPal\Payment_Service;
+use QuillBooking\Payment_Gateways\Paypal\Payment_Service;
 use QuillBooking\Models\Booking_Model;
 
 /**
  * Initialize PayPal AJAX handlers
  */
 function init_paypal_ajax_handlers() {
-    add_action('wp_ajax_quillbooking_init_paypal', 'QuillBooking\Payment_Gateways\PayPal\ajax_init_paypal');
-    add_action('wp_ajax_nopriv_quillbooking_init_paypal', 'QuillBooking\Payment_Gateways\PayPal\ajax_init_paypal');
+    add_action('wp_ajax_quillbooking_init_paypal', 'QuillBooking\Payment_Gateways\Paypal\ajax_init_paypal');
+    add_action('wp_ajax_nopriv_quillbooking_init_paypal', 'QuillBooking\Payment_Gateways\Paypal\ajax_init_paypal');
 }
-add_action('init', 'QuillBooking\Payment_Gateways\PayPal\init_paypal_ajax_handlers');
+add_action('init', 'QuillBooking\Payment_Gateways\Paypal\init_paypal_ajax_handlers');
 
 /**
  * AJAX handler for initializing PayPal payment
@@ -40,7 +40,27 @@ function ajax_init_paypal() {
         $booking = Booking_Model::getByHashId($booking_hash_id);
         
         if (!$booking) {
+            error_log('PayPal AJAX Init - Booking not found: ' . $booking_hash_id);
             throw new \Exception(__('Booking not found', 'quillbooking'));
+        }
+
+        // Validate the event exists
+        $event = $booking->event;
+        if (!$event) {
+            error_log('PayPal AJAX Init - Event not found for booking: ' . $booking_hash_id);
+            throw new \Exception(__('Event not found for this booking', 'quillbooking'));
+        }
+
+        // Validate payment is required
+        if (!isset($event->payments_settings['enable_payment']) || !$event->payments_settings['enable_payment']) {
+            error_log('PayPal AJAX Init - Payment not enabled for event: ' . $event->id);
+            throw new \Exception(__('Payment is not enabled for this event', 'quillbooking'));
+        }
+
+        // Validate PayPal is enabled
+        if (!isset($event->payments_settings['enable_paypal']) || !$event->payments_settings['enable_paypal']) {
+            error_log('PayPal AJAX Init - PayPal not enabled for event: ' . $event->id);
+            throw new \Exception(__('PayPal payment is not enabled for this event', 'quillbooking'));
         }
         
         // Create PayPal gateway instance
@@ -69,6 +89,7 @@ function ajax_init_paypal() {
             )
         );
     } catch (\Exception $e) {
+        error_log('PayPal AJAX Init - Error: ' . $e->getMessage());
         wp_send_json_error(
             array(
                 'message' => $e->getMessage(),

@@ -7,7 +7,7 @@
  */
 
 use QuillBooking\Payment_Gateways\Paypal\Payment_Gateway;
-use QuillBooking\Payment_Gateways\PayPal\Payment_Service;
+use QuillBooking\Payment_Gateways\Paypal\Payment_Service;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

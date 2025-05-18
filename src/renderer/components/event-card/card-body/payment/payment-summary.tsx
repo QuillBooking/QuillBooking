@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './style.scss';
 
 interface PaymentSummaryProps {
@@ -26,6 +26,16 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     stripe: event.payments_settings?.enable_stripe,
     paypal: event.payments_settings?.enable_paypal
   };
+
+  // Check if any payment method is enabled
+  const hasEnabledPaymentMethods = paymentMethods.stripe || paymentMethods.paypal;
+
+  useEffect(() => {
+    // If no payment methods are enabled, show an error
+    if (!hasEnabledPaymentMethods) {
+      setError('No payment methods are enabled for this event.');
+    }
+  }, [hasEnabledPaymentMethods]);
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -92,29 +102,35 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         <p>You are now about to pay {formatPrice(totalPrice)} to attend the event under the name <strong>{bookingData.guest?.name}</strong></p>
       </div>
       
-      <div className="payment-method-selection">
-        <p>Select Payment Way</p>
-        
-        <div className="payment-methods">
-          {paymentMethods.paypal && (
-            <div 
-              className={`payment-method-option ${selectedPaymentMethod === 'paypal' ? 'selected' : ''}`}
-              onClick={() => handlePaymentMethodSelect('paypal')}
-            >
-              <img src="/wp-content/plugins/QuillBooking/assets/icons/paypal/paypal.png" alt="PayPal" />
-            </div>
-          )}
+      {hasEnabledPaymentMethods ? (
+        <div className="payment-method-selection">
+          <p>Select Payment Way</p>
           
-          {paymentMethods.stripe && (
-            <div 
-              className={`payment-method-option ${selectedPaymentMethod === 'stripe' ? 'selected' : ''}`}
-              onClick={() => handlePaymentMethodSelect('stripe')}
-            >
-              <img src="/wp-content/plugins/QuillBooking/assets/icons/stripe/stripe.png" alt="Stripe" />
-            </div>
-          )}
+          <div className="payment-methods">
+            {paymentMethods.paypal && (
+              <div 
+                className={`payment-method-option ${selectedPaymentMethod === 'paypal' ? 'selected' : ''}`}
+                onClick={() => handlePaymentMethodSelect('paypal')}
+              >
+                <img src="/wp-content/plugins/QuillBooking/assets/icons/paypal/paypal.png" alt="PayPal" />
+              </div>
+            )}
+            
+            {paymentMethods.stripe && (
+              <div 
+                className={`payment-method-option ${selectedPaymentMethod === 'stripe' ? 'selected' : ''}`}
+                onClick={() => handlePaymentMethodSelect('stripe')}
+              >
+                <img src="/wp-content/plugins/QuillBooking/assets/icons/stripe/stripe.png" alt="Stripe" />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="payment-error-message">
+          <p>No payment methods are available for this event. Please contact the event organizer.</p>
+        </div>
+      )}
       
       {error && (
         <div className="error-message">{error}</div>
@@ -129,14 +145,16 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         >
           Back
         </button>
-        <button 
-          type="button" 
-          className="continue-button"
-          onClick={handleContinueToPayment}
-          disabled={isLoading || !selectedPaymentMethod}
-        >
-          {isLoading ? 'Processing...' : 'Continue to Payment'}
-        </button>
+        {hasEnabledPaymentMethods && (
+          <button 
+            type="button" 
+            className="continue-button"
+            onClick={handleContinueToPayment}
+            disabled={isLoading || !selectedPaymentMethod}
+          >
+            {isLoading ? 'Processing...' : 'Continue to Payment'}
+          </button>
+        )}
       </div>
     </div>
   );

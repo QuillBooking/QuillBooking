@@ -14,8 +14,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Include AJAX handler
+require_once dirname( __FILE__ ) . '/ajax-handler.php';
+
 /**
- * Initialize Stripe Payment Service and register AJAX handlers
+ * Initialize Stripe Payment Service and register webhook handler
  */
 function quillbooking_init_stripe_payment_service() {
 	// Check if the Stripe Payment Service class exists before initializing
@@ -23,7 +26,7 @@ function quillbooking_init_stripe_payment_service() {
 		// Create an instance of the payment gateway
 		$payment_gateway = new Payment_Gateway();
 
-        		// Make sure we have settings configured
+		// Make sure we have settings configured
 		$mode_settings = $payment_gateway->get_mode_settings();
 		if (!$mode_settings) {
 			error_log('Stripe Payment Service - Configuration missing');
@@ -36,46 +39,9 @@ function quillbooking_init_stripe_payment_service() {
 		if (class_exists('\\QuillBooking\\Payment_Gateways\\Stripe\\Webhook')) {
 			new Webhook($payment_gateway);
 		}
-		
-		// Register AJAX handlers
-		add_action('wp_ajax_quillbooking_init_stripe', 'quillbooking_ajax_init_stripe');
-		add_action('wp_ajax_nopriv_quillbooking_init_stripe', 'quillbooking_ajax_init_stripe');
 	}
 }
 add_action('plugins_loaded', 'quillbooking_init_stripe_payment_service');
-
-/**
- * AJAX handler for initializing Stripe payment
- */
-function quillbooking_ajax_init_stripe() {
-	// Debug logging
-	error_log('Stripe AJAX Init - Starting');
-	error_log('POST data: ' . print_r($_POST, true));
-	
-	try {
-		// Create Stripe gateway instance
-		$payment_gateway = new Payment_Gateway();
-		
-		// Check if Stripe is configured
-		$mode_settings = $payment_gateway->get_mode_settings();
-		if (!$mode_settings) {
-			error_log('Stripe AJAX Init - Configuration missing');
-			wp_send_json_error(array('message' => __('Stripe is not properly configured', 'quillbooking')));
-			return;
-		}
-		
-		error_log('Stripe AJAX Init - Gateway configured: ' . json_encode($mode_settings));
-		
-		// Initialize payment service
-		$payment_service = new Payment_Service($payment_gateway);
-		
-		// Call the ajax_init_stripe method
-		$payment_service->ajax_init_stripe();
-	} catch (Exception $e) {
-		error_log('Stripe AJAX Init - Exception: ' . $e->getMessage());
-		wp_send_json_error(array('message' => $e->getMessage()));
-	}
-}
 
 /**
  * Process Stripe payment

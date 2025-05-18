@@ -7,7 +7,7 @@
  * @package QuillBooking
  */
 
-namespace QuillBooking\Payment_Gateways\PayPal;
+namespace QuillBooking\Payment_Gateways\Paypal;
 
 use Illuminate\Support\Arr;
 use QuillBooking\Payment_Gateway\Payment_Service as Abstract_Payment_Service;

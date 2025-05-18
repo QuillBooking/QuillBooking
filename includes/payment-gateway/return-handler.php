@@ -39,15 +39,18 @@ function quillbooking_payment_return_handler() {
             
             // Determine redirect URL based on action
             if ($action === 'return') {
-                // Redirect to confirmation page
-                $redirect_url = site_url("/?quillbooking=booking&id={$booking_id}&type=confirm");
+                // Redirect to confirmation page - use home_url() which includes the full site path
+                $redirect_url = home_url("/?quillbooking=booking&id={$booking_id}&type=confirm");
             } elseif ($action === 'cancel') {
-                // Redirect to cancel page
-                $redirect_url = site_url("/?quillbooking=booking&id={$booking_id}&type=cancel");
+                // Redirect to cancel page - use home_url() which includes the full site path
+                $redirect_url = home_url("/?quillbooking=booking&id={$booking_id}&type=cancel");
             } else {
-                // Default to confirmation page
-                $redirect_url = site_url("/?quillbooking=booking&id={$booking_id}&type=confirm");
+                // Default to confirmation page - use home_url() which includes the full site path
+                $redirect_url = home_url("/?quillbooking=booking&id={$booking_id}&type=confirm");
             }
+            
+            // Log the redirection URL (helpful for debugging)
+            error_log('QuillBooking: Redirecting payment return to: ' . $redirect_url);
             
             // Redirect the user
             wp_redirect($redirect_url);

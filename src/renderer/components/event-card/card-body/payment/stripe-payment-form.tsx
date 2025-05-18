@@ -34,8 +34,10 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
     setIsLoading(true);
     setErrorMessage(null);
 
-    // Generate the confirmation URL
-    const confirmUrl = `${window.location.origin}/?quillbooking=booking&id=${bookingData.hash_id}&type=confirm`;
+    // Generate the confirmation URL using event_url if available, or fall back to window.location.origin
+    // This ensures we're using the same base URL that was used for the booking
+    const baseUrl = bookingData.event_url || window.location.origin;
+    const confirmUrl = `${baseUrl}/?quillbooking=booking&id=${bookingData.hash_id}&type=confirm`;
 
     const { error } = await stripe.confirmPayment({
       elements,

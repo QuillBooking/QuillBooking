@@ -144,7 +144,7 @@ class Payment_Service extends Abstract_Payment_Service {
 	 * @return string
 	 */
 	public function get_notify_url() {
-		return site_url( "?quillbooking_paypal_webhook={$this->mode_settings['mode']}" );
+		return home_url( "?quillbooking_paypal_webhook={$this->mode_settings['mode']}" );
 	}
 
 	/**
@@ -155,7 +155,7 @@ class Payment_Service extends Abstract_Payment_Service {
 	 * @return string
 	 */
 	public function get_return_url() {
-		return site_url( "?quillbooking_payment={$this->mode_settings['mode']}&method={$this->payment_gateway->slug}&action=return&booking_id={$this->booking->hash_id}" );
+		return home_url( "?quillbooking_payment={$this->mode_settings['mode']}&method={$this->payment_gateway->slug}&action=return&booking_id={$this->booking->hash_id}" );
 	}
 
 	/**
@@ -166,7 +166,7 @@ class Payment_Service extends Abstract_Payment_Service {
 	 * @return string
 	 */
 	public function get_cancel_url() {
-		return site_url( "?quillbooking_payment={$this->mode_settings['mode']}&method={$this->payment_gateway->slug}&action=cancel&booking_id={$this->booking->hash_id}" );
+		return home_url( "?quillbooking_payment={$this->mode_settings['mode']}&method={$this->payment_gateway->slug}&action=cancel&booking_id={$this->booking->hash_id}" );
 	}
 
 		/**

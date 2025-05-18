@@ -4,6 +4,7 @@ import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 // Import payment method icons
 import paypalIcon from '../../../../../../assets/icons/paypal/paypal.png';
 import stripeIcon from '../../../../../../assets/icons/stripe/stripe.png';
+import woocommerceIcon from '../../../../../../assets/icons/woocommerce/woocommerce.png';
 
 interface PaymentSummaryProps {
   ajax_url: string;
@@ -28,11 +29,12 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   // Determine available payment methods from event settings
   const paymentMethods = {
     stripe: event.payments_settings?.enable_stripe,
-    paypal: event.payments_settings?.enable_paypal
+    paypal: event.payments_settings?.enable_paypal,
+    woocommerce: event.payments_settings?.enable_woocommerce
   };
 
   // Check if any payment method is enabled
-  const hasEnabledPaymentMethods = paymentMethods.stripe || paymentMethods.paypal;
+  const hasEnabledPaymentMethods = paymentMethods.stripe || paymentMethods.paypal || paymentMethods.woocommerce;
 
   useEffect(() => {
     // If no payment methods are enabled, show an error
@@ -81,6 +83,12 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       // For PayPal, redirect to payment URL
       if (selectedPaymentMethod === 'paypal' && data.data.redirect_url) {
         window.location.href = data.data.redirect_url;
+        return;
+      }
+
+      // For WooCommerce, redirect to checkout URL
+      if (selectedPaymentMethod === 'woocommerce' && data.data.url) {
+        window.location.href = data.data.url;
         return;
       }
 
@@ -144,6 +152,19 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
                   onChange={() => handlePaymentMethodSelect('stripe')}
                 />
                 <img src={stripeIcon} alt="Stripe" />
+              </label>
+            )}
+
+            {paymentMethods.woocommerce && (
+              <label className={`payment-method-radio ${selectedPaymentMethod === 'woocommerce' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="woocommerce"
+                  checked={selectedPaymentMethod === 'woocommerce'}
+                  onChange={() => handlePaymentMethodSelect('woocommerce')}
+                />
+                <img src={woocommerceIcon} alt="WooCommerce" />
               </label>
             )}
           </div>

@@ -38,7 +38,9 @@ const CardBody: React.FC<CardBodyProps> = ({
 	// Calculate total price from items if payments are enabled
 	const totalPrice = event.payments_settings?.items?.reduce((sum, item) => sum + item.price, 0) || 0;
 	const requiresPayment = event.payments_settings?.enable_payment && totalPrice > 0;
-	const hasPaymentGateways = (event.payments_settings?.enable_stripe || event.payments_settings?.enable_paypal);
+	const hasPaymentGateways = (event.payments_settings?.enable_stripe || 
+	                           event.payments_settings?.enable_paypal || 
+	                           event.payments_settings?.enable_woocommerce);
 
 	const handleSelectedTime = (time: string | null) => {
 		setSelectedTime(time);
@@ -70,7 +72,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 			if (requiresPayment && hasPaymentGateways) {
 				// Default to the first available payment method
 				const defaultMethod = event.payments_settings?.enable_stripe ? 'stripe' : 
-				                     (event.payments_settings?.enable_paypal ? 'paypal' : null);
+				                     (event.payments_settings?.enable_paypal ? 'paypal' : 
+				                     (event.payments_settings?.enable_woocommerce ? 'woocommerce' : null));
 				
 				if (defaultMethod) {
 					formData.append('payment_method', defaultMethod);

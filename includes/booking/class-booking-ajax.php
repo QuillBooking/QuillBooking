@@ -315,6 +315,19 @@ class Booking_Ajax {
 			if ( ! isset( $event->payments_settings[ $method_enabled_key ] ) || ! $event->payments_settings[ $method_enabled_key ] ) {
 				throw new \Exception( __( 'Selected payment method is not available', 'quillbooking' ) );
 			}
+			
+			// Additional validation for WooCommerce payment method
+			if ( 'woocommerce' === $payment_method ) {
+				// Check if WooCommerce is active
+				if ( ! class_exists( 'WooCommerce' ) ) {
+					throw new \Exception( __( 'WooCommerce is not active', 'quillbooking' ) );
+				}
+				
+				// Check if product is set
+				if ( ! isset( $event->payments_settings['woo_product'] ) || empty( $event->payments_settings['woo_product'] ) ) {
+					throw new \Exception( __( 'No WooCommerce product configured for this event', 'quillbooking' ) );
+				}
+			}
 
 			// Process the payment through the payment gateway
 			do_action(

@@ -118,17 +118,37 @@ const Payment: React.FC<PaymentProps> = ({ ajax_url, setStep, bookingData, event
         formData.append('booking_id', bookingData.hash_id);
         
         console.log('Sending request to', ajax_url);
+        console.log('With booking_id:', bookingData.hash_id);
+        
         const response = await fetch(ajax_url, {
           method: 'POST',
           body: formData
         });
         
-        if (!response.ok) {
-          console.error('Server returned error status:', response.status);
-          throw new Error('Failed to initialize payment');
+        // Log the full response for debugging
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+        
+        let data;
+        try {
+          // Try to parse the response as JSON
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Failed to parse response as JSON:', parseError);
+          throw new Error('The server returned an invalid response format');
         }
         
-        const data = await response.json();
+        if (!response.ok) {
+          console.error('Server returned error status:', response.status);
+          console.error('Error response:', data);
+          
+          const errorMessage = data && data.data && data.data.message 
+            ? data.data.message 
+            : 'An unknown error occurred while initializing payment';
+            
+          throw new Error(errorMessage);
+        }
+        
         console.log('Payment initialization response:', data);
         
         if (data.success) {
@@ -138,7 +158,7 @@ const Payment: React.FC<PaymentProps> = ({ ajax_url, setStep, bookingData, event
           setPaymentIntent(data.data.client_secret);
         } else {
           console.error('Payment initialization failed:', data);
-          throw new Error(data.data.message || 'Failed to initialize payment');
+          throw new Error(data.data && data.data.message ? data.data.message : 'Failed to initialize payment');
         }
       } catch (err: any) {
         console.error('Error in payment initialization:', err);

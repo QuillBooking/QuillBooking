@@ -109,10 +109,6 @@ class QuillBooking {
 		WooCommerce::instance();
 		Webhook_Feeds::instance();
 		
-		// Initialize the Stripe Payment Service
-		if (class_exists('\\QuillBooking\\Payment_Gateways\\Stripe\\Payment_Service')) {
-			new \QuillBooking\Payment_Gateways\Stripe\Payment_Service();
-		}
 	}
 
 	/**

@@ -16,3 +16,7 @@ use QuillBooking\Payment_Gateways\Stripe\Payment_Gateway as Stripe_Payment_Gatew
 
 Paypal_Payment_Gateway::instance();
 Stripe_Payment_Gateway::instance();
+
+// Load payment gateway hooks
+require_once dirname( __FILE__ ) . '/paypal/hooks.php';
+require_once dirname( __FILE__ ) . '/stripe/hooks.php';

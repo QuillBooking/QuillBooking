@@ -168,4 +168,18 @@ class Payment_Service extends Abstract_Payment_Service {
 	public function get_cancel_url() {
 		return site_url( "?quillbooking_payment={$this->mode_settings['mode']}&method={$this->payment_gateway->slug}&action=cancel&booking_id={$this->booking->hash_id}" );
 	}
+
+		/**
+	 * Set booking for the payment service.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \QuillBooking\Models\Booking_Model $booking The booking model.
+	 * @return self
+	 */
+	public function set_booking( $booking ) {
+		$this->booking       = $booking;
+		$this->mode_settings = $this->payment_gateway->get_mode_settings();
+		return $this;
+	}
 }

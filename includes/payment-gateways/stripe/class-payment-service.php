@@ -111,7 +111,8 @@ class Payment_Service extends Abstract_Payment_Service {
 				),
 				'metadata'                  => array(
 					'quillbooking' => true,
-					'booking_id'   => $this->booking->id,
+					'booking_id'   => $this->booking->hash_id,
+					'booking_numeric_id' => $this->booking->id,
 					'guest_name'   => $this->booking->guest->name,
 					'guest_email'  => $this->booking->guest->email,
 				),

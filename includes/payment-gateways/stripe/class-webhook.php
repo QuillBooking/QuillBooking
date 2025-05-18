@@ -11,7 +11,7 @@ namespace QuillBooking\Payment_Gateways\Stripe;
 
 use Illuminate\Support\Arr;
 use QuillBooking\Models\Booking_Model;
-use QuillBooking\Payment_Gateways\PayPal\Payment_Gateway;
+use QuillBooking\Payment_Gateways\Stripe\Payment_Gateway;
 use Stripe\StripeClient;
 use Stripe\Webhook as StripeWebhook;
 
@@ -54,7 +54,7 @@ class Webhook {
 	}
 
 	/**
-	 * Processes the PayPal webhook.
+	 * Processes the Stripe webhook.
 	 *
 	 * @return void
 	 */
@@ -86,8 +86,90 @@ class Webhook {
 			);
 
 			error_log( 'Webhook Event Data: ' . wp_json_encode( $event ) );
-		} catch ( Throwable $e ) {
-			$this->respond( 400 );
+			
+			// Process the webhook event
+			$this->process_webhook_event($event);
+			
+		} catch ( \Throwable $e ) {
+			error_log('Stripe Webhook Error: ' . $e->getMessage());
+			$this->respond( 400, $e->getMessage() );
+		}
+		
+		// If we got here, everything went well
+		$this->respond( 200, 'Webhook processed successfully' );
+	}
+	
+	/**
+	 * Process webhook event
+	 *
+	 * @param \Stripe\Event $event Stripe event.
+	 * @return void
+	 */
+	private function process_webhook_event($event) {
+		$event_type = $event->type;
+		
+		// Handle payment_intent.succeeded event
+		if ($event_type === 'payment_intent.succeeded') {
+			$payment_intent = $event->data->object;
+			$booking_hash_id = $payment_intent->metadata->booking_id ?? null;
+			
+			if (!$booking_hash_id) {
+				error_log('No booking_id found in payment intent metadata');
+				return;
+			}
+			
+			// Get booking by hash_id
+			$booking = Booking_Model::getByHashId($booking_hash_id);
+			
+			if (!$booking) {
+				error_log('Booking not found with hash_id: ' . $booking_hash_id);
+				return;
+			}
+			
+			// Update booking status to confirmed/paid
+			$booking->changeStatus('confirmed');
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __('Payment completed', 'quillbooking'),
+					'details' => __('Payment completed via Stripe', 'quillbooking'),
+				)
+			);
+			
+			// Trigger action for other plugins
+			do_action('quillbooking_stripe_payment_completed', $booking, $payment_intent);
+		}
+		
+		// Handle payment_intent.payment_failed event
+		if ($event_type === 'payment_intent.payment_failed') {
+			$payment_intent = $event->data->object;
+			$booking_hash_id = $payment_intent->metadata->booking_id ?? null;
+			
+			if (!$booking_hash_id) {
+				error_log('No booking_id found in payment intent metadata');
+				return;
+			}
+			
+			// Get booking by hash_id
+			$booking = Booking_Model::getByHashId($booking_hash_id);
+			
+			if (!$booking) {
+				error_log('Booking not found with hash_id: ' . $booking_hash_id);
+				return;
+			}
+			
+			// Update booking status to failed
+			$booking->changeStatus('cancelled');
+			$booking->logs()->create(
+				array(
+					'type'    => 'error',
+					'message' => __('Payment failed', 'quillbooking'),
+					'details' => __('Payment failed via Stripe', 'quillbooking'),
+				)
+			);
+			
+			// Trigger action for other plugins
+			do_action('quillbooking_stripe_payment_failed', $booking, $payment_intent);
 		}
 	}
 

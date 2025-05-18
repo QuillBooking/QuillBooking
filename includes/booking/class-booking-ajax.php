@@ -103,7 +103,7 @@ class Booking_Ajax {
 
 			$fields = array();
 			if ( isset( $_POST['fields'] ) ) {
-				$fields = sanitize_text_field( $_POST['fields'] );
+				$fields = json_decode(wp_unslash($_POST['fields']), true);
 			}
 
 			$calendar_id = $event->calendar_id;

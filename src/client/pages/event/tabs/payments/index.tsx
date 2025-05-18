@@ -41,27 +41,9 @@ import {
 import ConfigAPI from '@quillbooking/config';
 import { useEventContext } from '../../state/context';
 import './style.scss';
-import paypal from '../../../../../../assets/icons/paypal/paypal.png';
-import stripe from '../../../../../../assets/icons/stripe/stripe.png';
-
-interface PaymentItem {
-	item: string;
-	price: number;
-}
-
-interface PaymentsSettings {
-	enable_payment: boolean;
-	type: 'native' | 'woocommerce';
-	woo_product: number | null;
-	enable_items_based_on_duration: boolean;
-	items: PaymentItem[];
-	multi_duration_items: {
-		[key: string]: PaymentItem & { duration: string };
-	};
-	payment_methods?: string[];
-	enable_paypal: boolean;
-	enable_stripe: boolean;
-}
+import paypal from '@quillbooking/assets/icons/paypal/paypal.png';
+import stripe from '@quillbooking/assets/icons/stripe/stripe.png';
+import { PaymentsSettings } from 'client/types';
 
 interface EventPaymentProps {
 	disabled: boolean;

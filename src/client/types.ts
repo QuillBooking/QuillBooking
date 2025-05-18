@@ -40,6 +40,7 @@ export type Calendar = {
 		is_disabled: boolean;
 		booking_count: number;
 		created_at: string;
+		payments_settings: PaymentsSettings;
 	}[];
 	created_at: string;
 	updated_at: string;
@@ -363,3 +364,22 @@ export type NoticeMessage = {
 	title: string;
 	message: string;
 };
+
+export interface PaymentItem {
+	item: string;
+	price: number;
+}
+
+export interface PaymentsSettings {
+	enable_payment: boolean;
+	type: 'native' | 'woocommerce';
+	woo_product: number | null;
+	enable_items_based_on_duration: boolean;
+	items: PaymentItem[];
+	multi_duration_items: {
+		[key: string]: PaymentItem & { duration: string };
+	};
+	payment_methods?: string[];
+	enable_paypal: boolean;
+	enable_stripe: boolean;
+}

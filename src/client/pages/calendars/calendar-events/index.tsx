@@ -191,7 +191,7 @@ const CalendarEvents: React.FC<{
 													{event.location.map(
 														(loc, index) => (
 															<span key={index}>
-																{loc.type}
+																{loc.type.split('_').join(' ')}
 																{index !==
 																	event
 																		.location

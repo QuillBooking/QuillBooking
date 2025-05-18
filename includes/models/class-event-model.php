@@ -798,10 +798,9 @@ class Event_Model extends Model {
 	}
 
 	/**
-	 * Require payment
+	 * Check if payment is required
 	 *
-	 * @return bool
-	 * @throws \Exception If payments are enabled but no gateway is selected.
+	 * @return boolean
 	 */
 	public function requirePayment() {
 		$payments_settings = $this->payments_settings;
@@ -819,10 +818,30 @@ class Event_Model extends Model {
 			return false;
 		}
 
-		// Validate payment gateway selection
-		$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
-		if ( is_wp_error( $validation_result ) ) {
-			throw new \Exception( $validation_result->get_error_message() );
+		// Check if payment gateways are registered in the system
+		$payment_gateways_manager = \QuillBooking\Managers\Payment_Gateways_Manager::instance();
+		$payment_gateways = $payment_gateways_manager->get_items();
+		
+		// If no payment gateways are registered or available, we can't require payment
+		if (empty($payment_gateways)) {
+			// Log this issue since it's a configuration problem
+			error_log('QuillBooking: Payment is enabled but no payment gateways are registered in the system.');
+			return false;
+		}
+
+		// Check if at least one payment gateway is enabled for this event
+		$gateway_enabled = false;
+		foreach ($payment_gateways as $gateway) {
+			if (Arr::get($payments_settings, 'enable_' . $gateway->slug, false)) {
+				$gateway_enabled = true;
+				break;
+			}
+		}
+		
+		if (!$gateway_enabled) {
+			// Instead of throwing an exception, we'll just log and return false
+			error_log('QuillBooking: Payment is enabled but no payment gateway is selected for this event.');
+			return false;
 		}
 
 		return true;

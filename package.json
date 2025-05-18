@@ -15,6 +15,8 @@
     "@lexical/selection": "^0.30.0",
     "@lexical/table": "^0.30.0",
     "@mui/material": "^6.4.8",
+    "@stripe/react-stripe-js": "^3.7.0",
+    "@stripe/stripe-js": "^7.3.0",
     "@udecode/cn": "^47.3.1",
     "@udecode/plate": "^47.3.1",
     "@udecode/plate-basic-elements": "^47.0.0",

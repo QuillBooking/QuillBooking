@@ -31,6 +31,16 @@ export type Event = {
     fields: Fields;
     availability_data?: Availability,
     reserve: boolean;
+    payments_settings?: {
+        enable_payment: boolean;
+        enable_paypal?: boolean;
+        enable_stripe?: boolean;
+        items: Array<{
+            item: string;
+            price: number;
+        }>;
+        currency: string;
+    };
     connected_integrations: {
         apple: ConnectedIntegrationsFields;
         google: ConnectedIntegrationsFields;
@@ -39,7 +49,6 @@ export type Event = {
         zoom: ConnectedIntegrationsFields;
     };
 };
-
 
 export type EventTypes = 'one-to-one' | 'group' | 'round-robin';
 

@@ -56,8 +56,7 @@ class Payment_Gateway extends Abstract_Payment_Gateway {
 	 */
 	public function __construct() {
 		parent::__construct();
-		new Payment_Service( $this );
-		new Webhook( $this );
+		// Payment_Service and Webhook are now initialized via hooks
 	}
 
 	/**

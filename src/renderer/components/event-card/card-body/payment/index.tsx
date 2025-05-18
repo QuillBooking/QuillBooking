@@ -123,29 +123,21 @@ const Payment: React.FC<PaymentProps> = ({ ajax_url, setStep, bookingData, event
       clientSecret: paymentIntent,
       appearance: {
         theme: 'stripe' as const,
+        variables: {
+          colorPrimary: '#953AE4',
+          borderRadius: '8px',
+        }
       },
     };
 
     return (
-      <div className="payment-container">
-        <h3>Complete your payment</h3>
-        <div className="payment-details">
-          <p className="payment-amount">
-            Total: {new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: event.payments_settings?.currency || 'USD',
-            }).format(totalPrice)}
-          </p>
-        </div>
-        
-        <Elements stripe={stripePromise} options={options}>
-          <StripePaymentForm
-            ajax_url={ajax_url} 
-            setStep={handleStepChange} 
-            bookingData={bookingData}
-          />
-        </Elements>
-      </div>
+      <Elements stripe={stripePromise} options={options}>
+        <StripePaymentForm
+          ajax_url={ajax_url} 
+          setStep={handleStepChange} 
+          bookingData={bookingData}
+        />
+      </Elements>
     );
   }
 

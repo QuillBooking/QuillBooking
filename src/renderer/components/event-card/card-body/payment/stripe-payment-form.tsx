@@ -4,6 +4,7 @@ import {
   useStripe,
   useElements
 } from '@stripe/react-stripe-js';
+import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import './style.scss';
 
 interface StripePaymentFormProps {
@@ -64,33 +65,37 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
   };
 
   return (
-    <form id="payment-form" onSubmit={handleSubmit}>
-      <div className="payment-element-container">
-        <PaymentElement />
-      </div>
-      
-      {errorMessage && (
-        <div className="error-message">{errorMessage}</div>
-      )}
-      
-      <div className="payment-actions">
-        <button 
-          type="button" 
-          className="back-button"
+    <div className="stripe-payment-container">
+      <div className="stripe-payment-header">
+        <div
+          className="stripe-payment-header-icon"
           onClick={handleGoBack}
-          disabled={isLoading}
         >
-          Back
-        </button>
-        <button 
-          type="submit" 
-          className="pay-button"
-          disabled={isLoading || !stripe || !elements}
-        >
-          {isLoading ? 'Processing...' : 'Pay Now'}
-        </button>
+          <LeftArrowIcon />
+        </div>
+        <p>Payment Details</p>
       </div>
-    </form>
+      
+      <form id="payment-form" onSubmit={handleSubmit}>
+        <div className="payment-element-container">
+          <PaymentElement />
+        </div>
+        
+        {errorMessage && (
+          <div className="error-message">{errorMessage}</div>
+        )}
+        
+        <div className="payment-actions">
+          <button 
+            type="submit"
+            className="pay-now-button" 
+            disabled={isLoading || !stripe || !elements}
+          >
+            {isLoading ? 'Processing...' : 'Pay Now'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 

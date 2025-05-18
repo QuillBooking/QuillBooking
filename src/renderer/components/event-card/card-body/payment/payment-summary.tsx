@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './style.scss';
+import LeftArrowIcon from '../../../../icons/left-arrow-icon';
+// Import payment method icons
+import paypalIcon from '../../../../../../assets/icons/paypal/paypal.png';
+import stripeIcon from '../../../../../../assets/icons/stripe/stripe.png';
 
 interface PaymentSummaryProps {
   ajax_url: string;
@@ -96,10 +100,20 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   };
 
   return (
-    <div className="payment-summary">
-      <h3>Payment Summary</h3>
+    <div className="payment-summary-container">
+      <div className="payment-summary-header">
+        <div
+          className="payment-summary-header-icon"
+          onClick={handleGoBack}
+        >
+          <LeftArrowIcon />
+        </div>
+        <p>Payment Summary</p>
+      </div>
+      
       <div className="payment-amount">
-        <p>You are now about to pay {formatPrice(totalPrice)} to attend the event under the name <strong>{bookingData.guest?.name}</strong></p>
+        <div className="info-icon">ℹ️</div>
+        <p>You are now about to pay {formatPrice(totalPrice)} to attend the event under the name <strong>{event.title || 'Sprint Planning Meeting'} - For {event.duration || '30'} Minutes</strong> as the online booking fees.</p>
       </div>
       
       {hasEnabledPaymentMethods ? (
@@ -108,21 +122,29 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
           
           <div className="payment-methods">
             {paymentMethods.paypal && (
-              <div 
-                className={`payment-method-option ${selectedPaymentMethod === 'paypal' ? 'selected' : ''}`}
-                onClick={() => handlePaymentMethodSelect('paypal')}
-              >
-                <img src="/wp-content/plugins/QuillBooking/assets/icons/paypal/paypal.png" alt="PayPal" />
-              </div>
+              <label className={`payment-method-radio ${selectedPaymentMethod === 'paypal' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="paypal"
+                  checked={selectedPaymentMethod === 'paypal'}
+                  onChange={() => handlePaymentMethodSelect('paypal')}
+                />
+                <img src={paypalIcon} alt="PayPal" />
+              </label>
             )}
             
             {paymentMethods.stripe && (
-              <div 
-                className={`payment-method-option ${selectedPaymentMethod === 'stripe' ? 'selected' : ''}`}
-                onClick={() => handlePaymentMethodSelect('stripe')}
-              >
-                <img src="/wp-content/plugins/QuillBooking/assets/icons/stripe/stripe.png" alt="Stripe" />
-              </div>
+              <label className={`payment-method-radio ${selectedPaymentMethod === 'stripe' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="stripe"
+                  checked={selectedPaymentMethod === 'stripe'}
+                  onChange={() => handlePaymentMethodSelect('stripe')}
+                />
+                <img src={stripeIcon} alt="Stripe" />
+              </label>
             )}
           </div>
         </div>
@@ -139,22 +161,12 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       <div className="payment-actions">
         <button 
           type="button" 
-          className="back-button"
-          onClick={handleGoBack}
-          disabled={isLoading}
+          className="continue-to-payment-button"
+          onClick={handleContinueToPayment}
+          disabled={isLoading || !selectedPaymentMethod}
         >
-          Back
+          {isLoading ? 'Processing...' : 'Continue to Payments'}
         </button>
-        {hasEnabledPaymentMethods && (
-          <button 
-            type="button" 
-            className="continue-button"
-            onClick={handleContinueToPayment}
-            disabled={isLoading || !selectedPaymentMethod}
-          >
-            {isLoading ? 'Processing...' : 'Continue to Payment'}
-          </button>
-        )}
       </div>
     </div>
   );

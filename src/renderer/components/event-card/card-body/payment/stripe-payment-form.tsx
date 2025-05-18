@@ -34,10 +34,14 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
     setIsLoading(true);
     setErrorMessage(null);
 
+    // Generate the confirmation URL
+    const confirmUrl = `${window.location.origin}/?quillbooking=booking&id=${bookingData.hash_id}&type=confirm`;
+
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.href}&booking_id=${bookingData.hash_id}&payment_status=success`,
+        // After successful payment, redirect to the confirmation page
+        return_url: confirmUrl,
       },
       redirect: 'if_required',
     });
@@ -51,7 +55,6 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
       setIsLoading(false);
       
       // Redirect to the confirmation page
-      const confirmUrl = `${bookingData.event_url || window.location.origin}/?quillbooking=booking&id=${bookingData.hash_id}&type=confirm`;
       if (window.top) {
         window.top.location.href = confirmUrl;
       } else {

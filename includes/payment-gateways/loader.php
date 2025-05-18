@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // First, ensure all necessary classes are available to avoid circularity
 require_once QUILLBOOKING_PLUGIN_DIR . 'includes/payment-gateway/class-payment-gateway.php';
 require_once QUILLBOOKING_PLUGIN_DIR . 'includes/payment-gateway/class-payment-service.php';
+require_once QUILLBOOKING_PLUGIN_DIR . 'includes/payment-gateway/return-handler.php';
 
 // Payment gateway files
 require_once dirname( __FILE__ ) . '/paypal/class-payment-gateway.php';

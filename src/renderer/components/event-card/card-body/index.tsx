@@ -132,6 +132,13 @@ const CardBody: React.FC<CardBodyProps> = ({
 				throw new Error(data.data?.message || 'Unknown error occurred');
 			}
 			
+			// Check for WooCommerce URL response first (it has different format)
+			if (data.data.url) {
+				console.log('WooCommerce payment, redirecting to checkout:', data.data.url);
+				(window.top || window).location.href = data.data.url;
+				return;
+			}
+			
 			// If payment is required and we have payment gateways, go to payment step
 			if (requiresPayment && hasPaymentGateways) {
 				console.log('Payment required, transitioning to payment step', { 
@@ -143,9 +150,15 @@ const CardBody: React.FC<CardBodyProps> = ({
 			} else {
 				// Otherwise redirect to confirmation
 				console.log('No payment required or no payment gateways configured, redirecting to confirmation');
-				const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
-				console.log('Redirect URL:', redirectUrl);
-				(window.top || window).location.href = redirectUrl;
+				
+				// Make sure we have a booking with hash_id before trying to use it
+				if (data.data.booking && data.data.booking.hash_id) {
+					const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
+					console.log('Redirect URL:', redirectUrl);
+					(window.top || window).location.href = redirectUrl;
+				} else {
+					console.error('Could not find booking hash_id in response:', data);
+				}
 			}
 		} catch (error) {
 			console.error('Error during booking submission:', error);

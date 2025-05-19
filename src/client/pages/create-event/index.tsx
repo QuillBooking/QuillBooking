@@ -548,7 +548,6 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 							<Flex gap={1} vertical className="mt-4">
 								<div className="text-[#09090B] text-[16px]">
 									{__('Description', 'quillbooking')}
-									<span className="text-red-500">*</span>
 								</div>
 								<Input.TextArea
 									value={event.description || ''}

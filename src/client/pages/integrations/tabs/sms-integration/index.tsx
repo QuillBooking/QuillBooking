@@ -13,6 +13,7 @@ import { Button, Card, Flex, Form, Input, Skeleton, Spin, Typography } from 'ant
  */
 import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
+import IntegrationsShimmerLoader from '../../shimmer-loader';
 
 const { Text } = Typography;
 
@@ -53,6 +54,10 @@ const SMSIntegration: React.FC = () => {
             },
         });
     };
+
+    if (loading) {
+		return <IntegrationsShimmerLoader />;
+	}
 
 
     return (

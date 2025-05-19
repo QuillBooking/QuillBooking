@@ -117,7 +117,6 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 				},
 				onSuccess() {
 					props.setDisabled(true);
-					
 				},
 				onError(error) {
 					throw new Error(error.message);

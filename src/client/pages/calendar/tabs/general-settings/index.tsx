@@ -140,8 +140,8 @@ const GeneralSettings: React.FC = () => {
 									}
 								/>
 							</Flex>
-							<Divider />
-							<Checkbox
+							{/* <Divider /> */}
+							{/* <Checkbox
 								className="custom-check text-base font-semibold"
 								checked={state.enable_landing_page || false}
 								onChange={(e) =>
@@ -199,7 +199,7 @@ const GeneralSettings: React.FC = () => {
 										)}
 									</Radio>
 								</Radio.Group>
-							</Flex>
+							</Flex> */}
 							{bookingForms === 'select' && (
 								<Flex vertical gap={6} className="mt-4">
 									<div className="text-base font-semibold">

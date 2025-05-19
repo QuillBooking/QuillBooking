@@ -4,12 +4,12 @@ import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import paypalIcon from '../../../../../../assets/icons/paypal/paypal.png';
 import stripeIcon from '../../../../../../assets/icons/stripe/stripe.png';
 import woocommerceIcon from '../../../../../../assets/icons/woocommerce/woocommerce.png';
-import { Event } from 'renderer/types';
+import { Booking, Event } from 'renderer/types';
 
 interface PaymentSummaryProps {
   ajax_url: string;
   setStep: (step: number) => void;
-  bookingData: any;
+  bookingData: Booking;
   event: Event;
   totalPrice: number;
 }

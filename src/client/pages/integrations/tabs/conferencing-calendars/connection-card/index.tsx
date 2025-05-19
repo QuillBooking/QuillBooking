@@ -7,26 +7,17 @@ import { useEffect, useState } from '@wordpress/element';
 /**
  * External dependencies
  */
-import {
-	Card,
-	Button,
-	Flex,
-	Form,
-	Input,
-	Select,
-	Skeleton,
-	Radio,
-	Typography,
-	Divider,
-	Spin,
-} from 'antd';
+import { Card, Button, Flex, Form, Skeleton, Typography, Spin } from 'antd';
 
 /**
  * Internal dependencies
  */
 import type { Integration } from '@quillbooking/config';
-import { useApi, useNotice, useCopyToClipboard } from '@quillbooking/hooks';
-import { CloneIcon } from '@quillbooking/components';
+import { useApi, useNotice } from '@quillbooking/hooks';
+import ZoomFields from './fields/ZoomFields';
+import GoogleFields from './fields/GoogleFields';
+import OutlookFields from './fields/OutlookFields';
+import AppleFields from './fields/AppleFields';
 
 const { Text } = Typography;
 
@@ -43,200 +34,6 @@ const CACHE_TIME_OPTIONS = [
 	{ value: '15', label: '15 Minutes' },
 ];
 
-const ZoomFields = ({ fields }: { fields: any }) => (
-	<div className="zoom-fields">
-		<Flex vertical gap={10} className="w-full">
-			<div className="text-[#71717A] italic">
-				{__('Please read the', 'quillbooking')}
-				<span className="cursor-pointer font-semibold underline mx-1">
-					{__('documentation here', 'quillbooking')}
-				</span>
-				{__(
-					'for step by step guide to know how you can get credentials from Zoom Account',
-					'quillbooking'
-				)}
-			</div>
-
-			{Object.entries(fields).map(([key, field]: [string, any]) => (
-				<Form.Item
-					name={key}
-					key={key}
-					label={
-						<label
-							htmlFor={`zoom-${key}`}
-							className="text-[#3F4254] font-semibold text-[16px]"
-						>
-							{field.label}
-						</label>
-					}
-					rules={[
-						{
-							required: field.required,
-							message: __(
-								'This field is required',
-								'quillbooking'
-							),
-						},
-					]}
-					extra={
-						<div>
-							<Text type="secondary" className="text-xs">
-								{field.help_text ||
-									`You Can Find Your ${field.label.replace('*', '')} In Your Zoom App Settings.`}
-							</Text>
-						</div>
-					}
-				>
-					{field.type === 'password' ? (
-						<Input.Password
-							id={`zoom-${key}`}
-							placeholder={field.placeholder}
-							className="rounded-lg h-[48px]"
-						/>
-					) : (
-						<Input
-							id={`zoom-${key}`}
-							type={field.type}
-							placeholder={field.placeholder}
-							className="rounded-lg h-[48px]"
-						/>
-					)}
-				</Form.Item>
-			))}
-
-			<Divider />
-
-			<div className="text-[#71717A] italic">
-				{__(
-					' The above app secret key will be encrypted and stored securely.',
-					'quillbooking'
-				)}
-			</div>
-		</Flex>
-	</div>
-);
-
-const GoogleFields = () => (
-	<div className="google-fields">
-		<Flex vertical gap={10} className="w-full">
-			<div className="text-[#71717A] italic">
-				{__(
-					'Your Google Calendar API configuration is already done. You can connect your Google Calendar from your host settings.',
-					'quillbooking'
-				)}
-				<span className="cursor-pointer font-semibold underline ml-1">
-					{__('Read the documentation', 'quillbooking')}
-				</span>
-			</div>
-
-			<Form.Item
-				name="cache_time"
-				label={
-					<div className="text-[#3F4254] font-semibold text-[16px]">
-						{__('Caching Time', 'quillbooking')}
-						<span className="text-[#E53E3E]">
-							{__('*', 'quillbooking')}
-						</span>
-					</div>
-				}
-			>
-				<Select
-					options={CACHE_TIME_OPTIONS}
-					defaultValue="5"
-					className="w-full h-[48px] rounded-lg mb-2"
-				/>
-				<div className="text-[#71717A] italic">
-					{__(
-						'Select how many minutes the Google Calendar / Meet events API call will be cached. Recommended 5/10 minutes. If you add lots of manual events in Google Calendar then you may lower this value',
-						'quillbooking'
-					)}
-				</div>
-			</Form.Item>
-		</Flex>
-	</div>
-);
-
-
-const OutlookFields = () => (
-	<div className="outlook-fields">
-		<Flex vertical gap={10} className="w-full">
-			<div className="text-[#71717A] italic">
-				{__(
-					'Your outlook API configuration is already. You can connect your outlook calendar from your host settings.',
-					'quillbooking'
-				)}
-				<span className="cursor-pointer font-semibold underline ml-1">
-					{__('Read the documentation', 'quillbooking')}
-				</span>
-			</div>
-
-			<Form.Item
-				name="cache_time"
-				label={
-					<div className="text-[#3F4254] font-semibold text-[16px]">
-						{__('Caching Time', 'quillbooking')}
-						<span className="text-[#E53E3E]">
-							{__('*', 'quillbooking')}
-						</span>
-					</div>
-				}
-			>
-				<Select
-					options={CACHE_TIME_OPTIONS}
-					defaultValue="5"
-					className="w-full h-[48px] rounded-lg mb-2"
-				/>
-				<div className="text-[#71717A] italic">
-					{__(
-						'Select how many minutes the Outlook Calendar / MS Teams events API call will be cached. Recommended 5/10 minutes. If you add lots of manual events in Outlook Calendar / MS Teams then you may lower this value',
-						'quillbooking'
-					)}
-				</div>
-			</Form.Item>
-		</Flex>
-	</div>
-);
-
-const AppleFields = () => (
-	<div className="apple-fields">
-		<Flex vertical gap={10} className="w-full">
-			<div className="text-[#71717A] italic">
-				{__(
-					'Your Apple Calendar API configuration is already. You can connect your Apple Calendar from your host settings.',
-					'quillbooking'
-				)}
-				<span className="cursor-pointer font-semibold underline ml-1">
-					{__('Read the documentation', 'quillbooking')}
-				</span>
-			</div>
-
-			<Form.Item
-				name="cache_time"
-				label={
-					<div className="text-[#3F4254] font-semibold text-[16px]">
-						{__('Caching Time', 'quillbooking')}
-						<span className="text-[#E53E3E]">
-							{__('*', 'quillbooking')}
-						</span>
-					</div>
-				}
-			>
-				<Select
-					options={CACHE_TIME_OPTIONS}
-					defaultValue="5"
-					className="w-full h-[48px] rounded-lg mb-2"
-				/>
-				<div className="text-[#71717A] italic">
-					{__(
-						'Select how many minutes the Apple Calendar events API call will be cached. Recommended 5/10 minutes. If you add lots of manual events in Apple Calendar then you may lower this value',
-						'quillbooking'
-					)}
-				</div>
-			</Form.Item>
-		</Flex>
-	</div>
-);
-
 const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	slug,
 	integration,
@@ -251,25 +48,55 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 
 	const [previousSlug, setPreviousSlug] = useState<string | null>(slug);
 
+	// Reset form when integration changes
 	useEffect(() => {
-	
 		if (slug !== previousSlug) {
 			form.resetFields();
 			setPreviousSlug(slug);
 		}
+	}, [slug, previousSlug, form]);
 
-	
-		if (integration && integration.settings && integration.settings.app) {
-			form.setFieldsValue(integration.settings.app);
+	// Set form values for non-Zoom integrations (Zoom handles its own form values)
+	useEffect(() => {
+		if (slug === 'zoom') {
+			return;
 		}
-	}, [integration, form, slug, previousSlug]);
+
+		if (integration?.settings?.app) {
+			const appSettings = integration.settings.app as Record<string, any>;
+			form.setFieldsValue({
+				...appSettings,
+				cache_time:
+					appSettings.cache_time ?? CACHE_TIME_OPTIONS[1].value,
+			});
+		} else {
+			// If no settings exist yet, initialize with default cache_time
+			form.setFieldsValue({
+				cache_time: CACHE_TIME_OPTIONS[1].value,
+			});
+		}
+	}, [integration, form, slug, CACHE_TIME_OPTIONS]);
 
 	const handleSaveSettings = (values: any) => {
+		console.log('Submitted values:', values);
+		
+		if (slug === 'zoom') {
+			form.submit();
+			return;
+		}
+
+		// Log the form field value directly from the form instance
+		console.log('Direct form value:', form.getFieldValue('cache_time'));
+		
+		// Make sure we're getting the latest value
+		const formValues = form.getFieldsValue();
+		console.log('All form values:', formValues);
+		
 		setSaving(true);
 		callApi({
 			path: `integrations/${slug}`,
 			method: 'POST',
-			data: { settings: { app: values } },
+			data: { settings: { app: formValues } },
 			onSuccess() {
 				successNotice(
 					__(
@@ -295,13 +122,15 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	const renderFields = () => {
 		switch (slug) {
 			case 'zoom':
-				return <ZoomFields fields={integration.fields} />;
+				return <ZoomFields fields={integration.fields} form={form} />;
 			case 'google':
-				return <GoogleFields />;
+				return <GoogleFields CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS} form={form} />;
 			case 'outlook':
-				return <OutlookFields />;
+				return (
+					<OutlookFields CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS} form={form} />
+				);
 			case 'apple':
-				return <AppleFields />;
+				return <AppleFields CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS} form={form} />;
 			default:
 				return null;
 		}
@@ -354,9 +183,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 							layout="vertical"
 							onFinish={handleSaveSettings}
 							className={`${slug}-form`}
-						
 							name={`${slug}-connection-form`}
-				
 							preserve={false}
 						>
 							{renderFields()}

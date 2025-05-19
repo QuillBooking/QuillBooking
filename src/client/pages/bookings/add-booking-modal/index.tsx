@@ -27,12 +27,19 @@ import {
 	TimezoneSelect,
 } from '@quillbooking/components';
 import { fetchAjax, getCurrentTimezone, getFields } from '@quillbooking/utils';
-import { Booking, Calendar, Event, EventAvailability } from 'client/types';
+import {
+	Booking,
+	Calendar,
+	Event,
+	EventAvailability,
+	Fields,
+} from 'client/types';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { CurrentTimeInTimezone } from '@quillbooking/components';
 import ConfigAPI from '@quillbooking/config';
 import { find, map } from 'lodash';
 import { DynamicFormField } from '@quillbooking/components';
+import QuestionsComponents from './questions';
 
 interface AddBookingModalProps {
 	open: boolean;
@@ -63,12 +70,17 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	const [selectedAvailability, setSelectedAvailability] =
 		useState<EventAvailability>();
 	const [timeOptions, setTimeOptions] = useState<string[]>([]);
-	const [showAllTimes, setShowAllTimes] = useState(false);
+	const [showAllTimes, setShowAllTimes] = useState<boolean>(false);
 	const locationTypes = ConfigAPI.getLocations();
-	const [ignoreAvailability, setIgnoreAvailability] = useState(false);
+	const [ignoreAvailability, setIgnoreAvailability] =
+		useState<boolean>(false);
+	const [fields, setFields] = useState<Fields>();
+	const [isMultipleDuration, setIsMultipleDuration] =
+		useState<boolean>(false);
+	const [defaultDuration, setDefaultDuration] = useState<number | null>(null);
 
 	const { callApi, loading } = useApi();
-	const { errorNotice, successNotice } = useNotice();
+	const { errorNotice } = useNotice();
 
 	const fetchCalendar = () => {
 		callApi({
@@ -90,12 +102,30 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			onSuccess: (event: Event) => {
 				setSelectedEvent(event);
 				form.setFieldsValue({
-					duration: event.duration,
 					location: event.location[0]?.type || '',
 				});
 				form.resetFields(['selectDate', 'selectTime']);
 				setTimeOptions([]);
 				fetchAvailability(event.id);
+				fetchFields(event.id);
+				setIsMultipleDuration(
+					event.additional_settings.allow_attendees_to_select_duration
+				);
+				if (
+					event.additional_settings.allow_attendees_to_select_duration
+				) {
+					setDefaultDuration(
+						event.additional_settings.default_duration
+					);
+					form.setFieldsValue({
+						duration: event.additional_settings.default_duration,
+					});
+				} else {
+					setDefaultDuration(event.duration);
+					form.setFieldsValue({
+						duration: event.duration,
+					});
+				}
 			},
 			onError: (error) => {
 				const errorMessage =
@@ -114,13 +144,26 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		});
 	};
 
+	const fetchFields = (eventId: number) => {
+		callApi({
+			path: `events/${eventId}/fields`,
+			method: 'GET',
+			onSuccess: (res) => {
+				setFields(res);
+			},
+			onError: () => {
+				errorNotice('error fetching fields');
+			},
+		});
+	};
+
 	const fetchAvailability = (value: number, calendar_id?: number) => {
 		const formData = new FormData();
 		formData.append('action', 'quillbooking_booking_slots');
 		formData.append('id', value.toString());
 		formData.append('timezone', currentTimezone || '');
 		formData.append('start_date', new Date().toISOString());
-		formData.append('duration', selectedEvent?.duration.toString() || '30');
+		formData.append('duration', defaultDuration?.toString() || '30');
 		if (calendar_id) {
 			formData.append('calendar_id', calendar_id.toString());
 		}
@@ -152,12 +195,12 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		}
 		return selectedAvailability
 			? selectedAvailability[date.format('YYYY-MM-DD')].map(
-				(slot: { start: string; end: string }) => {
-					const timeString = slot.start.split(' ')[1];
-					const time = timeString.split(':');
-					return `${time[0]}:${time[1]}`;
-				}
-			)
+					(slot: { start: string; end: string }) => {
+						const timeString = slot.start.split(' ')[1];
+						const time = timeString.split(':');
+						return `${time[0]}:${time[1]}`;
+					}
+				)
 			: [];
 	};
 
@@ -239,8 +282,8 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	}, [currentTimezone]);
 
 	useEffect(() => {
-		if (selectedEvent?.duration) {
-			const duration = selectedEvent.duration;
+		if (ignoreAvailability && defaultDuration) {
+			const duration = defaultDuration;
 			const slots: string[] = [];
 			for (
 				let minutes = 0;
@@ -255,7 +298,12 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			}
 			setAllTimeSlots(slots);
 		}
-	}, [selectedEvent?.duration]);
+	}, [ignoreAvailability, defaultDuration]);
+
+	useEffect(() => {
+		fetchAvailability(selectedEvent?.id || 0);
+		form.resetFields(['selectDate', 'selectTime']);
+	}, [defaultDuration]);
 
 	return (
 		<Modal
@@ -280,7 +328,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			}
 			open={open}
 			onCancel={onClose}
-			width={900}
+			width={950}
 			footer={[
 				<Button
 					className="bg-color-primary text-white text-center w-full"
@@ -334,7 +382,9 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 										key={calendar.name}
 									>
 										{calendar.events
-											.filter(event => !event.is_disabled)
+											.filter(
+												(event) => !event.is_disabled
+											)
 											.map((event) => (
 												<Option
 													value={event.id}
@@ -349,52 +399,57 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 						</Select>
 					</Form.Item>
 
-					{selectedEvent?.hosts && (
-						<Form.Item
-							name="hosts"
-							label={
-								<div>
-									{__('Select Host', 'quillbooking')}{' '}
-									<span className="text-[10px] text-[#949494]">
-										{__(
-											'(If not selected, the system will select one based on their availability)',
-											'quillbooking'
-										)}
-									</span>
-								</div>
-							}
-							className="flex-1"
-						>
-							<Select
-								placeholder={__('Select Host', 'quillbooking')}
-								showSearch
-								getPopupContainer={(trigger) =>
-									trigger.parentElement
+					{selectedEvent &&
+						selectedEvent?.calendar.type != 'host' && (
+							<Form.Item
+								name="hosts"
+								label={
+									<div>
+										{__('Select Host', 'quillbooking')}{' '}
+										<span className="text-[10px] text-[#949494]">
+											{__(
+												'(If not selected, the system will select one based on their availability)',
+												'quillbooking'
+											)}
+										</span>
+									</div>
 								}
-								size="large"
-								filterOption={(input, option) =>
-									(typeof option?.children === 'string'
-										? (
-											option.children as string
-										).toLowerCase()
-										: ''
-									).includes(input.toLowerCase())
-								}
-								onChange={(calendar_id: number) =>
-									fetchAvailability(
-										selectedEvent.id,
-										calendar_id
-									)
-								}
+								className="flex-1"
 							>
-								{selectedEvent.hosts.map((host) => (
-									<Option value={host.id} key={host.id}>
-										{host.name}
-									</Option>
-								))}
-							</Select>
-						</Form.Item>
-					)}
+								<Select
+									placeholder={__(
+										'Select Host',
+										'quillbooking'
+									)}
+									showSearch
+									getPopupContainer={(trigger) =>
+										trigger.parentElement
+									}
+									size="large"
+									filterOption={(input, option) =>
+										(typeof option?.children === 'string'
+											? (
+													option.children as string
+												).toLowerCase()
+											: ''
+										).includes(input.toLowerCase())
+									}
+									onChange={(calendar_id: number) =>
+										fetchAvailability(
+											selectedEvent.id,
+											calendar_id
+										)
+									}
+								>
+									{selectedEvent.hosts &&
+										selectedEvent.hosts.map((host) => (
+											<Option value={host.id} key={host.id}>
+												{host.name}
+											</Option>
+										))}
+								</Select>
+							</Form.Item>
+						)}
 				</Flex>
 
 				<Flex gap={20}>
@@ -415,7 +470,6 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							/>
 						</Form.Item>
 					)}
-
 					<Form.Item
 						name="duration"
 						className="flex-1 mb-1"
@@ -429,13 +483,30 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							getPopupContainer={(trigger) =>
 								trigger.parentElement
 							}
+							onChange={(value) => {
+								setDefaultDuration(value);
+							}}
 						>
-							{selectedEvent && (
-								<Option value={selectedEvent.duration}>
-									{selectedEvent.duration}{' '}
-									{__('minutes', 'quillbooking')}
-								</Option>
-							)}
+							{selectedEvent ? (
+								isMultipleDuration ? (
+									selectedEvent?.additional_settings.selectable_durations.map(
+										(duration) => (
+											<Option
+												key={duration}
+												value={duration}
+											>
+												{duration}{' '}
+												{__('minutes', 'quillbooking')}
+											</Option>
+										)
+									)
+								) : (
+									<Option value={selectedEvent.duration}>
+										{selectedEvent.duration}{' '}
+										{__('minutes', 'quillbooking')}
+									</Option>
+								)
+							) : null}
 						</Select>
 					</Form.Item>
 				</Flex>
@@ -485,7 +556,9 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							disabled={!selectedEvent}
 							disabledDate={disabledDate}
 							onChange={handleDateChange}
-							getPopupContainer={(trigger) => trigger.parentElement || document.body}
+							getPopupContainer={(trigger) =>
+								trigger.parentElement || document.body
+							}
 						/>
 					</Form.Item>
 					<Form.Item
@@ -516,10 +589,10 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					label={__('Status', 'quillbooking')}
 					rules={[{ required: true }]}
 				>
-					<Select disabled={!selectedEvent} size="large"
-					getPopupContainer={(trigger) =>
-						trigger.parentElement
-					}
+					<Select
+						disabled={!selectedEvent}
+						size="large"
+						getPopupContainer={(trigger) => trigger.parentElement}
 					>
 						<Option value="scheduled">
 							{__('Scheduled', 'quillbooking')}
@@ -550,11 +623,18 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					</Form.Item>
 
 					<Form.Item
+						className="flex-1"
 						name="email"
 						rules={[{ required: true }]}
 						label={__("Attendee's Gmail", 'quillbooking')}
 					>
-						<Input size='large'/>
+						<Input
+							size="large"
+							placeholder={__(
+								"Type the attendee's gmail",
+								'quillbooking'
+							)}
+						/>
 					</Form.Item>
 					{selectedEvent && selectedEvent.location.length > 1 && (
 						<Form.Item
@@ -563,17 +643,21 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							rules={[{ required: true }]}
 						>
 							<Select
-								placeholder={__('Select Location', 'quillbooking')}
+								placeholder={__(
+									'Select Location',
+									'quillbooking'
+								)}
 								options={
 									selectedEvent.location.map((location) => ({
-										label: locationTypes[location.type].title,
+										label: locationTypes[location.type]
+											.title,
 										value: location.type,
 									})) || []
 								}
 								getPopupContainer={(trigger) =>
 									trigger.parentElement
 								}
-								size='large'
+								size="large"
 							/>
 						</Form.Item>
 					)}
@@ -600,7 +684,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 						);
 					}}
 				</Form.Item>
-				{/* hidden input, appear depedning on the event info */}
+				{fields && <QuestionsComponents fields={fields} />}
 			</Form>
 		</Modal>
 	);

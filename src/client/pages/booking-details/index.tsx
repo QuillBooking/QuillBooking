@@ -93,7 +93,6 @@ const BookingDetails: React.FC = () => {
 	const { callApi } = useApi();
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(true);
-	const navigate = useNavigate();
 	const [isDeleted, setIsDeleted] = useState(false);
 
 	const handleStatusUpdated = (action?: string) => {

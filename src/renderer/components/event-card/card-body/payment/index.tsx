@@ -4,12 +4,13 @@ import { loadStripe } from '@stripe/stripe-js';
 import './style.scss';
 import PaymentSummary from './payment-summary';
 import StripePaymentForm from './stripe-payment-form';
+import { Event } from 'renderer/types';
 
 interface PaymentProps {
   ajax_url: string;
   setStep: (step: number) => void;
   bookingData: any;
-  event: any;
+  event: Event;
   totalPrice: number;
 }
 

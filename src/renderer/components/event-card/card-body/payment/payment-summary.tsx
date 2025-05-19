@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import './style.scss';
 import LeftArrowIcon from '../../../../icons/left-arrow-icon';
-// Import payment method icons
 import paypalIcon from '../../../../../../assets/icons/paypal/paypal.png';
 import stripeIcon from '../../../../../../assets/icons/stripe/stripe.png';
 import woocommerceIcon from '../../../../../../assets/icons/woocommerce/woocommerce.png';
+import { Event } from 'renderer/types';
 
 interface PaymentSummaryProps {
   ajax_url: string;
   setStep: (step: number) => void;
   bookingData: any;
-  event: any;
+  event: Event;
   totalPrice: number;
 }
 
@@ -28,9 +28,9 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   
   // Determine available payment methods from event settings
   const paymentMethods = {
-    stripe: event.payments_settings?.enable_stripe,
-    paypal: event.payments_settings?.enable_paypal,
-    woocommerce: event.payments_settings?.enable_woocommerce
+    stripe: event?.payments_settings?.enable_stripe,
+    paypal: event?.payments_settings?.enable_paypal,
+    woocommerce: event?.payments_settings?.enable_woocommerce
   };
 
   // Check if any payment method is enabled
@@ -50,7 +50,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: event.payments_settings?.currency || 'USD',
+      currency: event?.payments_settings?.currency || 'USD',
     }).format(price);
   };
 
@@ -66,7 +66,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     try {
       const formData = new FormData();
       formData.append('action', 'quillbooking_process_payment');
-      formData.append('booking_hash_id', bookingData.hash_id);
+      formData.append('booking_hash_id', bookingData?.hash_id);
       formData.append('payment_method', selectedPaymentMethod);
 
       const response = await fetch(ajax_url, {
@@ -76,19 +76,19 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
       const data = await response.json();
       
-      if (!data.success) {
-        throw new Error(data.data?.message || 'Failed to process payment');
+      if (!data?.success) {
+        throw new Error(data?.data?.message || 'Failed to process payment');
       }
 
       // For PayPal, redirect to payment URL
-      if (selectedPaymentMethod === 'paypal' && data.data.redirect_url) {
-        window.location.href = data.data.redirect_url;
+      if (selectedPaymentMethod === 'paypal' && data?.data?.redirect_url) {
+        window.location.href = data?.data?.redirect_url;
         return;
       }
 
       // For WooCommerce, redirect to checkout URL
-      if (selectedPaymentMethod === 'woocommerce' && data.data.url) {
-        window.location.href = data.data.url;
+      if (selectedPaymentMethod === 'woocommerce' && data?.data?.url) {
+        window.location.href = data?.data?.url;
         return;
       }
 
@@ -97,7 +97,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         setStep(4); // Move to Stripe payment form
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      setError(err?.message || 'An error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +121,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       
       <div className="payment-amount">
         <div className="info-icon">ℹ️</div>
-        <p>You are now about to pay {formatPrice(totalPrice)} to attend the event under the name <strong>{event.title} - For {event.duration} Minutes</strong> as the online booking fees.</p>
+        <p>You are now about to pay {formatPrice(totalPrice)} to attend the event under the name <strong>{event?.name} - For {event?.duration} Minutes</strong> as the online booking fees.</p>
       </div>
       
       {hasEnabledPaymentMethods ? (

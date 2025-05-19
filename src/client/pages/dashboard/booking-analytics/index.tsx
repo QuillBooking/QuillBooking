@@ -53,12 +53,12 @@ const BookingAnalytics: React.FC = () => {
 			method: 'GET',
 			onSuccess: (res) => {
 				setCounts({
-					total: res.total || 0,
-					upcoming: res.upcoming || 0,
-					completed: res.completed || 0,
-					pending: res.pending_ || 0,
-					cancelled: res.cancelled || 0,
-					no_show: res.noshow || 0,
+					total: res.total ?? 0,
+					upcoming: res.upcoming ?? 0,
+					completed: res.completed ?? 0,
+					pending: res.pending_ ?? 0,
+					cancelled: res.cancelled ?? 0,
+					no_show: res.noshow ?? 0,
 				});
 				setError(null);
 				setLoading(false);

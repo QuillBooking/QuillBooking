@@ -217,7 +217,7 @@ const BookingAnalyticsChart: React.FC = () => {
 			method: 'GET',
 			onSuccess: (res) => {
 				setRevenueData({
-					total: res.total_revenue || 0,
+					total: res.total_revenue ?? 0,
 				});
 				setRevenueLoading(false);
 			},
@@ -240,7 +240,7 @@ const BookingAnalyticsChart: React.FC = () => {
 			method: 'GET',
 			onSuccess: (res) => {
 				setGuestCountData({
-					total: res || 0,
+					total: res ?? 0,
 				});
 				setGuestsLoading(false);
 			},

@@ -33,7 +33,7 @@ const BookingList: React.FC<BookingListProps> = ({
 	setBookingId,
 }) => {
 	return (
-		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
+		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5 max-h-[500px] overflow-y-auto">
 			<CardHeader
 				title={__('Upcoming Booking', 'quillbooking')}
 				description={__(

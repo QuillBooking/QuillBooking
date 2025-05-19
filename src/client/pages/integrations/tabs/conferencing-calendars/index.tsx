@@ -15,6 +15,7 @@ import SelectionCard from './selection-card';
 import ConnectionCard from './connection-card';
 import { NoticeBanner } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/client';
+import IntegrationsShimmerLoader from '../../shimmer-loader';
 
 
 const ConferencingCalendars: React.FC = () => {
@@ -35,6 +36,10 @@ const ConferencingCalendars: React.FC = () => {
             setActiveTab(integrations[0].id);
         }
     }, [integrations, activeTab]);
+
+    if (isLoading) {
+		return <IntegrationsShimmerLoader />;
+	}
 
     return (
         <div className="quillbooking-conferencing-calendars grid grid-cols-2 gap-5 w-full">

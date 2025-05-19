@@ -6,6 +6,7 @@ import {
 	useState,
 	forwardRef,
 	useImperativeHandle,
+	useRef,
 } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
@@ -21,12 +22,11 @@ import {
 	InputNumber,
 	Radio,
 	Skeleton,
-	Form,
 	Checkbox,
 } from 'antd';
 import { get, isEmpty, map } from 'lodash';
 import { PiClockClockwiseFill } from 'react-icons/pi';
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaTrash } from 'react-icons/fa';
 /**
  * Internal Dependencies
  */
@@ -37,6 +37,7 @@ import {
 	Header,
 	PaymentIcon,
 	ProductSelect,
+	NoticeBanner,
 } from '@quillbooking/components';
 import ConfigAPI from '@quillbooking/config';
 import { useEventContext } from '../../state/context';
@@ -131,67 +132,130 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 	(props, ref) => {
 		const { state: event } = useEventContext();
 		const { callApi, loading } = useApi();
-		const { successNotice, errorNotice } = useNotice();
-		const [settings, setSettings] = useState<PaymentsSettings | null>(null);
-		const setBreadcrumbs = useBreadcrumbs();
-		const [form] = Form.useForm();
-		const [selectedValue, setSelectedValue] = useState('');
-		const [selectedMethod, setSelectedMethod] = useState<string[]>([]);
 		const [isSaving, setIsSaving] = useState(false);
-		console.log(settings);
+		const [isInitialLoad, setIsInitialLoad] = useState(true);
+		const initialLoadCompleted = useRef(false);
+		const setBreadcrumbs = useBreadcrumbs();
+		const { successNotice, errorNotice } = useNotice();
+
+		// Single state for all payment settings with default values
+		const [paymentSettings, setPaymentSettings] = useState<PaymentsSettings>({
+			enable_payment: false,
+			enable_items_based_on_duration: false,
+			enable_paypal: false,
+			enable_stripe: false,
+			items: [
+				{ item: __('Booking Item', 'quillbooking'), price: 100 },
+			],
+			multi_duration_items: {},
+			payment_methods: [], // Initialize with empty array to fix TypeScript error
+			type: 'native',
+			woo_product: 0,
+		});
 
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {
-				if (settings) {
-					return saveSettings();
-				}
-				return Promise.resolve();
+				return saveSettings();
 			},
 		}));
 
-		// Update the toggleSelectionMethod function with null checks
-		const toggleSelectionMethod = (method: string) => {
-			// Update the selectedMethod array
-			const newMethods = selectedMethod.includes(method)
-				? selectedMethod.filter((item) => item !== method) // Remove if already selected
-				: [...selectedMethod, method]; // Add if not selected
+		const handleSettingsChange = (key, value) => {
+			setPaymentSettings((prev) => ({
+				...prev,
+				[key]: value,
+			}));
+			props.setDisabled(false);
+		};
 
-			setSelectedMethod(newMethods);
+		// Updated togglePaymentMethod function to ensure consistency
+		const togglePaymentMethod = (method) => {
+			// Ensure payment_methods is always an array
+			const currentMethods = paymentSettings.payment_methods || [];
+			const methodExists = currentMethods.includes(method);
 
-			// Only update settings if it's not null
-			if (settings) {
-				// Update the corresponding boolean flag in settings
-				const updatedSettings = { ...settings };
-				if (method === 'paypal') {
-					updatedSettings.enable_paypal =
-						!updatedSettings.enable_paypal;
-				} else if (method === 'stripe') {
-					updatedSettings.enable_stripe =
-						!updatedSettings.enable_stripe;
-				}
+			// Create a new payment_methods array based on the toggle action
+			const newPaymentMethods = methodExists
+				? currentMethods.filter((item) => item !== method)
+				: [...currentMethods, method];
 
-				setSettings(updatedSettings);
+			// Update the corresponding boolean flag based on the method
+			const newPaymentSettings = {
+				...paymentSettings,
+				payment_methods: newPaymentMethods,
+			};
+
+			// Explicitly set the boolean flags based on whether methods exist in the array
+			newPaymentSettings.enable_paypal = newPaymentMethods.includes('paypal');
+			newPaymentSettings.enable_stripe = newPaymentMethods.includes('stripe');
+
+			setPaymentSettings(newPaymentSettings);
+			props.setDisabled(false);
+		};
+
+		const handleItemChange = (index, field, value) => {
+			const updatedItems = [...paymentSettings.items];
+			updatedItems[index] = {
+				...updatedItems[index],
+				[field]: value,
+			};
+
+			setPaymentSettings((prev) => ({
+				...prev,
+				items: updatedItems,
+			}));
+
+			props.setDisabled(false);
+		};
+
+		const addItem = () => {
+			setPaymentSettings((prev) => ({
+				...prev,
+				items: [
+					...prev.items,
+					{ item: __('Booking Item', 'quillbooking'), price: 100 },
+				],
+			}));
+
+			props.setDisabled(false);
+		};
+
+		const removeItem = (index) => {
+			const updatedItems = [...paymentSettings.items];
+			updatedItems.splice(index, 1);
+
+			setPaymentSettings((prev) => ({
+				...prev,
+				items: updatedItems,
+			}));
+
+			props.setDisabled(false);
+		};
+
+		const handleDurationItemChange = (duration, field, value) => {
+			const durationStr = duration.toString();
+			const updatedDurationItems = {
+				...paymentSettings.multi_duration_items,
+			};
+
+			if (!updatedDurationItems[durationStr]) {
+				updatedDurationItems[durationStr] = {
+					item: __('Booking Item', 'quillbooking'),
+					price: 100,
+					duration: durationStr,
+				};
 			}
 
-			// Update form values
-			form.setFieldValue('payment_methods', newMethods);
-			form.setFieldValue(
-				'enable_paypal',
-				method === 'paypal'
-					? !(settings?.enable_paypal ?? false)
-					: (settings?.enable_paypal ?? false)
-			);
-			form.setFieldValue(
-				'enable_stripe',
-				method === 'stripe'
-					? !(settings?.enable_stripe ?? false)
-					: (settings?.enable_stripe ?? false)
-			);
+			updatedDurationItems[durationStr] = {
+				...updatedDurationItems[durationStr],
+				[field]: value,
+			};
 
-			// Mark as modified
-			if (props.setDisabled) {
-				props.setDisabled(false);
-			}
+			setPaymentSettings((prev) => ({
+				...prev,
+				multi_duration_items: updatedDurationItems,
+			}));
+
+			props.setDisabled(false);
 		};
 
 		const fetchSettings = () => {
@@ -201,46 +265,74 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 				path: `events/${event.id}/meta/payments_settings`,
 				method: 'GET',
 				onSuccess(response: PaymentsSettings) {
-					console.log;
-					setSettings(response);
-					setSelectedValue(response.type || '');
-					setSelectedMethod(response.payment_methods || []);
+					// Ensure items is always an array with at least one item
+					const responseWithDefaults = {
+						...response,
+						items: response.items?.length
+							? response.items
+							: [
+								{
+									item: __(
+										'Booking Item',
+										'quillbooking'
+									),
+									price: 100,
+								},
+							],
+						multi_duration_items:
+							response.multi_duration_items || {},
+						// Ensure payment_methods is always an array
+						payment_methods: response.payment_methods || [],
+					};
 
-					const initialValues = get(
+					// Ensure payment_methods and boolean flags are in sync
+					responseWithDefaults.enable_paypal = responseWithDefaults.payment_methods.includes('paypal');
+					responseWithDefaults.enable_stripe = responseWithDefaults.payment_methods.includes('stripe');
+					responseWithDefaults.type = response.type || 'native';
+
+					// Setup initial values for multi-duration items if needed
+					const selectableDurations = get(
 						event,
 						'additional_settings.selectable_durations',
 						[]
-					).reduce((acc, duration) => {
-						acc[duration.toString()] = get(
-							response,
-							['multi_duration_items', duration],
-							{
-								item: __('Booking Item', 'quillbooking'),
-								price: 100,
-							}
-						);
-						return acc;
-					}, {});
+					);
 
-					form.setFieldsValue({
-						enable_payment: response.enable_payment,
-						type: response.type,
-						woo_product: response.woo_product,
-						enable_items_based_on_duration:
-							response.enable_items_based_on_duration,
-						items: response.items,
-						payment_methods: response.payment_methods || [],
-						enable_paypal: response.enable_paypal,
-						enable_stripe: response.enable_stripe,
-						multi_duration_items: isEmpty(
-							response.multi_duration_items
-						)
-							? initialValues
-							: response.multi_duration_items,
-					});
+					if (
+						selectableDurations.length &&
+						isEmpty(responseWithDefaults.multi_duration_items)
+					) {
+						selectableDurations.forEach((duration) => {
+							const durationStr = duration.toString();
+							if (
+								!responseWithDefaults.multi_duration_items[
+								durationStr
+								]
+							) {
+								responseWithDefaults.multi_duration_items[
+									durationStr
+								] = {
+									item: __('Booking Item', 'quillbooking'),
+									price: 100,
+									duration: durationStr,
+								};
+							}
+						});
+					}
+
+					setPaymentSettings(responseWithDefaults);
+
+					// Mark initial load as complete after first successful fetch
+					if (isInitialLoad) {
+						setIsInitialLoad(false);
+						initialLoadCompleted.current = true;
+					}
 				},
 				onError(error) {
-					errorNotice(error.message);
+					if (isInitialLoad) {
+						setIsInitialLoad(false);
+						initialLoadCompleted.current = true;
+					}
+					throw new Error(error.message);
 				},
 			});
 		};
@@ -250,7 +342,12 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 				return;
 			}
 
-			fetchSettings();
+			// Only fetch on initial mount or if initialLoadCompleted is false
+			if (!initialLoadCompleted.current) {
+				fetchSettings();
+				initialLoadCompleted.current = true;
+			}
+
 			setBreadcrumbs([
 				{
 					path: `calendars/${event.calendar_id}/events/${event.id}/payments`,
@@ -264,56 +361,78 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 				setIsSaving(true);
 				props.setDisabled(true);
 
-				const values = await form.validateFields();
-				if (!event) return;
+				if (!event) {
+					throw new Error(__('Event not found', 'quillbooking'));
+				}
 
-				// Include the selected payment methods in the settings
-				const updatedSettings = {
-					...settings,
-					...values,
-					payment_methods: selectedMethod,
+				// Make sure we have at least one item in the items array if not using multi-duration
+				if (
+					!paymentSettings.enable_items_based_on_duration &&
+					(!paymentSettings.items ||
+						paymentSettings.items.length === 0)
+				) {
+					setPaymentSettings((prev) => ({
+						...prev,
+						items: [
+							{
+								item: __('Booking Item', 'quillbooking'),
+								price: 100,
+							},
+						],
+					}));
+				}
+
+				// Ensure payment_methods array and boolean flags are consistent before saving
+				const finalPaymentSettings = {
+					...paymentSettings,
+					// Ensure payment_methods is always an array
+					payment_methods: paymentSettings.payment_methods || [],
+					enable_paypal: (paymentSettings.payment_methods || []).includes('paypal'),
+					enable_stripe: (paymentSettings.payment_methods || []).includes('stripe'),
 				};
 
 				await callApi({
 					path: `events/${event.id}`,
 					method: 'POST',
 					data: {
-						payments_settings: updatedSettings,
+						payments_settings: finalPaymentSettings,
 					},
 					onSuccess() {
 						successNotice(
-							__('Settings saved successfully', 'quillbooking')
+							__(
+								'Payment settings saved successfully',
+								'quillbooking'
+							)
 						);
+						// No longer refreshing the page or refetching data
 					},
 					onError(error) {
-						errorNotice(error.message);
 						props.setDisabled(false);
+						throw new Error(error.message);
 					},
 				});
 			} catch (error: any) {
-				// Handle validation errors if any
-				if (error?.errorFields?.length) {
-					errorNotice(
-						__('Please fill in all required fields', 'quillbooking')
-					);
-				}
 				props.setDisabled(false);
+				throw error;
 			} finally {
 				setIsSaving(false);
 			}
 		};
 
-		const handleFormChange = () => {
-			if (!isSaving) {
-				props.setDisabled(false);
-			}
-		};
+		// Show skeleton only during initial load
+		if (loading && isInitialLoad) {
+			return <PaymentsSkeleton />;
+		}
 
-		if (!settings || !event) {
+		if (!event) {
 			return <PaymentsSkeleton />;
 		}
 
 		const isWooCommerceEnabled = ConfigAPI.isWoocommerceActive();
+		const allowAttendeesToSelectDuration = get(
+			event,
+			'additional_settings.allow_attendees_to_select_duration'
+		);
 
 		return (
 			<Card className="rounded-lg mx-9">
@@ -325,615 +444,535 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 					)}
 					icon={<PaymentIcon />}
 				/>
-				<Form
-					form={form}
-					layout="vertical"
-					onFinish={saveSettings}
-					onValuesChange={handleFormChange}
-					disabled={isSaving}
+				<Flex
+					vertical
+					gap={25}
+					className="quillbooking-payments-tab mt-4"
 				>
-					<Flex
-						vertical
-						gap={25}
-						className="quillbooking-payments-tab mt-4"
-					>
-						<Form.Item shouldUpdate style={{ marginBottom: 0 }}>
-							{({ getFieldValue }) => {
-								const enablePayment =
-									getFieldValue('enable_payment');
-								const allowAttendeesToSelectDuration = get(
-									event,
-									'additional_settings.allow_attendees_to_select_duration'
-								);
-
-								if (!enablePayment) {
-									// Only show Enable Payment full width if switch is off
-									return (
-										<Flex gap={10} className="w-full">
-											<Flex className="justify-between items-center w-full">
-												<Flex vertical gap={1}>
-													<div className="text-[#09090B] font-bold">
-														{__(
-															'Enable Payment',
-															'quillbooking'
-														)}
-													</div>
-													<div className="text-[#71717A] font-[500]">
-														{__(
-															'Enable this event as Paid and collect payment on booking',
-															'quillbooking'
-														)}
-													</div>
-												</Flex>
-												<Form.Item
-													name="enable_payment"
-													valuePropName="checked"
-												>
-													<Switch className="custom-switch" />
-												</Form.Item>
-											</Flex>
-										</Flex>
-									);
-								}
-
-								// enable_payment is ON
-								return (
-									<Flex gap={20} className="w-full">
-										<Flex
-											className={`justify-between items-center ${allowAttendeesToSelectDuration ? 'w-1/2' : 'w-full'}`}
-										>
-											<Flex vertical gap={1}>
-												<div className="text-[#09090B] font-bold">
-													{__(
-														'Enable Payment',
-														'quillbooking'
-													)}
-												</div>
-												<div className="text-[#71717A] font-[500]">
-													{__(
-														'Enable this event as Paid and collect payment on booking',
-														'quillbooking'
-													)}
-												</div>
-											</Flex>
-											<Form.Item
-												name="enable_payment"
-												valuePropName="checked"
-											>
-												<Switch className="custom-switch" />
-											</Form.Item>
-										</Flex>
-
-										{allowAttendeesToSelectDuration && (
-											<Flex className="justify-between items-center w-1/2">
-												<Flex vertical gap={1}>
-													<div className="text-[#09090B] font-bold">
-														{__(
-															'Enable Multiple Payment',
-															'quillbooking'
-														)}
-													</div>
-													<div className="text-[#71717A] font-[500]">
-														{__(
-															'Enable Multiple Payment options based on duration.',
-															'quillbooking'
-														)}
-													</div>
-												</Flex>
-												<Form.Item
-													name="enable_items_based_on_duration"
-													valuePropName="checked"
-												>
-													<Switch className="custom-switch" />
-												</Form.Item>
-											</Flex>
+					{/* Enable Payment Switch */}
+					<Flex gap={10} className="w-full">
+						{!paymentSettings.enable_payment ? (
+							<Flex className="justify-between items-center w-full">
+								<Flex vertical gap={1}>
+									<div className="text-[#09090B] font-bold">
+										{__('Enable Payment', 'quillbooking')}
+									</div>
+									<div className="text-[#71717A] font-[500]">
+										{__(
+											'Enable this event as Paid and collect payment on booking',
+											'quillbooking'
 										)}
+									</div>
+								</Flex>
+								<Switch
+									className="custom-switch"
+									checked={paymentSettings.enable_payment}
+									onChange={(checked) =>
+										handleSettingsChange(
+											'enable_payment',
+											checked
+										)
+									}
+									disabled={isSaving}
+								/>
+							</Flex>
+						) : (
+							<Flex gap={20} className="w-full">
+								<Flex
+									className={`justify-between items-center ${allowAttendeesToSelectDuration ? 'w-1/2' : 'w-full'}`}
+								>
+									<Flex vertical gap={1}>
+										<div className="text-[#09090B] font-bold">
+											{__(
+												'Enable Payment',
+												'quillbooking'
+											)}
+										</div>
+										<div className="text-[#71717A] font-[500]">
+											{__(
+												'Enable this event as Paid and collect payment on booking',
+												'quillbooking'
+											)}
+										</div>
 									</Flex>
-								);
-							}}
-						</Form.Item>
+									<Switch
+										className="custom-switch"
+										checked={paymentSettings.enable_payment}
+										onChange={(checked) =>
+											handleSettingsChange(
+												'enable_payment',
+												checked
+											)
+										}
+										disabled={isSaving}
+									/>
+								</Flex>
 
-						{/* Main form content */}
-						<Form.Item shouldUpdate style={{ marginBottom: 0 }}>
-							{({ getFieldValue }) => {
-								const enablePayment =
-									getFieldValue('enable_payment');
-								const type = getFieldValue('type') || '';
-								const allowAttendeesToSelectDuration = get(
-									event,
-									'additional_settings.allow_attendees_to_select_duration'
-								);
-								const enableItemsBasedOnDuration =
-									getFieldValue(
-										'enable_items_based_on_duration'
-									);
-								if (!enablePayment) return null;
+								{allowAttendeesToSelectDuration && (
+									<Flex className="justify-between items-center w-1/2">
+										<Flex vertical gap={1}>
+											<div className="text-[#09090B] font-bold">
+												{__(
+													'Enable Multiple Payment',
+													'quillbooking'
+												)}
+											</div>
+											<div className="text-[#71717A] font-[500]">
+												{__(
+													'Enable Multiple Payment options based on duration.',
+													'quillbooking'
+												)}
+											</div>
+										</Flex>
+										<Switch
+											className="custom-switch"
+											checked={
+												paymentSettings.enable_items_based_on_duration
+											}
+											onChange={(checked) =>
+												handleSettingsChange(
+													'enable_items_based_on_duration',
+													checked
+												)
+											}
+											disabled={isSaving}
+										/>
+									</Flex>
+								)}
+							</Flex>
+						)}
+					</Flex>
 
-								return (
-									<>
-										<Form.Item name="type">
-											<Flex vertical gap={4}>
-												<div className="text-[#3F4254] font-semibold text-[16px]">
+					{/* Main content - only show if payment is enabled */}
+					{paymentSettings.enable_payment && (
+						<>
+							{/* Payment Type Selection */}
+							<Flex vertical gap={4}>
+								<div className="text-[#3F4254] font-semibold text-[16px]">
+									{__('Checkout Method', 'quillbooking')}
+								</div>
+								<Radio.Group
+									className="flex w-full"
+									value={paymentSettings.type}
+									onChange={(e) =>
+										handleSettingsChange(
+											'type',
+											e.target.value
+										)
+									}
+									disabled={isSaving}
+								>
+									<Radio
+										value="native"
+										className={`custom-radio border w-1/2 rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
+                                      ${paymentSettings.type === 'native' ? 'bg-color-secondary border-color-primary' : 'border'}`}
+									>
+										{__(
+											'Use Native Payment Methods by Quillbooking',
+											'quillbooking'
+										)}
+									</Radio>
+									<Radio
+										value="woocommerce"
+										className={`custom-radio border w-1/2 rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
+                                      ${paymentSettings.type === 'woocommerce' ? 'bg-color-secondary border-color-primary' : 'border'}`}
+									>
+										{__(
+											'Use WooCommerce Checkout',
+											'quillbooking'
+										)}
+									</Radio>
+								</Radio.Group>
+							</Flex>
+
+							{/* WooCommerce Product Selection */}
+							{paymentSettings.type === 'woocommerce' && (
+								<>
+									{isWooCommerceEnabled ? (
+										<Flex vertical gap={4} className="mt-6">
+											<div className="text-[#3F4254] font-semibold text-[16px]">
+												{__(
+													'Select WooCommerce Product',
+													'quillbooking'
+												)}
+											</div>
+											<ProductSelect
+												placeholder={__(
+													'Select a WooCommerce product...',
+													'quillbooking'
+												)}
+												onChange={(value) => handleSettingsChange('woo_product', value)}
+												value={paymentSettings.woo_product || 0}
+											/>
+											<span className="text-[#71717A] text-[16px] font-medium">
+												{__(
+													'The selected product will be used for checkout in WooCommerce. The amount will be equal to the selected product pricing.',
+													'quillbooking'
+												)}
+											</span>
+										</Flex>
+									) : (
+										<Flex
+											gap={20}
+											align="center"
+											className="border-2 border-[#FF3B30] border-dashed bg-[#FBF9FC] rounded-lg py-4 pl-6 mt-5"
+										>
+											<div className="text-[#FF3B30]">
+												<AlertIcon />
+											</div>
+											<Flex vertical gap={3}>
+												<span className="text-[#3F4254] text-[15px] font-semibold">
 													{__(
-														'Checkout Method',
+														'Need to Activate WooCommerce!',
 														'quillbooking'
 													)}
-												</div>
-												<Radio.Group
-													className="flex w-full"
-													value={selectedValue}
-													onChange={(e) => {
-														setSelectedValue(
-															e.target.value
-														);
-														props.setDisabled(
-															false
-														);
-													}}
-												>
-													<Radio
-														value="native"
-														className={`custom-radio border w-1/2 rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                                  ${
-														selectedValue ===
-														'native'
-															? 'bg-color-secondary border-color-primary'
-															: 'border'
-													}`}
-													>
+												</span>
+												<span className="text-[#71717A] text-[13px] font-medium">
+													{__(
+														'You Need to Activate WooCommerce Plugin, Please ',
+														'quillbooking'
+													)}
+													<a className="text-color-primary no-underline font-semibold">
 														{__(
-															'Use Native Payment Methods by Quillbooking',
+															'Click here to Activate.',
 															'quillbooking'
 														)}
-													</Radio>
-													<Radio
-														value="woocommerce"
-														className={`custom-radio border w-1/2 rounded-lg p-4 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                                ${
-													selectedValue ===
-													'woocommerce'
-														? 'bg-color-secondary border-color-primary'
-														: 'border'
-												}`}
-													>
-														{__(
-															'Use WooCommerce Checkout',
-															'quillbooking'
-														)}
-													</Radio>
-												</Radio.Group>
+													</a>
+												</span>
 											</Flex>
-										</Form.Item>
-										{type === 'woocommerce' &&
-											(isWooCommerceEnabled ? (
-												<Form.Item
-													name="woo_product"
-													rules={[
-														{
-															required: true,
-															message: __(
-																'Please select a WooCommerce product',
+										</Flex>
+									)}
+								</>
+							)}
+
+							{/* Native Payment Options */}
+							{paymentSettings.type === 'native' && (
+								<>
+									{/* Payment Methods Selection */}
+									<Flex vertical gap={2} className="mt-5">
+										<div className="text-[#09090B] font-semibold text-[16px]">
+											{__(
+												'Select One or More',
+												'quillbooking'
+											)}
+										</div>
+										<Flex gap={20} className="mb-5">
+											<Checkbox
+												checked={(paymentSettings.payment_methods || []).includes(
+													'paypal'
+												)}
+												onChange={() =>
+													togglePaymentMethod(
+														'paypal'
+													)
+												}
+												className={`custom-check border px-4 py-[10px] rounded-lg ${(paymentSettings.payment_methods || []).includes(
+													'paypal'
+												)
+														? 'border-color-primary bg-color-secondary'
+														: ''
+													}`}
+												disabled={isSaving}
+											>
+												<img
+													src={paypal}
+													alt="paypal"
+													className="paypal-img"
+												/>
+											</Checkbox>
+
+											<Checkbox
+												checked={(paymentSettings.payment_methods || []).includes(
+													'stripe'
+												)}
+												onChange={() =>
+													togglePaymentMethod(
+														'stripe'
+													)
+												}
+												className={`custom-check border px-4 py-[10px] rounded-lg ${(paymentSettings.payment_methods || []).includes(
+													'stripe'
+												)
+														? 'border-color-primary bg-color-secondary'
+														: ''
+													}`}
+												disabled={isSaving}
+											>
+												<img
+													src={stripe}
+													alt="stripe"
+													className="stripe-img"
+												/>
+											</Checkbox>
+										</Flex>
+									</Flex>
+
+									{/* Duration-based Items */}
+									{paymentSettings.enable_items_based_on_duration &&
+										allowAttendeesToSelectDuration ? (
+										<Flex vertical gap={20}>
+											<Header
+												header={__(
+													'Booking Payment Items',
+													'quillbooking'
+												)}
+												subHeader={__(
+													'Manage your Payment Items per Durations for events.',
+													'quillbooking'
+												)}
+											/>
+											{map(
+												get(
+													event,
+													'additional_settings.selectable_durations',
+													[]
+												),
+												(duration: number | string) => {
+													const durationStr =
+														duration.toString();
+													const durationItem =
+														paymentSettings
+															.multi_duration_items[
+														durationStr
+														] || {
+															item: __(
+																'Booking Item',
 																'quillbooking'
 															),
-														},
-													]}
-													className="mt-6"
-												>
-													<Flex vertical gap={4}>
-														<div className="text-[#3F4254] font-semibold text-[16px]">
-															{__(
-																'Select WooCommerce Product',
-																'quillbooking'
-															)}
-														</div>
-														<ProductSelect
-															placeholder={__(
-																'Select a WooCommerce product...',
-																'quillbooking'
-															)}
-															onChange={(
-																value
-															) => {
-																form.setFieldsValue(
-																	{
-																		woo_product:
-																			value,
-																	}
-																);
-																props.setDisabled(
-																	false
-																);
-															}}
-															value={
-																get(
-																	settings,
-																	'woo_product'
-																) || 0
-															}
-														/>
-														<span className="text-[#71717A] text-[16px] font-medium">
-															{__(
-																'The selected product will be used for checkout in WooCommerce. The amount will be equal to the selected product pricing.',
-																'quillbooking'
-															)}
-														</span>
-													</Flex>
-												</Form.Item>
-											) : (
-												<Flex
-													gap={20}
-													align="center"
-													className="border-2 border-[#FF3B30] border-dashed bg-[#FBF9FC] rounded-lg py-4 pl-6 mt-5"
-												>
-													<div className="text-[#FF3B30]">
-														<AlertIcon />
-													</div>
-													<Flex vertical gap={3}>
-														<span className="text-[#3F4254] text-[15px] font-semibold">
-															{__(
-																'Need to Activate WooCommerce!',
-																'quillbooking'
-															)}
-														</span>
-														<span className="text-[#71717A] text-[13px] font-medium">
-															{__(
-																'You Need to Activate WooCommerce Plugin, Please ',
-																'quillbooking'
-															)}
-															<a className="text-color-primary no-underline font-semibold">
+															price: 100,
+															duration:
+																durationStr,
+														};
+
+													return (
+														<Card
+															key={durationStr}
+															className="w-full"
+														>
+															<Flex vertical>
+																<div className="font-semibold text-[#7E8299] mb-5 flex items-center px-3 py-1 bg-[#F1F1F2] rounded-lg w-[140px]">
+																	<PiClockClockwiseFill className="text-[18px] mr-1" />{' '}
+																	{sprintf(
+																		__(
+																			'%s minutes',
+																			'quillbooking'
+																		),
+																		duration
+																	)}
+																</div>
+																<Flex gap={10}>
+																	<div className="w-full">
+																		<div className="text-[#09090B] text-[16px] pb-1">
+																			{__(
+																				'Booking Payment Items',
+																				'quillbooking'
+																			)}
+																			<span className="text-red-500">
+																				*
+																			</span>
+																		</div>
+																		<Input
+																			placeholder={__(
+																				'Booking Fee',
+																				'quillbooking'
+																			)}
+																			className="h-[48px] rounded-lg w-full"
+																			value={
+																				durationItem.item
+																			}
+																			onChange={(
+																				e
+																			) =>
+																				handleDurationItemChange(
+																					duration,
+																					'item',
+																					e
+																						.target
+																						.value
+																				)
+																			}
+																			disabled={
+																				isSaving
+																			}
+																		/>
+																	</div>
+
+																	<div className="w-full">
+																		<div className="text-[#09090B] text-[16px] pb-1">
+																			{__(
+																				'Price',
+																				'quillbooking'
+																			)}
+																			<span className="text-red-500">
+																				*
+																			</span>
+																		</div>
+																		<InputNumber
+																			placeholder={__(
+																				'Price',
+																				'quillbooking'
+																			)}
+																			suffix={
+																				<span className="border-l pl-2">
+																					$
+																				</span>
+																			}
+																			className="h-[48px] rounded-lg w-full"
+																			value={
+																				durationItem.price
+																			}
+																			onChange={(
+																				value
+																			) =>
+																				handleDurationItemChange(
+																					duration,
+																					'price',
+																					value
+																				)
+																			}
+																			disabled={
+																				isSaving
+																			}
+																		/>
+																	</div>
+																</Flex>
+															</Flex>
+														</Card>
+													);
+												}
+											)}
+										</Flex>
+									) : (
+										<>
+											{/* Regular Items */}
+											<Header
+												header={__(
+													'Booking Payment Items',
+													'quillbooking'
+												)}
+												subHeader={__(
+													'Manage your Payment Items for events.',
+													'quillbooking'
+												)}
+											/>
+											{paymentSettings.items.map(
+												(item, index) => (
+													<Flex
+														key={index}
+														gap={10}
+														className="mb-4"
+														align="flex-end"
+													>
+														<div className="w-full">
+															<div className="text-[#09090B] text-[16px] pb-2">
 																{__(
-																	'Click here to Activate.',
+																	'Booking Payment Items',
 																	'quillbooking'
 																)}
-															</a>
-														</span>
-													</Flex>
-												</Flex>
-											))}
-										{type === 'native' && (
-											<>
-												<Form.Item
-													name="payment_methods"
-													className="mt-5"
-												>
-													<Flex vertical gap={2}>
-														<div className="text-[#09090B] font-semibold text-[16px]">
-															{__(
-																'Select One or More',
-																'quillbooking'
-															)}
+																<span className="text-red-500">
+																	*
+																</span>
+															</div>
+															<Input
+																placeholder={__(
+																	'Item Name',
+																	'quillbooking'
+																)}
+																className="h-[48px] rounded-lg w-full"
+																value={
+																	item.item
+																}
+																onChange={(e) =>
+																	handleItemChange(
+																		index,
+																		'item',
+																		e.target
+																			.value
+																	)
+																}
+																disabled={
+																	isSaving
+																}
+															/>
 														</div>
-														<Flex
-															gap={20}
-															className="mb-5"
-														>
-															<Checkbox
-																checked={selectedMethod.includes(
-																	'paypal'
+														<div className="w-full">
+															<div className="text-[#09090B] text-[16px] pb-2">
+																{__(
+																	'Price',
+																	'quillbooking'
 																)}
-																onChange={() =>
-																	toggleSelectionMethod(
-																		'paypal'
+																<span className="text-red-500">
+																	*
+																</span>
+															</div>
+															<InputNumber
+																placeholder={__(
+																	'Price',
+																	'quillbooking'
+																)}
+																suffix={
+																	<span className="border-l pl-2">
+																		$
+																	</span>
+																}
+																className="h-[48px] rounded-lg w-full"
+																value={
+																	item.price
+																}
+																onChange={(
+																	value
+																) =>
+																	handleItemChange(
+																		index,
+																		'price',
+																		value
 																	)
 																}
-																className={`custom-check border px-4 py-[10px] rounded-lg ${selectedMethod.includes('paypal') ? 'border-color-primary bg-color-secondary' : ''}`}
-															>
-																<img
-																	src={paypal}
-																	alt="paypal"
-																	className="paypal-img "
-																/>
-															</Checkbox>
-
-															<Checkbox
-																checked={selectedMethod.includes(
-																	'stripe'
-																)}
-																onChange={() =>
-																	toggleSelectionMethod(
-																		'stripe'
-																	)
+																disabled={
+																	isSaving
 																}
-																className={`custom-check border px-4 py-[10px] rounded-lg ${selectedMethod.includes('stripe') ? 'border-color-primary bg-color-secondary' : ''}`}
-															>
-																<img
-																	src={stripe}
-																	alt="stripe"
-																	className="stripe-img"
-																/>
-															</Checkbox>
-														</Flex>
-													</Flex>
-												</Form.Item>
-												{enableItemsBasedOnDuration &&
-												allowAttendeesToSelectDuration ? (
-													<Flex vertical gap={20}>
-														<Header
-															header={__(
-																'Booking Payment Items',
-																'quillbooking'
-															)}
-															subHeader={__(
-																'Manage your Payment Items per Durations for events.',
-																'quillbooking'
-															)}
-														/>
-														{map(
-															get(
-																event,
-																'additional_settings.selectable_durations',
-																[]
-															),
-															(
-																duration:
-																	| number
-																	| string
-															) => {
-																const durationStr =
-																	duration.toString();
-
-																const itemValue =
-																	get(
-																		settings,
-																		[
-																			'multi_duration_items',
-																			durationStr,
-																			'item',
-																		]
-																	);
-																const priceValue =
-																	get(
-																		settings,
-																		[
-																			'multi_duration_items',
-																			durationStr,
-																			'price',
-																		]
-																	);
-
-																return (
-																	<Card
-																		key={
-																			durationStr
-																		}
-																		className="w-full"
-																	>
-																		<Flex
-																			vertical
-																		>
-																			<div className="font-semibold text-[#7E8299] mb-5 flex items-center px-3 py-1 bg-[#F1F1F2] rounded-lg w-[140px]">
-																				<PiClockClockwiseFill className="text-[18px] mr-1" />{' '}
-																				{sprintf(
-																					__(
-																						'%s minutes',
-																						'quillbooking'
-																					),
-																					duration
-																				)}
-																			</div>
-																			<Flex
-																				gap={
-																					10
-																				}
-																			>
-																				<Form.Item
-																					name={[
-																						'multi_duration_items',
-																						durationStr,
-																						'item',
-																					]}
-																					initialValue={
-																						itemValue
-																					}
-																					rules={[
-																						{
-																							required:
-																								true,
-																							message:
-																								__(
-																									'Please enter item name',
-																									'quillbooking'
-																								),
-																						},
-																					]}
-																					className="w-full"
-																				>
-																					<div className="text-[#09090B] text-[16px] pb-1">
-																						{__(
-																							'Booking Payment Items',
-																							'quillbooking'
-																						)}
-																						<span className="text-red-500">
-																							*
-																						</span>
-																					</div>
-																					<Input
-																						placeholder={__(
-																							'Booking Fee',
-																							'quillbooking'
-																						)}
-																						className="h-[48px] rounded-lg w-full"
-																					/>
-																				</Form.Item>
-
-																				<Form.Item
-																					name={[
-																						'multi_duration_items',
-																						durationStr,
-																						'price',
-																					]}
-																					initialValue={
-																						priceValue
-																					}
-																					rules={[
-																						{
-																							required:
-																								true,
-																							message:
-																								__(
-																									'Please enter item price',
-																									'quillbooking'
-																								),
-																						},
-																					]}
-																					className="w-full"
-																				>
-																					<div className="text-[#09090B] text-[16px] pb-1">
-																						{__(
-																							'Price',
-																							'quillbooking'
-																						)}
-																						<span className="text-red-500">
-																							*
-																						</span>
-																					</div>
-																					<InputNumber
-																						placeholder={__(
-																							'Price',
-																							'quillbooking'
-																						)}
-																						suffix={
-																							<span className="border-l pl-2">
-																								$
-																							</span>
-																						}
-																						className="h-[48px] rounded-lg w-full"
-																					/>
-																				</Form.Item>
-																			</Flex>
-																		</Flex>
-																	</Card>
-																);
-															}
-														)}
-													</Flex>
-												) : (
-													<Form.List name="items">
-														{(fields, { add }) => (
-															<>
-																{fields.map(
-																	({
-																		key,
-																		name,
-																		...restField
-																	}) => (
-																		<Flex
-																			key={
-																				key
-																			}
-																			gap={
-																				10
-																			}
-																		>
-																			<Form.Item
-																				{...restField}
-																				name={[
-																					name,
-																					'item',
-																				]}
-																				rules={[
-																					{
-																						required:
-																							true,
-																						message:
-																							__(
-																								'Please enter item name',
-																								'quillbooking'
-																							),
-																					},
-																				]}
-																				className="w-full"
-																			>
-																				<div className="text-[#09090B] text-[16px] pb-2">
-																					{__(
-																						'Booking Payment Items',
-																						'quillbooking'
-																					)}
-																					<span className="text-red-500">
-																						*
-																					</span>
-																				</div>
-																				<Input
-																					placeholder={__(
-																						'Item Name',
-																						'quillbooking'
-																					)}
-																					className="h-[48px] rounded-lg w-full"
-																				/>
-																			</Form.Item>
-																			<Form.Item
-																				{...restField}
-																				name={[
-																					name,
-																					'price',
-																				]}
-																				rules={[
-																					{
-																						required:
-																							true,
-																						message:
-																							__(
-																								'Please enter item price',
-																								'quillbooking'
-																							),
-																					},
-																				]}
-																				className="w-full"
-																			>
-																				<div className="text-[#09090B] text-[16px] pb-2">
-																					{__(
-																						'Price',
-																						'quillbooking'
-																					)}
-																					<span className="text-red-500">
-																						*
-																					</span>
-																				</div>
-																				<InputNumber
-																					placeholder={__(
-																						'Price',
-																						'quillbooking'
-																					)}
-																					suffix={
-																						<span className="border-l pl-2">
-																							$
-																						</span>
-																					}
-																					className="h-[48px] rounded-lg w-full"
-																				/>
-																			</Form.Item>
-																		</Flex>
-																	)
-																)}
+															/>
+														</div>
+														{paymentSettings.items
+															.length > 1 && (
 																<Button
 																	onClick={() =>
-																		add({
-																			item: 'Booking Item',
-																			price: 100,
-																		})
+																		removeItem(
+																			index
+																		)
 																	}
 																	icon={
-																		<FaPlus className="text-color-primary" />
+																		<FaTrash />
 																	}
-																	className="text-color-primary font-semibold outline-none border-none shadow-none"
-																>
-																	{__(
-																		'Add More Items',
-																		'quillbooking'
-																	)}
-																</Button>
-															</>
-														)}
-													</Form.List>
+																	className="text-red-500 ml-2"
+																	disabled={
+																		isSaving
+																	}
+																/>
+															)}
+													</Flex>
+												)
+											)}
+											<Button
+												onClick={addItem}
+												icon={
+													<FaPlus className="text-color-primary" />
+												}
+												className="text-color-primary font-semibold outline-none border-none shadow-none"
+												disabled={isSaving}
+											>
+												{__(
+													'Add More Items',
+													'quillbooking'
 												)}
-											</>
-										)}
-									</>
-								);
-							}}
-						</Form.Item>
-					</Flex>
-				</Form>
+											</Button>
+										</>
+									)}
+								</>
+							)}
+						</>
+					)}
+				</Flex>
 			</Card>
 		);
 	}

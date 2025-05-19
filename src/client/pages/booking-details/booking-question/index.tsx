@@ -26,7 +26,7 @@ const BookingQuestion: React.FC<BookingQuestionProps> = ({ booking }) => {
 	if (Object.entries(fields).length === 0)  return null;
 	
 	return (
-		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
+		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5 max-h-[600px] overflow-y-auto">
 			<CardHeader
 				title={__('Booking Questions', 'quillbooking')}
 				description={__(

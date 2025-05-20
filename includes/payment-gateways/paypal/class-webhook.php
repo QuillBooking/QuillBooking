@@ -118,18 +118,39 @@ class Webhook {
 	 * @return void
 	 */
 	private function process_refund( $booking, $event_data ) {
+		// Get transaction IDs from event data
+		$transaction_id = '';
+		if ( isset( $event_data['txn_id'] ) ) {
+			$transaction_id = sanitize_text_field( $event_data['txn_id'] );
+		} elseif ( isset( $event_data['parent_txn_id'] ) ) {
+			$transaction_id = sanitize_text_field( $event_data['parent_txn_id'] );
+		}
+		
+		// Update booking status
 		$booking->changeStatus( 'cancelled' );
-		$booking->order()->update(
-			array(
-				'status' => 'refunded',
-			)
-		);
+		
+		// Update order data
+		$order_data = array( 'status' => 'refunded' );
+		if ( ! empty( $transaction_id ) ) {
+			$order_data['refund_transaction_id'] = $transaction_id;
+		}
+		
+		$booking->order()->update( $order_data );
 
+		// Create log entry
+		$log_details = __( 'The payment for booking has been refunded.', 'quillbooking' );
+		if ( ! empty( $transaction_id ) ) {
+			$log_details = sprintf( 
+				__( 'The payment for booking has been refunded. Transaction ID: %s', 'quillbooking' ),
+				$transaction_id
+			);
+		}
+		
 		$booking->logs()->create(
 			array(
 				'type'    => 'info',
 				'message' => __( 'Payment refunded.', 'quillbooking' ),
-				'details' => __( 'The payment for bookinghas been refunded.', 'quillbooking' ),
+				'details' => $log_details,
 			)
 		);
 	}
@@ -142,10 +163,40 @@ class Webhook {
 	 * @return void
 	 */
 	private function process_completed( $booking, $event_data ) {
+		// Verify transaction ID exists
+		$txn_id = isset( $event_data['txn_id'] ) ? sanitize_text_field( $event_data['txn_id'] ) : '';
+		if ( empty( $txn_id ) ) {
+			$booking->logs()->create([
+				'type'    => 'error',
+				'message' => __( 'Payment verification failed.', 'quillbooking' ),
+				'details' => __( 'Missing transaction ID in PayPal response.', 'quillbooking' ),
+			]);
+			return;
+		}
+
+		// Verify payment amount matches booking total
+		$mc_gross = isset( $event_data['mc_gross'] ) ? floatval( $event_data['mc_gross'] ) : 0;
+		if ( $booking->order && abs( $mc_gross - $booking->order->total ) > 0.01 ) {
+			$booking->logs()->create([
+				'type'    => 'error',
+				'message' => __( 'Payment amount mismatch.', 'quillbooking' ),
+				'details' => sprintf( __( 'Expected %s but received %s.', 'quillbooking' ), 
+					$booking->order->total, 
+					$mc_gross
+				),
+			]);
+			return;
+		}
+
+		// Update booking status
 		$booking->changeStatus( 'scheduled' );
+		
+		// Update order with transaction info
 		$booking->order()->update(
 			array(
-				'status' => 'completed',
+				'status'        => 'completed',
+				'transaction_id' => $txn_id,
+				'paid_date'     => current_time( 'mysql' ),
 			)
 		);
 
@@ -153,7 +204,7 @@ class Webhook {
 			array(
 				'type'    => 'info',
 				'message' => __( 'Payment completed.', 'quillbooking' ),
-				'details' => __( 'The payment for booking has been completed.', 'quillbooking' ),
+				'details' => sprintf( __( 'The payment for booking has been completed. Transaction ID: %s', 'quillbooking' ), $txn_id ),
 			)
 		);
 	}
@@ -166,15 +217,38 @@ class Webhook {
 	 * @return void
 	 */
 	private function process_pending( $booking, $event_data ) {
+		// Get transaction ID if available
+		$transaction_id = '';
+		if ( isset( $event_data['txn_id'] ) ) {
+			$transaction_id = sanitize_text_field( $event_data['txn_id'] );
+		}
+		
+		// Update booking status
 		$booking->changeStatus( 'cancelled' );
+		
+		// Get pending reason
 		$pending_reason = Arr::get( $event_data, 'pending_reason', null );
 		$pending_reason = $this->get_pending_reason( $pending_reason );
+		
+		// Update order with transaction info if available
+		$order_data = array( 'status' => 'pending' );
+		if ( ! empty( $transaction_id ) ) {
+			$order_data['transaction_id'] = $transaction_id;
+		}
+		
+		$booking->order()->update( $order_data );
 
+		// Create log details
+		$log_details = sprintf( __( 'The payment for booking is pending. Reason: %s', 'quillbooking' ), $pending_reason );
+		if ( ! empty( $transaction_id ) ) {
+			$log_details .= ' ' . sprintf( __( 'Transaction ID: %s', 'quillbooking' ), $transaction_id );
+		}
+		
 		$booking->logs()->create(
 			array(
 				'type'    => 'error',
 				'message' => __( 'Payment pending.', 'quillbooking' ),
-				'details' => sprintf( 'The payment for booking is pending. Reason: %s', $pending_reason ),
+				'details' => $log_details,
 			)
 		);
 	}
@@ -183,15 +257,27 @@ class Webhook {
 	 * Validate PayPal IPN data.
 	 *
 	 * @param string $raw_ipn_data The raw IPN data received.
+	 * @param array  $mode_settings The mode settings to use for verification.
 	 * @return bool Whether the IPN data is valid.
 	 */
-	private function validate_ipn( $raw_ipn_data ) {
+	private function validate_ipn( $raw_ipn_data, $mode_settings ) {
+		// Skip verification if disabled in settings
+		if ( isset( $mode_settings['disable_verification'] ) && $mode_settings['disable_verification'] ) {
+			return true;
+		}
+
 		$ipn_data = array();
 		parse_str( $raw_ipn_data, $ipn_data );
 
+		// Verify receiver email matches our configured PayPal email
+		if ( isset( $ipn_data['receiver_email'] ) && $ipn_data['receiver_email'] !== $mode_settings['email'] ) {
+			error_log( 'PayPal IPN verification failed: Receiver email mismatch. Expected: ' . $mode_settings['email'] . ', Received: ' . $ipn_data['receiver_email'] );
+			return false;
+		}
+
 		$ipn_data['cmd'] = '_notify-validate';
 
-		$is_sandbox = ( $this->payment_gateway->get_mode_settings()['mode'] === 'sandbox' );
+		$is_sandbox = ( $mode_settings['mode'] === 'sandbox' );
 		$paypal_url = $is_sandbox ? 'https://ipnpb.sandbox.paypal.com/cgi-bin/webscr' : 'https://ipnpb.paypal.com/cgi-bin/webscr';
 
 		$response = wp_safe_remote_post(
@@ -204,9 +290,18 @@ class Webhook {
 			)
 		);
 
-		if ( is_wp_error( $response ) || wp_remote_retrieve_body( $response ) !== 'VERIFIED' ) {
+		if ( is_wp_error( $response ) ) {
+			error_log( 'PayPal IPN verification failed: ' . $response->get_error_message() );
 			return false;
 		}
+
+		if ( wp_remote_retrieve_body( $response ) !== 'VERIFIED' ) {
+			error_log( 'PayPal IPN verification failed: Response was not VERIFIED' );
+			return false;
+		}
+
+		// Log the successful verification
+		error_log( 'PayPal IPN verification successful for: ' . ( isset( $ipn_data['txn_id'] ) ? $ipn_data['txn_id'] : 'unknown' ) );
 
 		return true;
 	}

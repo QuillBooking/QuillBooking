@@ -148,6 +148,8 @@ const Event: React.FC = () => {
 		fetchEvent();
 	}, []);
 
+	console.log(event);
+
 	useEffect(() => {
 		const handleTabClose = (event: BeforeUnloadEvent) => {
 			if (saveDisabled) {

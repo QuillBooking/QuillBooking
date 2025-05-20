@@ -338,6 +338,7 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 			}
 		}
 
+		console.log('Calendar options:', options); // Debug log
 		return options;
 	};
 
@@ -423,7 +424,8 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 				</div>
 				<Select
 					placeholder={__('Select a Remote Calendar', 'quillbooking')}
-					className="w-full h-[48px] rounded-lg mb-2"
+					className="w-full rounded-lg mb-2"
+					style={{ height: '48px' }}
 					value={selectedCalendar || undefined}
 					onChange={handleRemoteCalendarChange}
 					options={getAllCalendars()}
@@ -431,6 +433,12 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 					loading={loading}
 					showSearch
 					optionFilterProp="label"
+					showArrow={true}
+					dropdownMatchSelectWidth={true}
+					dropdownStyle={{ zIndex: 9999 }}
+					getPopupContainer={(trigger) =>
+						trigger.parentElement || document.body
+					}
 				/>
 				<div className="text-[#71717A] italic">
 					{__(
@@ -558,7 +566,7 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 									)}
 								</Flex>
 							)}
-							<Flex vertical gap={10} className="w-full">
+							{/* <Flex vertical gap={10} className="w-full">
 								<Text
 									type="secondary"
 									className="text-[#9197A4]"
@@ -607,7 +615,7 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 										)}
 									</Checkbox>
 								</Flex>
-							</Flex>
+							</Flex> */}
 						</Card>
 					))
 				)}

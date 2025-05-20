@@ -22,26 +22,26 @@ require_once dirname( __FILE__ ) . '/ajax-handler.php';
  */
 function quillbooking_init_stripe_payment_service() {
 	// Check if the Stripe Payment Service class exists before initializing
-	if (class_exists('\\QuillBooking\\Payment_Gateways\\Stripe\\Payment_Service')) {
+	if ( class_exists( '\\QuillBooking\\Payment_Gateways\\Stripe\\Payment_Service' ) ) {
 		// Create an instance of the payment gateway
 		$payment_gateway = new Payment_Gateway();
 
 		// Make sure we have settings configured
 		$mode_settings = $payment_gateway->get_mode_settings();
-		if (!$mode_settings) {
-			error_log('Stripe Payment Service - Configuration missing');
+		if ( ! $mode_settings ) {
+			error_log( 'Stripe Payment Service - Configuration missing' );
 			return;
 		}
-		
-		error_log('Stripe Payment Service - Gateway configured: ' . json_encode($mode_settings));
-		
+
+		error_log( 'Stripe Payment Service - Gateway configured: ' . json_encode( $mode_settings ) );
+
 		// Initialize Webhook handler
-		if (class_exists('\\QuillBooking\\Payment_Gateways\\Stripe\\Webhook')) {
-			new Webhook($payment_gateway);
+		if ( class_exists( '\\QuillBooking\\Payment_Gateways\\Stripe\\Webhook' ) ) {
+			new Webhook( $payment_gateway );
 		}
 	}
 }
-add_action('plugins_loaded', 'quillbooking_init_stripe_payment_service');
+add_action( 'plugins_loaded', 'quillbooking_init_stripe_payment_service' );
 
 /**
  * Process Stripe payment
@@ -111,16 +111,11 @@ function quillbooking_process_stripe_payment( $booking, $args ) {
 			)
 		);
 
-		// Create or update order in our system
-		$booking->order()->create(
-			array(
-				'payment_method' => 'stripe',
-				'status'         => 'pending',
-				'total'          => $amount,
-				'currency'       => $currency,
-				'transaction_id' => $payment_intent->id,
-			)
-		);
+		// Store payment intent ID in booking meta
+		$booking->update_meta( 'stripe_payment_intent_id', $payment_intent->id );
+
+		// Create the initial pending order (similar to PayPal flow)
+		$payment_service->create_initial_order( $payment_intent->id, $amount, $currency );
 
 		// Return the client secret to the frontend
 		wp_send_json_success(

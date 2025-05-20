@@ -50,7 +50,44 @@ export type Event = {
         twilio: ConnectedIntegrationsFields;
         zoom: ConnectedIntegrationsFields;
     };
+    limits_data: EventLimits;
 };
+
+export interface EventLimits {
+    general: {
+        buffer_before: number;
+        buffer_after: number;
+        minimum_notices: number;
+        minimum_notice_unit: 'minutes' | 'hours';
+        time_slot: number;
+    };
+    frequency: {
+        enable: boolean;
+        limits: LimitRule[];
+    };
+    duration: {
+        enable: boolean;
+        limits: LimitRule[];
+    };
+    timezone_lock: {
+        enable: boolean;
+        timezone: string;
+    };
+}
+
+export interface LimitRule {
+    limit: number;
+    unit: LimitUnit;
+}
+
+export interface UnitOption {
+    label: string;
+    disabled: boolean;
+}
+
+export type UnitOptions = Record<LimitUnit, UnitOption>;
+
+export type LimitUnit = 'days' | 'weeks' | 'months';
 
 export type EventTypes = 'one-to-one' | 'group' | 'round-robin';
 
@@ -165,35 +202,35 @@ export type TimeSlot = {
 
 
 export type FieldType = {
-	label: string;
-	type: string;
-	required: boolean;
-	group: string;
-	event_location: string;
-	placeholder: string;
-	order: number;
-	enabled?: boolean;
-	settings?: {
-		options?: string[];
-		min?: string;
-		max?: string;
-		format?: string;
-		maxFileSize?: number;
-		maxFileCount?: number;
-		allowedFiles?: string[];
-	};
+    label: string;
+    type: string;
+    required: boolean;
+    group: string;
+    event_location: string;
+    placeholder: string;
+    order: number;
+    enabled?: boolean;
+    settings?: {
+        options?: string[];
+        min?: string;
+        max?: string;
+        format?: string;
+        maxFileSize?: number;
+        maxFileCount?: number;
+        allowedFiles?: string[];
+    };
     helpText?: string;
 };
 
 export type Fields = {
-	system: FieldsGroup;
-	location: FieldsGroup;
-	custom: FieldsGroup;
-	other?: FieldsGroup;
+    system: FieldsGroup;
+    location: FieldsGroup;
+    custom: FieldsGroup;
+    other?: FieldsGroup;
 };
 
 export type FieldsGroup = {
-	[key: string]: FieldType;
+    [key: string]: FieldType;
 };
 
 
@@ -221,19 +258,19 @@ export interface Booking {
 }
 
 export type Guest = {
-	booking_id: number;
-	create_at: string;
-	email: string;
-	id: number;
-	name: string;
-	phone?: string;
-	updated_at: string;
-	user_id: number;
+    booking_id: number;
+    create_at: string;
+    email: string;
+    id: number;
+    name: string;
+    phone?: string;
+    updated_at: string;
+    user_id: number;
 };
 
 export type Location = {
-	type: string;
-	fields: {
-		[key: string]: string;
-	};
+    type: string;
+    fields: {
+        [key: string]: string;
+    };
 };

@@ -22,6 +22,7 @@ class App
 {
 
 
+
 	/**
 	 * Provider
 	 *
@@ -34,7 +35,7 @@ class App
 	 *
 	 * @var string
 	 */
-	protected $auth_proxy_url = 'http://localhost/quillbooking/GoogleAuthProxy.php';
+	protected $auth_proxy_url = 'https://app.quillbooking.com/GoogleAuthProxy.php';
 
 	/**
 	 * Constructor.

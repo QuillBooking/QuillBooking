@@ -38,7 +38,7 @@ class App
 	 *
 	 * @var string
 	 */
-	protected $auth_proxy_url = 'http://localhost/quillbooking/OutlookAuthProxy.php';
+	protected $auth_proxy_url = 'https://app.quillbooking.com/OutlookAuthProxy.php';
 
 	/**
 	 * Constructor.

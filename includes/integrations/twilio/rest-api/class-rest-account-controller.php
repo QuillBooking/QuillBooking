@@ -113,6 +113,7 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function create_item( $request ) {
+		return new WP_REST_Response( array( 'message' => 'Hello, world!' ), 200 );
 		$params          = $request->get_params();
 		$sms_number      = Arr::get( $params, 'credentials.sms_number' );
 		$whatsapp_number = Arr::get( $params, 'credentials.whatsapp_number' );

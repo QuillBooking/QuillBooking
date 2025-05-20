@@ -94,7 +94,7 @@ class Integration extends Abstract_Integration {
 	public function __construct() {
 		parent::__construct();
 		$this->app = new App( $this );
-		// add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
 		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
 	}

@@ -1,6 +1,6 @@
 {
   "editor.codeActionsOnSave": {},
-  "editor.formatOnSave": false,
+  "editor.formatOnSave": true,
   "php.version": "8.2",
   "saveAndRun": {
     "commands": [

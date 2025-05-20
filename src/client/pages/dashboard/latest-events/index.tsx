@@ -198,8 +198,8 @@ const LatestEvents: React.FC = () => {
 											)}
 										</div>
 									</Flex>
-									<div className="font-medium text-[#09090B] pt-1">
-										{event.location}
+									<div className="font-medium text-[#09090B] pt-1 capitalize">
+										{event.location.split('_').join(' ')}
 									</div>
 								</Flex>
 							</Flex>

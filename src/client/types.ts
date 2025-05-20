@@ -83,6 +83,18 @@ export type Event = {
 	fields?: EventMetaData[];
 	availability_data?: Availability,
 	reserve: boolean;
+	payments_settings?: {
+		enable_payment: boolean;
+		enable_paypal?: boolean;
+		enable_stripe?: boolean;
+		enable_woocommerce?: boolean;
+		woo_product?: number;
+		items: Array<{
+			item: string;
+			price: number;
+		}>;
+		currency: string;
+	};
 	connected_integrations: {
 		apple: ConnectedIntegrationsFields;
 		google: ConnectedIntegrationsFields;

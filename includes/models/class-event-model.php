@@ -818,6 +818,15 @@ class Event_Model extends Model {
 			return false;
 		}
 
+		// Check if WooCommerce integration is enabled
+		$woocommerce_enabled = Arr::get( $payments_settings, 'enable_woocommerce', false );
+		$woo_product_set = Arr::get( $payments_settings, 'woo_product', false );
+		
+		// If WooCommerce is enabled and properly configured, payment is required
+		if ( $woocommerce_enabled && $woo_product_set && class_exists( 'WooCommerce' ) ) {
+			return true;
+		}
+
 		// Check if payment gateways are registered in the system
 		$payment_gateways_manager = \QuillBooking\Managers\Payment_Gateways_Manager::instance();
 		$payment_gateways = $payment_gateways_manager->get_items();

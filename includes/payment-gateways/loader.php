@@ -27,6 +27,11 @@ require_once dirname( __FILE__ ) . '/stripe/class-webhook.php';
 require_once dirname( __FILE__ ) . '/stripe/class-customers.php';
 require_once dirname( __FILE__ ) . '/stripe/class-utils.php';
 
+// Include WooCommerce class if WooCommerce is active
+if ( class_exists( 'WooCommerce' ) ) {
+    require_once QUILLBOOKING_PLUGIN_DIR . 'includes/woocommerce/class-woocommerce.php';
+}
+
 // Use the gateway classes
 use QuillBooking\Payment_Gateways\Paypal\Payment_Gateway as Paypal_Payment_Gateway;
 use QuillBooking\Payment_Gateways\Stripe\Payment_Gateway as Stripe_Payment_Gateway;
@@ -38,3 +43,8 @@ Stripe_Payment_Gateway::instance();
 // Load payment gateway hooks - these must come after the gateways are initialized
 require_once dirname( __FILE__ ) . '/paypal/hooks.php';
 require_once dirname( __FILE__ ) . '/stripe/hooks.php';
+
+// Load WooCommerce hooks if WooCommerce is active
+if ( class_exists( 'WooCommerce' ) ) {
+    require_once dirname( __FILE__ ) . '/woocommerce/hooks.php';
+}

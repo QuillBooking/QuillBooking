@@ -6,11 +6,12 @@ import {
 } from '@stripe/react-stripe-js';
 import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import './style.scss';
+import { Booking } from 'renderer/types';
 
 interface StripePaymentFormProps {
   ajax_url: string;
   setStep: (step: number) => void;
-  bookingData: any;
+  bookingData: Booking;
 }
 
 // Form for collecting Stripe payment details

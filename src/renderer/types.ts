@@ -35,6 +35,8 @@ export type Event = {
         enable_payment: boolean;
         enable_paypal?: boolean;
         enable_stripe?: boolean;
+        enable_woocommerce?: boolean;
+        woo_product?: number;
         items: Array<{
             item: string;
             price: number;

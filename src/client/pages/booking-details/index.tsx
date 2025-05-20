@@ -18,7 +18,7 @@ import { useParams } from '@quillbooking/navigation';
 import { useApi } from '@quillbooking/hooks';
 import { useNavigate } from '@quillbooking/navigation';
 import type { Booking, NoticeMessage } from '@quillbooking/client';
-import { groupBookingsByDate } from '@quillbooking/utils';
+import { convertTimezone, getCurrentTimezone, groupBookingsByDate } from '@quillbooking/utils';
 import AddBookingModal from '../bookings/add-booking-modal';
 import BookingList from './booking-list';
 import MeetingInformation from './meeting-information';
@@ -115,7 +115,6 @@ const BookingDetails: React.FC = () => {
 	const { callApi } = useApi();
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(true);
-	const navigate = useNavigate();
 	const [isDeleted, setIsDeleted] = useState(false);
 
 	const handleStatusUpdated = (action?: string) => {
@@ -219,26 +218,18 @@ const BookingDetails: React.FC = () => {
 	}, [selectedDate, refresh]);
 
 	// Format date/time information only once.
-	const formattedDate = booking?.start_time
-		? new Date(booking.start_time).toLocaleDateString('en-GB', {
-				day: 'numeric',
-				month: 'short',
-				year: 'numeric',
-			})
-		: '';
-	const formattedStartTime = booking?.start_time
-		? new Date(booking.start_time).toLocaleTimeString(undefined, {
-				hour: 'numeric',
-				minute: 'numeric',
-				hour12: true,
-			})
-		: '';
-	const formattedEndTime = booking?.end_time
-		? new Date(booking.end_time).toLocaleTimeString(undefined, {
-				hour: 'numeric',
-				minute: 'numeric',
-				hour12: true,
-			})
+	const { date, time } = booking?.start_time
+		? convertTimezone(booking.start_time, getCurrentTimezone())
+		: { date: '', time: '' };
+
+	const endTime = booking && booking.start_time && booking.slot_time
+		? (() => {
+			const [hours, minutes] = time.split(':').map(Number);
+			const totalMinutes = hours * 60 + minutes + Number(booking.slot_time);
+			const endHours = Math.floor(totalMinutes / 60);
+			const endMinutes = totalMinutes % 60;
+			return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+		})()
 		: '';
 
 	return (
@@ -308,8 +299,7 @@ const BookingDetails: React.FC = () => {
 									{__('Event Date/Time', 'quillbooking')}
 								</p>
 								<p className="text-2xl font-medium">
-									{formattedDate} - {formattedStartTime} -{' '}
-									{formattedEndTime}
+									{date} - {time} - {endTime}
 								</p>
 							</div>
 							{booking && <MeetingActivities booking={booking} />}

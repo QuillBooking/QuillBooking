@@ -98,14 +98,11 @@ export const fetchAjax = async (url: string, options: RequestInit = {}) => {
 };
 
 export const getFields = (formData: Record<string, any>) => {
-	const groupedFields: Record<string, any>[] = [];
+	const groupedFields = {};
 
 	Object.entries(formData).forEach(([key, value]) => {
 		if (key.startsWith('fields-')) {
-			groupedFields.push({
-				label: key.replace('fields-', ''),
-				value,
-			});
+			groupedFields[key.replace('fields-', '')] = value;
 		}
 	});
 

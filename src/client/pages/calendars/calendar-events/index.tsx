@@ -179,7 +179,9 @@ const CalendarEvents: React.FC<{
 									</Flex>
 									<Flex vertical justify="center" gap={10}>
 										<Flex gap={10} className="items-center">
+											<div className='flex-shrink-0'>
 											<LocationIcon/>
+											</div>
 											<div className="flex flex-col">
 												<span className="text-[#71717A] text-[12px]">
 													{__(
@@ -235,7 +237,6 @@ const CalendarEvents: React.FC<{
 											</div>
 										</Flex>
 
-										{/* static */}
 										<EventPrice payments_settings={event.payments_settings} duration={event.additional_settings.default_duration} />
 									</Flex>
 									<Flex
@@ -282,7 +283,9 @@ const CalendarEvents: React.FC<{
 												onClose={() =>
 													setModalShareId(null)
 												}
-												url={`${siteUrl}?quillbooking_calendar=${calendar.slug}&event=${event.slug}`}
+												url={`${siteUrl}?quillbooking_calendar=${calendar.slug}&event=${
+													events.find(event => event.id === modalShareId)?.slug || ''
+												}`}
 											/>
 										)}
 									</Flex>

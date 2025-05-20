@@ -21,7 +21,7 @@ import {
  * Internal dependencies
  */
 import ConfigAPI from '@quillbooking/config';
-import { useApi, useNotice, useCurrentUser } from '@quillbooking/hooks';
+import { useApi, useNotice } from '@quillbooking/hooks';
 import { addQueryArgs } from '@wordpress/url';
 
 const { Text } = Typography;
@@ -321,7 +321,6 @@ const SMSIntegration: React.FC = () => {
 										</span>
 									</div>
 								}
-								// بنحط label هنا لكن مش بنحط input جواه عشان نتحكم في التصميم
 							>
 								<Flex gap={10}>
 									<Form.Item
@@ -335,7 +334,7 @@ const SMSIntegration: React.FC = () => {
 											},
 										]}
 									>
-										<Input
+										<Input.Password
 											className="h-[48px] w-full rounded-lg"
 											type="password"
 											placeholder="*****************"
@@ -363,7 +362,7 @@ const SMSIntegration: React.FC = () => {
 									</div>
 								)}
 							</Form.Item>
-                            
+
 							<div className="text-[#71717A] italic my-3">
 								{__(
 									'The above app secret key will be encrypted and stored securely.',

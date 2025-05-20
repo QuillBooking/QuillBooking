@@ -83,6 +83,7 @@ const IntegrationCards: React.FC = () => {
 					{activeTab && activeIntegration && id && (
 						<IntegrationDetailsPage
 							integration={activeIntegration}
+							setNotice={setNotice}
 							calendarId={id}
 							slug={activeTab}
 						/>

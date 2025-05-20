@@ -20,6 +20,11 @@ use \Exception;
  */
 class Payment_Service extends Abstract_Payment_Service {
 
+
+
+
+
+
 	/**
 	 * Stripe client
 	 *
@@ -38,7 +43,7 @@ class Payment_Service extends Abstract_Payment_Service {
 	 * @return void
 	 */
 	public function process_payment() {
-		$this->ajax_init_stripe_client();
+		 $this->ajax_init_stripe_client();
 
 		try {
 			$event          = $this->booking->event;
@@ -102,8 +107,8 @@ class Payment_Service extends Abstract_Payment_Service {
 	 */
 	private function create_payment_intent( $amount, $currency, $customer_id ) {
 		// Initialize Stripe client if not already
-		if (!$this->stripe_client && isset($this->mode_settings['secret_key'])) {
-			$this->stripe_client = new StripeClient($this->mode_settings['secret_key']);
+		if ( ! $this->stripe_client && isset( $this->mode_settings['secret_key'] ) ) {
+			$this->stripe_client = new StripeClient( $this->mode_settings['secret_key'] );
 		}
 
 		return $this->stripe_client->paymentIntents->create(
@@ -116,11 +121,11 @@ class Payment_Service extends Abstract_Payment_Service {
 					'enabled' => 'true',
 				),
 				'metadata'                  => array(
-					'quillbooking' => true,
-					'booking_id'   => $this->booking->hash_id,
+					'quillbooking'       => true,
+					'booking_id'         => $this->booking->hash_id,
 					'booking_numeric_id' => $this->booking->id,
-					'guest_name'   => $this->booking->guest->name,
-					'guest_email'  => $this->booking->guest->email,
+					'guest_name'         => $this->booking->guest->name,
+					'guest_email'        => $this->booking->guest->email,
 				),
 			)
 		);
@@ -137,53 +142,53 @@ class Payment_Service extends Abstract_Payment_Service {
 	private function ajax_init_stripe_client() {
 		$booking_id = isset( $_POST['booking_id'] ) ? sanitize_text_field( $_POST['booking_id'] ) : null;
 		if ( ! $booking_id ) {
-			error_log('Stripe - No booking_id provided in POST data');
+			error_log( 'Stripe - No booking_id provided in POST data' );
 			throw new Exception( __( 'Invalid booking ID', 'quillbooking' ) );
 		}
-		
-		error_log('Stripe - Looking up booking with hash_id: ' . $booking_id);
-		
+
+		error_log( 'Stripe - Looking up booking with hash_id: ' . $booking_id );
+
 		// Ensure the Booking_Model class exists
-		if (!class_exists('\\QuillBooking\\Models\\Booking_Model')) {
-			error_log('Stripe - Booking_Model class not found');
+		if ( ! class_exists( '\\QuillBooking\\Models\\Booking_Model' ) ) {
+			error_log( 'Stripe - Booking_Model class not found' );
 			throw new Exception( __( 'Booking model class not found', 'quillbooking' ) );
 		}
 
 		$booking = \QuillBooking\Models\Booking_Model::getByHashId( $booking_id );
 		if ( ! $booking ) {
-			error_log('Stripe - Booking not found for hash_id: ' . $booking_id);
+			error_log( 'Stripe - Booking not found for hash_id: ' . $booking_id );
 			throw new Exception( __( 'Booking not found', 'quillbooking' ) );
 		}
-		
-		error_log('Stripe - Booking found with ID: ' . $booking->id);
+
+		error_log( 'Stripe - Booking found with ID: ' . $booking->id );
 
 		$event = $booking->event;
 		if ( ! $event ) {
-			error_log('Stripe - Event not found for booking: ' . $booking_id);
+			error_log( 'Stripe - Event not found for booking: ' . $booking_id );
 			throw new Exception( __( 'Event not found', 'quillbooking' ) );
 		}
-		
-		error_log('Stripe - Event found with ID: ' . $event->id);
+
+		error_log( 'Stripe - Event found with ID: ' . $event->id );
 
 		// Check if payment is required
 		if ( ! $event->requirePayment() ) {
-			error_log('Stripe - Payment not required for this event');
+			error_log( 'Stripe - Payment not required for this event' );
 			throw new Exception( __( 'Payment is not required for this event', 'quillbooking' ) );
 		}
 
 		// Check payment gateway settings
-		if ( !isset($this->mode_settings) || !is_array($this->mode_settings) || !isset($this->mode_settings['secret_key']) ) {
-			error_log('Stripe - Mode settings missing or invalid: ' . (is_array($this->mode_settings) ? json_encode($this->mode_settings) : 'null'));
+		if ( ! isset( $this->mode_settings ) || ! is_array( $this->mode_settings ) || ! isset( $this->mode_settings['secret_key'] ) ) {
+			error_log( 'Stripe - Mode settings missing or invalid: ' . ( is_array( $this->mode_settings ) ? json_encode( $this->mode_settings ) : 'null' ) );
 			throw new Exception( __( 'Stripe payment gateway not properly configured', 'quillbooking' ) );
 		}
-		
+
 		// Initialize Stripe client
-		if (!$this->stripe_client && isset($this->mode_settings['secret_key'])) {
+		if ( ! $this->stripe_client && isset( $this->mode_settings['secret_key'] ) ) {
 			try {
-				$this->stripe_client = new StripeClient($this->mode_settings['secret_key']);
-				error_log('Stripe - Client initialized with secret key');
-			} catch (Exception $e) {
-				error_log('Stripe - Failed to initialize client: ' . $e->getMessage());
+				$this->stripe_client = new StripeClient( $this->mode_settings['secret_key'] );
+				error_log( 'Stripe - Client initialized with secret key' );
+			} catch ( Exception $e ) {
+				error_log( 'Stripe - Failed to initialize client: ' . $e->getMessage() );
 				throw new Exception( __( 'Failed to initialize Stripe client', 'quillbooking' ) );
 			}
 		}
@@ -191,28 +196,67 @@ class Payment_Service extends Abstract_Payment_Service {
 		// Set booking for further use
 		$this->booking = $booking;
 
-		return [
+		return array(
 			'booking' => $booking,
-			'event' => $event
-		];
+			'event'   => $event,
+		);
 	}
 
-	public function __construct($payment_gateway = null) {
-		if ($payment_gateway === null) {
+	public function __construct( $payment_gateway = null ) {
+		if ( $payment_gateway === null ) {
 			$payment_gateway = new Payment_Gateway();
 		}
-		
-		// Call parent constructor 
-		parent::__construct($payment_gateway);
-		
+
+		// Call parent constructor
+		parent::__construct( $payment_gateway );
+
 		$this->mode_settings = $this->payment_gateway->get_mode_settings();
-		
+
 		// Initialize Stripe client
-		if (isset($this->mode_settings['secret_key'])) {
-			$this->stripe_client = new StripeClient($this->mode_settings['secret_key']);
+		if ( isset( $this->mode_settings['secret_key'] ) ) {
+			$this->stripe_client = new StripeClient( $this->mode_settings['secret_key'] );
 		}
-		
+
 		// AJAX handlers are now registered via hooks in hooks.php
+	}
+
+	/**
+	 * Create initial order with pending status
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $payment_intent_id The payment intent ID.
+	 * @param float  $amount The order amount.
+	 * @param string $currency The currency code.
+	 * @return void
+	 */
+	public function create_initial_order( $payment_intent_id, $amount, $currency ) {
+		// Check if order already exists
+		if ( ! $this->booking->order ) {
+			$this->booking->order()->create(
+				array(
+					'payment_method' => 'stripe',
+					'status'         => 'pending',
+					'total'          => $amount,
+					'currency'       => $currency,
+					'transaction_id' => $payment_intent_id,
+					'items'          => $this->booking->event->getItems(),
+				)
+			);
+			error_log( 'Stripe - Order created with items for booking: ' . $this->booking->hash_id );
+		} else {
+			$this->booking->order()->update(
+				array(
+					'payment_method' => 'stripe',
+					'status'         => 'pending',
+					'total'          => $amount,
+					'currency'       => $currency,
+					'transaction_id' => $payment_intent_id,
+					'items'          => $this->booking->event->getItems(),
+				)
+			);
+			error_log( 'Stripe - Order updated with items for booking: ' . $this->booking->hash_id );
+		}
 	}
 
 	/**
@@ -220,50 +264,53 @@ class Payment_Service extends Abstract_Payment_Service {
 	 */
 	public function ajax_init_stripe() {
 		try {
-			error_log('Payment_Service - ajax_init_stripe called');
-			$data = $this->ajax_init_stripe_client();
+			error_log( 'Payment_Service - ajax_init_stripe called' );
+			$data    = $this->ajax_init_stripe_client();
 			$booking = $data['booking'];
-			$event = $data['event'];
+			$event   = $data['event'];
 
-			error_log('Payment_Service - Booking found: ' . $booking->hash_id);
+			error_log( 'Payment_Service - Booking found: ' . $booking->hash_id );
 
 			// Get customer
-			$name = $booking->guest->name;
+			$name  = $booking->guest->name;
 			$email = $booking->guest->email;
-			
-			$customer = [
-				'name' => $name,
+
+			$customer = array(
+				'name'  => $name,
 				'email' => $email,
-				'id' => null
-			];
-			
+				'id'    => null,
+			);
+
 			// Create or get customer in Stripe
-			$customers = new Customers($this->mode_settings);
-			if ($email) {
-				$customer['id'] = $customers->get($email);
+			$customers = new Customers( $this->mode_settings );
+			if ( $email ) {
+				$customer['id'] = $customers->get( $email );
 			}
-			if (!$customer['id']) {
-				$customer['id'] = $customers->create($name, $email);
+			if ( ! $customer['id'] ) {
+				$customer['id'] = $customers->create( $name, $email );
 			}
 
-			error_log('Payment_Service - Customer created/found: ' . $customer['id']);
+			error_log( 'Payment_Service - Customer created/found: ' . $customer['id'] );
 
 			// Get payment amount
-			$amount = $event->getTotalPrice();
+			$amount   = $event->getTotalPrice();
 			$currency = $event->payments_settings['currency'] ?? 'USD';
 
-			error_log('Payment_Service - Amount: ' . $amount . ' ' . $currency);
+			error_log( 'Payment_Service - Amount: ' . $amount . ' ' . $currency );
 
 			// Create payment intent
-			$payment_intent = $this->create_payment_intent($amount, $currency, $customer['id']);
+			$payment_intent = $this->create_payment_intent( $amount, $currency, $customer['id'] );
 
-			error_log('Payment_Service - Payment intent created: ' . $payment_intent->id);
+			error_log( 'Payment_Service - Payment intent created: ' . $payment_intent->id );
 
 			// Store payment intent ID in booking meta
-			$booking->update_meta('stripe_payment_intent_id', $payment_intent->id);
-			$booking->update_meta('payment_amount', $amount);
-			$booking->update_meta('payment_currency', $currency);
-			$booking->update_meta('payment_customer_id', $customer['id']);
+			$booking->update_meta( 'stripe_payment_intent_id', $payment_intent->id );
+			$booking->update_meta( 'payment_amount', $amount );
+			$booking->update_meta( 'payment_currency', $currency );
+			$booking->update_meta( 'payment_customer_id', $customer['id'] );
+
+			// Create or update the order - use the shared method to avoid duplication
+			$this->create_initial_order( $payment_intent->id, $amount, $currency );
 
 			// Return client secret
 			wp_send_json_success(
@@ -275,13 +322,13 @@ class Payment_Service extends Abstract_Payment_Service {
 					'currency'        => $currency,
 				)
 			);
-		} catch (Exception $e) {
-			error_log('Payment_Service - Exception: ' . $e->getMessage());
-			error_log('Payment_Service - Trace: ' . $e->getTraceAsString());
-			wp_send_json_error(array('message' => $e->getMessage()));
+		} catch ( Exception $e ) {
+			error_log( 'Payment_Service - Exception: ' . $e->getMessage() );
+			error_log( 'Payment_Service - Trace: ' . $e->getTraceAsString() );
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
 	}
-		/**
+	/**
 	 * Set booking for the payment service.
 	 *
 	 * @since 1.0.0

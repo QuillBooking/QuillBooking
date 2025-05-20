@@ -21,6 +21,12 @@ interface Product {
 	name: string;
 }
 
+interface Option {
+	value: number;
+	label: string;
+	disabled?: boolean;
+}
+
 interface ProductSelectProps {
 	value: number | number[];
 	onChange: (value: any) => void;
@@ -36,7 +42,9 @@ const ProductSelect: React.FC<ProductSelectProps> = ({
 	placeholder,
 	exclude,
 }) => {
-	const [products, setHosts] = useState<{ id: number; name: string }[]>([]);
+	const [products, setProducts] = useState<Product[]>([]);
+	const [selectedOptions, setSelectedOptions] = useState<Option | Option[] | null>(null);
+	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { callApi } = useApi();
 
 	const fetchProducts = async (input = '', ids: number[] = []) => {
@@ -48,18 +56,26 @@ const ProductSelect: React.FC<ProductSelectProps> = ({
 			data['include'] = ids;
 		}
 
-		return new Promise((resolve) => {
+		return new Promise<Option[]>((resolve) => {
 			callApi({
 				path: addQueryArgs(`wc/v3/products`, { per_page: 10, ...data }),
 				method: 'GET',
 				onSuccess: (response: Product[]) => {
-					setHosts((prevHosts) => [...prevHosts, ...response]);
-					const mappedHosts = map(response, (product) => ({
+					// Add new products to our state
+					setProducts((prevProducts) => {
+						// Filter out duplicates
+						const newProducts = response.filter(
+							(product) => !prevProducts.some((p) => p.id === product.id)
+						);
+						return [...prevProducts, ...newProducts];
+					});
+					
+					const mappedOptions = map(response, (product) => ({
 						value: product.id,
 						label: product.name,
 						disabled: exclude?.includes(product.id),
 					}));
-					resolve(mappedHosts);
+					resolve(mappedOptions);
 				},
 				onError: () => {
 					resolve([]);
@@ -75,6 +91,8 @@ const ProductSelect: React.FC<ProductSelectProps> = ({
 	}, 300);
 
 	const handleChange = (selected: any) => {
+		setSelectedOptions(selected);
+		
 		if (multiple) {
 			onChange(map(selected, 'value'));
 		} else {
@@ -82,41 +100,43 @@ const ProductSelect: React.FC<ProductSelectProps> = ({
 		}
 	};
 
+	// Fetch the product details when the component loads with a value
 	useEffect(() => {
 		const fetchInitialValues = async () => {
-			if (!value || (Array.isArray(value) && value.length === 0)) return;
+			if (!value || (Array.isArray(value) && value.length === 0)) {
+				return;
+			}
 
-			const ids = Array.isArray(value) ? value : [value];
-			const products = await fetchProducts('', ids);
-			if (!products) return;
-
-			if (Array.isArray(value)) {
-				onChange(products);
-			} else {
-				onChange(products[0]);
+			setIsLoading(true);
+			
+			try {
+				const ids = Array.isArray(value) ? value : [value];
+				const options = await fetchProducts('', ids);
+				
+				if (!options || options.length === 0) return;
+				
+				// Create the proper selected options format
+				if (multiple && Array.isArray(value)) {
+					// Match the order of the original value array
+					const orderedOptions = ids.map(id => 
+						options.find(option => option.value === id)
+					).filter(Boolean) as Option[];
+					
+					setSelectedOptions(orderedOptions);
+				} else {
+					// For single select, find the matching option
+					const option = options.find(opt => opt.value === value);
+					if (option) {
+						setSelectedOptions(option);
+					}
+				}
+			} finally {
+				setIsLoading(false);
 			}
 		};
 
 		fetchInitialValues();
-	}, []);
-
-	const getValue = () => {
-		if (multiple && Array.isArray(value)) {
-			return map(value, (id) => {
-				const product = products.find((u) => u.id === id);
-				if (product && isObject(product)) {
-					return { value: product.id, label: product.name };
-				}
-				return null;
-			});
-		} else {
-			const product = products.find((u) => u.id === value);
-			if (product && isObject(product)) {
-				return { value: product.id, label: product.name };
-			}
-			return null;
-		}
-	};
+	}, [value]); // Only re-run if the value prop changes
 
 	return (
 		<div className="product-select">
@@ -126,12 +146,41 @@ const ProductSelect: React.FC<ProductSelectProps> = ({
 				defaultOptions
 				loadOptions={debouncedLoadOptions}
 				onChange={handleChange}
-				value={getValue()}
+				value={selectedOptions}
+				isLoading={isLoading}
 				placeholder={
 					placeholder || __('Select a product...', 'quillbooking')
 				}
-				isOptionDisabled={(option) => option.disabled}
-				className="rounded-lg w-full h-[48px]"
+				isOptionDisabled={(option) =>
+					option ? (option as any).disabled : false
+				}				
+				classNamePrefix="custom-select"
+				styles={{
+					control: (base, state) => ({
+						...base,
+						height: '48px',
+						borderRadius: '0.5rem',
+						borderColor: state.isFocused ? '#ccc' : '#e2e8f0',
+						boxShadow: 'none',
+						minHeight: '48px',
+					}),
+					indicatorsContainer: (base) => ({
+						...base,
+						height: '48px',
+					}),
+					indicatorSeparator: () => ({
+						display: 'none',
+					}),
+					valueContainer: (base) => ({
+						...base,
+						height: '48px',
+						padding: '0 8px',
+					}),
+					multiValue: (base) => ({
+						...base,
+						backgroundColor: '#edf2f7',
+					}),
+				}}
 			/>
 		</div>
 	);

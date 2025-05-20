@@ -128,7 +128,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 	({ onKeepDialogOpen, notice, clearNotice, disabled, setDisabled }, ref) => {
 		const { state: event, actions } = useEventContext();
 		const { callApi } = useApi();
-		const { successNotice, errorNotice } = useNotice();
+		const { successNotice } = useNotice();
 		const setBreadcrumbs = useBreadcrumbs();
 		const [durationMode, setDurationMode] = useState<'preset' | 'custom'>(
 			'preset'

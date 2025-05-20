@@ -36,6 +36,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 		string | null
 	>(null);
 
+	const isTimezoneLocked = event.limits_data.timezone_lock.enable;
+
 	return (
 		<div className="date-time-container">
 			<div className="date-time-header">
@@ -70,15 +72,26 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 				</p>
 				<div className="date-time-timezone-select">
 					<GlobalIcon />
-					<TimezoneSelect
-						value={timeZone}
-						onChange={(val) => {
-							setTimeZone(val);
-							setSelectedDate(null);
-						}}
-					/>
+					{isTimezoneLocked ? (
+						<p className="timezone">
+							{event.limits_data.timezone_lock.timezone}
+						</p>
+					) : (
+						<TimezoneSelect
+							value={timeZone}
+							onChange={(val) => {
+								setTimeZone(val);
+								setSelectedDate(null);
+							}}
+						/>
+					)}
+
 					<CurrentTimeInTimezone
-						currentTimezone={timeZone}
+						currentTimezone={
+							isTimezoneLocked
+								? event.limits_data.timezone_lock.timezone
+								: timeZone
+						}
 						className="time-container"
 					/>
 				</div>

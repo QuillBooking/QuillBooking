@@ -137,19 +137,20 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 		const [dataFetched, setDataFetched] = useState(false);
 
 		// Single state for all payment settings with default values
-		const [paymentSettings, setPaymentSettings] = useState<PaymentsSettings>({
-			enable_payment: false,
-			enable_items_based_on_duration: false,
-			enable_paypal: false,
-			enable_stripe: false,
-			items: [
-				{ item: __('Booking Item', 'quillbooking'), price: 100 },
-			],
-			multi_duration_items: {},
-			payment_methods: [],
-			type: 'native',
-			woo_product: 0,
-		});
+		const [paymentSettings, setPaymentSettings] =
+			useState<PaymentsSettings>({
+				enable_payment: false,
+				enable_items_based_on_duration: false,
+				enable_paypal: false,
+				enable_stripe: false,
+				items: [
+					{ item: __('Booking Item', 'quillbooking'), price: 100 },
+				],
+				multi_duration_items: {},
+				payment_methods: [], // Initialize with empty array to fix TypeScript error
+				type: 'native',
+				woo_product: 0,
+			});
 
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {
@@ -179,6 +180,12 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 				enable_paypal: newPaymentMethods.includes('paypal'),
 				enable_stripe: newPaymentMethods.includes('stripe'),
 			};
+
+			// Explicitly set the boolean flags based on whether methods exist in the array
+			newPaymentSettings.enable_paypal =
+				newPaymentMethods.includes('paypal');
+			newPaymentSettings.enable_stripe =
+				newPaymentMethods.includes('stripe');
 
 			setPaymentSettings(newPaymentSettings);
 			props.setDisabled(false);
@@ -255,17 +262,25 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 						items: response.items?.length
 							? response.items
 							: [
-								{
-									item: __('Booking Item', 'quillbooking'),
-									price: 100,
-								},
-							],
-						multi_duration_items: response.multi_duration_items || {},
+									{
+										item: __(
+											'Booking Item',
+											'quillbooking'
+										),
+										price: 100,
+									},
+								],
+						multi_duration_items:
+							response.multi_duration_items || {},
+						// Ensure payment_methods is always an array
 						payment_methods: response.payment_methods || [],
 					};
 
-					responseWithDefaults.enable_paypal = responseWithDefaults.payment_methods.includes('paypal');
-					responseWithDefaults.enable_stripe = responseWithDefaults.payment_methods.includes('stripe');
+					// Ensure payment_methods and boolean flags are in sync
+					responseWithDefaults.enable_paypal =
+						responseWithDefaults.payment_methods.includes('paypal');
+					responseWithDefaults.enable_stripe =
+						responseWithDefaults.payment_methods.includes('stripe');
 					responseWithDefaults.type = response.type || 'native';
 
 					const selectableDurations = get(
@@ -277,7 +292,11 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 					if (selectableDurations.length && isEmpty(responseWithDefaults.multi_duration_items)) {
 						selectableDurations.forEach((duration) => {
 							const durationStr = duration.toString();
-							if (!responseWithDefaults.multi_duration_items[durationStr]) {
+							if (
+								!responseWithDefaults.multi_duration_items[
+									durationStr
+								]
+							) {
 								responseWithDefaults.multi_duration_items[
 									durationStr
 								] = responseWithDefaults.type === 'woocommerce'
@@ -369,11 +388,64 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 					throw new Error(__('Event not found', 'quillbooking'));
 				}
 
+				// Make sure we have at least one item in the items array if not using multi-duration
+				if (
+					!paymentSettings.enable_items_based_on_duration &&
+					(!paymentSettings.items ||
+						paymentSettings.items.length === 0)
+				) {
+					setPaymentSettings((prev) => ({
+						...prev,
+						items: [
+							{
+								item: __('Booking Item', 'quillbooking'),
+								price: 100,
+							},
+						],
+					}));
+				}
+
+				// Validate payment settings before sending to API
+				if (paymentSettings.enable_payment) {
+					// Check for native payment type
+					if (
+						paymentSettings.type === 'native' &&
+						(!paymentSettings.payment_methods ||
+							paymentSettings.payment_methods.length === 0)
+					) {
+						throw new Error(
+							__(
+								'Payment is enabled but no payment gateway is selected. Please select at least one payment gateway.',
+								'quillbooking'
+							)
+						);
+					}
+
+					// Check for WooCommerce payment type
+					if (
+						paymentSettings.type === 'woocommerce' &&
+						(!paymentSettings.woo_product ||
+							paymentSettings.woo_product === 0)
+					) {
+						throw new Error(
+							__(
+								'Payment is enabled with WooCommerce checkout, but no WooCommerce product is selected. Please select a product.',
+								'quillbooking'
+							)
+						);
+					}
+				}
+
+				// Ensure payment_methods array and boolean flags are consistent before saving
 				const finalPaymentSettings = {
 					...paymentSettings,
 					payment_methods: paymentSettings.payment_methods || [],
-					enable_paypal: (paymentSettings.payment_methods || []).includes('paypal'),
-					enable_stripe: (paymentSettings.payment_methods || []).includes('stripe'),
+					enable_paypal: (
+						paymentSettings.payment_methods || []
+					).includes('paypal'),
+					enable_stripe: (
+						paymentSettings.payment_methods || []
+					).includes('stripe'),
 				};
 
 				await callApi({
@@ -422,6 +494,47 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 					)}
 					icon={<PaymentIcon />}
 				/>
+				{/* Error notifications for payment validation issues */}
+				{/* Native payment type with no gateway selected */}
+				{paymentSettings.enable_payment &&
+					paymentSettings.type === 'native' &&
+					(paymentSettings.payment_methods || []).length === 0 && (
+						<NoticeBanner
+							notice={{
+								type: 'error',
+								title: __(
+									'Payment Gateway Required',
+									'quillbooking'
+								),
+								message: __(
+									"You've enabled payments but haven't selected any payment gateway. Please select at least one payment method to collect payments.",
+									'quillbooking'
+								),
+							}}
+							closeNotice={() => {}} // Empty function since we don't want to dismiss this warning
+						/>
+					)}
+
+				{/* WooCommerce payment type with no product selected */}
+				{paymentSettings.enable_payment &&
+					paymentSettings.type === 'woocommerce' &&
+					(!paymentSettings.woo_product ||
+						paymentSettings.woo_product === 0) && (
+						<NoticeBanner
+							notice={{
+								type: 'error',
+								title: __(
+									'WooCommerce Product Required',
+									'quillbooking'
+								),
+								message: __(
+									"You've enabled payments with WooCommerce checkout but haven't selected a product. Please select a WooCommerce product.",
+									'quillbooking'
+								),
+							}}
+							closeNotice={() => {}} // Empty function since we don't want to dismiss this warning
+						/>
+					)}
 				<Flex
 					vertical
 					gap={25}
@@ -679,23 +792,39 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 												'Select One or More',
 												'quillbooking'
 											)}
+											<span className="text-red-500 ml-1">
+												*
+											</span>
 										</div>
+										{/* Show warning message if no payment methods selected */}
+										{(paymentSettings.payment_methods || [])
+											.length === 0 && (
+											<div className="text-[#FF3B30] text-[14px] font-medium mb-2">
+												{__(
+													'Please select at least one payment gateway.',
+													'quillbooking'
+												)}
+											</div>
+										)}
 										<Flex gap={20} className="mb-5">
 											<Checkbox
-												checked={(paymentSettings.payment_methods || []).includes(
-													'paypal'
-												)}
+												checked={(
+													paymentSettings.payment_methods ||
+													[]
+												).includes('paypal')}
 												onChange={() =>
 													togglePaymentMethod(
 														'paypal'
 													)
 												}
-												className={`custom-check border px-4 py-[10px] rounded-lg ${(paymentSettings.payment_methods || []).includes(
-													'paypal'
-												)
+												className={`custom-check border px-4 py-[10px] rounded-lg ${
+													(
+														paymentSettings.payment_methods ||
+														[]
+													).includes('paypal')
 													? 'border-color-primary bg-color-secondary'
 													: ''
-													}`}
+												}`}
 												disabled={loading}
 											>
 												<img
@@ -706,20 +835,23 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 											</Checkbox>
 
 											<Checkbox
-												checked={(paymentSettings.payment_methods || []).includes(
-													'stripe'
-												)}
+												checked={(
+													paymentSettings.payment_methods ||
+													[]
+												).includes('stripe')}
 												onChange={() =>
 													togglePaymentMethod(
 														'stripe'
 													)
 												}
-												className={`custom-check border px-4 py-[10px] rounded-lg ${(paymentSettings.payment_methods || []).includes(
-													'stripe'
-												)
+												className={`custom-check border px-4 py-[10px] rounded-lg ${
+													(
+														paymentSettings.payment_methods ||
+														[]
+													).includes('stripe')
 													? 'border-color-primary bg-color-secondary'
 													: ''
-													}`}
+												}`}
 												disabled={loading}
 											>
 												<img
@@ -732,7 +864,7 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 									</Flex>
 
 									{paymentSettings.enable_items_based_on_duration &&
-										allowAttendeesToSelectDuration ? (
+									allowAttendeesToSelectDuration ? (
 										<Flex vertical gap={20}>
 											<Header
 												header={__(
@@ -756,7 +888,7 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 													const durationItem =
 														paymentSettings
 															.multi_duration_items[
-														durationStr
+															durationStr
 														] || {
 															item: __(
 																'Booking Item',

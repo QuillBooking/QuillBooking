@@ -27,6 +27,8 @@ class Booking_Actions {
 
 
 
+
+
 	// --- Dependency Properties ---
 	private string $calendarModelClass;
 	private string $eventModelClass;
@@ -141,6 +143,7 @@ class Booking_Actions {
 		$event->fields            = $event->getFieldsAttribute();
 		$event->availability_data = $event->getAvailabilityAttribute();
 		$event->reserve           = $event->getReserveTimesAttribute();
+		$event->limits_data       = $event->getLimitsAttribute();
 
 		if ( ! $event && $event_slug ) {
 			return;
@@ -366,9 +369,9 @@ class Booking_Actions {
 
 		// Format the booking time range string
 		if (
-		! empty( $booking_array['start_time'] ) &&
-		! empty( $booking_array['timezone'] ) &&
-		! empty( $booking_array['slot_time'] )
+			! empty( $booking_array['start_time'] ) &&
+			! empty( $booking_array['timezone'] ) &&
+			! empty( $booking_array['slot_time'] )
 		) {
 			try {
 				$start = new DateTime( $booking_array['start_time'], new DateTimeZone( 'UTC' ) );
@@ -420,12 +423,12 @@ class Booking_Actions {
 	}
 
 
-		/**
-		 * Fetches host users attached to an event.
-		 *
-		 * @param Event_Model \ $event
-		 * @return array<int, array{id: int, name: string, image: string}>
-		 */
+	/**
+	 * Fetches host users attached to an event.
+	 *
+	 * @param Event_Model \ $event
+	 * @return array<int, array{id: int, name: string, image: string}>
+	 */
 	private function getEventHosts( Event_Model $event ): array {
 		$ids   = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
 		$ids   = is_array( $ids ) ? $ids : array( $ids );

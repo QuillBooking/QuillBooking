@@ -32,6 +32,8 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  */
 class REST_Event_Controller extends REST_Controller {
 
+
+
 	/**
 	 * REST Base
 	 *
@@ -277,134 +279,134 @@ class REST_Event_Controller extends REST_Controller {
 	 * @return array
 	 */
 	public function get_item_schema() {
-		return array(
-			'$schema'    => 'http://json-schema.org/draft-04/schema#',
-			'title'      => 'event',
-			'type'       => 'object',
-			'properties' => array(
-				'id'            => array(
-					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
-					'type'        => 'integer',
-					'context'     => array( 'view' ),
-					'readonly'    => true,
-				),
-				'hash_id'       => array(
-					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view' ),
-					'readonly'    => true,
-				),
-				'calendar_id'   => array(
-					'description' => __( 'Calendar ID.', 'quillbooking' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-					'required'    => true,
-					'arg_options' => array(
-						'sanitize_callback' => 'absint',
-					),
-				),
-				'user_id'       => array(
-					'description' => __( 'User ID.', 'quillbooking' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-					'arg_options' => array(
-						'sanitize_callback' => 'absint',
-					),
-				),
-				'name'          => array(
-					'description' => __( 'Event name.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'required'    => true,
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-				'is_disabled'   => array(
-					'description' => __( 'Is event disabled.', 'quillbooking' ),
-					'type'        => 'boolean',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'description'   => array(
-					'description' => __( 'Event description.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-				'slug'          => array(
-					'description' => __( 'Event slug.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_title',
-					),
-				),
-				'status'        => array(
-					'description' => __( 'Event status.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'enum'        => array( 'active', 'inactive' ),
-				),
-				'type'          => array(
-					'description' => __( 'Event type.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'required'    => true,
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'enum'        => array( 'one-to-one', 'group', 'round-robin' ),
-				),
-				'duration'      => array(
-					'description' => __( 'Event duration.', 'quillbooking' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-					'required'    => true,
-					'arg_options' => array(
-						'sanitize_callback' => 'absint',
-					),
-				),
-				'color'         => array(
-					'description' => __( 'Event color.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-				'visibility'    => array(
-					'description' => __( 'Event visibility.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'arg_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'enum'        => array( 'public', 'private' ),
-				),
-				'reserve_times' => array(
-					'description' => __( 'Reserve times.', 'quillbooking' ),
-					'type'        => 'boolean',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'created_at'    => array(
-					'description' => __( 'Event created at.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'readonly'    => true,
-				),
-				'updated_at'    => array(
-					'description' => __( 'Event updated at.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'readonly'    => true,
-				),
-			),
-		);
+		 return array(
+			 '$schema'    => 'http://json-schema.org/draft-04/schema#',
+			 'title'      => 'event',
+			 'type'       => 'object',
+			 'properties' => array(
+				 'id'            => array(
+					 'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
+					 'type'        => 'integer',
+					 'context'     => array( 'view' ),
+					 'readonly'    => true,
+				 ),
+				 'hash_id'       => array(
+					 'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view' ),
+					 'readonly'    => true,
+				 ),
+				 'calendar_id'   => array(
+					 'description' => __( 'Calendar ID.', 'quillbooking' ),
+					 'type'        => 'integer',
+					 'context'     => array( 'view', 'edit' ),
+					 'required'    => true,
+					 'arg_options' => array(
+						 'sanitize_callback' => 'absint',
+					 ),
+				 ),
+				 'user_id'       => array(
+					 'description' => __( 'User ID.', 'quillbooking' ),
+					 'type'        => 'integer',
+					 'context'     => array( 'view', 'edit' ),
+					 'arg_options' => array(
+						 'sanitize_callback' => 'absint',
+					 ),
+				 ),
+				 'name'          => array(
+					 'description' => __( 'Event name.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'required'    => true,
+					 'arg_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+				 ),
+				 'is_disabled'   => array(
+					 'description' => __( 'Is event disabled.', 'quillbooking' ),
+					 'type'        => 'boolean',
+					 'context'     => array( 'view', 'edit' ),
+				 ),
+				 'description'   => array(
+					 'description' => __( 'Event description.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'arg_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+				 ),
+				 'slug'          => array(
+					 'description' => __( 'Event slug.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'arg_options' => array(
+						 'sanitize_callback' => 'sanitize_title',
+					 ),
+				 ),
+				 'status'        => array(
+					 'description' => __( 'Event status.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'arg_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+					 'enum'        => array( 'active', 'inactive' ),
+				 ),
+				 'type'          => array(
+					 'description' => __( 'Event type.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'required'    => true,
+					 'arg_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+					 'enum'        => array( 'one-to-one', 'group', 'round-robin' ),
+				 ),
+				 'duration'      => array(
+					 'description' => __( 'Event duration.', 'quillbooking' ),
+					 'type'        => 'integer',
+					 'context'     => array( 'view', 'edit' ),
+					 'required'    => true,
+					 'arg_options' => array(
+						 'sanitize_callback' => 'absint',
+					 ),
+				 ),
+				 'color'         => array(
+					 'description' => __( 'Event color.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'arg_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+				 ),
+				 'visibility'    => array(
+					 'description' => __( 'Event visibility.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'arg_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+					 'enum'        => array( 'public', 'private' ),
+				 ),
+				 'reserve_times' => array(
+					 'description' => __( 'Reserve times.', 'quillbooking' ),
+					 'type'        => 'boolean',
+					 'context'     => array( 'view', 'edit' ),
+				 ),
+				 'created_at'    => array(
+					 'description' => __( 'Event created at.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'readonly'    => true,
+				 ),
+				 'updated_at'    => array(
+					 'description' => __( 'Event updated at.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'readonly'    => true,
+				 ),
+			 ),
+		 );
 	}
 
 	/**
@@ -508,11 +510,11 @@ class REST_Event_Controller extends REST_Controller {
 			if ( $payments_settings ) {
 				// Use Payment_Validator to validate payment settings
 				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
-				
-				// If validation fails, add a warning header but proceed (since we don't want to block event creation)
+
+				// If validation fails, block the create operation and return error
 				if ( is_wp_error( $validation_result ) ) {
-					error_log( 'QuillBooking REST API: ' . $validation_result->get_error_message() );
-					header( 'X-QuillBooking-Warning: ' . $validation_result->get_error_message() );
+					$wpdb->query( 'ROLLBACK' );
+					return $validation_result;
 				}
 			}
 
@@ -814,11 +816,11 @@ class REST_Event_Controller extends REST_Controller {
 			if ( $payments_settings ) {
 				// Use Payment_Validator to validate payment settings
 				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
-				
-				// If validation fails, add a warning header but proceed (since we don't want to block event updates)
+
+				// If validation fails, block the update and return error
 				if ( is_wp_error( $validation_result ) ) {
-					error_log( 'QuillBooking REST API: ' . $validation_result->get_error_message() );
-					header( 'X-QuillBooking-Warning: ' . $validation_result->get_error_message() );
+					$wpdb->query( 'ROLLBACK' );
+					return $validation_result;
 				}
 			}
 

@@ -219,12 +219,12 @@ const GeneralSettings = () => {
 							updateSettings('email', field, value)
 						}
 					/>
-					<ThemeSettings
+					{/* <ThemeSettings
 						settings={settings.theme}
 						updateSettings={(field, value) =>
 							updateSettings('theme', field, value)
 						}
-					/>
+					/> */}
 				</Flex>
 			</div>
 			<Flex justify="flex-end">

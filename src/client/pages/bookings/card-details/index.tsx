@@ -46,7 +46,12 @@ const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 					<LocationIcon rectFill={false} width={18} height={18} />
 					{booking.event.location.length > 0 &&
 						booking.event.location.map((location, index) => (
-							<p key={index} className="break-words text-sm">{location.type}</p>
+							<p
+								key={index}
+								className="break-words text-s capitalize"
+							>
+								{location.type.split('_').join(' ')}
+							</p>
 						))}
 				</Flex>
 			</div>
@@ -67,7 +72,7 @@ const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 						<AttendeeIcon width={18} height={18} />
 					</span>
 					<p className="text-sm">
-						{__('Attendees', 'quillbooking')} 1
+						{__('Attendees', 'quillbooking')} 1{' '}
 						{__('person', 'quillbooking')}
 					</p>
 				</Flex>
@@ -75,7 +80,11 @@ const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 					<span className="text-color-primary-text flex-shrink-0">
 						<LinkIcon width={18} height={18} />
 					</span>
-					<a target="_blank" href={booking.event_url} className="truncate text-sm">
+					<a
+						target="_blank"
+						href={booking.event_url}
+						className="truncate text-sm"
+					>
 						{booking.event_url}
 					</a>
 					<span

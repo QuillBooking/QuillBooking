@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Flex, Button, Typography, Popover, Empty } from 'antd';
+import { Card, Flex, Button, Typography, Popover } from 'antd';
 import { SlOptions } from 'react-icons/sl';
 import { useEffect, useState } from 'react';
 
@@ -21,17 +21,15 @@ import {
 	TimeIcon,
 	LocationIcon,
 	DateIcon,
-	PriceIcon,
 	CalendarAddIcon,
 	BookingNumIcon,
 	UpcomingCalendarIcon,
 	ShareModal,
+	EventPrice,
 } from '@quillbooking/components';
 import {
 	useCopyToClipboard,
-	useNavigate,
 } from '@quillbooking/hooks';
-import { map } from 'lodash';
 import EventActions from '../event-actions';
 import CreateEvent from '../../create-event';
 
@@ -193,7 +191,7 @@ const CalendarEvents: React.FC<{
 													{event.location.map(
 														(loc, index) => (
 															<span key={index}>
-																{loc.type}
+																{loc.type.split('_').join(' ')}
 																{index !==
 																	event
 																		.location
@@ -238,20 +236,7 @@ const CalendarEvents: React.FC<{
 										</Flex>
 
 										{/* static */}
-										<Flex gap={10} className="items-center">
-											<PriceIcon />
-											<div className="flex flex-col">
-												<span className="text-[#71717A] text-[12px]">
-													{__(
-														'Price',
-														'quillbooking'
-													)}
-												</span>
-												<span className="text-[#007AFF] text-[14px] font-[500] capitalize">
-													Free
-												</span>
-											</div>
-										</Flex>
+										<EventPrice payments_settings={event.payments_settings} duration={event.additional_settings.default_duration} />
 									</Flex>
 									<Flex
 										justify="space-between"

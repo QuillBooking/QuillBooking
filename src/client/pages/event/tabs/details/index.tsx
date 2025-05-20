@@ -190,7 +190,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 					setDisabled(true);
 				},
 				onError: (error) => {
-					errorNotice(error);
+					throw new Error(error.message);
 				},
 			});
 		};
@@ -213,20 +213,15 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 
 		const validate = () => {
 			if (!event.name) {
-				errorNotice(
-					__('Please enter a name for the event.', 'quillbooking')
-				);
-				return false;
+				throw new Error(__('Please enter a name for the event.', 'quillbooking'));
 			}
 
 			if (!event.duration || event.duration <= 0) {
-				errorNotice(
-					__(
-						'Please enter a valid duration for the event.',
-						'quillbooking'
-					)
-				);
-				return false;
+				throw new Error(__('Please enter a valid duration for the event.', 'quillbooking'));
+			}
+
+			if (event.additional_settings.allow_attendees_to_select_duration && event.additional_settings.selectable_durations.length === 0) {
+				throw new Error(__('Please select at least one duration for the event.', 'quillbooking'));
 			}
 
 			return true;

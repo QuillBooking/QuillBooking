@@ -439,7 +439,6 @@ class REST_Booking_Controller extends REST_Controller {
 			$email               = $request->get_param( 'email' );
 			$status              = $request->get_param( 'status' );
 			$location            = $request->get_param( 'location' );
-			$message             = $request->get_param( 'message' );
 			$current_url         = $request->get_param( 'current_url' );
 			$fields              = $request->get_param( 'fields' );
 			$ignore_availability = $request->get_param( 'ignore_availability' );
@@ -600,7 +599,7 @@ class REST_Booking_Controller extends REST_Controller {
 
 			if ( 'cancelled' === $status ) {
 				$booking_data['cancelled_by'] = array(
-					'type' => 'user',
+					'type' => 'host',
 					'id'   => get_current_user_id(),
 				);
 				$booking->update_meta( 'cancellation_reason', $cancellation_reason );

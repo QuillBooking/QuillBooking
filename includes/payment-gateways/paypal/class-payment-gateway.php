@@ -11,8 +11,9 @@ namespace QuillBooking\Payment_Gateways\Paypal;
 
 use Illuminate\Support\Arr;
 use QuillBooking\Payment_Gateway\Payment_Gateway as Abstract_Payment_Gateway;
-use QuillBooking\Payment_Gateways\PayPal\Payment_Service;
+use QuillBooking\Payment_Gateways\Paypal\Payment_Service;
 use QuillBooking\Payment_Gateways\Paypal\REST_API\REST_API;
+use QuillBooking\Payment_Gateways\Paypal\Webhook;
 
 /**
  * Payment Gateway class.

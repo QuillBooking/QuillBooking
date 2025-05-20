@@ -40,6 +40,8 @@ export type Calendar = {
 		is_disabled: boolean;
 		booking_count: number;
 		created_at: string;
+		payments_settings: PaymentsSettings;
+		additional_settings: AdditionalSettings;
 	}[];
 	created_at: string;
 	updated_at: string;
@@ -81,6 +83,18 @@ export type Event = {
 	fields?: EventMetaData[];
 	availability_data?: Availability,
 	reserve: boolean;
+	payments_settings?: {
+		enable_payment: boolean;
+		enable_paypal?: boolean;
+		enable_stripe?: boolean;
+		enable_woocommerce?: boolean;
+		woo_product?: number;
+		items: Array<{
+			item: string;
+			price: number;
+		}>;
+		currency: string;
+	};
 	connected_integrations: {
 		apple: ConnectedIntegrationsFields;
 		google: ConnectedIntegrationsFields;
@@ -363,3 +377,22 @@ export type NoticeMessage = {
 	title: string;
 	message: string;
 };
+
+export interface PaymentItem {
+	item: string;
+	price: number;
+}
+
+export interface PaymentsSettings {
+	enable_payment: boolean;
+	type: 'native' | 'woocommerce';
+	woo_product: number | null;
+	enable_items_based_on_duration: boolean;
+	items: PaymentItem[];
+	multi_duration_items: {
+		[key: string]: PaymentItem & { duration: string };
+	};
+	payment_methods?: string[];
+	enable_paypal: boolean;
+	enable_stripe: boolean;
+}

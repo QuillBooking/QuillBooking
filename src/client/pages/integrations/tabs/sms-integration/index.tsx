@@ -23,6 +23,7 @@ import {
 import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { addQueryArgs } from '@wordpress/url';
+import IntegrationsShimmerLoader from '../../shimmer-loader';
 
 const { Text } = Typography;
 
@@ -167,6 +168,9 @@ const SMSIntegration: React.FC = () => {
 			},
 		});
 	};
+	if (loading) {
+		return <IntegrationsShimmerLoader />;
+	}
 
 	return (
 		<div className="quillbooking-sms-integration flex gap-5 w-full">

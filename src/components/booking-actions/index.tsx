@@ -25,6 +25,7 @@ import {
 	SquareEditIcon,
 	TrashIcon,
 } from '@quillbooking/components';
+import ConfigAPI from '@quillbooking/config';
 
 const Actions = {
 	email: {
@@ -91,6 +92,7 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 	onNotice,
 }) => {
 	const { callApi, loading } = useApi();
+	const siteUrl = ConfigAPI.getSiteUrl();
 
 	// State to handle modals
 	const [cancelModalVisible, setCancelModalVisible] =
@@ -114,7 +116,10 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 				onNotice({
 					type: 'success',
 					title: __('Success', 'quillbooking'),
-					message: __('Booking status updated successfully', 'quillbooking'),
+					message: __(
+						'Booking status updated successfully',
+						'quillbooking'
+					),
 				});
 				onStatusUpdated();
 			},
@@ -161,7 +166,8 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 		send_confirmation_email: sendConfirmationEmail,
 		rebook: rebook,
 		reschedule: () => {
-			// implement reschedule logic here
+			const redirectUrl = `${siteUrl}/?quillbooking=booking&id=${booking.hash_id}&type=reschedule`;
+			(window.top || window).location.href = redirectUrl;
 		},
 		// Open modals for cancel and delete
 		cancel: handleCancelClick,

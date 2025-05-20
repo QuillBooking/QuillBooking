@@ -506,10 +506,13 @@ class REST_Event_Controller extends REST_Controller {
 
 			// Validate payment settings if provided
 			if ( $payments_settings ) {
+				// Use Payment_Validator to validate payment settings
 				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+				
+				// If validation fails, add a warning header but proceed (since we don't want to block event creation)
 				if ( is_wp_error( $validation_result ) ) {
-					$wpdb->query( 'ROLLBACK' );
-					return $validation_result;
+					error_log( 'QuillBooking REST API: ' . $validation_result->get_error_message() );
+					header( 'X-QuillBooking-Warning: ' . $validation_result->get_error_message() );
 				}
 			}
 
@@ -809,10 +812,13 @@ class REST_Event_Controller extends REST_Controller {
 
 			// Validate payment settings
 			if ( $payments_settings ) {
+				// Use Payment_Validator to validate payment settings
 				$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
+				
+				// If validation fails, add a warning header but proceed (since we don't want to block event updates)
 				if ( is_wp_error( $validation_result ) ) {
-					$wpdb->query( 'ROLLBACK' );
-					return $validation_result;
+					error_log( 'QuillBooking REST API: ' . $validation_result->get_error_message() );
+					header( 'X-QuillBooking-Warning: ' . $validation_result->get_error_message() );
 				}
 			}
 

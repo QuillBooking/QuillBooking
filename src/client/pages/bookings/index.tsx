@@ -21,7 +21,7 @@ import {
 	GeneralOptions,
 	NoticeMessage,
 } from 'client/types';
-import { useApi, useNotice } from '@quillbooking/hooks';
+import { useApi } from '@quillbooking/hooks';
 import BookingsHeader from './header';
 import BookingsTabs from './tabs';
 import SearchFilter from './search-filter';
@@ -94,7 +94,6 @@ const Bookings: React.FC = () => {
 	const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
 	const [updateStatus, setUpdateStatus] = useState<boolean>(false);
 
-	const { errorNotice } = useNotice();
 	const { callApi } = useApi();
 
 	const fetchEvents = () => {

@@ -38,7 +38,7 @@ const EmailingSettings = ({ settings, updateSettings }) => {
 	return (
 		<Card>
 			<CardHeader
-				title={__('Emailing Settings', 'quillbooking')}
+				title={__('Email Settings', 'quillbooking')}
 				description={__(
 					'Configure your email settings for booking related emails',
 					'quillbooking'

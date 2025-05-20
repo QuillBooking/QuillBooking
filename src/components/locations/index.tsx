@@ -1010,7 +1010,7 @@ const Locations: React.FC<{
 				footer={null}
 				onCancel={handleModalCancel}
 			>
-				<Form form={form} layout="vertical">
+				<Form form={form} layout="vertical" requiredMark={false}>
 					{newLocationType === 'custom' ? (
 						<>
 							<Form.Item
@@ -1142,7 +1142,7 @@ const Locations: React.FC<{
 							className="w-full bg-color-primary text-white font-semibold rounded-lg transition-all"
 							onClick={handleModalOk}
 						>
-							Submit
+							{__('Submit', 'quillbooking')}
 						</Button>
 					</Form.Item>
 				</Form>

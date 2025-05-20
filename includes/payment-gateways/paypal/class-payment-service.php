@@ -7,7 +7,7 @@
  * @package QuillBooking
  */
 
-namespace QuillBooking\Payment_Gateways\PayPal;
+namespace QuillBooking\Payment_Gateways\Paypal;
 
 use Illuminate\Support\Arr;
 use QuillBooking\Payment_Gateway\Payment_Service as Abstract_Payment_Service;
@@ -144,7 +144,7 @@ class Payment_Service extends Abstract_Payment_Service {
 	 * @return string
 	 */
 	public function get_notify_url() {
-		return site_url( "?quillbooking_paypal_webhook={$this->mode_settings['mode']}" );
+		return home_url( "?quillbooking_paypal_webhook={$this->mode_settings['mode']}" );
 	}
 
 	/**
@@ -155,7 +155,7 @@ class Payment_Service extends Abstract_Payment_Service {
 	 * @return string
 	 */
 	public function get_return_url() {
-		return site_url( "?quillbooking_payment={$this->mode_settings['mode']}&method={$this->payment_gateway->slug}&action=return&booking_id={$this->booking->hash_id}" );
+		return home_url( "?quillbooking_payment={$this->mode_settings['mode']}&method={$this->payment_gateway->slug}&action=return&booking_id={$this->booking->hash_id}" );
 	}
 
 	/**
@@ -166,6 +166,20 @@ class Payment_Service extends Abstract_Payment_Service {
 	 * @return string
 	 */
 	public function get_cancel_url() {
-		return site_url( "?quillbooking_payment={$this->mode_settings['mode']}&method={$this->payment_gateway->slug}&action=cancel&booking_id={$this->booking->hash_id}" );
+		return home_url( "?quillbooking_payment={$this->mode_settings['mode']}&method={$this->payment_gateway->slug}&action=cancel&booking_id={$this->booking->hash_id}" );
+	}
+
+		/**
+	 * Set booking for the payment service.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \QuillBooking\Models\Booking_Model $booking The booking model.
+	 * @return self
+	 */
+	public function set_booking( $booking ) {
+		$this->booking       = $booking;
+		$this->mode_settings = $this->payment_gateway->get_mode_settings();
+		return $this;
 	}
 }

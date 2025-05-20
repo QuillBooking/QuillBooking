@@ -35,6 +35,8 @@ class Booking_Ajax {
 		add_action( 'wp_ajax_nopriv_quillbooking_cancel_booking', array( $this, 'ajax_cancel_booking' ) );
 		add_action( 'wp_ajax_quillbooking_reschedule_booking', array( $this, 'ajax_reschedule_booking' ) );
 		add_action( 'wp_ajax_nopriv_quillbooking_reschedule_booking', array( $this, 'ajax_reschedule_booking' ) );
+		add_action( 'wp_ajax_quillbooking_process_payment', array( $this, 'ajax_process_payment' ) );
+		add_action( 'wp_ajax_nopriv_quillbooking_process_payment', array( $this, 'ajax_process_payment' ) );
 	}
 
 	/**
@@ -103,7 +105,7 @@ class Booking_Ajax {
 
 			$fields = array();
 			if ( isset( $_POST['fields'] ) ) {
-				$fields = sanitize_text_field( $_POST['fields'] );
+				$fields = json_decode(wp_unslash($_POST['fields']), true);
 			}
 
 			$calendar_id = $event->calendar_id;
@@ -274,6 +276,84 @@ class Booking_Ajax {
 			wp_send_json_success( array( 'message' => __( 'Booking rescheduled', 'quillbooking' ) ) );
 		} catch ( \Exception $e ) {
 			error_log( 'error: ' . $e->getMessage() );
+			wp_send_json_error( array( 'message' => $e->getMessage() ) );
+		}
+	}
+
+
+	/**
+	 * Ajax Process Payment
+	 *
+	 * @return void
+	 */
+	public function ajax_process_payment() {
+		try {
+			$booking_hash_id = isset( $_POST['booking_hash_id'] ) ? sanitize_text_field( $_POST['booking_hash_id'] ) : null;
+			if ( ! $booking_hash_id ) {
+				throw new \Exception( __( 'Invalid booking', 'quillbooking' ) );
+			}
+
+			$booking = $this->bookingValidatorClass::validate_booking( $booking_hash_id );
+
+			$payment_method = isset( $_POST['payment_method'] ) ? sanitize_text_field( $_POST['payment_method'] ) : null;
+			if ( ! $payment_method ) {
+				throw new \Exception( __( 'Invalid payment method', 'quillbooking' ) );
+			}
+
+			$event = $booking->event;
+			if ( ! $event ) {
+				throw new \Exception( __( 'Event not found', 'quillbooking' ) );
+			}
+
+			// Check if payment is enabled for this event
+			if ( ! isset( $event->payments_settings['enable_payment'] ) || ! $event->payments_settings['enable_payment'] ) {
+				throw new \Exception( __( 'Payment is not enabled for this event', 'quillbooking' ) );
+			}
+
+			// Check if the selected payment method is enabled
+			$method_enabled_key = 'enable_' . $payment_method;
+			if ( ! isset( $event->payments_settings[ $method_enabled_key ] ) || ! $event->payments_settings[ $method_enabled_key ] ) {
+				throw new \Exception( __( 'Selected payment method is not available', 'quillbooking' ) );
+			}
+			
+			// Additional validation for WooCommerce payment method
+			if ( 'woocommerce' === $payment_method ) {
+				// Check if WooCommerce is active
+				if ( ! class_exists( 'WooCommerce' ) ) {
+					throw new \Exception( __( 'WooCommerce is not active', 'quillbooking' ) );
+				}
+				
+				// Check if product is set
+				if ( ! isset( $event->payments_settings['woo_product'] ) || empty( $event->payments_settings['woo_product'] ) ) {
+					throw new \Exception( __( 'No WooCommerce product configured for this event', 'quillbooking' ) );
+				}
+			}
+
+			// Process the payment through the payment gateway
+			do_action(
+				'quillbooking_process_payment',
+				$booking,
+				array(
+					'payment_method' => $payment_method,
+				)
+			);
+
+			// Log the payment attempt
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Payment processing initiated', 'quillbooking' ),
+					'details' => sprintf( __( 'Payment processing initiated with %s', 'quillbooking' ), $payment_method ),
+				)
+			);
+
+			wp_send_json_success(
+				array(
+					'booking' => $booking,
+					'message' => __( 'Payment processing initiated', 'quillbooking' ),
+				)
+			);
+		} catch ( \Exception $e ) {
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
 	}

@@ -31,3 +31,4 @@ export { default as TabButtons } from './tab-buttons';
 export { default as Locations } from './locations';
 export { default as ColorSelector } from './color-selector';
 export { default as ShareModal } from './share-modal';
+export { default as EventPrice } from './event-price';

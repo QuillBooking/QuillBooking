@@ -55,7 +55,7 @@ const LivePreview: React.FC<LivePreviewProps> = ({
 								{hosts.map((host, index) => (
 									<span key={index}>
 										{host.name}
-										{index !== locations.length - 1 && ', '}
+										{index !== hosts.length - 1 && ', '}
 									</span>
 								))}
 							</div>
@@ -83,7 +83,7 @@ const LivePreview: React.FC<LivePreviewProps> = ({
 					<span className="text-[16px] text-[#1A1A1A99] font-[500] capitalize">
 						{locations.map((loc, index) => (
 							<span key={index}>
-								{loc.type}
+								{loc.type.split('_').join(' ')}
 								{index !== locations.length - 1 && ', '}
 							</span>
 						))}

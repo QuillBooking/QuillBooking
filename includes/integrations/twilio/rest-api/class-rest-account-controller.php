@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class REST Integration Account Controller
  *
@@ -21,13 +22,14 @@ use Illuminate\Support\Arr;
  */
 class REST_Account_Controller extends Abstract_REST_Account_Controller {
 
+
 	/**
 	 * Register the routes for the objects of the controller.
 	 *
 	 * @since 1.0.0
 	 */
 	public function register_routes() {
-		parent::register_routes();
+		 parent::register_routes();
 
 		register_rest_route(
 			$this->namespace,
@@ -47,63 +49,63 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 * @return array
 	 */
 	public function get_item_schema() {
-		return array(
-			'type'       => 'object',
-			'properties' => array(
-				'id'          => array(
-					'type'        => array( 'integer', 'string' ),
-					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
-					'context'     => array( 'view', 'edit', 'embed' ),
-					'readonly'    => false,
-				),
-				'name'        => array(
-					'type'        => 'string',
-					'description' => __( 'Name of the account.', 'quillbooking' ),
-					'context'     => array( 'view', 'edit', 'embed' ),
-					'required'    => false,
-				),
-				'credentials' => array(
-					'type'                 => 'object',
-					'description'          => __( 'Credentials for the account.', 'quillbooking' ),
-					'context'              => array( 'view', 'edit', 'embed' ),
-					'required'             => true,
-					'properties'           => array(
-						'sms_number'      => array(
-							'type'        => 'string',
-							'description' => __( 'SMS number.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-						'whatsapp_number' => array(
-							'type'        => 'string',
-							'description' => __( 'WhatsApp number.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => false,
-						),
-						'account_sid'     => array(
-							'type'        => 'string',
-							'description' => __( 'Account SID.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-						'auth_token'      => array(
-							'type'        => 'string',
-							'description' => __( 'Auth token.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-					),
-					'additionalProperties' => true,
-				),
-				'config'      => array(
-					'type'                 => 'object',
-					'description'          => __( 'Configuration for the account.', 'quillbooking' ),
-					'context'              => array( 'view', 'edit', 'embed' ),
-					'required'             => true,
-					'additionalProperties' => true,
-				),
-			),
-		);
+		 return array(
+			 'type'       => 'object',
+			 'properties' => array(
+				 'id'          => array(
+					 'type'        => array( 'integer', 'string' ),
+					 'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
+					 'context'     => array( 'view', 'edit', 'embed' ),
+					 'readonly'    => false,
+				 ),
+				 'name'        => array(
+					 'type'        => 'string',
+					 'description' => __( 'Name of the account.', 'quillbooking' ),
+					 'context'     => array( 'view', 'edit', 'embed' ),
+					 'required'    => false,
+				 ),
+				 'credentials' => array(
+					 'type'                 => 'object',
+					 'description'          => __( 'Credentials for the account.', 'quillbooking' ),
+					 'context'              => array( 'view', 'edit', 'embed' ),
+					 'required'             => true,
+					 'properties'           => array(
+						 'sms_number'      => array(
+							 'type'        => 'string',
+							 'description' => __( 'SMS number.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+						 'whatsapp_number' => array(
+							 'type'        => 'string',
+							 'description' => __( 'WhatsApp number.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => false,
+						 ),
+						 'account_sid'     => array(
+							 'type'        => 'string',
+							 'description' => __( 'Account SID.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+						 'auth_token'      => array(
+							 'type'        => 'string',
+							 'description' => __( 'Auth token.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+					 ),
+					 'additionalProperties' => true,
+				 ),
+				 'config'      => array(
+					 'type'                 => 'object',
+					 'description'          => __( 'Configuration for the account.', 'quillbooking' ),
+					 'context'              => array( 'view', 'edit', 'embed' ),
+					 'required'             => true,
+					 'additionalProperties' => true,
+				 ),
+			 ),
+		 );
 	}
 
 	/**
@@ -113,7 +115,6 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function create_item( $request ) {
-		return new WP_REST_Response( array( 'message' => 'Hello, world!' ), 200 );
 		$params          = $request->get_params();
 		$sms_number      = Arr::get( $params, 'credentials.sms_number' );
 		$whatsapp_number = Arr::get( $params, 'credentials.whatsapp_number' );
@@ -133,10 +134,10 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 			}
 
 			$this->integration->set_host( $host_id );
-			
+
 			// Get existing accounts
 			$existing_accounts = $this->integration->accounts->get_accounts();
-			
+
 			// Account data to save
 			$account_data = array(
 				'name'        => Arr::get( $data, 'data.friendly_name' ),
@@ -148,12 +149,12 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 				),
 				'config'      => array(),
 			);
-			
+
 			// If an account exists, update it instead of removing and adding
 			if ( ! empty( $existing_accounts ) ) {
 				// Get the first account ID (we only want one account)
 				$existing_account_id = array_key_first( $existing_accounts );
-				
+
 				// Update the existing account
 				$this->integration->accounts->update_account( $existing_account_id, $account_data );
 			} else {

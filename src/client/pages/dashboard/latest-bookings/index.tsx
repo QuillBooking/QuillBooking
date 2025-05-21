@@ -202,10 +202,10 @@ const LatestBookings: React.FC = () => {
 																							key={
 																								index
 																							}
-																							className="max-w-[150px] truncate"
+																							className="max-w-[150px] truncate capitalize"
 																						>
 																							{
-																								location.type
+																								location.type.split('_').join(' ')
 																							}
 																							{index <
 																								booking

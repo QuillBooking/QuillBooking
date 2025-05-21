@@ -495,7 +495,7 @@ const Event: React.FC = () => {
 									<ShareModal
 										open={modalShareId !== null}
 										onClose={() => setModalShareId(null)}
-										url={`${siteUrl}?quillbooking_event=${event?.slug}`}
+										url={`${siteUrl}?quillbooking_calendar=${event?.calendar.slug}&event=${event?.slug}`}
 									/>
 								)}
 							</Flex>

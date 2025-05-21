@@ -1,0 +1,48 @@
+.questions-container {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 24px 28px;
+	border: 1px solid #0000001a;
+	border-radius: 16px;
+	margin-top: 24px;
+}
+
+.questions-header {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	font-weight: 600;
+	font-size: 24px;
+}
+
+.questions-header p {
+	margin: 10px 0;
+}
+
+.questions-header-icon {
+	padding: 1px;
+	background-color: #ededed;
+	border-radius: 5px;
+	cursor: pointer;
+}
+
+.schedule-btn-container {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.schedule-btn {
+	cursor: pointer;
+	color: #FFFFFF;
+	font-weight: 400;
+	font-size: 14px;
+	border-radius: 100px;
+	border: none;
+	padding: 12px 24px;
+	background-color: #953AE4;
+}
+
+.schedule-btn:hover {
+	background-color: #7b1fa2;
+}

@@ -12,7 +12,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Flex, Switch, Skeleton } from 'antd';
+import { Card, Flex, Switch } from 'antd';
 
 /**
  * Internal dependencies
@@ -84,7 +84,7 @@ const EmailNotificationTab = forwardRef<
 >(({ disabled, setDisabled }, ref) => {
 	const { state: event } = useEventContext();
 	const { callApi, loading } = useApi();
-	const { successNotice, errorNotice } = useNotice();
+	const { successNotice } = useNotice();
 	const [notificationSettings, setNotificationSettings] = useState<Record<
 		string,
 		NotificationType
@@ -130,7 +130,7 @@ const EmailNotificationTab = forwardRef<
 				setNotificationsLoaded(true);
 			},
 			onError(error) {
-				errorNotice(error.message);
+				throw new Error(error.message);
 			},
 		});
 	};
@@ -194,7 +194,7 @@ const EmailNotificationTab = forwardRef<
 				);
 			},
 			onError(error) {
-				errorNotice(error.message);
+				throw new Error(error.message);
 			},
 		});
 	};

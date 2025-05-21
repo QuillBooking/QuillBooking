@@ -7,6 +7,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { Booking } from 'client/types';
 import { CardHeader } from '@quillbooking/components';
 import { QuestionIcon, QuestionOutlineIcon } from '@quillbooking/components';
+import { useApi } from '@quillbooking/hooks';
 
 interface BookingQuestionProps {
 	booking: Booking;
@@ -18,13 +19,34 @@ type FieldItem = {
 
 const BookingQuestion: React.FC<BookingQuestionProps> = ({ booking }) => {
 	const [fields, setFields] = useState<FieldItem>({});
+	const { callApi } = useApi();
+	const [eventFields, setEventFields] = useState<FieldItem>({});
+
 	console.log(Object.entries(fields));
+	console.log(booking);
+
+	const getEventFields = (eventId: number) => {
+		callApi({
+			path: `events/${eventId}/fields`,
+			method: 'GET',
+			onSuccess: (response) => {
+				setEventFields({ ...response.custom, ...response.system });
+			},
+			onError: (error) => {
+				console.error(error);
+			},
+		});
+	};
+
 	useEffect(() => {
-		if (booking && booking.fields) setFields(booking.fields);
+		if (booking && booking.fields) {
+			setFields(booking.fields);
+			getEventFields(booking.event.id);
+		}
 	}, [booking]);
 
-	if (Object.entries(fields).length === 0)  return null;
-	
+	if (Object.entries(fields).length === 0) return null;
+
 	return (
 		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5 max-h-[600px] overflow-y-auto">
 			<CardHeader
@@ -42,7 +64,9 @@ const BookingQuestion: React.FC<BookingQuestionProps> = ({ booking }) => {
 						<div className="flex gap-3 items-center pb-2">
 							<QuestionIcon />
 							<p className="text-xl text-color-primary-text font-medium">
-								{key}
+								{typeof eventFields[key] === 'object' && eventFields[key] !== null && 'label' in eventFields[key]
+									? (eventFields[key] as { label: string }).label
+									: key}
 							</p>
 						</div>
 						<div>

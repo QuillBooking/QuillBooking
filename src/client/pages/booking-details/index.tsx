@@ -18,7 +18,7 @@ import { useParams } from '@quillbooking/navigation';
 import { useApi } from '@quillbooking/hooks';
 import { useNavigate } from '@quillbooking/navigation';
 import type { Booking, NoticeMessage } from '@quillbooking/client';
-import { groupBookingsByDate } from '@quillbooking/utils';
+import { convertTimezone, getCurrentTimezone, groupBookingsByDate } from '@quillbooking/utils';
 import AddBookingModal from '../bookings/add-booking-modal';
 import BookingList from './booking-list';
 import MeetingInformation from './meeting-information';
@@ -27,6 +27,7 @@ import MeetingActivities from './booking-activities';
 import { CancelIcon, UpcomingCalendarIcon, NoticeBanner } from '@quillbooking/components';
 import { BookingActions } from '@quillbooking/components';
 import BookingQuestion from './booking-question';
+import PaymentHistory from './payment-history';
 
 interface DayInfo {
 	weekday: string;
@@ -53,25 +54,46 @@ function getNextTenDays(): DayInfo[] {
 const days = getNextTenDays();
 
 const ShimmerLoader = () => (
-	<div className="animate-pulse">
-		<Flex justify="space-between" className="border-b border-[#E5E5E5] p-4 pb-7">
-			<div className="h-8 w-48 bg-gray-200 rounded"></div>
-			<div className="h-8 w-32 bg-gray-200 rounded"></div>
-		</Flex>
-		<Flex gap={40} align="start" className="p-16 pt-8">
-			<Flex vertical gap={20} className="flex-1">
-				<div className="h-40 bg-gray-200 rounded-lg w-full"></div>
-				<div className="h-32 bg-gray-200 rounded-lg w-full"></div>
-				<div className="h-48 bg-gray-200 rounded-lg w-full"></div>
-			</Flex>
-			<div className="flex flex-col flex-2 gap-4">
-				<div className="h-32 bg-gray-200 rounded-lg w-full"></div>
-				<div className="h-48 bg-gray-200 rounded-lg w-full"></div>
-				<div className="h-64 bg-gray-200 rounded-lg w-full"></div>
+	<div className="p-16 pt-8 animate-pulse">
+	  {/* Header */}
+	  <div className="flex justify-between border-b border-[#E5E5E5] pb-7 mb-10">
+		<div className="h-8 w-48 bg-gray-200 rounded-md" />
+		<div className="h-8 w-32 bg-gray-200 rounded-md" />
+	  </div>
+  
+	  {/* Main Flex Row */}
+	  <div className="flex gap-8">
+		{/* Left Column: 4 Cards (2/3 width) */}
+		<div className="w-2/3 flex flex-col gap-6">
+		  {Array.from({ length: 4 }).map((_, index) => (
+			<div
+			  key={index}
+			  className="bg-white shadow border border-gray-200 rounded-xl p-6"
+			>
+			  <div className="h-5 w-1/3 bg-gray-200 rounded" />
+			  <div className="mt-4 h-4 w-2/3 bg-gray-200 rounded" />
+			  <div className="mt-2 h-4 w-1/2 bg-gray-200 rounded" />
 			</div>
-		</Flex>
+		  ))}
+		</div>
+  
+		{/* Right Column: 3 Cards (1/3 width) */}
+		<div className="w-1/3 flex flex-col gap-6">
+		  {Array.from({ length: 3 }).map((_, index) => (
+			<div
+			  key={index}
+			  className="bg-white shadow border border-gray-200 rounded-xl p-6"
+			>
+			  <div className="h-5 w-1/2 bg-gray-200 rounded" />
+			  <div className="mt-4 h-4 w-3/4 bg-gray-200 rounded" />
+			  <div className="mt-2 h-4 w-full bg-gray-200 rounded" />
+			</div>
+		  ))}
+		</div>
+	  </div>
 	</div>
-);
+  );
+  
 
 const BookingDetails: React.FC = () => {
 	// Destructure params at the top.
@@ -93,7 +115,6 @@ const BookingDetails: React.FC = () => {
 	const { callApi } = useApi();
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(true);
-	const navigate = useNavigate();
 	const [isDeleted, setIsDeleted] = useState(false);
 
 	const handleStatusUpdated = (action?: string) => {
@@ -197,26 +218,18 @@ const BookingDetails: React.FC = () => {
 	}, [selectedDate, refresh]);
 
 	// Format date/time information only once.
-	const formattedDate = booking?.start_time
-		? new Date(booking.start_time).toLocaleDateString('en-GB', {
-				day: 'numeric',
-				month: 'short',
-				year: 'numeric',
-			})
-		: '';
-	const formattedStartTime = booking?.start_time
-		? new Date(booking.start_time).toLocaleTimeString(undefined, {
-				hour: 'numeric',
-				minute: 'numeric',
-				hour12: true,
-			})
-		: '';
-	const formattedEndTime = booking?.end_time
-		? new Date(booking.end_time).toLocaleTimeString(undefined, {
-				hour: 'numeric',
-				minute: 'numeric',
-				hour12: true,
-			})
+	const { date, time } = booking?.start_time
+		? convertTimezone(booking.start_time, getCurrentTimezone())
+		: { date: '', time: '' };
+
+	const endTime = booking && booking.start_time && booking.slot_time
+		? (() => {
+			const [hours, minutes] = time.split(':').map(Number);
+			const totalMinutes = hours * 60 + minutes + Number(booking.slot_time);
+			const endHours = Math.floor(totalMinutes / 60);
+			const endMinutes = totalMinutes % 60;
+			return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+		})()
 		: '';
 
 	return (
@@ -271,6 +284,7 @@ const BookingDetails: React.FC = () => {
 							<Flex vertical gap={20} className="flex-1">
 								<MeetingInformation booking={booking} />
 								<BookingQuestion booking={booking} />
+								<PaymentHistory booking={booking} />
 								<InviteeInformation
 									booking={booking}
 									handleStatusUpdated={handleStatusUpdated}
@@ -285,8 +299,7 @@ const BookingDetails: React.FC = () => {
 									{__('Event Date/Time', 'quillbooking')}
 								</p>
 								<p className="text-2xl font-medium">
-									{formattedDate} - {formattedStartTime} -{' '}
-									{formattedEndTime}
+									{date} - {time} - {endTime}
 								</p>
 							</div>
 							{booking && <MeetingActivities booking={booking} />}

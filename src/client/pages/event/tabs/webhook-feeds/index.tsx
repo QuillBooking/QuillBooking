@@ -108,9 +108,9 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 	(props, ref) => {
 		const { state: event } = useEventContext();
 		const { callApi, loading } = useApi();
-		const { callApi: saveApi, loading: saveLoading } = useApi();
+		const { callApi: saveApi } = useApi();
 		const { callApi: deleteApi } = useApi();
-		const { successNotice, errorNotice } = useNotice();
+		const { successNotice } = useNotice();
 		const [webhookFeeds, setWebhookFeeds] = useState<
 			WebhookFeedType[] | null
 		>(null);
@@ -143,7 +143,7 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 					setWebhookFeeds(response);
 				},
 				onError(error) {
-					errorNotice(error.message);
+					throw new Error(error.message);
 				},
 			});
 		};
@@ -183,8 +183,7 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 					props.setDisabled(true);
 				},
 				onError(error) {
-					errorNotice(error.message);
-					throw error;
+					throw new Error(error.message);
 				},
 			});
 		};
@@ -216,8 +215,9 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 					);
 				},
 				onError(error) {
-					errorNotice(error.message);
 					setWebhookFeeds(webhookFeeds);
+					throw new Error(error.message);
+					
 				},
 			});
 			props.setDisabled(false);
@@ -243,7 +243,7 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 					);
 				},
 				onError(error) {
-					errorNotice(error.message);
+					throw new Error(error.message);
 				},
 			});
 			props.setDisabled(false);

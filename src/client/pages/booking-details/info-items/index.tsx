@@ -53,7 +53,7 @@ const InfoItem: React.FC<InfoItemProps> = ({
 						</span>
 					</div>
 				) : (
-					<p className="text-[#09090B] text-lg leading-4 font-medium">
+					<p className="text-[#09090B] text-lg leading-4 font-medium capitalize">
 						{content}
 					</p>
 				)}

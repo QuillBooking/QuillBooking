@@ -20,6 +20,8 @@ use Illuminate\Support\Arr;
  */
 class Booking_Model extends Model {
 
+
+
 	/**
 	 * Table name
 	 *
@@ -327,8 +329,8 @@ class Booking_Model extends Model {
 	 * @return bool
 	 */
 	public function isCompleted() {
-		$end_time = new \DateTime( $this->end_time, new \DateTimeZone( $this->timezone ) );
-		$now      = new \DateTime( 'now', new \DateTimeZone( $this->timezone ) );
+		 $end_time = new \DateTime( $this->end_time, new \DateTimeZone( $this->timezone ) );
+		$now       = new \DateTime( 'now', new \DateTimeZone( $this->timezone ) );
 
 		return $end_time < $now;
 	}
@@ -339,7 +341,7 @@ class Booking_Model extends Model {
 	 * @return bool
 	 */
 	public function isCancelled() {
-		return 'cancelled' === $this->status;
+		 return 'cancelled' === $this->status;
 	}
 
 	/**
@@ -413,67 +415,67 @@ class Booking_Model extends Model {
 
 	/**
 	 * Check if payment is required for this booking
-	 * 
+	 *
 	 * @return bool
 	 */
 	public function requiresPayment() {
-		if (!$this->event) {
+		if ( ! $this->event ) {
 			return false;
 		}
-		
+
 		return $this->event->requirePayment();
 	}
-	
+
 	/**
 	 * Get payment status
-	 * 
+	 *
 	 * @return string
 	 */
 	public function getPaymentStatus() {
-		return $this->get_meta('payment_status', 'pending');
+		return $this->get_meta( 'payment_status', 'pending' );
 	}
-	
+
 	/**
 	 * Set payment status
-	 * 
+	 *
 	 * @param string $status
 	 * @return void
 	 */
-	public function setPaymentStatus($status) {
-		$this->update_meta('payment_status', $status);
-		
-		if ($status === 'completed') {
+	public function setPaymentStatus( $status ) {
+		$this->update_meta( 'payment_status', $status );
+
+		if ( $status === 'completed' ) {
 			$this->status = 'scheduled';
 			$this->save();
-			
+
 			$this->logs()->create(
 				array(
 					'type'    => 'info',
-					'message' => __('Payment completed', 'quillbooking'),
-					'details' => __('Payment has been successfully processed', 'quillbooking'),
+					'message' => __( 'Payment completed', 'quillbooking' ),
+					'details' => __( 'Payment has been successfully processed', 'quillbooking' ),
 				)
 			);
-			
-			do_action('quillbooking_booking_payment_completed', $this);
+
+			do_action( 'quillbooking_booking_payment_completed', $this );
 		}
 	}
-	
+
 	/**
 	 * Get payment amount
-	 * 
+	 *
 	 * @return float
 	 */
 	public function getPaymentAmount() {
-		return (float) $this->get_meta('payment_amount', 0);
+		return (float) $this->get_meta( 'payment_amount', 0 );
 	}
-	
+
 	/**
 	 * Get payment currency
-	 * 
+	 *
 	 * @return string
 	 */
 	public function getPaymentCurrency() {
-		return $this->get_meta('payment_currency', 'USD');
+		return $this->get_meta( 'payment_currency', 'USD' );
 	}
 
 	/**
@@ -501,7 +503,7 @@ class Booking_Model extends Model {
 	 * @return void
 	 */
 	public static function boot() {
-		parent::boot();
+		 parent::boot();
 
 		static::creating(
 			function ( $booking ) {
@@ -520,5 +522,18 @@ class Booking_Model extends Model {
 				$booking->guest()->delete();
 			}
 		);
+	}
+
+	/**
+	 * Get transaction ID
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string|null Transaction ID or null if not available
+	 */
+	public function get_transaction_id() {
+		if ( $this->order ) {
+			return $this->order->transaction_id;
+		}
 	}
 }

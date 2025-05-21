@@ -20,6 +20,8 @@ use Stripe\Webhook as StripeWebhook;
  */
 class Webhook {
 
+
+
 	/**
 	 * Stripe client
 	 *
@@ -159,20 +161,30 @@ class Webhook {
 			try {
 				$charge = $this->stripe_client->charges->retrieve( $payment_intent->latest_charge );
 				$booking->update_meta( 'stripe_charge_id', $charge->id );
-				$booking->update_meta( 'stripe_transaction_id', $charge->id ); // Keep transaction_id for backwards compatibility
 
 				// Store additional useful charge information
 				$booking->update_meta( 'stripe_payment_method_details', json_encode( $charge->payment_method_details ) );
 				$booking->update_meta( 'stripe_receipt_url', $charge->receipt_url );
+
+				// Make sure transaction ID is in order
+				if ( $booking->order ) {
+					$booking->order()->update( array( 'transaction_id' => $charge->id ) );
+				}
 			} catch ( \Exception $e ) {
 				error_log( 'Stripe Webhook - Could not retrieve charge details: ' . $e->getMessage() );
 				// Fallback to just storing the charge ID from the payment intent
 				$booking->update_meta( 'stripe_charge_id', $payment_intent->latest_charge );
-				$booking->update_meta( 'stripe_transaction_id', $payment_intent->latest_charge );
+
+				// Make sure transaction ID is in order
+				if ( $booking->order ) {
+					$booking->order()->update( array( 'transaction_id' => $payment_intent->latest_charge ) );
+				}
 			}
 		} else {
 			// If for some reason the charge isn't available, fall back to payment intent ID
-			$booking->update_meta( 'stripe_transaction_id', $payment_intent->id );
+			if ( $booking->order ) {
+				$booking->order()->update( array( 'transaction_id' => $payment_intent->id ) );
+			}
 		}
 
 		// Log the payment
@@ -184,7 +196,7 @@ class Webhook {
 					__( 'Payment of %1$s %2$s processed successfully via Stripe. Transaction ID: %3$s', 'quillbooking' ),
 					$payment_intent->amount / 100,
 					strtoupper( $payment_intent->currency ),
-					$booking->get_meta( 'stripe_transaction_id' )
+					$booking->order ? $booking->order->transaction_id : $payment_intent->id
 				),
 			)
 		);
@@ -202,12 +214,14 @@ class Webhook {
 					'currency'       => strtoupper( $payment_intent->currency ),
 					'payment_method' => 'stripe',
 					'status'         => 'completed',
+					'transaction_id' => $booking->order ? $booking->order->transaction_id : $payment_intent->id,
 				)
 			);
 		} else {
 			// Update existing order
 			$order_data = array(
-				'status' => 'completed',
+				'status'         => 'completed',
+				'transaction_id' => $payment_intent->id,
 			);
 
 			// Add items if they don't exist
@@ -302,9 +316,10 @@ class Webhook {
 		$booking_id = $wpdb->get_var( $query );
 
 		if ( ! $booking_id ) {
-			// Try the fallback transaction_id field
-			$query = $wpdb->prepare(
-				"SELECT booking_id FROM {$table_name} WHERE meta_key = 'stripe_transaction_id' AND meta_value = %s LIMIT 1",
+			// Try finding by transaction_id in orders table
+			$orders_table = $wpdb->prefix . 'quillbooking_booking_orders';
+			$query        = $wpdb->prepare(
+				"SELECT booking_id FROM {$orders_table} WHERE transaction_id = %s LIMIT 1",
 				$charge_id
 			);
 

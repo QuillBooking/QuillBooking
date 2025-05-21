@@ -23,10 +23,6 @@ use QuillBooking\Managers\Integrations_Manager;
  */
 class Calendar_Model extends Model {
 
-
-
-
-
 	/**
 	 * Table name
 	 *
@@ -337,7 +333,6 @@ class Calendar_Model extends Model {
 
 		static::deleting(
 			function ( $calendar ) {
-				// Use Eloquent's relationships to cascade delete
 				$calendar->meta()->delete();
 				$calendar->bookings()->delete();
 

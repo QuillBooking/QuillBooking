@@ -97,7 +97,7 @@ const EventAdvancedSettings = forwardRef<
 	>(null);
 	const { callApi, loading } = useApi();
 	const { callApi: saveApi } = useApi();
-	const { successNotice, errorNotice } = useNotice();
+	const { successNotice } = useNotice();
 	const [showSlugField, setShowSlugField] = useState(false);
 	const [settings, setSettings] = useState<AdvancedSettings | null>(null);
 	const [initialSettings, setInitialSettings] =
@@ -137,7 +137,7 @@ const EventAdvancedSettings = forwardRef<
 				setInitialSlug(event.slug || '');
 			},
 			onError(error) {
-				errorNotice(error.message);
+				throw new Error(error.message);
 			},
 		});
 	};
@@ -270,7 +270,7 @@ const EventAdvancedSettings = forwardRef<
 				props.setDisabled(true);
 			},
 			onError(error) {
-				errorNotice(error.message);
+				throw new Error(error.message);
 			},
 		});
 	};

@@ -77,7 +77,7 @@ const SmsNotificationTab = forwardRef<
 >(({ disabled, setDisabled }, ref) => {
 	const { state: event } = useEventContext();
 	const { callApi, loading } = useApi();
-	const { successNotice, errorNotice } = useNotice();
+	const { successNotice } = useNotice();
 	const navigate = useNavigate();
 	const [notificationSettings, setNotificationSettings] = useState<Record<
 		string,
@@ -125,7 +125,7 @@ const SmsNotificationTab = forwardRef<
 				setNotificationsLoaded(true);
 			},
 			onError(error) {
-				errorNotice(error.message);
+				throw new Error(error.message);
 			},
 		});
 	};
@@ -176,7 +176,7 @@ const SmsNotificationTab = forwardRef<
 				setNotificationSettings(notificationSettings);
 			},
 			onError(error) {
-				errorNotice(error.message);
+				throw new Error(error.message);
 			},
 		});
 	};

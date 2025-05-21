@@ -28,7 +28,7 @@ import {
 import { getCurrentTimezone } from '@quillbooking/utils';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
 import { useEventContext } from '../../state/context';
-import { useApi, useNotice } from '@quillbooking/hooks';
+import { useApi } from '@quillbooking/hooks';
 
 const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 	(props, ref) => {
@@ -70,7 +70,6 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 
 		const { state: event } = useEventContext();
 		const { callApi } = useApi();
-		const { errorNotice } = useNotice();
 
 		const fetchLimits = () => {
 			if (!event) return;
@@ -105,7 +104,7 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 					});
 				},
 				onError(error) {
-					errorNotice(error.message);
+					throw new Error(error.message);
 				},
 			});
 		};
@@ -156,7 +155,7 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 					props.setDisabled(true);
 				},
 				onError(error) {
-					errorNotice(error.message);
+					throw new Error(error.message);
 				},
 			});
 		};

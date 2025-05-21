@@ -22,9 +22,17 @@ use WP_Error;
  *
  * @since 1.0.0
  */
-class App
-{
+class App {
 
+
+
+
+	/**
+	 * State prefix for Microsoft authentication
+	 *
+	 * @var string
+	 */
+	const STATE_PREFIX = 'quillbooking-ms-';
 
 	/**
 	 * Provider
@@ -47,11 +55,10 @@ class App
 	 *
 	 * @param Integration $integration Provider.
 	 */
-	public function __construct($integration)
-	{
+	public function __construct( $integration ) {
 		$this->integration = $integration;
 
-		\add_action('admin_init', array($this, 'maybe_add_settings'));
+		\add_action( 'admin_init', array( $this, 'maybe_add_settings' ) );
 	}
 
 	/**
@@ -62,26 +69,25 @@ class App
 	 *
 	 * @return string|WP_Error Auth URL or error.
 	 */
-	public function get_auth_uri($host_id, $app_credentials = array())
-	{
-		if (empty($host_id)) {
-			return new \WP_Error('no_host_id', \esc_html__('No host ID found!', 'quillbooking'));
+	public function get_auth_uri( $host_id, $app_credentials = array() ) {
+		if ( empty( $host_id ) ) {
+			return new \WP_Error( 'no_host_id', \esc_html__( 'No host ID found!', 'quillbooking' ) );
 		}
 
 		// Check if we have custom app credentials
 		$custom_credentials = $this->get_app_credentials();
-		$use_custom_app     = ! empty($custom_credentials);
+		$use_custom_app     = ! empty( $custom_credentials );
 
-		if ($use_custom_app) {
+		if ( $use_custom_app ) {
 			// Use direct authentication with custom credentials
 			$auth_url = \add_query_arg(
 				array(
 					'response_type' => 'code',
 					'access_type'   => 'offline',
 					'client_id'     => $custom_credentials['client_id'],
-					'redirect_uri'  => \urlencode($this->get_redirect_uri()),
-					'state'         => "quillbooking-ms-{$host_id}",
-					'scope'         => \urlencode('openid profile offline_access User.Read Calendars.ReadWrite'),
+					'redirect_uri'  => \urlencode( $this->get_redirect_uri() ),
+					'state'         => self::STATE_PREFIX . $host_id,
+					'scope'         => \urlencode( 'openid profile offline_access User.Read Calendars.ReadWrite' ),
 				),
 				'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
 			);
@@ -99,22 +105,22 @@ class App
 						array(
 							'action'       => 'get_auth_url',
 							'host_id'      => $host_id,
-							'redirect_uri' =>  $this->get_redirect_uri(),
+							'redirect_uri' => $this->get_redirect_uri(),
 							'scope'        => 'openid profile offline_access User.Read Calendars.ReadWrite',
-							'state'        => "quillbooking-ms-{$host_id}",
+							'state'        => self::STATE_PREFIX . $host_id . '-' . admin_url(),
 						)
 					),
 				)
 			);
 
-			if (\is_wp_error($response)) {
-				return new \WP_Error('proxy_error', \esc_html__('Error connecting to authentication server!', 'quillbooking'));
+			if ( \is_wp_error( $response ) ) {
+				return new \WP_Error( 'proxy_error', \esc_html__( 'Error connecting to authentication server!', 'quillbooking' ) );
 			}
 
-			$body = \json_decode(\wp_remote_retrieve_body($response), true);
+			$body = \json_decode( \wp_remote_retrieve_body( $response ), true );
 
-			if (empty($body) || isset($body['error'])) {
-				return new \WP_Error('proxy_error', isset($body['error']) ? $body['error'] : \esc_html__('Unknown error from authentication server!', 'quillbooking'));
+			if ( empty( $body ) || isset( $body['error'] ) ) {
+				return new \WP_Error( 'proxy_error', isset( $body['error'] ) ? $body['error'] : \esc_html__( 'Unknown error from authentication server!', 'quillbooking' ) );
 			}
 
 			return $body['auth_url'];
@@ -126,33 +132,32 @@ class App
 	 *
 	 * @return void
 	 */
-	public function maybe_add_settings()
-	{
+	public function maybe_add_settings() {
 		$state = $_GET['state'] ?? '';
-		if (strpos($state, 'quillbooking-ms-') !== 0) {
+		if ( strpos( $state, self::STATE_PREFIX ) !== 0 ) {
 			return;
 		}
 
-		$host_id  = str_replace('quillbooking-ms-', '', $state);
-		$calendar = Calendar_Model::find($host_id);
-		if (empty($calendar)) {
+		$host_id  = str_replace( self::STATE_PREFIX, '', $state );
+		$calendar = Calendar_Model::find( $host_id );
+		if ( empty( $calendar ) ) {
 			return;
 		}
 
 		// ensure authorize code.
 		$code = $_GET['code'] ?? null;
-		if (empty($code)) {
-			echo \esc_html__('Error, There is no authorize code passed!', 'quillbooking');
+		if ( empty( $code ) ) {
+			echo \esc_html__( 'Error, There is no authorize code passed!', 'quillbooking' );
 			exit;
 		}
 
 		// Check if we have custom app credentials
 		$custom_credentials = $this->get_app_credentials();
-		$use_custom_app     = ! empty($custom_credentials);
+		$use_custom_app     = ! empty( $custom_credentials );
 
 		$tokens = array();
 
-		if ($use_custom_app) {
+		if ( $use_custom_app ) {
 			// Use direct token exchange with custom credentials
 			$tokens = $this->get_tokens(
 				array(
@@ -181,43 +186,43 @@ class App
 				)
 			);
 
-			if (\is_wp_error($response)) {
-				echo \esc_html__('Error connecting to authentication server!', 'quillbooking');
+			if ( \is_wp_error( $response ) ) {
+				echo \esc_html__( 'Error connecting to authentication server!', 'quillbooking' );
 				exit;
 			}
 
-			$tokens = \json_decode(\wp_remote_retrieve_body($response), true);
+			$tokens = \json_decode( \wp_remote_retrieve_body( $response ), true );
 		}
 
-		if (empty($tokens) || isset($tokens['error']) || empty($tokens['access_token'])) {
-			echo \esc_html__('Error, Cannot get tokens!', 'quillbooking');
+		if ( empty( $tokens ) || isset( $tokens['error'] ) || empty( $tokens['access_token'] ) ) {
+			echo \esc_html__( 'Error, Cannot get tokens!', 'quillbooking' );
 			exit;
 		}
 
-		$account_data = new API($tokens['access_token'], $tokens['refresh_token'], $this);
+		$account_data = new API( $tokens['access_token'], $tokens['refresh_token'], $this );
 		$account_data = $account_data->get_account_info();
-		if (! $account_data['success']) {
-			echo \esc_html__('Error, Cannot get account data!', 'quillbooking');
+		if ( ! $account_data['success'] ) {
+			echo \esc_html__( 'Error, Cannot get account data!', 'quillbooking' );
 			exit;
 		}
 
 		$account      = $account_data;
-		$account_id   = Arr::get($account, 'data.id');
-		$account_name = Arr::get($account, 'data.displayName');
-		if (empty($account_id) || empty($account_name)) {
-			echo \esc_html__('Error, Cannot get account ID!', 'quillbooking');
+		$account_id   = Arr::get( $account, 'data.id' );
+		$account_name = Arr::get( $account, 'data.displayName' );
+		if ( empty( $account_id ) || empty( $account_name ) ) {
+			echo \esc_html__( 'Error, Cannot get account ID!', 'quillbooking' );
 			exit;
 		}
 
 		// Check if account already exists
-		$this->integration->set_host($host_id);
-		if (! is_numeric($account_id)) {
-			$hash       = crc32($account_id);
-			$account_id = abs($hash);
+		$this->integration->set_host( $host_id );
+		if ( ! is_numeric( $account_id ) ) {
+			$hash       = crc32( $account_id );
+			$account_id = abs( $hash );
 		}
-		$existing_account = $this->integration->accounts->get_account($account_id);
-		if (! empty($existing_account)) {
-			echo \esc_html__('Error, This account is already connected!', 'quillbooking');
+		$existing_account = $this->integration->accounts->get_account( $account_id );
+		if ( ! empty( $existing_account ) ) {
+			echo \esc_html__( 'Error, This account is already connected!', 'quillbooking' );
 			\wp_redirect(
 				\admin_url(
 					"admin.php?page=quillbooking&path=calendars&id={$host_id}&tab=integrations&subtab={$this->integration->slug}"
@@ -236,7 +241,7 @@ class App
 		);
 
 		// Redirect to settings page.
-		echo \esc_html__('Success, Account added!', 'quillbooking');
+		echo \esc_html__( 'Success, Account added!', 'quillbooking' );
 		\wp_redirect(
 			\admin_url(
 				"admin.php?page=quillbooking&path=calendars&id={$host_id}&tab=integrations&subtab={$this->integration->slug}"
@@ -252,19 +257,18 @@ class App
 	 * @param string|null $account_id Account ID.
 	 * @return array|false|WP_Error
 	 */
-	public function refresh_tokens($refresh_token = null, $account_id = null)
-	{
-		if (empty($refresh_token)) {
+	public function refresh_tokens( $refresh_token = null, $account_id = null ) {
+		if ( empty( $refresh_token ) ) {
 			return false;
 		}
 
 		// Check if we have custom app credentials
 		$custom_credentials = $this->get_app_credentials();
-		$use_custom_app     = ! empty($custom_credentials);
+		$use_custom_app     = ! empty( $custom_credentials );
 
 		$refeshed_tokens = array();
 
-		if ($use_custom_app) {
+		if ( $use_custom_app ) {
 			// Use direct token refresh with custom credentials
 			$refeshed_tokens = $this->get_tokens(
 				array(
@@ -291,20 +295,20 @@ class App
 				)
 			);
 
-			if (\is_wp_error($response)) {
+			if ( \is_wp_error( $response ) ) {
 				return false;
 			}
 
-			$refeshed_tokens = \json_decode(\wp_remote_retrieve_body($response), true);
+			$refeshed_tokens = \json_decode( \wp_remote_retrieve_body( $response ), true );
 		}
 
-		if (empty($refeshed_tokens) || isset($refeshed_tokens['error']) || empty($refeshed_tokens['access_token'])) {
+		if ( empty( $refeshed_tokens ) || isset( $refeshed_tokens['error'] ) || empty( $refeshed_tokens['access_token'] ) ) {
 			return false;
 		}
 
-		$account_data           = $this->integration->accounts->get_account($account_id);
-		$tokens                 = Arr::get($account_data, 'tokens', array());
-		$tokens['access_token'] = Arr::get($refeshed_tokens, 'access_token');
+		$account_data           = $this->integration->accounts->get_account( $account_id );
+		$tokens                 = Arr::get( $account_data, 'tokens', array() );
+		$tokens['access_token'] = Arr::get( $refeshed_tokens, 'access_token' );
 
 		$this->integration->accounts->update_account(
 			$account_id,
@@ -322,8 +326,7 @@ class App
 	 * @param array $query Query to get tokens.
 	 * @return boolean|array
 	 */
-	public function get_tokens($query)
-	{
+	public function get_tokens( $query ) {
 		$response = \wp_remote_post(
 			'https://login.microsoftonline.com/common/oauth2/v2.0/token',
 			array(
@@ -331,15 +334,15 @@ class App
 			)
 		);
 
-		if (\is_wp_error($response)) {
+		if ( \is_wp_error( $response ) ) {
 			return false;
 		}
 
-		$tokens = \json_decode(\wp_remote_retrieve_body($response), true);
+		$tokens = \json_decode( \wp_remote_retrieve_body( $response ), true );
 
-		if (empty($tokens['access_token'])) {
+		if ( empty( $tokens['access_token'] ) ) {
 			// log in case of first request.
-			if ($query['grant_type'] === 'authorization_code' && empty($tokens['refresh_token'])) {
+			if ( $query['grant_type'] === 'authorization_code' && empty( $tokens['refresh_token'] ) ) {
 				return false;
 			}
 
@@ -354,20 +357,19 @@ class App
 	 *
 	 * @return array|false Array of client_id & client_secret. false if not configured.
 	 */
-	public function get_app_credentials()
-	{
-		$app_settings = $this->integration->get_setting('app') ?? array();
+	public function get_app_credentials() {
+		 $app_settings = $this->integration->get_setting( 'app' ) ?? array();
 
 		// Early return if app is empty
 		if (
-			empty($app_settings) || !isset($app_settings['client_id']) || !isset($app_settings['client_secret']) ||
-			(isset($app_settings['app']) && empty($app_settings['app']))
+			empty( $app_settings ) || ! isset( $app_settings['client_id'] ) || ! isset( $app_settings['client_secret'] ) ||
+			( isset( $app_settings['app'] ) && empty( $app_settings['app'] ) )
 		) {
 			return false;
 		}
 
 		// Return credentials if both client_id and client_secret are provided
-		if (!empty($app_settings['client_id']) && !empty($app_settings['client_secret'])) {
+		if ( ! empty( $app_settings['client_id'] ) && ! empty( $app_settings['client_secret'] ) ) {
 			return array(
 				'client_id'     => $app_settings['client_id'],
 				'client_secret' => $app_settings['client_secret'],
@@ -382,8 +384,7 @@ class App
 	 *
 	 * @return string
 	 */
-	public function get_redirect_uri()
-	{
-		return \admin_url('admin.php'); // TODO: use https schema?
+	public function get_redirect_uri() {
+		return 'https://app.quillbooking.com/Callback.php';
 	}
 }

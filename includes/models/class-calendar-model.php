@@ -23,6 +23,10 @@ use QuillBooking\Managers\Integrations_Manager;
  */
 class Calendar_Model extends Model {
 
+
+
+
+
 	/**
 	 * Table name
 	 *
@@ -292,10 +296,10 @@ class Calendar_Model extends Model {
 	 * @return void
 	 */
 	public static function boot() {
-		parent::boot();
+		 parent::boot();
 
 		static::creating(
-			function( $calendar ) {
+			function ( $calendar ) {
 				$calendar->hash_id = Utils::generate_hash_key();
 				$originalSlug      = $slug = Str::slug( $calendar->name );
 				$count             = 1;
@@ -324,7 +328,7 @@ class Calendar_Model extends Model {
 		);
 
 		static::retrieved(
-			function( $calendar ) {
+			function ( $calendar ) {
 				if ( 'team' === $calendar->type ) {
 					$calendar->team_members = $calendar->getTeamMembers();
 				}
@@ -332,9 +336,16 @@ class Calendar_Model extends Model {
 		);
 
 		static::deleting(
-			function( $calendar ) {
+			function ( $calendar ) {
+				// Use Eloquent's relationships to cascade delete
 				$calendar->meta()->delete();
-				$calendar->events()->delete();
+				$calendar->bookings()->delete();
+
+				$calendar->events()->each(
+					function ( $event ) {
+						$event->delete();
+					}
+				);
 			}
 		);
 	}

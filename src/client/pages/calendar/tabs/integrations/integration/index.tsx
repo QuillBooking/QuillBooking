@@ -325,7 +325,8 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 
 	// Get all available calendars across all accounts
 	const getAllCalendars = () => {
-		const options: { value: string; label: string }[] = [];
+		const options: { value: string; label: string; can_edit: boolean }[] =
+			[];
 
 		for (const account of accounts) {
 			if (!account.calendars || !account.calendars.length) continue;
@@ -333,11 +334,11 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 			for (const calendar of account.calendars) {
 				options.push({
 					value: calendar.id,
-					label: `${calendar.name} (${account.name})`,
+					label: calendar.name,
+					can_edit: calendar.can_edit,
 				});
 			}
 		}
-
 		console.log('Calendar options:', options); // Debug log
 		return options;
 	};
@@ -428,7 +429,20 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 					style={{ height: '48px' }}
 					value={selectedCalendar || undefined}
 					onChange={handleRemoteCalendarChange}
-					options={getAllCalendars()}
+					options={getAllCalendars().map((calendar) => ({
+						value: calendar.value,
+						label: (
+							<div className="flex items-center justify-between">
+								<span>{calendar.label}</span>
+								{!calendar.can_edit && (
+									<span className="text-gray-400 text-xs ml-2">
+										({__('Read Only', 'quillbooking')})
+									</span>
+								)}
+							</div>
+						),
+						disabled: !calendar.can_edit,
+					}))}
 					disabled={loading || !accounts.length}
 					loading={loading}
 					showSearch

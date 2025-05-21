@@ -21,6 +21,8 @@ use \Exception;
 class Payment_Service extends Abstract_Payment_Service {
 
 
+
+
 	/**
 	 * Stripe client
 	 *
@@ -100,31 +102,70 @@ class Payment_Service extends Abstract_Payment_Service {
 	 * @param integer $booking_id
 	 * @param string  $customer_id
 	 * @return PaymentIntent
+	 * @throws Exception If payment intent creation fails
 	 */
 	private function create_payment_intent( $amount, $currency, $customer_id ) {
+		// Validate required parameters
+		if ( empty( $amount ) || $amount <= 0 ) {
+			error_log( 'Stripe - Invalid amount for payment intent: ' . $amount );
+			throw new Exception( __( 'Invalid payment amount', 'quillbooking' ) );
+		}
+
+		if ( empty( $currency ) ) {
+			error_log( 'Stripe - Missing currency for payment intent' );
+			throw new Exception( __( 'Missing currency for payment', 'quillbooking' ) );
+		}
+
+		if ( empty( $customer_id ) ) {
+			error_log( 'Stripe - Missing customer ID for payment intent' );
+			throw new Exception( __( 'Missing customer information', 'quillbooking' ) );
+		}
+
 		// Initialize Stripe client if not already
 		if ( ! $this->stripe_client && isset( $this->mode_settings['secret_key'] ) ) {
 			$this->stripe_client = new StripeClient( $this->mode_settings['secret_key'] );
 		}
 
-		return $this->stripe_client->paymentIntents->create(
-			array(
-				'amount'                    => Utils::to_stripe_amount( $amount, $currency ),
-				'currency'                  => strtolower( $currency ),
-				'description'               => get_bloginfo( 'name' ),
-				'customer'                  => $customer_id,
-				'automatic_payment_methods' => array(
-					'enabled' => 'true',
-				),
-				'metadata'                  => array(
-					'quillbooking'       => true,
-					'booking_id'         => $this->booking->hash_id,
-					'booking_numeric_id' => $this->booking->id,
-					'guest_name'         => $this->booking->guest->name,
-					'guest_email'        => $this->booking->guest->email,
-				),
-			)
-		);
+		if ( ! $this->stripe_client ) {
+			error_log( 'Stripe - Failed to initialize Stripe client' );
+			throw new Exception( __( 'Payment gateway configuration error', 'quillbooking' ) );
+		}
+
+		try {
+			// Create the payment intent
+			$payment_intent = $this->stripe_client->paymentIntents->create(
+				array(
+					'amount'                    => Utils::to_stripe_amount( $amount, $currency ),
+					'currency'                  => strtolower( $currency ),
+					'description'               => get_bloginfo( 'name' ),
+					'customer'                  => $customer_id,
+					'automatic_payment_methods' => array(
+						'enabled' => 'true',
+					),
+					'metadata'                  => array(
+						'quillbooking'       => true,
+						'booking_id'         => $this->booking->hash_id,
+						'booking_numeric_id' => $this->booking->id,
+						'guest_name'         => $this->booking->guest->name,
+						'guest_email'        => $this->booking->guest->email,
+					),
+				)
+			);
+
+			// Verify payment intent was created successfully
+			if ( empty( $payment_intent ) || empty( $payment_intent->id ) ) {
+				error_log( 'Stripe - Empty payment intent returned from API' );
+				throw new Exception( __( 'Failed to create payment intent', 'quillbooking' ) );
+			}
+
+			return $payment_intent;
+		} catch ( \Stripe\Exception\ApiErrorException $e ) {
+			error_log( 'Stripe API Error: ' . $e->getMessage() );
+			throw new Exception( __( 'Payment service error: ', 'quillbooking' ) . $e->getMessage() );
+		} catch ( \Exception $e ) {
+			error_log( 'Stripe - Error creating payment intent: ' . $e->getMessage() );
+			throw new Exception( __( 'Error creating payment: ', 'quillbooking' ) . $e->getMessage() );
+		}
 	}
 
 	/**
@@ -299,6 +340,12 @@ class Payment_Service extends Abstract_Payment_Service {
 
 			// Create payment intent
 			$payment_intent = $this->create_payment_intent( $amount, $currency, $customer['id'] );
+
+			// Verify we got a valid payment intent with a client secret
+			if ( empty( $payment_intent ) || empty( $payment_intent->id ) || empty( $payment_intent->client_secret ) ) {
+				error_log( 'Payment_Service - Invalid payment intent returned' );
+				throw new Exception( __( 'Failed to create a valid payment session', 'quillbooking' ) );
+			}
 
 			error_log( 'Payment_Service - Payment intent created: ' . $payment_intent->id );
 

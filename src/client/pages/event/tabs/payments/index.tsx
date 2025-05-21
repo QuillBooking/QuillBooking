@@ -495,47 +495,6 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 					)}
 					icon={<PaymentIcon />}
 				/>
-				{/* Error notifications for payment validation issues */}
-				{/* Native payment type with no gateway selected */}
-				{paymentSettings.enable_payment &&
-					paymentSettings.type === 'native' &&
-					(paymentSettings.payment_methods || []).length === 0 && (
-						<NoticeBanner
-							notice={{
-								type: 'error',
-								title: __(
-									'Payment Gateway Required',
-									'quillbooking'
-								),
-								message: __(
-									"You've enabled payments but haven't selected any payment gateway. Please select at least one payment method to collect payments.",
-									'quillbooking'
-								),
-							}}
-							closeNotice={() => {}} // Empty function since we don't want to dismiss this warning
-						/>
-					)}
-
-				{/* WooCommerce payment type with no product selected */}
-				{paymentSettings.enable_payment &&
-					paymentSettings.type === 'woocommerce' &&
-					(!paymentSettings.woo_product ||
-						paymentSettings.woo_product === 0) && (
-						<NoticeBanner
-							notice={{
-								type: 'error',
-								title: __(
-									'WooCommerce Product Required',
-									'quillbooking'
-								),
-								message: __(
-									"You've enabled payments with WooCommerce checkout but haven't selected a product. Please select a WooCommerce product.",
-									'quillbooking'
-								),
-							}}
-							closeNotice={() => {}} // Empty function since we don't want to dismiss this warning
-						/>
-					)}
 				<Flex
 					vertical
 					gap={25}

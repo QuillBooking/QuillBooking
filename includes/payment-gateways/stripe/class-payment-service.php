@@ -21,10 +21,6 @@ use \Exception;
 class Payment_Service extends Abstract_Payment_Service {
 
 
-
-
-
-
 	/**
 	 * Stripe client
 	 *
@@ -231,6 +227,9 @@ class Payment_Service extends Abstract_Payment_Service {
 	 * @return void
 	 */
 	public function create_initial_order( $payment_intent_id, $amount, $currency ) {
+		// Get items and ensure they're JSON encoded for database storage
+		$items = json_encode( $this->booking->event->getItems() );
+
 		// Check if order already exists
 		if ( ! $this->booking->order ) {
 			$this->booking->order()->create(
@@ -239,10 +238,10 @@ class Payment_Service extends Abstract_Payment_Service {
 					'status'         => 'pending',
 					'total'          => $amount,
 					'currency'       => $currency,
-					'transaction_id' => $payment_intent_id,
-					'items'          => $this->booking->event->getItems(),
+					'items'          => $items,
 				)
 			);
+			$this->booking->update_meta( 'stripe_transaction_id', $payment_intent_id );
 			error_log( 'Stripe - Order created with items for booking: ' . $this->booking->hash_id );
 		} else {
 			$this->booking->order()->update(
@@ -251,10 +250,10 @@ class Payment_Service extends Abstract_Payment_Service {
 					'status'         => 'pending',
 					'total'          => $amount,
 					'currency'       => $currency,
-					'transaction_id' => $payment_intent_id,
-					'items'          => $this->booking->event->getItems(),
+					'items'          => $items,
 				)
 			);
+			$this->booking->update_meta( 'stripe_transaction_id', $payment_intent_id );
 			error_log( 'Stripe - Order updated with items for booking: ' . $this->booking->hash_id );
 		}
 	}
@@ -308,6 +307,7 @@ class Payment_Service extends Abstract_Payment_Service {
 			$booking->update_meta( 'payment_amount', $amount );
 			$booking->update_meta( 'payment_currency', $currency );
 			$booking->update_meta( 'payment_customer_id', $customer['id'] );
+			$booking->update_meta( 'stripe_transaction_id', $payment_intent->id );
 
 			// Create or update the order - use the shared method to avoid duplication
 			$this->create_initial_order( $payment_intent->id, $amount, $currency );

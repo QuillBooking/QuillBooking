@@ -35,6 +35,7 @@ import {
 	AlertIcon,
 	CardHeader,
 	Header,
+	NoticeBanner,
 	PaymentIcon,
 	ProductSelect,
 	TrashIcon,
@@ -233,17 +234,40 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 		const handleDurationItemChange = (duration: number | string, field: string, value: any) => {
 			const durationStr = duration.toString();
 			setPaymentSettings(prev => {
-				const updatedDurationItems = {
-					...prev.multi_duration_items,
+				// Create a proper object structure if it's currently an array
+				let currentItems = prev.multi_duration_items;
+				
+				// If multi_duration_items is an array, convert it to an object
+				if (Array.isArray(currentItems)) {
+					const newItems = {};
+					
+					// Transfer any existing items from the array to the object
+					for (let i = 0; i < currentItems.length; i++) {
+						if (currentItems[i]) {
+							const item = currentItems[i];
+							newItems[item.duration] = item;
+						}
+					}
+					
+					currentItems = newItems;
+				}
+				
+				// Create or update the specific duration item
+				const updatedItems = {
+					...currentItems,
 					[durationStr]: {
-						...(prev.multi_duration_items[durationStr] || { duration: durationStr }),
+						...(currentItems[durationStr] || {}),
+						duration: durationStr,
+						item: currentItems[durationStr]?.item || __('Booking Item', 'quillbooking'),
+						price: currentItems[durationStr]?.price || 100,
+						woo_product: currentItems[durationStr]?.woo_product || 0,
 						[field]: value
 					}
 				};
-
+				
 				return {
 					...prev,
-					multi_duration_items: updatedDurationItems
+					multi_duration_items: updatedItems
 				};
 			});
 			props.setDisabled(false);
@@ -262,16 +286,18 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 						items: response.items?.length
 							? response.items
 							: [
-									{
-										item: __(
-											'Booking Item',
-											'quillbooking'
-										),
-										price: 100,
-									},
-								],
-						multi_duration_items:
-							response.multi_duration_items || {},
+								  {
+									  item: __(
+										  'Booking Item',
+										  'quillbooking'
+									  ),
+									  price: 100,
+								  },
+							  ],
+						// Ensure multi_duration_items is always an object, not an array
+						multi_duration_items: Array.isArray(response.multi_duration_items) 
+							? {} // Convert array to empty object if needed
+							: (response.multi_duration_items || {}),
 						// Ensure payment_methods is always an array
 						payment_methods: response.payment_methods || [],
 					};

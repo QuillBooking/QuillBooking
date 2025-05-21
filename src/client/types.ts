@@ -379,8 +379,10 @@ export type NoticeMessage = {
 };
 
 export interface PaymentItem {
-	item: string;
-	price: number;
+	item?: string;
+	price?: number;
+	woo_product?: number;
+	duration?: string;
 }
 
 export interface PaymentsSettings {

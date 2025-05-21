@@ -35,7 +35,6 @@ import {
 	AlertIcon,
 	CardHeader,
 	Header,
-	NoticeBanner,
 	PaymentIcon,
 	ProductSelect,
 	TrashIcon,
@@ -495,26 +494,6 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 					)}
 					icon={<PaymentIcon />}
 				/>
-				{/* WooCommerce payment type with no product selected */}
-				{paymentSettings.enable_payment &&
-					paymentSettings.type === 'woocommerce' &&
-					(!paymentSettings.woo_product ||
-						paymentSettings.woo_product === 0) && (
-						<NoticeBanner
-							notice={{
-								type: 'error',
-								title: __(
-									'WooCommerce Product Required',
-									'quillbooking'
-								),
-								message: __(
-									"You've enabled payments with WooCommerce checkout but haven't selected a product. Please select a WooCommerce product.",
-									'quillbooking'
-								),
-							}}
-							closeNotice={() => {}} // Empty function since we don't want to dismiss this warning
-						/>
-					)}
 				<Flex
 					vertical
 					gap={25}

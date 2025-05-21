@@ -60,21 +60,28 @@ const AddAvailabilityScheduleModal: React.FC<AddAvailabilityModalProps> = ({
 	const saveAvailabilitySchedule = async () => {
 		if (!validate() || loading) return;
 
-		callApi({
-			path: 'availabilities',
-			method: 'POST',
-			data: formData,
-			onSuccess: (respone) => {
-				closeHandler();
-				sessionStorage.setItem('showNewScheduleNotice', 'true');
-				navigate(`availability/${respone.data.id}`);
-			},
-			onError: () => {
-				errorNotice(
-					__('Failed to save availability schedule.', 'quillbooking')
-				);
-			},
-		});
+		try {
+			await callApi({
+				path: 'availabilities',
+				method: 'POST',
+				data: formData,
+				onSuccess: (response) => {
+					closeHandler();
+					sessionStorage.setItem('showNewScheduleNotice', 'true');
+					navigate(`availability/${response.data.id}`);
+				},
+				onError: () => {
+					errorNotice(
+						__('Failed to save availability schedule.', 'quillbooking')
+					);
+				},
+			});
+		} catch (error) {
+			console.error('Error in saveAvailabilitySchedule:', error);
+			errorNotice(
+				__('An unexpected error occurred while saving the schedule.', 'quillbooking')
+			);
+		}
 	};
 
 	const closeHandler = () => {

@@ -156,7 +156,7 @@ const CalendarActions: React.FC<CalendarActionsProps> = ({
 					</p>
 					<span className="text-[#71717A]">
 						{__(
-							'by deleting this calendar you will not be able to restore it again!',
+							'Are you sure you want to delete this calendar? All the associate bookings and data will be deleted',
 							'quillbooking'
 						)}
 					</span>

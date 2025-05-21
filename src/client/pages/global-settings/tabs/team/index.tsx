@@ -160,132 +160,157 @@ const TeamTab: React.FC = () => {
 		setIsModalVisible(true);
 	};
 
-	const handleRemoveMember = (memberId: number) => {
-		deleteApi({
-			path: `team-members/${memberId}`,
-			method: 'DELETE',
-			onSuccess(response: {
-				success: boolean;
-				message: string;
-				id: number;
-			}) {
-				if (response.success) {
-					setTeamMembers((prevMembers) =>
-						prevMembers.filter(
-							(member) => member.ID !== response.id
-						)
-					);
+	const handleRemoveMember = async (memberId: number) => {
+		try {
+			await deleteApi({
+				path: `team-members/${memberId}`,
+				method: 'DELETE',
+				onSuccess(response: {
+					success: boolean;
+					message: string;
+					id: number;
+				}) {
+					if (response.success) {
+						setTeamMembers((prevMembers) =>
+							prevMembers.filter(
+								(member) => member.ID !== response.id
+							)
+						);
+						setNotice({
+							type: 'success',
+							title: __('Success', 'quillbooking'),
+							message: response.message,
+						});
+					}
+				},
+				onError(error) {
+					setNotice({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message:
+							error.message ||
+							__('Failed to remove team member', 'quillbooking'),
+					});
+				},
+			});
+		} catch (error) {
+			setNotice({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message: __('An unexpected error occurred while removing the team member', 'quillbooking'),
+			});
+			console.error('Error in handleRemoveMember:', error);
+		}
+	};
+
+	const handleEditSubmit = async (values: {
+		capabilities: Record<string, string[]>;
+	}) => {
+		try {
+			if (!currentMember) return;
+			const allCapabilities = Object.values(values.capabilities || {}).flat();
+
+			await saveApi({
+				path: `team-members/${currentMember.ID}`,
+				method: 'PUT',
+				data: {
+					capabilities: allCapabilities,
+				},
+				onSuccess() {
 					setNotice({
 						type: 'success',
 						title: __('Success', 'quillbooking'),
-						message: response.message,
+						message: __('Team member updated successfully', 'quillbooking'),
 					});
-				}
-			},
-			onError(error) {
-				setNotice({
-					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message:
-						error.message ||
-						__('Failed to remove team member', 'quillbooking'),
-				});
-			},
-		});
-	};
-
-	const handleEditSubmit = (values: {
-		capabilities: Record<string, string[]>;
-	}) => {
-		if (!currentMember) return;
-		const allCapabilities = Object.values(values.capabilities || {}).flat();
-
-		saveApi({
-			path: `team-members/${currentMember.ID}`,
-			method: 'PUT',
-			data: {
-				capabilities: allCapabilities,
-			},
-			onSuccess() {
-				setNotice({
-					type: 'success',
-					title: __('Success', 'quillbooking'),
-					message: __(
-						'Team member updated successfully',
-						'quillbooking'
-					),
-				});
-				setIsModalVisible(false);
-				fetchTeamMembers();
-			},
-			onError(error) {
-				setNotice({
-					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message:
-						error.message ||
-						__('Failed to update team member', 'quillbooking'),
-				});
-			},
-		});
-	};
-
-	const handleAddMember = () => {
-		if (!selectedUser) {
+					setIsModalVisible(false);
+					fetchTeamMembers();
+				},
+				onError(error) {
+					setNotice({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message:
+							error.message ||
+							__('Failed to update team member', 'quillbooking'),
+					});
+				},
+			});
+		} catch (error) {
 			setNotice({
 				type: 'error',
 				title: __('Error', 'quillbooking'),
-				message: __('Please select a user', 'quillbooking'),
+				message: __('An unexpected error occurred while updating the team member', 'quillbooking'),
 			});
-			return;
+			console.error('Error in handleEditSubmit:', error);
 		}
+	};
 
-		const groupedCapabilities = form.getFieldValue('capabilities') || {};
-		const allCapabilities = Object.values(groupedCapabilities).flat();
-
-		if (!allCapabilities.length) {
-			setNotice({
-				type: 'error',
-				title: __('Error', 'quillbooking'),
-				message: __(
-					'Please select at least one capability',
-					'quillbooking'
-				),
-			});
-			return;
-		}
-
-		saveApi({
-			path: 'team-members',
-			method: 'POST',
-			data: {
-				user_id: selectedUser,
-				capabilities: allCapabilities,
-			},
-			onSuccess() {
-				setNotice({
-					type: 'success',
-					title: __('Success', 'quillbooking'),
-					message: __(
-						'Team member added successfully',
-						'quillbooking'
-					),
-				});
-				setIsAddModalVisible(false);
-				setSelectedUser(null);
-				form.resetFields();
-				fetchTeamMembers();
-			},
-			onError(error) {
+	const handleAddMember = async () => {
+		try {
+			// Validate selected user
+			if (!selectedUser) {
 				setNotice({
 					type: 'error',
 					title: __('Error', 'quillbooking'),
-					message:
-						error.message ||
-						__('Failed to add team member', 'quillbooking'),
+					message: __('Please select a user', 'quillbooking'),
 				});
-			},
-		});
+				return;
+			}
+
+			// Validate capabilities
+			const groupedCapabilities = form.getFieldValue('capabilities') || {};
+			const allCapabilities = Object.values(groupedCapabilities).flat();
+
+			if (!allCapabilities.length) {
+				setNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message: __('Please select at least one capability', 'quillbooking'),
+				});
+				return;
+			}
+
+			// API call
+			await saveApi({
+				path: 'team-members',
+				method: 'POST',
+				data: {
+					user_id: selectedUser,
+					capabilities: allCapabilities,
+				},
+				onSuccess() {
+					setNotice({
+						type: 'success',
+						title: __('Success', 'quillbooking'),
+						message: __('Team member added successfully', 'quillbooking'),
+					});
+					setIsAddModalVisible(false);
+					setSelectedUser(null);
+					form.resetFields();
+					fetchTeamMembers();
+				},
+				onError(error) {
+					setNotice({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message: error.message || __('Failed to add team member', 'quillbooking'),
+					});
+				},
+			});
+		} catch (error) {
+			// Handle unexpected errors
+			setNotice({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message: __('An unexpected error occurred while adding the team member', 'quillbooking'),
+			});
+			console.error('Error in handleAddMember:', error);
+
+			// Reset form state on critical errors if needed
+			setIsAddModalVisible(false);
+			setSelectedUser(null);
+			form.resetFields();
+		}
 	};
 
 	const renderCapabilityGroups = () => {

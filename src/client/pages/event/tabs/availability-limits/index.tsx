@@ -127,37 +127,46 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 			},
 		}));
 		const saveEventDetails = async () => {
-			const eventHostavailability = {
-				...availability,
-				type: availabilityType,
-				override: dateOverrides,
-				...(commonSchedule ? { is_common: commonSchedule } : {}),
-			};
-
-			const eventTeamAvailability = {
-				users_availability: teamAvailability,
-				type: availabilityType,
-				is_common: commonSchedule,
-			};
-			return callApi({
-				path: `events/${event?.id}`,
-				method: 'PUT',
-				data: {
-					availability:
-						event?.calendar?.type === 'team' && !commonSchedule
-							? { ...eventTeamAvailability }
-							: { ...eventHostavailability },
-					limits,
-					event_range: range,
-					reserve_times: reservetimes,
-				},
-				onSuccess() {
-					props.setDisabled(true);
-				},
-				onError(error) {
-					throw new Error(error.message);
-				},
-			});
+			try {
+				const eventHostavailability = {
+					...availability,
+					type: availabilityType,
+					override: dateOverrides,
+					...(commonSchedule ? { is_common: commonSchedule } : {}),
+				};
+		
+				const eventTeamAvailability = {
+					users_availability: teamAvailability,
+					type: availabilityType,
+					is_common: commonSchedule,
+				};
+		
+				await callApi({
+					path: `events/${event?.id}`,
+					method: 'PUT',
+					data: {
+						availability:
+							event?.calendar?.type === 'team' && !commonSchedule
+								? { ...eventTeamAvailability }
+								: { ...eventHostavailability },
+						limits,
+						event_range: range,
+						reserve_times: reservetimes,
+					},
+					onSuccess() {
+						props.setDisabled(true);
+					},
+					onError(error) {
+						// Re-throw the error to be caught by the outer try-catch
+						throw new Error(error.message);
+					},
+				});
+			} catch (error:any) {
+				console.error('Failed to save event details:', error);
+				
+				// Re-throw the error if you want calling code to handle it
+				throw new Error(error.message);
+			}
 		};
 		return (
 			<div className="grid grid-cols-2 gap-5 px-9">

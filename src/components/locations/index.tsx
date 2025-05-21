@@ -18,10 +18,10 @@ import type { Location } from '@quillbooking/client';
 import { EditIcon, TrashIcon } from '@quillbooking/components';
 
 import './style.scss';
-import meet from '../../../assets/icons/google/google_meet.png';
-import zoom from '../../../assets/icons/zoom/zoom_video.png';
-import teams from '../../../assets/icons/teams/teams.png';
-import { useApi, useNavigate } from '@quillbooking/hooks';
+import meet from '@quillbooking/assets/icons/google/google_meet.png';
+import zoom from '@quillbooking/assets/icons/zoom/zoom_video.png';
+import teams from '@quillbooking/assets/icons/teams/teams.png';
+import { useNavigate } from '@quillbooking/hooks';
 import TextArea from 'antd/es/input/TextArea';
 
 // Extended Location type to include custom ID for multiple custom locations

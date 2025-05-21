@@ -156,29 +156,38 @@ const SmsNotificationTab = forwardRef<
 	};
 
 	const saveNotificationSettings = async () => {
-		if (!event || !notificationSettings) return;
-
-		return callApi({
-			path: `events/${event.id}`,
-			method: 'POST',
-			data: {
-				[`sms_notifications`]: notificationSettings,
-			},
-			onSuccess() {
-				successNotice(
-					__(
-						'Notification settings saved successfully',
-						'quillbooking'
-					)
-				);
-				setDisabled(true);
-				// Update the base notification settings with a deep copy to avoid reference issues
-				setNotificationSettings(notificationSettings);
-			},
-			onError(error) {
-				throw new Error(error.message);
-			},
-		});
+		try {
+			// Validate required data
+			if (!event || !notificationSettings) {
+				console.warn('Cannot save notification settings - missing event or settings data');
+				return;
+			}
+	
+			await callApi({
+				path: `events/${event.id}`,
+				method: 'POST',
+				data: {
+					[`sms_notifications`]: notificationSettings,
+				},
+				onSuccess() {
+					// Show success message and update state
+					successNotice(
+						__('Notification settings saved successfully', 'quillbooking')
+					);
+					setDisabled(true);
+					// Update the base notification settings with a deep copy
+					setNotificationSettings(JSON.parse(JSON.stringify(notificationSettings)));
+				},
+				onError(error) {
+					// Re-throw error to be caught by outer try-catch
+					throw new Error(error.message);
+				},
+			});
+		} catch (error:any) {
+			console.error('Failed to save notification settings:', error);
+			// Re-throw error if you want calling code to handle it
+			throw new Error(error.message);
+		}
 	};
 
 	if (!notificationsLoaded || !notificationSettings) {
@@ -187,7 +196,7 @@ const SmsNotificationTab = forwardRef<
 
 	return (
 		<div className="w-full px-9">
-			{false ? (
+			{!event?.connected_integrations.twilio.connected ? (
 				<Card>
 					<CardHeader
 						title={__('Sms Notification', 'quillbooking')}

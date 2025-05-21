@@ -28,11 +28,9 @@ import { useLocation } from 'react-router-dom';
 /**
  * Internal dependencies
  */
-import { NavBar } from '@quillbooking/components';
+import { NavBar, SearchIcon, LogoIcon } from '@quillbooking/components';
 import { Controller } from './controller';
 import './style.scss';
-import LogoIcon from '../../components/icons/logo';
-import SearchIcon from '../../components/icons/search-icon';
 import User from '../../components/icons/user.png';
 
 const AntProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

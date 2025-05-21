@@ -51,62 +51,81 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 	const [showConfirmation, setShowConfirmation] = useState(false);
 
 	const deleteAvailability = async (availabilityId: string) => {
-		if (isAvailabilityDefault) {
+		try {
+			if (isAvailabilityDefault) {
+				setNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message: __(
+						'You cannot delete the default availability. Please set another availability as default first.',
+						'quillbooking'
+					),
+				});
+				return;
+			}
+
+			await callApi({
+				path: `availabilities/${availabilityId}`,
+				method: 'DELETE',
+				onSuccess: () => {
+					const updatedAvailability = filter(
+						availabilities,
+						(a) => a.id !== availabilityId
+					);
+					setAvailabilities(updatedAvailability);
+					setNotice({
+						type: 'success',
+						title: __('Success', 'quillbooking'),
+						message: __('Calendar deleted', 'quillbooking'),
+					});
+				},
+				onError: () => {
+					setNotice({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message: __('Failed to delete calendar', 'quillbooking'),
+					});
+				},
+			});
+		} catch (error) {
+			console.error('Error in deleteAvailability:', error);
 			setNotice({
 				type: 'error',
 				title: __('Error', 'quillbooking'),
-				message: __(
-					'You cannot delete the default availability. Please set another availability as default first.',
-					'quillbooking'
-				),
+				message: __('An unexpected error occurred while deleting the calendar', 'quillbooking'),
 			});
-			return;
 		}
-		await callApi({
-			path: `availabilities/${availabilityId}`,
-			method: 'DELETE',
-			onSuccess: () => {
-				const updatedAvailability = filter(
-					availabilities,
-					(a) => a.id !== availabilityId
-				);
-				setAvailabilities(updatedAvailability);
-				setNotice({
-					type: 'success',
-					title: __('Success', 'quillbooking'),
-					message: __('Calendar deleted', 'quillbooking'),
-				});
-			},
-			onError: () => {
-				setNotice({
-					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message: __('Failed to delete calendar', 'quillbooking'),
-				});
-			},
-		});
 	};
 
 	const setCloneCalendar = async (availabilityId: string) => {
-		await callApi({
-			path: `availabilities/${availabilityId}/clone`,
-			method: 'POST',
-			onSuccess: (data) => {
-				navigate(`availability/${data.id}`);
-				setNotice({
-					type: 'success',
-					title: __('Success', 'quillbooking'),
-					message: __('Calendar duplicated', 'quillbooking'),
-				});
-			},
-			onError: () => {
-				setNotice({
-					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message: __('Failed to duplicate calendar', 'quillbooking'),
-				});
-			},
-		});
+		try {
+			await callApi({
+				path: `availabilities/${availabilityId}/clone`,
+				method: 'POST',
+				onSuccess: (data) => {
+					navigate(`availability/${data.id}`);
+					setNotice({
+						type: 'success',
+						title: __('Success', 'quillbooking'),
+						message: __('Calendar duplicated', 'quillbooking'),
+					});
+				},
+				onError: () => {
+					setNotice({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message: __('Failed to duplicate calendar', 'quillbooking'),
+					});
+				},
+			});
+		} catch (error) {
+			console.error('Error in setCloneCalendar:', error);
+			setNotice({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message: __('An unexpected error occurred while duplicating the calendar', 'quillbooking'),
+			});
+		}
 	};
 
 	const getTitle = () => {

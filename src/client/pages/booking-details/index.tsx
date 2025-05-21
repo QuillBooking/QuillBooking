@@ -54,15 +54,15 @@ function getNextTenDays(): DayInfo[] {
 const days = getNextTenDays();
 
 const ShimmerLoader = () => (
-	<div className="p-16 pt-8 animate-pulse">
+	<div className="pt-8 animate-pulse">
 	  {/* Header */}
-	  <div className="flex justify-between border-b border-[#E5E5E5] pb-7 mb-10">
+	  <div className="flex justify-between border-b border-[#E5E5E5] pb-7 px-16 mb-10">
 		<div className="h-8 w-48 bg-gray-200 rounded-md" />
 		<div className="h-8 w-32 bg-gray-200 rounded-md" />
 	  </div>
   
 	  {/* Main Flex Row */}
-	  <div className="flex gap-8">
+	  <div className="flex gap-8 px-16">
 		{/* Left Column: 4 Cards (2/3 width) */}
 		<div className="w-2/3 flex flex-col gap-6">
 		  {Array.from({ length: 4 }).map((_, index) => (
@@ -245,12 +245,12 @@ const BookingDetails: React.FC = () => {
 				<>
 					<Flex
 						justify="space-between"
-						className="border-b border-[#E5E5E5] p-4 pb-7 w-full"
+						className="border-b border-[#E5E5E5] px-5 py-7 w-full"
 					>
 						<div>
 							<Flex gap={10} align="center">
 								<div 
-									className="text-color-primary-text cursor-pointer"
+									className="text-color-primary-text cursor-pointer pr-2"
 									onClick={handleClose}
 								>
 									<CancelIcon width={30} height={30} />

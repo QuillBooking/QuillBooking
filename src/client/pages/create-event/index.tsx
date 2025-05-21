@@ -208,55 +208,70 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 		}
 	};
 
-	const handleSubmit = () => {
-		if (!event.name || !event.location || event.location.length === 0) {
-			setValidationErrors({
-				name: !event.name,
-				location: !event.location || event.location.length === 0,
-				members: !event.hosts,
-			});
-
-			setErrorBanner({
-				type: 'error',
-				title: __('Validation Error', 'quillbooking'),
-				message: __(
-					'Please fill in all required fields',
-					'quillbooking'
-				),
-			});
-			return;
-		}
-
-		// Transform event.hosts to an array of ids
-		const transformedEvent = {
-			...event,
-			hosts: event.hosts?.map((host) => host.id) || [],
-		};
-
-		callApi({
-			path: 'events',
-			method: 'POST',
-			data: transformedEvent,
-			onSuccess: (response: Event) => {
-				successNotice(__('Event created successfully', 'quillbooking'));
-				navigate(`calendars/${calendarId}/events/${response.id}`, {
-					state: {
-						notice: {
-							title: 'Complete Your Setup',
-							message:
-								'The event has been created successfully. Please complete your event setup and settings to finish.',
-						},
-					},
+	const handleSubmit = async () => {
+		try {
+			// Validation check
+			if (!event.name || !event.location || event.location.length === 0) {
+				setValidationErrors({
+					name: !event.name,
+					location: !event.location || event.location.length === 0,
+					members: !event.hosts,
 				});
-			},
-			onError: (error: string) => {
+	
 				setErrorBanner({
 					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message: error,
+					title: __('Validation Error', 'quillbooking'),
+					message: __('Please fill in all required fields', 'quillbooking'),
 				});
-			},
-		});
+				return;
+			}
+	
+			// Transform event.hosts to an array of ids
+			const transformedEvent = {
+				...event,
+				hosts: event.hosts?.map((host) => host.id) || [],
+			};
+	
+			try {
+				await callApi({
+					path: 'events',
+					method: 'POST',
+					data: transformedEvent,
+					onSuccess: (response: Event) => {
+						successNotice(__('Event created successfully', 'quillbooking'));
+						navigate(`calendars/${calendarId}/events/${response.id}`, {
+							state: {
+								notice: {
+									title: 'Complete Your Setup',
+									message: 'The event has been created successfully. Please complete your event setup and settings to finish.',
+								},
+							},
+						});
+					},
+					onError: (error: string) => {
+						setErrorBanner({
+							type: 'error',
+							title: __('Error', 'quillbooking'),
+							message: error,
+						});
+					},
+				});
+			} catch (apiError) {
+				setErrorBanner({
+					type: 'error',
+					title: __('API Error', 'quillbooking'),
+					message: __('Failed to communicate with the server. Please try again.', 'quillbooking'),
+				});
+				console.error('API call failed:', apiError);
+			}
+		} catch (error) {
+			setErrorBanner({
+				type: 'error',
+				title: __('Unexpected Error', 'quillbooking'),
+				message: __('An unexpected error occurred. Please try again.', 'quillbooking'),
+			});
+			console.error('Unexpected error in handleSubmit:', error);
+		}
 	};
 
 	const fetchCalendarTeam = () => {

@@ -23,7 +23,7 @@ import {
 	NoticeBanner,
 } from '@quillbooking/components';
 import { NoticeMessage } from '@quillbooking/client';
-import SelectionCard from '../../../integrations/tabs/conferencing-calendars/selection-card';
+import { SelectionCard } from '@quillbooking/components';
 
 const IntegrationCards: React.FC = () => {
 	const { id } = useParams<{
@@ -46,8 +46,8 @@ const IntegrationCards: React.FC = () => {
 	}, [integrations, activeTab]);
 
 	// Find the active integration
-	const activeIntegration = activeTab 
-		? integrations.find(int => int.id === activeTab) 
+	const activeIntegration = activeTab
+		? integrations.find(int => int.id === activeTab)
 		: null;
 
 	return (

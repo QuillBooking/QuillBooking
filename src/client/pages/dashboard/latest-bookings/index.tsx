@@ -171,8 +171,8 @@ const LatestBookings: React.FC = () => {
 																<p className="text-lg font-semibold text-color-primary-text py-1">
 																	{
 																		booking
-																			.event
-																			.name
+																			?.event
+																			?.name
 																	}
 																</p>
 																<Flex
@@ -186,14 +186,16 @@ const LatestBookings: React.FC = () => {
 																		}
 																	</p>
 																	{booking
-																		.event
-																		.location
-																		.length >
+																		?.event
+																		?.location
+																		?.length >
 																		0 && (
 																		<>
-																			<span>•</span>
+																			<span>
+																				•
+																			</span>
 																			<div className="flex flex-wrap gap-1">
-																				{booking.event.location.map(
+																				{booking?.event?.location?.map(
 																					(
 																						location,
 																						index
@@ -204,9 +206,13 @@ const LatestBookings: React.FC = () => {
 																							}
 																							className="max-w-[150px] truncate capitalize"
 																						>
-																							{
-																								location.type.split('_').join(' ')
-																							}
+																							{location.type
+																								.split(
+																									'_'
+																								)
+																								.join(
+																									' '
+																								)}
 																							{index <
 																								booking
 																									.event
@@ -218,7 +224,9 @@ const LatestBookings: React.FC = () => {
 																					)
 																				)}
 																			</div>
-																			<span>•</span>
+																			<span>
+																				•
+																			</span>
 																		</>
 																	)}
 																	<p>

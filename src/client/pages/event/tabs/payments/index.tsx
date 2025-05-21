@@ -35,7 +35,6 @@ import {
 	AlertIcon,
 	CardHeader,
 	Header,
-	NoticeBanner,
 	PaymentIcon,
 	ProductSelect,
 	TrashIcon,

@@ -43,7 +43,7 @@ const Availability: React.FC = () => {
 					className="px-8"
 					type="primary"
 					icon={<PlusOutlined />}
-					size="middle"
+					size="large"
 					onClick={() => {
 						setOpen(true);
 					}}

@@ -4,6 +4,7 @@ import './style.scss';
 import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import { Form } from 'antd';
 import FormField from '../../../inputs';
+import { useState } from 'react';
 
 interface QuestionsComponentsProps {
 	fields: Fields;
@@ -17,6 +18,7 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 	onSubmit,
 }) => {
 	const [form] = Form.useForm();
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const allFields = {
 		...fields.system,
@@ -34,9 +36,23 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 		(a, b) => allFields[a].order - allFields[b].order
 	);
 
-	// called when the user clicks “Schedule Event”
+	// called when the user clicks "Schedule Event"
 	const handleFinish = (values: Record<string, any>) => {
-		onSubmit(values);
+		setIsSubmitting(true);
+		
+		// Call the onSubmit function passed from parent
+		try {
+			onSubmit(values);
+		} catch (error) {
+			// If there's an error, re-enable the button
+			console.error('Form submission error:', error);
+			setIsSubmitting(false);
+		}
+		
+		// Note: You might want to handle re-enabling the button depending on your
+		// overall application structure. If onSubmit is asynchronous and you need to
+		// re-enable the button after it completes, you would need to modify onSubmit
+		// to return a Promise and handle it appropriately.
 	};
 
 	return (
@@ -69,8 +85,12 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 						)
 					))}
 					<Form.Item className="schedule-btn-container">
-						<button className="schedule-btn" type="submit">
-							{__('Schedule Event', '@quillbooking')}
+						<button 
+							className="schedule-btn" 
+							type="submit" 
+							disabled={isSubmitting}
+						>
+							{!isSubmitting ? __('Schedule Event', '@quillbooking') : 'Scheduling...'}
 						</button>
 					</Form.Item>
 				</Form>

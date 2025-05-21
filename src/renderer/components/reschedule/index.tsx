@@ -3,6 +3,7 @@ import LeftArrowIcon from '../../icons/left-arrow-icon';
 import { Booking, Fields } from '../../types';
 import { Form, Input } from 'antd';
 import { Dayjs } from 'dayjs';
+import { useState } from '@wordpress/element';
 
 interface RescheduleProps {
 	setStep: (step: number) => void;
@@ -28,6 +29,7 @@ const Reschedule: React.FC<RescheduleProps> = ({
 	url,
 }) => {
 	const [form] = Form.useForm();
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// Helper function to render form label with required mark if needed
 	const renderLabel = (field: { label: string; required: boolean }) => (
@@ -41,6 +43,7 @@ const Reschedule: React.FC<RescheduleProps> = ({
 
 	// Called when the user clicks "Reschedule Event"
 	const handleFinish = async (values: any) => {
+		setIsSubmitting(true);
 		const formData = new FormData();
 		formData.append('action', 'quillbooking_reschedule_booking');
 		formData.append('id', booking?.hash_id?.toString() || '');
@@ -67,6 +70,8 @@ const Reschedule: React.FC<RescheduleProps> = ({
 			}
 		} catch (error) {
 			console.error('Error rescheduling booking:', error);
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
@@ -143,8 +148,8 @@ const Reschedule: React.FC<RescheduleProps> = ({
 						)}
 
 					<Form.Item className="schedule-btn-container">
-						<button className="schedule-btn" type="submit">
-							{__('Reschedule Event', 'quillbooking')}
+						<button className="schedule-btn" type="submit" disabled={isSubmitting}>
+							{isSubmitting ? __('Rescheduling...', 'quillbooking') : __('Reschedule Event', 'quillbooking')}
 						</button>
 					</Form.Item>
 				</Form>

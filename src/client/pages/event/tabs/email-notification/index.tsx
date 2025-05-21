@@ -168,35 +168,30 @@ const EmailNotificationTab = forwardRef<
 	const saveNotificationSettings = async () => {
 		if (!event || !notificationSettings) return;
 
-		console.log('before save method', notificationSettings);
-		return callApi({
-			path: `events/${event.id}`,
-			method: 'POST',
-			data: {
-				[`email_notifications`]: notificationSettings,
-			},
-			onSuccess() {
-				console.log('before success message', notificationSettings);
-
-				successNotice(
-					__(
-						'Notification settings saved successfully',
-						'quillbooking'
-					)
-				);
-
-				setDisabled(true);
-
-				setNotificationSettings(notificationSettings);
-				console.log(
-					'Notification settings saved successfully',
-					notificationSettings
-				);
-			},
-			onError(error) {
-				throw new Error(error.message);
-			},
-		});
+		try {
+			console.log('before save method', notificationSettings);
+			return await callApi({
+				path: `events/${event.id}`,
+				method: 'POST',
+				data: {
+					[`email_notifications`]: notificationSettings,
+				},
+				onSuccess() {
+					console.log('before success message', notificationSettings);
+					successNotice(__('Notification settings saved successfully', 'quillbooking'));
+					setDisabled(true);
+					setNotificationSettings(notificationSettings);
+					console.log('Notification settings saved successfully', notificationSettings);
+				},
+				onError(error) {
+					// This will be caught by the outer try-catch
+					throw new Error(error.message);
+				},
+			});
+		} catch (error) {
+			console.error("Error in saveNotificationSettings:", error);
+			// No error notice shown to the user
+		}
 	};
 
 	if (initialLoading || !notificationSettings) {

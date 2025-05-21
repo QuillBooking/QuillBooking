@@ -107,21 +107,42 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		};
 
 		const saveFields = async (fields: Fields) => {
-			console.log('Saving fields', fields);
-			if (!event) return;
-			return saveApi({
-				path: `events/${event.id}`,
-				method: 'POST',
-				data: {
-					fields,
-				},
-				onSuccess() {
-					props.setDisabled(true);
-				},
-				onError(error) {
-					throw new Error(error.message);
-				},
-			});
+			try {
+				console.log('Saving fields', fields);
+				
+				// Validate required data
+				if (!event) {
+					console.warn('Cannot save fields - event is undefined');
+					return;
+				}
+		
+				// Validate fields structure if needed
+				if (!fields || typeof fields !== 'object') {
+					console.error('Invalid fields data structure:', fields);
+					throw new Error('Invalid fields data');
+				}
+		
+				await saveApi({
+					path: `events/${event.id}`,
+					method: 'POST',
+					data: {
+						fields: structuredClone(fields), // Deep clone to avoid mutation issues
+					},
+					onSuccess() {
+						props.setDisabled(true);
+						console.log('Fields saved successfully');
+					},
+					onError(error) {
+						console.error('API error while saving fields:', error);
+						throw new Error(error.message); // Re-throw to be caught by outer try-catch
+					},
+				});
+		
+			} catch (error:any) {
+				console.error('Failed to save fields:', error);
+				// Consider adding error recovery or state reset here if needed
+				throw new Error(error.message); // Re-throw to allow calling code to handle
+			}
 		};
 
 		const addField = () => {

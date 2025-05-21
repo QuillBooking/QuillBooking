@@ -46,7 +46,7 @@ export type Calendar = {
 	created_at: string;
 	updated_at: string;
 	user?: User;
-	team_members:number[];
+	team_members: number[];
 };
 
 export type CalendarResponse = Response & {
@@ -71,7 +71,7 @@ export type Event = {
 	duration: number;
 	color: string;
 	booking_count: number;
-	is_disabled:boolean;
+	is_disabled: boolean;
 	visibility: 'public' | 'private';
 	dynamic_duration: boolean;
 	location: Location[];
@@ -300,6 +300,17 @@ export interface Booking extends BookingResponse {
 	guest?: Guest | Guest[];
 	calendar?: Calendar;
 	logs?: BookingLog[];
+	order: {
+		booking_id: number;
+		created_at: string;
+		currency: string;
+		discount: number;
+		id: number;
+		items: any[] | null;
+		payment_method: string;
+		status: 'pending' | 'confirmed' | 'cancelled' | 'failed';
+		total: number;
+	};
 }
 
 export type User = {

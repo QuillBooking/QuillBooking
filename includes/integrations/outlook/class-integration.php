@@ -13,15 +13,22 @@
 namespace QuillBooking\Integrations\Outlook;
 
 use Illuminate\Support\Arr;
+use QuillBooking\Event_Locations\MS_Teams;
 use QuillBooking\Integration\Integration as Abstract_Integration;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Integrations\Outlook\REST_API\REST_API;
 use QuillBooking\Utils;
+use WP_Error;
 
 /**
  * Outlook Integration class
  */
 class Integration extends Abstract_Integration {
+
+
+
+
+
 
 
 
@@ -79,11 +86,11 @@ class Integration extends Abstract_Integration {
 	public function __construct() {
 		 parent::__construct();
 		$this->app = new App( $this );
-		add_filter( 'quillbooking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
-		add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
-		add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
-		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
-		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
+		\add_filter( 'quillbooking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
+		\add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		\add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
+		\add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
+		\add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
 	}
 
 	/**
@@ -254,21 +261,65 @@ class Integration extends Abstract_Integration {
 	 * @return Booking_Model
 	 */
 	public function add_event_to_calendars( $booking ) {
-		$event = $booking->event;
-		$host  = $event->calendar->id;
-		$this->set_host( $host );
+		try {
+			// Early validation
+			if ( ! $booking || ! $booking->event || ! $booking->event->calendar ) {
+				error_log( 'Outlook Integration Error: Invalid booking or event data' );
+				return $booking;
+			}
 
-		$outlook_integration = $this->host->get_meta( $this->meta_key, array() );
-		if ( empty( $outlook_integration ) ) {
-			return $booking;
-		}
+			// Check if location is MS Teams
+			if ( ! in_array( $booking->location, array( MS_Teams::instance()->slug ) ) ) {
+				return $booking;
+			}
 
-		$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
-		$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
+			// Set host and get integration data
+			$event = $booking->event;
+			$host  = $event->calendar->id;
+			$this->set_host( $host );
 
-		foreach ( $outlook_integration as $account_id => $data ) {
-			$api = $this->connect( $host, $account_id );
-			if ( ! $api ) {
+			$outlook_integration = $this->host->get_meta( $this->meta_key, array() );
+			if ( empty( $outlook_integration ) ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Outlook Calendar integration not configured.', 'quillbooking' ),
+					)
+				);
+				return $booking;
+			}
+
+			// Find the account with the default calendar
+			$default_account = null;
+			foreach ( $outlook_integration as $account_id => $data ) {
+				if ( empty( $data ) || empty( $data['config'] ) ) {
+					continue;
+				}
+
+				$default_calendar = Arr::get( $data, 'config.default_calendar' );
+				if ( ! empty( $default_calendar ) && isset( $default_calendar['calendar_id'] ) && isset( $default_calendar['account_id'] ) ) {
+					$default_account = array(
+						'id'               => $account_id,
+						'data'             => $data,
+						'default_calendar' => $default_calendar,
+					);
+					break;
+				}
+			}
+
+			if ( ! $default_account ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'No default calendar found in any Outlook account.', 'quillbooking' ),
+					)
+				);
+				return $booking;
+			}
+
+			// Connect to Outlook API
+			$api = $this->connect( $host, $default_account['id'] );
+			if ( ! $api || \is_wp_error( $api ) ) {
 				$booking->logs()->create(
 					array(
 						'type'    => 'error',
@@ -276,12 +327,16 @@ class Integration extends Abstract_Integration {
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with Outlook Account %2$s.', 'quillbooking' ),
 							$host->name,
-							$account_id
+							$default_account['id']
 						),
 					)
 				);
-				continue;
+				return $booking;
 			}
+
+			// Prepare event data
+			$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
+			$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
 
 			$attendees = array(
 				array(
@@ -295,7 +350,7 @@ class Integration extends Abstract_Integration {
 
 			$event_data = array(
 				'subject'               => sprintf( __( '%1$s: %2$s', 'quillbooking' ), $booking->guest->name, $event->name ),
-				'description'           => $event->description,
+				// 'description'           => $event->description,
 				'location'              => array(
 					'displayName' => $booking->location ?? 'MS Meet',
 				),
@@ -322,20 +377,20 @@ class Integration extends Abstract_Integration {
 				'transactionId'         => "{$this->get_site_uid()}-{$booking->id}",
 			);
 
+			// Add MS Teams meeting if location is ms_meet
 			if ( 'ms_meet' === $booking->location ) {
 				$event_data['isOnlineMeeting']       = true;
 				$event_data['onlineMeetingProvider'] = 'teamsForBusiness';
 			}
 
-			// Remove any empty values recursively.
-			$event_data          = array_filter( $event_data );
-			$default_calendar_id = Arr::get( $data, 'config.default_calendar' );
+			// Remove empty values
+			$event_data = array_filter( $event_data );
 
-			if ( empty( $default_calendar_id ) ) {
-				continue;
-			}
+			error_log( 'Event Data Sent: ' . json_encode( $event_data ) );
 
-			$response = $api->create_event( $default_calendar_id, $event_data );
+			// Create event in Outlook
+			$response = $api->create_event( $default_account['default_calendar']['calendar_id'], $event_data );
+			error_log( 'Response Outlook : ' . print_r( $response, true ) );
 
 			if ( ! $response['success'] ) {
 				$booking->logs()->create(
@@ -344,26 +399,28 @@ class Integration extends Abstract_Integration {
 						'message' => __( 'Error adding event to Outlook Calendar.', 'quillbooking' ),
 						'details' => sprintf(
 							__( 'Error adding event to Outlook Calendar %1$s: %2$s', 'quillbooking' ),
-							$default_calendar_id,
+							$default_account['default_calendar']['calendar_id'],
 							Arr::get( $response, 'data.error.message', '' )
 						),
 					)
 				);
-				continue;
+				return $booking;
 			}
 
+			// Store event details
 			$event = Arr::get( $response, 'data' );
 			$id    = Arr::get( $event, 'id' );
 
 			$meta        = $booking->get_meta( 'outlook_events_details', array() );
 			$meta[ $id ] = array(
 				'event'       => $event,
-				'calendar_id' => $default_calendar_id,
-				'account_id'  => $account_id,
+				'calendar_id' => $default_account['default_calendar']['calendar_id'],
+				'account_id'  => $default_account['id'],
 			);
 
 			$booking->update_meta( 'outlook_events_details', $meta );
 
+			// Log success
 			$booking->logs()->create(
 				array(
 					'type'    => 'info',
@@ -371,10 +428,24 @@ class Integration extends Abstract_Integration {
 					'details' => sprintf(
 						__( 'Event %1$s added to Outlook Calendar %2$s.', 'quillbooking' ),
 						$id,
-						$default_calendar_id
+						$default_account['default_calendar']['calendar_id']
 					),
 				)
 			);
+
+			return $booking;
+		} catch ( \Exception $e ) {
+			error_log( 'Outlook Integration Error in add_event_to_calendars: ' . $e->getMessage() );
+			if ( isset( $booking ) ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error adding event to Outlook Calendar.', 'quillbooking' ),
+						'details' => $e->getMessage(),
+					)
+				);
+			}
+			return $booking;
 		}
 	}
 
@@ -414,32 +485,6 @@ class Integration extends Abstract_Integration {
 		);
 
 		return $description;
-		$description  = sprintf(
-			__( 'Event Detials:', 'quillbooking' ),
-			$booking->event->name
-		);
-		$description .= PHP_EOL;
-		$description .= sprintf(
-			__( 'Invitee: %s', 'quillbooking' ),
-			$booking->guest->name
-		);
-		$description .= PHP_EOL;
-		$description .= sprintf(
-			__( 'Invitee Email: %s', 'quillbooking' ),
-			$booking->guest->email
-		);
-		$description .= PHP_EOL . PHP_EOL;
-		$start_date   = new \DateTime( $booking->start_time, new \DateTimeZone( $booking->calendar->timezone ) );
-		$end_date     = new \DateTime( $booking->end_time, new \DateTimeZone( $booking->calendar->timezone ) );
-		$description .= sprintf(
-			__( 'When:%4$s%1$s to %2$s (%3$s)', 'quillbooking' ),
-			$start_date->format( 'Y-m-d H:i' ),
-			$end_date->format( 'Y-m-d H:i' ),
-			$booking->calendar->timezone,
-			PHP_EOL
-		);
-
-		return $description;
 	}
 
 	/**
@@ -450,12 +495,11 @@ class Integration extends Abstract_Integration {
 	 * @return string
 	 */
 	public function get_site_uid() {
-		$site_uid = get_option( 'quillbooking_site_uid', '' );
-		if ( empty( $site_uid ) ) {
-			$site_uid = Utils::generate_hash_key();
-			update_option( 'quillbooking_site_uid', $site_uid );
+		$site_uid = \get_option( 'quillbooking_site_uid' );
+		if ( ! $site_uid ) {
+			$site_uid = \wp_generate_uuid4();
+			\update_option( 'quillbooking_site_uid', $site_uid );
 		}
-
 		return $site_uid;
 	}
 

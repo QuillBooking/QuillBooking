@@ -26,6 +26,8 @@ class Integration extends Abstract_Integration {
 
 
 
+
+
 	/**
 	 * Integration Name
 	 *
@@ -270,6 +272,10 @@ class Integration extends Abstract_Integration {
 	 * @return Booking_Model
 	 */
 	public function add_event_to_calendars( $booking ) {
+		error_log( 'Event Location: ' . $booking->location );
+		if ( ! in_array( $booking->location, array( 'apple', 'apple_meet' ) ) ) {
+			return $booking;
+		}
 		$event = $booking->event;
 		$host  = $event->calendar->id;
 		$this->set_host( $host );

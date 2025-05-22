@@ -27,6 +27,7 @@ class App {
 
 
 
+
 	/**
 	 * State prefix for Microsoft authentication
 	 *
@@ -225,7 +226,7 @@ class App {
 			echo \esc_html__( 'Error, This account is already connected!', 'quillbooking' );
 			\wp_redirect(
 				\admin_url(
-					"admin.php?page=quillbooking&path=calendars&id={$host_id}&tab=integrations&subtab={$this->integration->slug}"
+					"admin.php?page=quillbooking&path=calendars/{$host_id}&tab=integrations&subtab={$this->integration->slug}"
 				)
 			);
 			exit;
@@ -244,7 +245,7 @@ class App {
 		echo \esc_html__( 'Success, Account added!', 'quillbooking' );
 		\wp_redirect(
 			\admin_url(
-				"admin.php?page=quillbooking&path=calendars&id={$host_id}&tab=integrations&subtab={$this->integration->slug}"
+				"admin.php?page=quillbooking&path=calendars/{$host_id}&tab=integrations&subtab={$this->integration->slug}"
 			)
 		);
 		exit;

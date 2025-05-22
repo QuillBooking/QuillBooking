@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Zoom Calendar / Meet Integration
  *
@@ -12,6 +13,7 @@
 namespace QuillBooking\Integrations\Zoom;
 
 use Illuminate\Support\Arr;
+use QuillBooking\Event_Locations\Zoom;
 use QuillBooking\Integration\Integration as Abstract_Integration;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Integrations\Zoom\REST_API\REST_API;
@@ -21,6 +23,7 @@ use QuillBooking\Utils;
  * Zoom Integration class
  */
 class Integration extends Abstract_Integration {
+
 
 	/**
 	 * Integration Name
@@ -92,7 +95,7 @@ class Integration extends Abstract_Integration {
 	 * Constructor
 	 */
 	public function __construct() {
-		parent::__construct();
+		 parent::__construct();
 		$this->app = new App( $this );
 		add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
 		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
@@ -253,7 +256,7 @@ class Integration extends Abstract_Integration {
 	 */
 	public function add_event_to_calendars( $booking ) {
 		error_log( 'Event Location: ' . $booking->location );
-		if ( 'zoom' !== $booking->location ) {
+		if ( ! in_array( $booking->location, array( Zoom::instance()->slug ) ) ) {
 			return $booking;
 		}
 
@@ -378,24 +381,25 @@ class Integration extends Abstract_Integration {
 			PHP_EOL
 		);
 
-		return $description;$description = sprintf(
+		return $description;
+		$description  = sprintf(
 			__( 'Event Detials:', 'quillbooking' ),
 			$booking->event->name
 		);
-		$description                    .= PHP_EOL;
-		$description                    .= sprintf(
+		$description .= PHP_EOL;
+		$description .= sprintf(
 			__( 'Invitee: %s', 'quillbooking' ),
 			$booking->guest->name
 		);
-		$description                    .= PHP_EOL;
-		$description                    .= sprintf(
+		$description .= PHP_EOL;
+		$description .= sprintf(
 			__( 'Invitee Email: %s', 'quillbooking' ),
 			$booking->guest->email
 		);
-		$description                    .= PHP_EOL . PHP_EOL;
-		$start_date                      = new \DateTime( $booking->start_time, new \DateTimeZone( $booking->calendar->timezone ) );
-		$end_date                        = new \DateTime( $booking->end_time, new \DateTimeZone( $booking->calendar->timezone ) );
-		$description                    .= sprintf(
+		$description .= PHP_EOL . PHP_EOL;
+		$start_date   = new \DateTime( $booking->start_time, new \DateTimeZone( $booking->calendar->timezone ) );
+		$end_date     = new \DateTime( $booking->end_time, new \DateTimeZone( $booking->calendar->timezone ) );
+		$description .= sprintf(
 			__( 'When:%4$s%1$s to %2$s (%3$s)', 'quillbooking' ),
 			$start_date->format( 'Y-m-d H:i' ),
 			$end_date->format( 'Y-m-d H:i' ),

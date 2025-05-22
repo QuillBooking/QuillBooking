@@ -54,11 +54,33 @@ const TimePicker: React.FC<TimePickerProps> = ({
 					originalSlot: slot,
 				};
 			})
-			.filter((slot): slot is TimeSlot => slot !== undefined); // TypeScript non-null assertion
+			.filter((slot): slot is TimeSlot => slot !== undefined);
 	};
 
 	const timeSlots = getTimeSlots();
 	const isGroupEvent = eventType === 'group';
+
+	const formatSpotsBadge = (spots: number) => {
+		if (spots === 1) {
+			return (
+				<span className="time-slot-spots time-slot-spots-single">
+					{__('Last spot!', 'quillbooking')}
+				</span>
+			);
+		} else if (spots < 5) {
+			return (
+				<span className="time-slot-spots time-slot-spots-few">
+					{spots} {__('spots left', 'quillbooking')}
+				</span>
+			);
+		} else {
+			return (
+				<span className="time-slot-spots">
+					{spots} {__('spots available', 'quillbooking')}
+				</span>
+			);
+		}
+	};
 
 	return (
 		<div className="time-picker-container">
@@ -66,7 +88,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
 				{selectedDate.format('dddd, MMMM D')}
 			</p>
 			<div className="time-slots-container">
-				{timeSlots.length > 0 &&
+				{timeSlots.length > 0 ? (
 					timeSlots.map((slot: TimeSlot, index: number) => (
 						<div
 							key={index}
@@ -74,24 +96,24 @@ const TimePicker: React.FC<TimePickerProps> = ({
 							onClick={() => setSelectedTime(slot.time)}
 						>
 							<span className="time-slot-time">{slot.time}</span>
-							{isGroupEvent && slot.remaining > 1 && (
-								<span className="time-slot-spots">
-									{slot.remaining}{' '}
-									{__('spots left', 'quillbooking')}
-								</span>
-							)}
-							{isGroupEvent && slot.remaining === 1 && (
-								<span className="time-slot-spots time-slot-spots-single">
-									{__('1 spot left', 'quillbooking')}
-								</span>
-							)}
-							{!isGroupEvent && slot.remaining > 1 && (
+							{isGroupEvent &&
+								slot.remaining > 0 &&
+								formatSpotsBadge(slot.remaining)}
+							{!isGroupEvent && (
 								<span className="time-slot-spots time-slot-availability">
 									{__('Available', 'quillbooking')}
 								</span>
 							)}
 						</div>
-					))}
+					))
+				) : (
+					<div className="no-time-slots">
+						{__(
+							'No available time slots for this day',
+							'quillbooking'
+						)}
+					</div>
+				)}
 			</div>
 		</div>
 	);

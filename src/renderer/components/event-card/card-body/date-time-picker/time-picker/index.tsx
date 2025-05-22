@@ -92,18 +92,13 @@ const TimePicker: React.FC<TimePickerProps> = ({
 					timeSlots.map((slot: TimeSlot, index: number) => (
 						<div
 							key={index}
-							className={`time-slot ${selectedTime === slot.time ? 'active' : ''}`}
+							className={`time-slot ${!isGroupEvent ? 'time-slot-centered' : ''} ${selectedTime === slot.time ? 'active' : ''}`}
 							onClick={() => setSelectedTime(slot.time)}
 						>
 							<span className="time-slot-time">{slot.time}</span>
 							{isGroupEvent &&
 								slot.remaining > 0 &&
 								formatSpotsBadge(slot.remaining)}
-							{!isGroupEvent && (
-								<span className="time-slot-spots time-slot-availability">
-									{__('Available', 'quillbooking')}
-								</span>
-							)}
 						</div>
 					))
 				) : (

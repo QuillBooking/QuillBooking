@@ -50,6 +50,10 @@
 	}
 }
 
+.time-slot-centered {
+	justify-content: center;
+}
+
 .time-slot-time {
 	font-weight: 700;
 	font-size: 16px;
@@ -83,18 +87,6 @@
 .time-slot.active .time-slot-spots-single {
 	background-color: #fee2e2;
 	color: #dc2626;
-}
-
-.time-slot-availability {
-	background-color: #d1fae5;
-	color: #065f46;
-	font-weight: 600;
-}
-
-.time-slot:hover .time-slot-availability,
-.time-slot.active .time-slot-availability {
-	background-color: #a7f3d0;
-	color: #065f46;
 }
 
 .time-slot-spots-few {

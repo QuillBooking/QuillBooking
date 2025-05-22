@@ -9,6 +9,7 @@ import QuestionsComponents from './questions';
 import Reschedule from '../../reschedule';
 import Payment from './payment';
 import { Col, Row, Skeleton, Space } from 'antd';
+import { get } from 'lodash';
 
 interface CardBodyProps {
 	event: Event;
@@ -79,13 +80,42 @@ const CardBody: React.FC<CardBodyProps> = ({
 	);
 	const [bookingData, setBookingData] = useState<any>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [totalPrice, setTotalPrice] = useState<number>(0);
 
-	// Calculate total price from items if payments are enabled
-	const totalPrice =
-		event.payments_settings?.items?.reduce(
-			(sum, item) => sum + item.price,
-			0
-		) || 0;
+	// Calculate price based on whether it's multi-duration or not
+	const calculatePrice = () => {
+		const isMultiDurations =
+			event.additional_settings?.allow_attendees_to_select_duration;
+		const paymentSettings = get(event, 'payments_settings', {});
+		const isPaymentEnabled = get(paymentSettings, 'enable_payment', false);
+
+		if (!isPaymentEnabled) return 0;
+
+		if (isMultiDurations && selectedDuration) {
+			const durationStr = selectedDuration.toString();
+			return get(
+				paymentSettings,
+				['multi_duration_items', durationStr, 'price'],
+				0
+			);
+		} else {
+			const items = get(paymentSettings, 'items', []) as Array<{
+				item: string;
+				price: number;
+			}>;
+			if (items.length > 0) {
+				return items[0].price;
+			}
+		}
+
+		return 0;
+	};
+
+	// Update price when duration changes
+	useEffect(() => {
+		setTotalPrice(calculatePrice());
+	}, [selectedDuration, event]);
+
 	const requiresPayment =
 		event.payments_settings?.enable_payment && totalPrice > 0;
 	const hasPaymentGateways =

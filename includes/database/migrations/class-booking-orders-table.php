@@ -9,14 +9,16 @@
  * @package QuillBooking
  */
 
- namespace QuillBooking\Database\Migrations;
+namespace QuillBooking\Database\Migrations;
 
- use QuillBooking\Abstracts\Migration;
+use QuillBooking\Abstracts\Migration;
 
 /**
  * Booking Orders Table class
  */
 class Booking_Orders_Table extends Migration {
+
+
 
 	/**
 	 * Table name
@@ -36,19 +38,20 @@ class Booking_Orders_Table extends Migration {
 	 */
 	public function get_query() {
 		/**
-		 * Columns:
-		 *
-		 * id: int(11) NOT NULL AUTO_INCREMENT
-		 * booking_id: int(11) NOT NULL
-		 * items: text Can be NULL
-		 * discount: decimal(10,2) NOT NULL
-		 * total: decimal(10,2) NOT NULL
-		 * currency: varchar(255) NOT NULL
-		 * payment_method: varchar(255) NOT NULL
-		 * status: varchar(255) NOT NULL
-		 * created_at: datetime NOT NULL
-		 * updated_at: datetime NOT NULL
-		 */
+		  * Columns:
+		  *
+		  * id: int(11) NOT NULL AUTO_INCREMENT
+		  * booking_id: int(11) NOT NULL
+		  * items: text Can be NULL
+		  * discount: decimal(10,2) NOT NULL
+		  * total: decimal(10,2) NOT NULL
+		  * currency: varchar(255) NOT NULL
+		  * payment_method: varchar(255) NOT NULL
+		  * status: varchar(255) NOT NULL
+		  * transaction_id: varchar(255) DEFAULT NULL
+		  * created_at: datetime NOT NULL
+		  * updated_at: datetime NOT NULL
+		  */
 		$query = 'id int(11) NOT NULL AUTO_INCREMENT,
             booking_id int(11) NOT NULL,
             items text,
@@ -57,6 +60,7 @@ class Booking_Orders_Table extends Migration {
             currency varchar(255) NOT NULL,
             payment_method varchar(255) NOT NULL,
             status varchar(255) NOT NULL,
+            transaction_id varchar(255) DEFAULT NULL,
             created_at datetime NOT NULL,
             updated_at datetime NOT NULL,
             PRIMARY KEY  (id),

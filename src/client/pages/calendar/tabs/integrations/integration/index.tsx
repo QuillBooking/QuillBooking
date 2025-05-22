@@ -39,6 +39,8 @@ interface Props {
 	calendarId: string;
 	slug: string;
 	setNotice: (notice: NoticeMessage) => void;
+	onCalendarSelect: (selected: boolean) => void;
+	hasAccounts: (hasAccounts: boolean) => void;
 }
 
 interface Account {
@@ -54,6 +56,8 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 	calendarId,
 	slug,
 	setNotice,
+	onCalendarSelect,
+	hasAccounts,
 }) => {
 	const [accounts, setAccounts] = useState<Account[]>([]);
 	const [form] = Form.useForm();
@@ -78,6 +82,29 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 		setIntegrationSlug(integration?.id || slug);
 	}, [integration?.id, slug]);
 
+	// Update selected calendar when accounts change
+	useEffect(() => {
+		hasAccounts(accounts.length > 0);
+		if (!accounts.length) {
+			setSelectedCalendar('');
+			return;
+		}
+
+		// Find the first account with a default calendar
+		for (const account of accounts) {
+			if (account.config?.default_calendar?.calendar_id) {
+				setSelectedCalendar(
+					account.config.default_calendar.calendar_id
+				);
+				break;
+			}
+		}
+	}, [accounts]);
+
+	useEffect(() => {
+		onCalendarSelect(Boolean(selectedCalendar));
+	}, [selectedCalendar]);
+
 	const fetchAccounts = () => {
 		callApi({
 			path: `integrations/${integrationSlug}/${calendarId}/accounts`,
@@ -89,6 +116,7 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 				})) as Account[];
 
 				setAccounts(accounts);
+				setSelectedCalendar('');
 
 				// Set form values from first account's app_credentials if available
 				if (accounts.length > 0 && accounts[0].app_credentials) {
@@ -119,6 +147,10 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 					setAccounts((prev) =>
 						prev.filter((account) => account.id !== accountId)
 					);
+					// Clear form fields after successful deletion
+					form.resetFields();
+					// Reset selected calendar
+					setSelectedCalendar('');
 				},
 				onError(error) {
 					console.log('Delete error:', error);
@@ -253,7 +285,6 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 
 	const canAddAccount = () => integration.has_accounts && visible == false;
 
-	// Handle selection of a default calendar
 	const handleRemoteCalendarChange = (value: string) => {
 		// Find which account this calendar belongs to
 		let foundAccount: Account | undefined = undefined;
@@ -272,46 +303,73 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 
 		if (!foundAccount || !foundCalendar) return;
 
-		// Update the account config to set this as the default calendar
-		const accountId = foundAccount.id;
-		const accountConfig = foundAccount.config || {};
+		// Update local state first for immediate feedback
+		setSelectedCalendar(value);
+		onCalendarSelect(true);
 
-		toggleCalendarApi({
-			path: `integrations/${integrationSlug}/${calendarId}/accounts/${accountId}`,
-			method: 'PUT',
-			data: {
-				config: {
-					...accountConfig,
-					default_calendar: value,
-				},
-			},
-			onSuccess() {
-				setSelectedCalendar(value);
+		// Update all accounts - only one will have the default calendar
+		const updatedAccounts = accounts.map((account) => {
+			if (account.id === foundAccount?.id) {
+				// This account will have the default calendar
+				return {
+					...account,
+					config: {
+						...account.config,
+						default_calendar: {
+							calendar_id: value,
+							account_id: account.id,
+						},
+					},
+				};
+			} else {
+				// All other accounts will have null default calendar
+				return {
+					...account,
+					config: {
+						...account.config,
+						default_calendar: null,
+					},
+				};
+			}
+		});
+
+		setAccounts(updatedAccounts);
+
+		// Update all accounts via API
+		Promise.all(
+			accounts.map((account) =>
+				toggleCalendarApi({
+					path: `integrations/${integrationSlug}/${calendarId}/accounts/${account.id}`,
+					method: 'PUT',
+					data: {
+						config: {
+							...account.config,
+							default_calendar:
+								account.id === foundAccount?.id
+									? {
+											calendar_id: value,
+											account_id: account.id,
+										}
+									: null,
+						},
+					},
+				})
+			)
+		)
+			.then(() => {
 				setNotice({
 					type: 'success',
 					title: __('Success', 'quillbooking'),
 					message: __(
-						'Default remote calendar updated',
+						'Default calendar updated successfully',
 						'quillbooking'
 					),
 				});
-
-				// Update local state
-				setAccounts((prevAccounts) =>
-					prevAccounts.map((acc) =>
-						acc.id === accountId
-							? {
-									...acc,
-									config: {
-										...acc.config,
-										default_calendar: value,
-									},
-								}
-							: acc
-					)
-				);
-			},
-			onError(error) {
+			})
+			.catch((error) => {
+				// Revert local state on error
+				setSelectedCalendar('');
+				setAccounts(accounts); // Revert to original accounts
 				setNotice({
 					type: 'error',
 					title: __('Error', 'quillbooking'),
@@ -319,41 +377,32 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 						error.message ||
 						__('Failed to update default calendar', 'quillbooking'),
 				});
-			},
-		});
+			});
 	};
 
 	// Get all available calendars across all accounts
 	const getAllCalendars = () => {
 		const options: { value: string; label: string; can_edit: boolean }[] =
 			[];
+		const seenCalendars = new Set<string>();
 
 		for (const account of accounts) {
 			if (!account.calendars || !account.calendars.length) continue;
 
 			for (const calendar of account.calendars) {
+				// Skip if we've already seen this calendar
+				if (seenCalendars.has(calendar.id)) continue;
+				seenCalendars.add(calendar.id);
+
 				options.push({
 					value: calendar.id,
-					label: calendar.name,
+					label: `${calendar.name} (${account.name})${!calendar.can_edit ? ' (Read Only)' : ''}`,
 					can_edit: calendar.can_edit,
 				});
 			}
 		}
-		console.log('Calendar options:', options); // Debug log
 		return options;
 	};
-
-	// Get the current default calendar from accounts
-	useEffect(() => {
-		if (!accounts.length) return;
-
-		for (const account of accounts) {
-			if (account.config?.default_calendar) {
-				setSelectedCalendar(account.config.default_calendar);
-				break;
-			}
-		}
-	}, [accounts]);
 
 	const handleSettingsChange = (
 		accountId: string,
@@ -416,51 +465,6 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 
 	const renderAccountList = () => (
 		<Flex vertical gap={20} className="w-full">
-			<Flex vertical>
-				<div className="text-[#3F4254] font-semibold text-[16px]">
-					{__('Remote Calendar', 'quillbooking')}
-					<span className="text-[#E53E3E]">
-						{__('*', 'quillbooking')}
-					</span>
-				</div>
-				<Select
-					placeholder={__('Select a Remote Calendar', 'quillbooking')}
-					className="w-full rounded-lg mb-2"
-					style={{ height: '48px' }}
-					value={selectedCalendar || undefined}
-					onChange={handleRemoteCalendarChange}
-					options={getAllCalendars().map((calendar) => ({
-						value: calendar.value,
-						label: (
-							<div className="flex items-center justify-between">
-								<span>{calendar.label}</span>
-								{!calendar.can_edit && (
-									<span className="text-gray-400 text-xs ml-2">
-										({__('Read Only', 'quillbooking')})
-									</span>
-								)}
-							</div>
-						),
-						disabled: !calendar.can_edit,
-					}))}
-					disabled={loading || !accounts.length}
-					loading={loading}
-					showSearch
-					optionFilterProp="label"
-					showArrow={true}
-					dropdownMatchSelectWidth={true}
-					dropdownStyle={{ zIndex: 9999 }}
-					getPopupContainer={(trigger) =>
-						trigger.parentElement || document.body
-					}
-				/>
-				<div className="text-[#71717A] italic">
-					{__(
-						'Select remote calendar in where to add new events to when you`re booked.',
-						'quillbooking'
-					)}
-				</div>
-			</Flex>
 			<Flex vertical gap={20}>
 				{loading ? (
 					<Spin spinning={true} />
@@ -580,56 +584,6 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 									)}
 								</Flex>
 							)}
-							{/* <Flex vertical gap={10} className="w-full">
-								<Text
-									type="secondary"
-									className="text-[#9197A4]"
-								>
-									{__('Additional Settings', 'quillbooking')}
-								</Text>
-								<Flex vertical gap={8}>
-									<Checkbox
-										className="custom-check text-base font-semibold text-color-primary-text"
-										checked={
-											account.config?.settings
-												?.enable_notifications ?? false
-										}
-										onChange={(e) =>
-											handleSettingsChange(
-												account.id,
-												'enable_notifications',
-												e.target.checked
-											)
-										}
-										disabled={updateSettingsLoading}
-									>
-										{__(
-											`Enable ${integration.name} Calendar Notification`,
-											'quillbooking'
-										)}
-									</Checkbox>
-									<Checkbox
-										className="custom-check text-base font-semibold text-color-primary-text"
-										checked={
-											account.config?.settings
-												?.show_guests ?? false
-										}
-										onChange={(e) =>
-											handleSettingsChange(
-												account.id,
-												'show_guests',
-												e.target.checked
-											)
-										}
-										disabled={updateSettingsLoading}
-									>
-										{__(
-											'Guests Can See other Guests of the Slot',
-											'quillbooking'
-										)}
-									</Checkbox>
-								</Flex>
-							</Flex> */}
 						</Card>
 					))
 				)}
@@ -722,11 +676,48 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 									>
 										{field.type === 'password' ||
 										fieldKey === 'client_secret' ? (
-											<Input.Password
-												id={`${integrationSlug}-${fieldKey}`}
-												placeholder={field.placeholder}
-												className="rounded-lg h-[48px]"
-											/>
+											<Flex gap={10}>
+												<Form.Item
+													name={fieldKey}
+													noStyle
+													rules={[
+														{
+															required:
+																field.required,
+															message: __(
+																'This field is required',
+																'quillbooking'
+															),
+														},
+													]}
+												>
+													<Input.Password
+														id={`${integrationSlug}-${fieldKey}`}
+														placeholder={
+															field.placeholder
+														}
+														className="rounded-lg h-[48px]"
+													/>
+												</Form.Item>
+
+												{accounts.length > 0 && (
+													<Button
+														danger
+														className="h-[48px]"
+														onClick={() =>
+															handleDeleteAccount(
+																accounts[0].id
+															)
+														}
+														loading={loading}
+													>
+														{__(
+															'Disconnect',
+															'quillbooking'
+														)}
+													</Button>
+												)}
+											</Flex>
 										) : (
 											<Input
 												id={`${integrationSlug}-${fieldKey}`}
@@ -825,11 +816,48 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 									>
 										{field.type === 'password' ||
 										fieldKey === 'client_secret' ? (
-											<Input.Password
-												id={`${integrationSlug}-${fieldKey}`}
-												placeholder={field.placeholder}
-												className="rounded-lg h-[48px]"
-											/>
+											<Flex gap={10}>
+												<Form.Item
+													name={fieldKey}
+													noStyle
+													rules={[
+														{
+															required:
+																field.required,
+															message: __(
+																'This field is required',
+																'quillbooking'
+															),
+														},
+													]}
+												>
+													<Input.Password
+														id={`${integrationSlug}-${fieldKey}`}
+														placeholder={
+															field.placeholder
+														}
+														className="rounded-lg h-[48px]"
+													/>
+												</Form.Item>
+
+												{accounts.length > 0 && (
+													<Button
+														danger
+														className="h-[48px]"
+														onClick={() =>
+															handleDeleteAccount(
+																accounts[0].id
+															)
+														}
+														loading={loading}
+													>
+														{__(
+															'Disconnect',
+															'quillbooking'
+														)}
+													</Button>
+												)}
+											</Flex>
 										) : (
 											<Input
 												id={`${integrationSlug}-${fieldKey}`}
@@ -875,7 +903,50 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 							</div>
 						</Flex>
 					) : (
-						renderAccountList()
+						<Flex vertical gap={20} className="w-full">
+							<Flex vertical>
+								<div className="text-[#3F4254] font-semibold text-[16px]">
+									{__('Remote Calendar', 'quillbooking')}
+									<span className="text-[#E53E3E]">
+										{__('*', 'quillbooking')}
+									</span>
+								</div>
+								<Select
+									placeholder={__(
+										'Select a Remote Calendar',
+										'quillbooking'
+									)}
+									className="w-full rounded-lg mb-2"
+									style={{ height: '48px' }}
+									value={selectedCalendar || undefined}
+									onChange={handleRemoteCalendarChange}
+									options={getAllCalendars().map(
+										(calendar) => ({
+											value: calendar.value,
+											label: calendar.label,
+											disabled: !calendar.can_edit,
+										})
+									)}
+									disabled={loading || !accounts.length}
+									loading={loading}
+									showSearch
+									optionFilterProp="label"
+									showArrow={true}
+									dropdownMatchSelectWidth={true}
+									dropdownStyle={{ zIndex: 9999 }}
+									getPopupContainer={(trigger) =>
+										trigger.parentElement || document.body
+									}
+								/>
+								<div className="text-[#71717A] italic">
+									{__(
+										'Select remote calendar in where to add new events to when you`re booked.',
+										'quillbooking'
+									)}
+								</div>
+							</Flex>
+							{renderAccountList()}
+						</Flex>
 					)}
 				</>
 			)}

@@ -1,5 +1,5 @@
 import { __ } from '@wordpress/i18n';
-import { Flex, Form, Input, Divider, Typography, Skeleton } from 'antd';
+import { Flex, Form, Input, Divider, Typography, Skeleton, Button } from 'antd';
 import { useEffect, useState } from 'react';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { addQueryArgs } from '@wordpress/url';
@@ -10,6 +10,12 @@ interface ZoomAccount {
 	account_id?: string;
 	client_id?: string;
 	client_secret?: string;
+	id?: string;
+	app_credentials?: {
+		account_id?: string;
+		client_id?: string;
+		client_secret?: string;
+	};
 }
 
 interface Calendar {
@@ -39,11 +45,11 @@ const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 
 	// When account data is available, set form values
 	useEffect(() => {
-		if (accountData) {
+		if (accountData?.app_credentials) {
 			form.setFieldsValue({
-				account_id: accountData.account_id || '',
-				client_id: accountData.client_id || '',
-				client_secret: accountData.client_secret || '',
+				account_id: accountData.app_credentials.account_id || '',
+				client_id: accountData.app_credentials.client_id || '',
+				client_secret: accountData.app_credentials.client_secret || '',
 			});
 		}
 	}, [accountData, form]);
@@ -86,7 +92,7 @@ const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 				const firstKey = Object.keys(response)[0];
 				const account = response[firstKey];
 				if (account) {
-					setAccountData(account.app_credentials);
+					setAccountData(account);
 				}
 				setLoadingAccount(false);
 			},
@@ -96,6 +102,34 @@ const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 					error?.message ||
 						__('Failed to fetch Zoom account', 'quillbooking')
 				);
+			},
+		});
+	};
+
+	const handleDisconnect = () => {
+		if (!accountData?.id) {
+			errorNotice(__('No account to disconnect', 'quillbooking'));
+			return;
+		}
+
+		setSaving(true);
+		callApi({
+			path: `integrations/zoom/accounts/${accountData.id}`,
+			method: 'DELETE',
+			onSuccess() {
+				successNotice(
+					__('Zoom account disconnected successfully', 'quillbooking')
+				);
+				form.resetFields();
+				setAccountData(null);
+				setSaving(false);
+			},
+			onError(error) {
+				errorNotice(
+					error.message ||
+						__('Failed to disconnect Zoom account', 'quillbooking')
+				);
+				setSaving(false);
 			},
 		});
 	};
@@ -207,11 +241,38 @@ const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 					>
 						{field.type === 'password' ||
 						key === 'client_secret' ? (
-							<Input.Password
-								id={`zoom-${key}`}
-								placeholder={field.placeholder}
-								className="rounded-lg h-[48px]"
-							/>
+							<Flex gap={10}>
+								<Form.Item
+									name={key}
+									noStyle
+									rules={[
+										{
+											required: field.required,
+											message: __(
+												'This field is required',
+												'quillbooking'
+											),
+										},
+									]}
+								>
+									<Input.Password
+										id={`zoom-${key}`}
+										placeholder={field.placeholder}
+										className="rounded-lg h-[48px]"
+									/>
+								</Form.Item>
+
+								{accountData && (
+									<Button
+										danger
+										className="h-[48px]"
+										onClick={handleDisconnect}
+										loading={saving}
+									>
+										{__('Disconnect', 'quillbooking')}
+									</Button>
+								)}
+							</Flex>
 						) : (
 							<Input
 								id={`zoom-${key}`}
@@ -230,6 +291,15 @@ const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 						'quillbooking'
 					)}
 				</div>
+
+				{accountData && (
+					<div className="text-[#9197A4] mt-2">
+						{__(
+							'Your Zoom API integration is up and running.',
+							'quillbooking'
+						)}
+					</div>
+				)}
 			</Flex>
 		</div>
 	);

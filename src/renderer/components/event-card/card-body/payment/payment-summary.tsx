@@ -182,25 +182,6 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 								<img src={stripeIcon} alt="Stripe" />
 							</label>
 						)}
-
-						{paymentMethods.woocommerce && (
-							<label
-								className={`payment-method-radio ${selectedPaymentMethod === 'woocommerce' ? 'selected' : ''}`}
-							>
-								<input
-									type="radio"
-									name="payment-method"
-									value="woocommerce"
-									checked={
-										selectedPaymentMethod === 'woocommerce'
-									}
-									onChange={() =>
-										handlePaymentMethodSelect('woocommerce')
-									}
-								/>
-								<img src={woocommerceIcon} alt="WooCommerce" />
-							</label>
-						)}
 					</div>
 				</div>
 			) : (

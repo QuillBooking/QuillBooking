@@ -48,7 +48,7 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({ booking }) => {
 					</Flex>
 					<Flex vertical>
 						<div>{__(`Payment Status: ${booking?.order?.status}`, 'quillbooking')}</div>
-						<div>{__('Transaction ID: v=CqJ7nCioctw&ab_c', 'quillbooking')}</div>
+						<div>{__(`Transaction ID: ${booking?.order?.transaction_id}`, 'quillbooking')}</div>
 					</Flex>
 				</Flex>
 			</Flex>

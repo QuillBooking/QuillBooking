@@ -1,37 +1,65 @@
 import { Dayjs } from 'dayjs';
+import { __ } from '@wordpress/i18n';
+import { EventTypes } from '../../../../../types';
 import './style.scss';
+
+interface TimeSlot {
+	time: string;
+	remaining: number;
+	originalSlot: {
+		start: string;
+		end: string;
+		remaining: number;
+	};
+}
 
 interface TimePickerProps {
 	selectedAvailability: string | null;
 	selectedDate: Dayjs;
 	selectedTime: string | null;
 	setSelectedTime: (time: string) => void;
+	eventType?: EventTypes;
 }
 
 const TimePicker: React.FC<TimePickerProps> = ({
 	selectedAvailability,
 	selectedDate,
 	selectedTime,
-	setSelectedTime
+	setSelectedTime,
+	eventType = 'one-to-one',
 }) => {
-	const getTimeSlots = () => {
-		return selectedAvailability
-			? selectedAvailability[selectedDate.format('YYYY-MM-DD')].map(
-					(slot: {
-						start: string;
-						end: string;
-						remaining: number;
-					}) => {
-						if (slot.remaining === 0) return null;
-						const timeString = slot.start.split(' ')[1];
-						const time = timeString.split(':');
-						return `${time[0]}:${time[1]}`;
-					}
-				)
-			: [];
+	const getTimeSlots = (): TimeSlot[] => {
+		if (!selectedAvailability) {
+			return [];
+		}
+
+		const dateKey = selectedDate.format('YYYY-MM-DD');
+		const slotsForDate = selectedAvailability[dateKey];
+
+		if (!slotsForDate || !Array.isArray(slotsForDate)) {
+			return [];
+		}
+
+		return slotsForDate
+			.filter((slot: { remaining: number }) => slot && slot.remaining > 0)
+			.map((slot: { start: string; end: string; remaining: number }) => {
+				if (!slot || !slot.start) {
+					return undefined;
+				}
+				const timeString = slot.start.split(' ')[1];
+				const time = timeString.split(':');
+				return {
+					time: `${time[0]}:${time[1]}`,
+					remaining: slot.remaining,
+					originalSlot: slot,
+				};
+			})
+			.filter((slot): slot is TimeSlot => slot !== undefined); // TypeScript non-null assertion
 	};
 
 	const timeSlots = getTimeSlots();
+	const isGroupEvent = eventType === 'group';
+
 	return (
 		<div className="time-picker-container">
 			<p className="time-picker-title">
@@ -39,13 +67,29 @@ const TimePicker: React.FC<TimePickerProps> = ({
 			</p>
 			<div className="time-slots-container">
 				{timeSlots.length > 0 &&
-					timeSlots.map((slot: string, index: number) => (
+					timeSlots.map((slot: TimeSlot, index: number) => (
 						<div
 							key={index}
-							className={`time-slot ${selectedTime === slot ? 'active' : ''}`}
-							onClick={() => setSelectedTime(slot)}
+							className={`time-slot ${selectedTime === slot.time ? 'active' : ''}`}
+							onClick={() => setSelectedTime(slot.time)}
 						>
-							{slot}
+							<span className="time-slot-time">{slot.time}</span>
+							{isGroupEvent && slot.remaining > 1 && (
+								<span className="time-slot-spots">
+									{slot.remaining}{' '}
+									{__('spots left', 'quillbooking')}
+								</span>
+							)}
+							{isGroupEvent && slot.remaining === 1 && (
+								<span className="time-slot-spots time-slot-spots-single">
+									{__('1 spot left', 'quillbooking')}
+								</span>
+							)}
+							{!isGroupEvent && slot.remaining > 1 && (
+								<span className="time-slot-spots time-slot-availability">
+									{__('Available', 'quillbooking')}
+								</span>
+							)}
 						</div>
 					))}
 			</div>

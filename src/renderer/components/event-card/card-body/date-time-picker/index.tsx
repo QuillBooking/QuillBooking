@@ -63,6 +63,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 						selectedAvailability={selectedAvailability}
 						selectedDate={selectedDate}
 						setSelectedTime={setSelectedTime}
+						eventType={event.type}
 					/>
 				)}
 			</div>

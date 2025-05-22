@@ -33,12 +33,59 @@
 	padding: 12px 24px;
 	font-weight: 700;
 	font-size: 16px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 
 	&:hover,
 	&.active {
 		background-color: #f1e0ff;
 		color: #9333ea;
+		border-color: #9333ea;
 	}
+}
+
+.time-slot-time {
+	font-weight: 700;
+	font-size: 16px;
+}
+
+.time-slot-spots {
+	font-size: 12px;
+	font-weight: 500;
+	color: #6b7280;
+	background-color: #f3f4f6;
+	padding: 2px 8px;
+	border-radius: 12px;
+	white-space: nowrap;
+}
+
+.time-slot-spots-single {
+	color: #ef4444;
+	background-color: #fee2e2;
+}
+
+.time-slot:hover .time-slot-spots,
+.time-slot.active .time-slot-spots {
+	background-color: #ead5ff;
+	color: #9333ea;
+}
+
+.time-slot:hover .time-slot-spots-single,
+.time-slot.active .time-slot-spots-single {
+	background-color: #fee2e2;
+	color: #ef4444;
+}
+
+.time-slot-availability {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.time-slot:hover .time-slot-availability,
+.time-slot.active .time-slot-availability {
+  background-color: #d1fae5;
+  color: #065f46;
 }
 
 .time-picker-container::-webkit-scrollbar-track:hover {

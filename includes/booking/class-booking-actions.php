@@ -45,6 +45,7 @@ class Booking_Actions {
 
 		add_action( 'wp_loaded', array( $this, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_filter( 'template_include', array( $this, 'template_loader' ), 99999 );
 	}
 
 	public function enqueue_scripts() {
@@ -447,5 +448,16 @@ class Booking_Actions {
 		}
 
 		return $hosts;
+	}
+
+	/**
+	 * Template loader for standalone booking pages
+	 */
+	public function template_loader( $template ) {
+		// Only override for booking pages (adjust logic as needed)
+		if ( isset( $_GET['quillbooking_calendar'] ) || isset( $_GET['quillbooking'] ) || isset( $_GET['id'] ) ) {
+			return QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderer-template.php';
+		}
+		return $template;
 	}
 }

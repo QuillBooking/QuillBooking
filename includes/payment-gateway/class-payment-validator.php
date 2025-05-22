@@ -21,9 +21,6 @@ use WP_Error;
 class Payment_Validator {
 
 
-
-
-
 	/**
 	 * Validate that payment settings have at least one gateway enabled when payments are enabled.
 	 *
@@ -69,14 +66,37 @@ class Payment_Validator {
 			// Different validation based on payment type
 			if ( $payment_type === 'woocommerce' ) {
 				// For WooCommerce, check that a product is selected
-				$woo_product = Arr::get( $payments_settings, 'woo_product', 0 );
+				if ( $enable_items_based_on_duration ) {
+					// Check if all multi-duration items have WooCommerce products selected
+					if ( empty( $multi_duration_items ) ) {
+						return new WP_Error(
+							'payment_items_required',
+							__( 'Payment is enabled with multiple duration options using WooCommerce, but no products are defined. Please select a product for each duration.', 'quillbooking' ),
+							array( 'status' => 400 )
+						);
+					}
 
-				if ( empty( $woo_product ) ) {
-					return new WP_Error(
-						'woocommerce_product_required',
-						__( 'Payment is enabled with WooCommerce checkout, but no WooCommerce product is selected. Please select a product.', 'quillbooking' ),
-						array( 'status' => 400 )
-					);
+					foreach ( $multi_duration_items as $duration => $item ) {
+						$woo_product = Arr::get( $item, 'woo_product', 0 );
+
+						if ( empty( $woo_product ) ) {
+							return new WP_Error(
+								'woocommerce_product_required',
+								sprintf( __( 'Payment is enabled with WooCommerce checkout for multiple durations, but no WooCommerce product is selected for the %s minute duration. Please select a product for each duration.', 'quillbooking' ), $duration ),
+								array( 'status' => 400 )
+							);
+						}
+					}
+				} else {
+					$woo_product = Arr::get( $payments_settings, 'woo_product', 0 );
+
+					if ( empty( $woo_product ) ) {
+						return new WP_Error(
+							'woocommerce_product_required',
+							__( 'Payment is enabled with WooCommerce checkout, but no WooCommerce product is selected. Please select a product.', 'quillbooking' ),
+							array( 'status' => 400 )
+						);
+					}
 				}
 
 				// Also check if WooCommerce is active

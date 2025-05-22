@@ -36,6 +36,8 @@ class REST_Booking_Controller extends REST_Controller {
 
 
 
+
+
 	/**
 	 * REST Base
 	 *
@@ -388,7 +390,7 @@ class REST_Booking_Controller extends REST_Controller {
 				$this->apply_search_filter( $query, $search );
 			}
 
-			$bookings = $query->with( 'event', 'event.calendar', 'guest', 'calendar.user' )->get();
+			$bookings = $query->with( 'event', 'event.calendar', 'guest', 'calendar.user', 'order' )->get();
 
 			// The 'bookings' array data is designed to compensate for pagination when it gets added.
 			return new WP_REST_Response(
@@ -524,7 +526,7 @@ class REST_Booking_Controller extends REST_Controller {
 	public function get_item( $request ) {
 		try {
 			$id      = $request->get_param( 'id' );
-			$booking = Booking_Model::find( $id );
+			$booking = Booking_Model::with( 'order' )->find( $id );
 
 			if ( ! $booking ) {
 				return new WP_Error( 'rest_booking_error', __( 'Booking not found', 'quillbooking' ), array( 'status' => 404 ) );
@@ -679,23 +681,23 @@ class REST_Booking_Controller extends REST_Controller {
 	 */
 	protected function apply_date_range_filter( $query, $year, $month, $day ) {
 		if ( ! empty( $day ) ) {
-				// Specific day
-				$start_date = new DateTime( "$year-$month-$day 00:00:00" );
-				$end_date   = new DateTime( "$year-$month-$day 23:59:59" );
+			// Specific day
+			$start_date = new DateTime( "$year-$month-$day 00:00:00" );
+			$end_date   = new DateTime( "$year-$month-$day 23:59:59" );
 		} else {
-				// Full month
-				$start_date = new DateTime( "$year-$month-01 00:00:00" );
-				$end_date   = clone $start_date;
-				$end_date->modify( 'last day of this month' )->setTime( 23, 59, 59 );
+			// Full month
+			$start_date = new DateTime( "$year-$month-01 00:00:00" );
+			$end_date   = clone $start_date;
+			$end_date->modify( 'last day of this month' )->setTime( 23, 59, 59 );
 		}
 
-			$query->whereBetween(
-				'start_time',
-				array(
-					$start_date->format( 'Y-m-d H:i:s' ),
-					$end_date->format( 'Y-m-d H:i:s' ),
-				)
-			);
+		$query->whereBetween(
+			'start_time',
+			array(
+				$start_date->format( 'Y-m-d H:i:s' ),
+				$end_date->format( 'Y-m-d H:i:s' ),
+			)
+		);
 	}
 
 	/**
@@ -706,12 +708,12 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return void
 	 */
 	protected function apply_user_filter( $query, $user_id ) {
-			$query->whereHas(
-				'event',
-				function( $query ) use ( $user_id ) {
-					$query->where( 'user_id', $user_id );
-				}
-			);
+		$query->whereHas(
+			'event',
+			function ( $query ) use ( $user_id ) {
+				$query->where( 'user_id', $user_id );
+			}
+		);
 	}
 
 	/**
@@ -721,13 +723,13 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return array Associative array with status counts
 	 */
 	protected function get_status_counts( $query ) {
-			// Use a single query with subqueries for better performance
-			$counts                            = array();
-			$counts[ $this->STATUS_PENDING ]   = ( clone $query )->where( 'status', $this->STATUS_PENDING )->count();
-			$counts[ $this->STATUS_CANCELLED ] = ( clone $query )->where( 'status', $this->STATUS_CANCELLED )->count();
-			$counts[ $this->STATUS_NO_SHOW ]   = ( clone $query )->where( 'status', $this->STATUS_NO_SHOW )->count();
+		// Use a single query with subqueries for better performance
+		$counts                            = array();
+		$counts[ $this->STATUS_PENDING ]   = ( clone $query )->where( 'status', $this->STATUS_PENDING )->count();
+		$counts[ $this->STATUS_CANCELLED ] = ( clone $query )->where( 'status', $this->STATUS_CANCELLED )->count();
+		$counts[ $this->STATUS_NO_SHOW ]   = ( clone $query )->where( 'status', $this->STATUS_NO_SHOW )->count();
 
-			return $counts;
+		return $counts;
 	}
 
 	/**
@@ -740,12 +742,12 @@ class REST_Booking_Controller extends REST_Controller {
 	protected function apply_period_filter( $query, $period ) {
 		switch ( $period ) {
 			case 'latest':
-					$query->orderBy( 'created_at', 'desc' );
+				$query->orderBy( 'created_at', 'desc' );
 				break;
 
 			case 'upcoming':
-					$query->where( 'start_time', '>', current_time( 'mysql' ) )
-								->orderBy( 'start_time' );
+				$query->where( 'start_time', '>', current_time( 'mysql' ) )
+					->orderBy( 'start_time' );
 				break;
 
 			case $this->STATUS_PENDING:
@@ -756,7 +758,7 @@ class REST_Booking_Controller extends REST_Controller {
 				break;
 
 			default: // 'all'
-					$query->orderBy( 'start_time' );
+				$query->orderBy( 'start_time' );
 				break;
 		}
 	}
@@ -770,19 +772,19 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return void
 	 */
 	protected function apply_event_filters( $query, $event, $event_type ) {
-			// Filter by event type
+		// Filter by event type
 		if ( 'all' !== $event_type ) {
-				$query->whereHas(
-					'event',
-					function( $query ) use ( $event_type ) {
-						$query->where( 'type', $event_type );
-					}
-				);
+			$query->whereHas(
+				'event',
+				function ( $query ) use ( $event_type ) {
+					$query->where( 'type', $event_type );
+				}
+			);
 		}
 
-			// Filter by specific event
+		// Filter by specific event
 		if ( 'all' !== $event ) {
-				$query->where( 'event_id', absint( $event ) );
+			$query->where( 'event_id', absint( $event ) );
 		}
 	}
 
@@ -794,14 +796,14 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return void
 	 */
 	protected function apply_search_filter( $query, $search ) {
-			$query->whereHas(
-				'guest',
-				function( $query ) use ( $search ) {
-					$sanitized_search = '%' . $search . '%';
-					$query->where( 'name', 'LIKE', $sanitized_search )
-								->orWhere( 'email', 'LIKE', $sanitized_search );
-				}
-			);
+		$query->whereHas(
+			'guest',
+			function ( $query ) use ( $search ) {
+				$sanitized_search = '%' . $search . '%';
+				$query->where( 'name', 'LIKE', $sanitized_search )
+					->orWhere( 'email', 'LIKE', $sanitized_search );
+			}
+		);
 	}
 
 	/**
@@ -822,8 +824,8 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return string Validated month (01-12)
 	 */
 	protected function validate_month( $month ) {
-			$month = absint( $month );
-			return ( $month >= 1 && $month <= 12 ) ? sprintf( '%02d', $month ) : current_time( 'm' );
+		$month = absint( $month );
+		return ( $month >= 1 && $month <= 12 ) ? sprintf( '%02d', $month ) : current_time( 'm' );
 	}
 
 	/**
@@ -834,11 +836,11 @@ class REST_Booking_Controller extends REST_Controller {
 	 */
 	protected function validate_day( $day ) {
 		if ( empty( $day ) ) {
-				return null;
+			return null;
 		}
 
-			$day = absint( $day );
-			return ( $day >= 1 && $day <= 31 ) ? sprintf( '%02d', $day ) : null;
+		$day = absint( $day );
+		return ( $day >= 1 && $day <= 31 ) ? sprintf( '%02d', $day ) : null;
 	}
 
 
@@ -1072,7 +1074,6 @@ class REST_Booking_Controller extends REST_Controller {
 			}
 
 			return new WP_REST_Response( $primary_count + $additional_count, 200 );
-
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
@@ -1195,7 +1196,6 @@ class REST_Booking_Controller extends REST_Controller {
 			);
 
 			return new WP_REST_Response( $results, 200 );
-
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_revenue_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
@@ -1238,16 +1238,16 @@ class REST_Booking_Controller extends REST_Controller {
 
 		// Include only completed orders
 		$query->where( 'status', '!=', 'cancelled' )
-			  ->where( 'status', '!=', 'refunded' );
+			->where( 'status', '!=', 'refunded' );
 
 		// Apply user filter if specific user requested
 		if ( 'all' !== $user ) {
 			$query->whereHas(
 				'booking',
-				function( $q ) use ( $user ) {
+				function ( $q ) use ( $user ) {
 					$q->whereHas(
 						'event',
-						function( $q ) use ( $user ) {
+						function ( $q ) use ( $user ) {
 							$q->where( 'user_id', $user );
 						}
 					);

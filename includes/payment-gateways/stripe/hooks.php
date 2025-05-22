@@ -111,9 +111,10 @@ function quillbooking_process_stripe_payment( $booking, $args ) {
 			)
 		);
 
+		error_log( 'Stripe - Payment intent created: ' . $payment_intent->id );
+
 		// Store payment intent ID in booking meta
 		$booking->update_meta( 'stripe_payment_intent_id', $payment_intent->id );
-
 		// Create the initial pending order (similar to PayPal flow)
 		$payment_service->create_initial_order( $payment_intent->id, $amount, $currency );
 

@@ -21,6 +21,7 @@ use Stripe\Webhook as StripeWebhook;
 class Webhook {
 
 
+
 	/**
 	 * Stripe client
 	 *
@@ -110,15 +111,28 @@ class Webhook {
 		switch ( $event->type ) {
 			case 'payment_intent.succeeded':
 				$payment_intent = $event->data->object;
+				// Validate payment intent object
+				if ( ! $payment_intent || empty( $payment_intent->id ) ) {
+					error_log( 'Stripe Webhook Error: Invalid payment intent data received' );
+					return;
+				}
 				$this->process_payment_intent_succeeded( $payment_intent );
 				break;
 
 			case 'payment_intent.payment_failed':
 				$payment_intent = $event->data->object;
+				// Validate payment intent object
+				if ( ! $payment_intent || empty( $payment_intent->id ) ) {
+					error_log( 'Stripe Webhook Error: Invalid payment intent data received for failed payment' );
+					return;
+				}
 				$this->process_payment_intent_failed( $payment_intent );
 				break;
 
 			// Handle other webhook events as needed
+			default:
+				error_log( 'Stripe Webhook: Unhandled event type: ' . $event->type );
+				break;
 		}
 	}
 
@@ -138,40 +152,81 @@ class Webhook {
 		// Update booking payment status
 		$booking->setPaymentStatus( 'completed' );
 
+		// Store the payment intent ID in booking meta
+		$booking->update_meta( 'stripe_payment_intent_id', $payment_intent->id );
+
+		// Also store the actual charge ID (transaction ID) if available
+		if ( ! empty( $payment_intent->latest_charge ) ) {
+			// Get the complete charge object to have all details
+			try {
+				$charge = $this->stripe_client->charges->retrieve( $payment_intent->latest_charge );
+				$booking->update_meta( 'stripe_charge_id', $charge->id );
+
+				// Store additional useful charge information
+				$booking->update_meta( 'stripe_payment_method_details', json_encode( $charge->payment_method_details ) );
+				$booking->update_meta( 'stripe_receipt_url', $charge->receipt_url );
+
+				// Make sure transaction ID is in order
+				if ( $booking->order ) {
+					$booking->order()->update( array( 'transaction_id' => $charge->id ) );
+				}
+			} catch ( \Exception $e ) {
+				error_log( 'Stripe Webhook - Could not retrieve charge details: ' . $e->getMessage() );
+				// Fallback to just storing the charge ID from the payment intent
+				$booking->update_meta( 'stripe_charge_id', $payment_intent->latest_charge );
+
+				// Make sure transaction ID is in order
+				if ( $booking->order ) {
+					$booking->order()->update( array( 'transaction_id' => $payment_intent->latest_charge ) );
+				}
+			}
+		} else {
+			// If for some reason the charge isn't available, fall back to payment intent ID
+			if ( $booking->order ) {
+				$booking->order()->update( array( 'transaction_id' => $payment_intent->id ) );
+			}
+		}
+
 		// Log the payment
 		$booking->logs()->create(
 			array(
 				'type'    => 'info',
 				'message' => __( 'Payment processed', 'quillbooking' ),
 				'details' => sprintf(
-					__( 'Payment of %1$s %2$s processed successfully via Stripe', 'quillbooking' ),
+					__( 'Payment of %1$s %2$s processed successfully via Stripe. Transaction ID: %3$s', 'quillbooking' ),
 					$payment_intent->amount / 100,
-					strtoupper( $payment_intent->currency )
+					strtoupper( $payment_intent->currency ),
+					$booking->order ? $booking->order->transaction_id : $payment_intent->id
 				),
 			)
 		);
 
 		// Update or create order
 		if ( ! $booking->order ) {
+			// Get items and ensure they're JSON encoded for database storage
+			$items = json_encode( $booking->event->getItems() );
+
 			// Create new order if none exists
 			$booking->order()->create(
 				array(
-					'items'          => $booking->event->getItems(),
+					'items'          => $items,
 					'total'          => $payment_intent->amount / 100,
 					'currency'       => strtoupper( $payment_intent->currency ),
 					'payment_method' => 'stripe',
 					'status'         => 'completed',
+					'transaction_id' => $booking->order ? $booking->order->transaction_id : $payment_intent->id,
 				)
 			);
 		} else {
 			// Update existing order
 			$order_data = array(
-				'status' => 'completed',
+				'status'         => 'completed',
+				'transaction_id' => $payment_intent->id,
 			);
 
 			// Add items if they don't exist
 			if ( empty( $booking->order->items ) ) {
-				$order_data['items'] = $booking->event->getItems();
+				$order_data['items'] = json_encode( $booking->event->getItems() );
 			}
 
 			$booking->order()->update( $order_data );
@@ -193,6 +248,14 @@ class Webhook {
 
 		// Update booking payment status
 		$booking->setPaymentStatus( 'failed' );
+
+		// Save the failed payment intent ID
+		$booking->update_meta( 'stripe_failed_payment_intent_id', $payment_intent->id );
+
+		// If there's a charge that failed, save it too
+		if ( ! empty( $payment_intent->latest_charge ) ) {
+			$booking->update_meta( 'stripe_failed_charge_id', $payment_intent->latest_charge );
+		}
 
 		// Log the payment failure
 		$booking->logs()->create(
@@ -229,6 +292,42 @@ class Webhook {
 
 		if ( ! $booking_id ) {
 			return null;
+		}
+
+		return \QuillBooking\Models\Booking_Model::find( $booking_id );
+	}
+
+	/**
+	 * Find booking by charge ID (transaction ID)
+	 *
+	 * @param string $charge_id The Stripe charge ID
+	 * @return \QuillBooking\Models\Booking_Model|null
+	 */
+	private function find_booking_by_charge_id( $charge_id ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'quillbooking_booking_meta';
+
+		$query = $wpdb->prepare(
+			"SELECT booking_id FROM {$table_name} WHERE meta_key = 'stripe_charge_id' AND meta_value = %s LIMIT 1",
+			$charge_id
+		);
+
+		$booking_id = $wpdb->get_var( $query );
+
+		if ( ! $booking_id ) {
+			// Try finding by transaction_id in orders table
+			$orders_table = $wpdb->prefix . 'quillbooking_booking_orders';
+			$query        = $wpdb->prepare(
+				"SELECT booking_id FROM {$orders_table} WHERE transaction_id = %s LIMIT 1",
+				$charge_id
+			);
+
+			$booking_id = $wpdb->get_var( $query );
+
+			if ( ! $booking_id ) {
+				return null;
+			}
 		}
 
 		return \QuillBooking\Models\Booking_Model::find( $booking_id );

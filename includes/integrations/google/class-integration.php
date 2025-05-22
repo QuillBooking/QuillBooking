@@ -23,11 +23,6 @@ use QuillBooking\Utils;
  */
 class Integration extends Abstract_Integration {
 
-
-
-
-
-
 	/**
 	 * Integration Name
 	 *

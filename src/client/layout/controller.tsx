@@ -25,6 +25,7 @@ import AvailabilityDetails from '../pages/availability-details';
 import Bookings from '../pages/bookings';
 import BookingDetails from '../pages/booking-details';
 import Event from '../pages/event';
+import GettingStarted from '../pages/getting-started';
 import Help from '../pages/help';
 import Logout from '../pages/logout';
 import Integrations from '../pages/integrations';
@@ -167,3 +168,10 @@ registerAdminPage('booking-details', {
 	label: __('Booking Details', 'quillbooking'),
 	hidden: true,
 });
+
+registerAdminPage('getting-started', {
+	path: 'getting-started',
+	component: () => <GettingStarted />,
+	label: __('Getting Started', 'quillbooking'),
+	hidden: true,
+})

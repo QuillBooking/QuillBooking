@@ -37,7 +37,7 @@ type Integration = {
 const Locations: React.FC<{
 	locations: ExtendedLocation[];
 	onChange: (locations: ExtendedLocation[]) => void;
-	onKeepDialogOpen: () => void;
+	onKeepDialogOpen?: () => void;
 	connected_integrations: {
 		apple: Integration;
 		google: Integration;

@@ -409,3 +409,13 @@ export interface PaymentsSettings {
 	enable_paypal: boolean;
 	enable_stripe: boolean;
 }
+
+export interface GettingStartedComponentProps {
+    event: Omit<Event, "id"> & { id?: number };
+    onEventChange?: (field: keyof Event, value: any) => void;
+    onAvailabilityChange?: (
+        dayKey: string,
+        field: string,
+        value: boolean | { start: string; end: string }[]
+    ) => void;
+}

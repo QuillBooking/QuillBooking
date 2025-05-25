@@ -21,7 +21,7 @@ import './style.scss';
 import meet from '../../../assets/icons/google/google_meet.png';
 import zoom from '../../../assets/icons/zoom/zoom_video.png';
 import teams from '../../../assets/icons/teams/teams.png';
-import { useApi, useNavigate } from '@quillbooking/hooks';
+import { useNavigate } from '@quillbooking/hooks';
 import TextArea from 'antd/es/input/TextArea';
 
 // Extended Location type to include custom ID for multiple custom locations
@@ -32,6 +32,7 @@ interface ExtendedLocation extends Location {
 type Integration = {
 	name: string;
 	connected: boolean;
+	has_accounts?: boolean;
 };
 
 const Locations: React.FC<{
@@ -45,13 +46,13 @@ const Locations: React.FC<{
 		twilio: Integration;
 		zoom: Integration;
 	};
-	disabled?: boolean;
+	calendar?: any;
 }> = ({
 	locations,
 	onChange,
 	onKeepDialogOpen,
 	connected_integrations,
-	disabled,
+	calendar,
 }) => {
 	const [isModalVisible, setIsModalVisible] = useState(false);
 	const [editingLocationIndex, setEditingLocationIndex] = useState<
@@ -78,7 +79,6 @@ const Locations: React.FC<{
 	const [form] = Form.useForm();
 	const navigate = useNavigate();
 	const locationTypes = ConfigAPI.getLocations();
-	const integrations = ConfigAPI.getIntegrations();
 
 	// Check if an integration is connected
 	const isIntegrationConnected = (type: string): boolean => {
@@ -117,6 +117,32 @@ const Locations: React.FC<{
 
 	console.log(locationTypes);
 
+	// Navigate to integration settings page
+	const navigateToIntegrations = (
+		integrationType: string,
+		hasAccounts = false
+	) => {
+		const path = `calendars/${calendar?.id}`;
+		const baseUrl = '';
+
+		if (!calendar?.id) {
+			// If no calendar ID, go to global settings
+			navigate(
+				`${baseUrl}&path=settings&tab=integrations&subtab=${integrationType}`
+			);
+		} else if (!hasAccounts) {
+			// If the integration is configured but no accounts are added
+			navigate(
+				`${baseUrl}&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`
+			);
+		} else {
+			// If integration is configured and has accounts
+			navigate(
+				`${baseUrl}&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`
+			);
+		}
+	};
+
 	// Modified handleCheckboxChange to prevent checking if integration isn't connected
 	const handleCheckboxChange = (type: string, checked: boolean) => {
 		// First check if this is an integration-dependent location that requires connection
@@ -124,17 +150,50 @@ const Locations: React.FC<{
 			// If trying to check but integration isn't connected, navigate to integration page
 			switch (type) {
 				case 'google-meet':
-					navigateToIntegrations('google');
+					navigateToIntegrations('google', false);
 					break;
 				case 'zoom':
-					navigateToIntegrations('zoom');
+					navigateToIntegrations('zoom', false);
 					break;
 				case 'ms-teams':
-					navigateToIntegrations('outlook');
+					navigateToIntegrations('outlook', false);
 					break;
 			}
 			// Prevent checking the checkbox
 			return;
+		}
+
+		// If integration is connected but doesn't have accounts
+		if (checked) {
+			switch (type) {
+				case 'google-meet':
+					if (
+						connected_integrations.google.connected &&
+						!connected_integrations.google.has_accounts
+					) {
+						navigateToIntegrations('google', false);
+						return;
+					}
+					break;
+				case 'zoom':
+					if (
+						connected_integrations.zoom.connected &&
+						!connected_integrations.zoom.has_accounts
+					) {
+						navigateToIntegrations('zoom', false);
+						return;
+					}
+					break;
+				case 'ms-teams':
+					if (
+						connected_integrations.outlook.connected &&
+						!connected_integrations.outlook.has_accounts
+					) {
+						navigateToIntegrations('outlook', false);
+						return;
+					}
+					break;
+			}
 		}
 
 		// If not custom and integration is connected (or not required), handle regular location toggle
@@ -414,11 +473,6 @@ const Locations: React.FC<{
 		onChange(updatedLocations);
 	};
 
-	// Navigate to integration settings page
-	const navigateToIntegrations = (integrationType: string) => {
-		navigate('integrations');
-	};
-
 	return (
 		<>
 			<Flex vertical gap={15}>
@@ -442,7 +496,10 @@ const Locations: React.FC<{
 							)
 						}
 						disabled={
-							!connected_integrations.google.connected &&
+							(!connected_integrations.google.connected ||
+								(connected_integrations.google.connected &&
+									!connected_integrations.google
+										.has_accounts)) &&
 							!locations.some((loc) => loc.type === 'google-meet')
 						}
 					>
@@ -477,21 +534,30 @@ const Locations: React.FC<{
 							{!connected_integrations.google.connected ? (
 								<Button
 									onClick={() =>
-										navigateToIntegrations('google')
+										navigateToIntegrations('google', false)
 									}
 									className="bg-transparent shadow-none border border-color-primary text-color-primary"
 								>
 									{__('Connect', 'quillbooking')}
 								</Button>
+							) : !connected_integrations.google.has_accounts ? (
+								<Button
+									onClick={() =>
+										navigateToIntegrations('google', false)
+									}
+									className="bg-transparent shadow-none border border-color-primary text-color-primary"
+								>
+									{__('Add Account', 'quillbooking')}
+								</Button>
 							) : (
 								<Button
 									onClick={() =>
-										handleEditLocation('google-meet')
+										navigateToIntegrations('google', true)
 									}
 									className="bg-transparent border-none text-[#3F4254] shadow-none"
 								>
 									<EditIcon />
-									{__('Edit Connection', 'quillbooking')}
+									{__('Manage Accounts', 'quillbooking')}
 								</Button>
 							)}
 						</Flex>
@@ -507,7 +573,10 @@ const Locations: React.FC<{
 							handleCheckboxChange('zoom', e.target.checked)
 						}
 						disabled={
-							!connected_integrations.zoom.connected &&
+							(!connected_integrations.zoom.connected ||
+								(connected_integrations.zoom.connected &&
+									!connected_integrations.zoom
+										.has_accounts)) &&
 							!locations.some((loc) => loc.type === 'zoom')
 						}
 					>
@@ -542,19 +611,30 @@ const Locations: React.FC<{
 							{!connected_integrations.zoom.connected ? (
 								<Button
 									onClick={() =>
-										navigateToIntegrations('zoom')
+										navigateToIntegrations('zoom', false)
 									}
 									className="bg-transparent shadow-none border border-color-primary text-color-primary"
 								>
 									{__('Connect', 'quillbooking')}
 								</Button>
+							) : !connected_integrations.zoom.has_accounts ? (
+								<Button
+									onClick={() =>
+										navigateToIntegrations('zoom', false)
+									}
+									className="bg-transparent shadow-none border border-color-primary text-color-primary"
+								>
+									{__('Add Account', 'quillbooking')}
+								</Button>
 							) : (
 								<Button
-									onClick={() => handleEditLocation('zoom')}
+									onClick={() =>
+										navigateToIntegrations('zoom', true)
+									}
 									className="bg-transparent border-none text-[#3F4254] shadow-none"
 								>
 									<EditIcon />
-									{__('Edit Connection', 'quillbooking')}
+									{__('Manage Accounts', 'quillbooking')}
 								</Button>
 							)}
 						</Flex>
@@ -572,7 +652,10 @@ const Locations: React.FC<{
 							handleCheckboxChange('ms-teams', e.target.checked)
 						}
 						disabled={
-							!connected_integrations.outlook.connected &&
+							(!connected_integrations.outlook.connected ||
+								(connected_integrations.outlook.connected &&
+									!connected_integrations.outlook
+										.has_accounts)) &&
 							!locations.some((loc) => loc.type === 'ms-teams')
 						}
 					>
@@ -608,21 +691,30 @@ const Locations: React.FC<{
 							{!connected_integrations.outlook.connected ? (
 								<Button
 									onClick={() =>
-										navigateToIntegrations('outlook')
+										navigateToIntegrations('outlook', false)
 									}
 									className="bg-transparent shadow-none border border-color-primary text-color-primary"
 								>
 									{__('Connect', 'quillbooking')}
 								</Button>
+							) : !connected_integrations.outlook.has_accounts ? (
+								<Button
+									onClick={() =>
+										navigateToIntegrations('outlook', false)
+									}
+									className="bg-transparent shadow-none border border-color-primary text-color-primary"
+								>
+									{__('Add Account', 'quillbooking')}
+								</Button>
 							) : (
 								<Button
 									onClick={() =>
-										handleEditLocation('ms-teams')
+										navigateToIntegrations('outlook', true)
 									}
 									className="bg-transparent border-none text-[#3F4254] shadow-none"
 								>
 									<EditIcon />
-									{__('Edit Connection', 'quillbooking')}
+									{__('Manage Accounts', 'quillbooking')}
 								</Button>
 							)}
 						</Flex>

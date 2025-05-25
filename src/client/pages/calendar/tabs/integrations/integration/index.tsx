@@ -102,7 +102,11 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 	}, [accounts]);
 
 	useEffect(() => {
-		onCalendarSelect(Boolean(selectedCalendar));
+		if (integrationSlug == 'zoom') {
+			onCalendarSelect(true);
+		} else {
+			onCalendarSelect(Boolean(selectedCalendar));
+		}
 	}, [selectedCalendar]);
 
 	const fetchAccounts = () => {

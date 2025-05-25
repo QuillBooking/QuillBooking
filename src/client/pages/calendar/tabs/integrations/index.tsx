@@ -63,6 +63,9 @@ const IntegrationCards: React.FC<{
 			// Otherwise set first integration as default
 			setActiveTab(integrations[0].id);
 		}
+		if (activeTab == 'zoom') {
+			setHasSelectedCalendar(true);
+		}
 	}, [integrations, activeTab]);
 
 	// Handle tab change

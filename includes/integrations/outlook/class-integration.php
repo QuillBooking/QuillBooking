@@ -35,6 +35,7 @@ class Integration extends Abstract_Integration {
 
 
 
+
 	/**
 	 * Integration Name
 	 *
@@ -386,11 +387,8 @@ class Integration extends Abstract_Integration {
 			// Remove empty values
 			$event_data = array_filter( $event_data );
 
-			error_log( 'Event Data Sent: ' . json_encode( $event_data ) );
-
 			// Create event in Outlook
 			$response = $api->create_event( $default_account['default_calendar']['calendar_id'], $event_data );
-			error_log( 'Response Outlook : ' . print_r( $response, true ) );
 
 			if ( ! $response['success'] ) {
 				$booking->logs()->create(

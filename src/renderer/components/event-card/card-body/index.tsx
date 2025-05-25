@@ -36,7 +36,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 	const [selectedDuration, setSelectedDuration] = useState<number>(
 		event.duration
 	);
-	const [bookingData, setBookingData] = useState<any>(null);
+	const [bookingData, setBookingData] = useState<Booking | null>(null);
 	const [totalPrice, setTotalPrice] = useState<number>(0);
 
 	// Calculate price based on whether it's multi-duration or not
@@ -201,9 +201,9 @@ const CardBody: React.FC<CardBodyProps> = ({
 			) {
 				console.log('Payment required, transitioning to payment step', {
 					requiresPayment,
-					bookingData: data.data.booking,
+					bookingData: data?.data?.booking,
 				});
-				setBookingData(data.data.booking);
+				setBookingData(data?.data?.booking);
 				setStep(3); // Payment step
 			} else {
 				// Otherwise redirect to confirmation

@@ -29,11 +29,6 @@ const Payment: React.FC<PaymentProps> = ({
 	const [currentPaymentStep, setCurrentPaymentStep] = useState<number>(3); // 3 = Payment Summary, 4 = Stripe Form
 
 	useEffect(() => {
-		// Check if WooCommerce is enabled
-		if (event?.payments_settings?.enable_woocommerce) {
-			processWooCommercePayment();
-			return;
-		}
 
 		// Only initialize Stripe when moving to the Stripe form step
 		if (currentPaymentStep === 4) {
@@ -42,48 +37,6 @@ const Payment: React.FC<PaymentProps> = ({
 			setLoading(false);
 		}
 	}, [currentPaymentStep]);
-
-	const processWooCommercePayment = async () => {
-		try {
-			setLoading(true);
-			console.log(
-				'Processing WooCommerce payment for booking:',
-				bookingData.hash_id
-			);
-
-			const formData = new FormData();
-			formData.append('action', 'quillbooking_process_payment');
-			formData.append('booking_hash_id', bookingData.hash_id);
-			formData.append('payment_method', 'woocommerce');
-
-			const response = await fetch(ajax_url, {
-				method: 'POST',
-				body: formData,
-			});
-
-			const data = await response.json();
-
-			if (!data.success) {
-				throw new Error(
-					data.data?.message ||
-						'Failed to process WooCommerce payment'
-				);
-			}
-
-			// Redirect to WooCommerce checkout
-			if (data.data?.url) {
-				window.location.href = data.data.url;
-			} else {
-				throw new Error('No checkout URL was provided');
-			}
-		} catch (err: any) {
-			console.error('Error processing WooCommerce payment:', err);
-			setError(
-				err.message || 'An error occurred while processing payment'
-			);
-			setLoading(false);
-		}
-	};
 
 	const initStripe = async () => {
 		try {
@@ -97,25 +50,12 @@ const Payment: React.FC<PaymentProps> = ({
 			formData.append('action', 'quillbooking_init_stripe');
 			formData.append('booking_id', bookingData.hash_id);
 
-			console.log('Sending request to', ajax_url);
-
 			const response = await fetch(ajax_url, {
 				method: 'POST',
 				body: formData,
 			});
 
-			const responseText = await response.text();
-			console.log('Raw response:', responseText);
-
-			let data;
-			try {
-				data = JSON.parse(responseText);
-			} catch (parseError) {
-				console.error('Failed to parse response as JSON:', parseError);
-				throw new Error(
-					'The server returned an invalid response format'
-				);
-			}
+			const data = await response.json();
 
 			if (!data.success) {
 				throw new Error(

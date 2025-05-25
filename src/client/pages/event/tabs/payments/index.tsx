@@ -35,7 +35,6 @@ import {
 	AlertIcon,
 	CardHeader,
 	Header,
-	NoticeBanner,
 	PaymentIcon,
 	ProductSelect,
 	TrashIcon,
@@ -231,16 +230,20 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 			props.setDisabled(false);
 		};
 
-		const handleDurationItemChange = (duration: number | string, field: string, value: any) => {
+		const handleDurationItemChange = (
+			duration: number | string,
+			field: string,
+			value: any
+		) => {
 			const durationStr = duration.toString();
-			setPaymentSettings(prev => {
+			setPaymentSettings((prev) => {
 				// Create a proper object structure if it's currently an array
 				let currentItems = prev.multi_duration_items;
-				
+
 				// If multi_duration_items is an array, convert it to an object
 				if (Array.isArray(currentItems)) {
 					const newItems = {};
-					
+
 					// Transfer any existing items from the array to the object
 					for (let i = 0; i < currentItems.length; i++) {
 						if (currentItems[i]) {
@@ -248,26 +251,29 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 							newItems[item.duration] = item;
 						}
 					}
-					
+
 					currentItems = newItems;
 				}
-				
+
 				// Create or update the specific duration item
 				const updatedItems = {
 					...currentItems,
 					[durationStr]: {
 						...(currentItems[durationStr] || {}),
 						duration: durationStr,
-						item: currentItems[durationStr]?.item || __('Booking Item', 'quillbooking'),
+						item:
+							currentItems[durationStr]?.item ||
+							__('Booking Item', 'quillbooking'),
 						price: currentItems[durationStr]?.price || 100,
-						woo_product: currentItems[durationStr]?.woo_product || 0,
-						[field]: value
-					}
+						woo_product:
+							currentItems[durationStr]?.woo_product || 0,
+						[field]: value,
+					},
 				};
-				
+
 				return {
 					...prev,
-					multi_duration_items: updatedItems
+					multi_duration_items: updatedItems,
 				};
 			});
 			props.setDisabled(false);
@@ -286,18 +292,20 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 						items: response.items?.length
 							? response.items
 							: [
-								  {
-									  item: __(
-										  'Booking Item',
-										  'quillbooking'
-									  ),
-									  price: 100,
-								  },
-							  ],
+									{
+										item: __(
+											'Booking Item',
+											'quillbooking'
+										),
+										price: 100,
+									},
+								],
 						// Ensure multi_duration_items is always an object, not an array
-						multi_duration_items: Array.isArray(response.multi_duration_items) 
+						multi_duration_items: Array.isArray(
+							response.multi_duration_items
+						)
 							? {} // Convert array to empty object if needed
-							: (response.multi_duration_items || {}),
+							: response.multi_duration_items || {},
 						// Ensure payment_methods is always an array
 						payment_methods: response.payment_methods || [],
 					};
@@ -315,7 +323,10 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 						[]
 					);
 
-					if (selectableDurations.length && isEmpty(responseWithDefaults.multi_duration_items)) {
+					if (
+						selectableDurations.length &&
+						isEmpty(responseWithDefaults.multi_duration_items)
+					) {
 						selectableDurations.forEach((duration) => {
 							const durationStr = duration.toString();
 							if (
@@ -325,16 +336,20 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 							) {
 								responseWithDefaults.multi_duration_items[
 									durationStr
-								] = responseWithDefaults.type === 'woocommerce'
+								] =
+									responseWithDefaults.type === 'woocommerce'
 										? {
-											woo_product: 0,
-											duration: durationStr
-										}
+												woo_product: 0,
+												duration: durationStr,
+											}
 										: {
-											item: __('Booking Item', 'quillbooking'),
-											price: 100,
-											duration: durationStr,
-										};
+												item: __(
+													'Booking Item',
+													'quillbooking'
+												),
+												price: 100,
+												duration: durationStr,
+											};
 							}
 						});
 					}
@@ -366,7 +381,9 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 				);
 
 				if (selectableDurations.length) {
-					const updatedItems = { ...paymentSettings.multi_duration_items };
+					const updatedItems = {
+						...paymentSettings.multi_duration_items,
+					};
 					let hasChanges = false;
 
 					selectableDurations.forEach((duration) => {
@@ -376,7 +393,7 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 								item: __('Booking Item', 'quillbooking'),
 								price: 100,
 								woo_product: 0,
-								duration: durationStr
+								duration: durationStr,
 							};
 							hasChanges = true;
 						} else {
@@ -397,9 +414,9 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 					});
 
 					if (hasChanges) {
-						setPaymentSettings(prev => ({
+						setPaymentSettings((prev) => ({
 							...prev,
-							multi_duration_items: updatedItems
+							multi_duration_items: updatedItems,
 						}));
 					}
 				}
@@ -448,17 +465,48 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 					}
 
 					// Check for WooCommerce payment type
-					if (
-						paymentSettings.type === 'woocommerce' &&
-						(!paymentSettings.woo_product ||
-							paymentSettings.woo_product === 0)
-					) {
-						throw new Error(
-							__(
-								'Payment is enabled with WooCommerce checkout, but no WooCommerce product is selected. Please select a product.',
-								'quillbooking'
-							)
-						);
+					if (paymentSettings.type === 'woocommerce') {
+						if (paymentSettings.enable_items_based_on_duration) {
+							// Check if all duration items have a woo_product selected
+							const selectableDurations = get(
+								event,
+								'additional_settings.selectable_durations',
+								[]
+							);
+
+							for (const duration of selectableDurations) {
+								const durationStr = duration.toString();
+								const durationItem =
+									paymentSettings.multi_duration_items[
+										durationStr
+									];
+
+								if (
+									!durationItem ||
+									!durationItem.woo_product
+								) {
+									throw new Error(
+										sprintf(
+											__(
+												'Payment is enabled with WooCommerce checkout for multiple durations, but no WooCommerce product is selected for the %s minute duration. Please select a product for each duration.',
+												'quillbooking'
+											),
+											duration
+										)
+									);
+								}
+							}
+						} else if (
+							!paymentSettings.woo_product ||
+							paymentSettings.woo_product === 0
+						) {
+							throw new Error(
+								__(
+									'Payment is enabled with WooCommerce checkout, but no WooCommerce product is selected. Please select a product.',
+									'quillbooking'
+								)
+							);
+						}
 					}
 				}
 
@@ -482,7 +530,10 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 					},
 					onSuccess() {
 						successNotice(
-							__('Payment settings saved successfully', 'quillbooking')
+							__(
+								'Payment settings saved successfully',
+								'quillbooking'
+							)
 						);
 					},
 					onError(error) {
@@ -663,7 +714,7 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 									{isWooCommerceEnabled ? (
 										<>
 											{paymentSettings.enable_items_based_on_duration &&
-												allowAttendeesToSelectDuration ? (
+											allowAttendeesToSelectDuration ? (
 												<Flex vertical gap={20}>
 													{map(
 														get(
@@ -671,40 +722,73 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 															'additional_settings.selectable_durations',
 															[]
 														),
-														(duration: number | string) => {
-															const durationStr = duration.toString();
-															const durationItem = paymentSettings.multi_duration_items[durationStr] || {
-																duration: durationStr,
-																woo_product: 0
-															};
+														(
+															duration:
+																| number
+																| string
+														) => {
+															const durationStr =
+																duration.toString();
+															const durationItem =
+																paymentSettings
+																	.multi_duration_items[
+																	durationStr
+																] || {
+																	duration:
+																		durationStr,
+																	woo_product: 0,
+																};
 
 															return (
-																<Card key={durationStr} className="w-full">
-																	<Flex vertical>
+																<Card
+																	key={
+																		durationStr
+																	}
+																	className="w-full"
+																>
+																	<Flex
+																		vertical
+																	>
 																		<div className="font-semibold text-[#7E8299] mb-5 flex items-center px-3 py-1 bg-[#F1F1F2] rounded-lg w-[140px]">
 																			<PiClockClockwiseFill className="text-[18px] mr-1" />{' '}
 																			{sprintf(
-																				__('%s minutes', 'quillbooking'),
+																				__(
+																					'%s minutes',
+																					'quillbooking'
+																				),
 																				duration
 																			)}
 																		</div>
-																		<Flex vertical gap={4}>
+																		<Flex
+																			vertical
+																			gap={
+																				4
+																			}
+																		>
 																			<div className="text-[#3F4254] font-semibold text-[16px]">
-																				{__('Select Product', 'quillbooking')}
+																				{__(
+																					'Select Product',
+																					'quillbooking'
+																				)}
 																			</div>
 																			<ProductSelect
 																				placeholder={__(
 																					'Select a WooCommerce product...',
 																					'quillbooking'
 																				)}
-																				onChange={(value) =>
+																				onChange={(
+																					value
+																				) =>
 																					handleDurationItemChange(
 																						duration,
 																						'woo_product',
 																						value
 																					)
 																				}
-																				value={durationItem.woo_product || 0}
+																				value={
+																					durationItem.woo_product ||
+																					0
+																				}
 																			/>
 																		</Flex>
 																	</Flex>
@@ -714,17 +798,32 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 													)}
 												</Flex>
 											) : (
-												<Flex vertical gap={4} className="mt-6">
+												<Flex
+													vertical
+													gap={4}
+													className="mt-6"
+												>
 													<div className="text-[#3F4254] font-semibold text-[16px]">
-														{__('Select WooCommerce Product', 'quillbooking')}
+														{__(
+															'Select WooCommerce Product',
+															'quillbooking'
+														)}
 													</div>
 													<ProductSelect
 														placeholder={__(
 															'Select a WooCommerce product...',
 															'quillbooking'
 														)}
-														onChange={(value) => handleSettingsChange('woo_product', value)}
-														value={paymentSettings.woo_product || 0}
+														onChange={(value) =>
+															handleSettingsChange(
+																'woo_product',
+																value
+															)
+														}
+														value={
+															paymentSettings.woo_product ||
+															0
+														}
 													/>
 													<span className="text-[#71717A] text-[16px] font-medium">
 														{__(
@@ -807,8 +906,8 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 														paymentSettings.payment_methods ||
 														[]
 													).includes('paypal')
-													? 'border-color-primary bg-color-secondary'
-													: ''
+														? 'border-color-primary bg-color-secondary'
+														: ''
 												}`}
 												disabled={loading}
 											>
@@ -834,8 +933,8 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 														paymentSettings.payment_methods ||
 														[]
 													).includes('stripe')
-													? 'border-color-primary bg-color-secondary'
-													: ''
+														? 'border-color-primary bg-color-secondary'
+														: ''
 												}`}
 												disabled={loading}
 											>
@@ -1074,21 +1173,28 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 														</div>
 														{paymentSettings.items
 															.length > 1 && (
-																<Button
-																	onClick={() =>
-																		removeItem(
-																			index
-																		)
-																	}
-																	icon={
-																		<TrashIcon width={20} height={20} />
-																	}
-																	className="ml-2 border-none shadow-none text-[#E91E63]"
-																	disabled={
-																		loading
-																	}
-																/>
-															)}
+															<Button
+																onClick={() =>
+																	removeItem(
+																		index
+																	)
+																}
+																icon={
+																	<TrashIcon
+																		width={
+																			20
+																		}
+																		height={
+																			20
+																		}
+																	/>
+																}
+																className="ml-2 border-none shadow-none text-[#E91E63]"
+																disabled={
+																	loading
+																}
+															/>
+														)}
 													</Flex>
 												)
 											)}

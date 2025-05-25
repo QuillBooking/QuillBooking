@@ -84,7 +84,7 @@ class WooCommerce {
 			array(
 				'payment_method' => 'woocommerce',
 				'status'         => 'pending',
-				'total'          => $product->get_price() * $quantity,
+				'total'          => floatval( $product->get_price() ) * (int) $quantity,
 				'currency'       => get_woocommerce_currency(),
 				'items'          => array(
 					array(
@@ -242,7 +242,7 @@ class WooCommerce {
 			<p><strong><?php esc_html_e( 'Event:', 'quillbooking' ); ?></strong> <?php echo esc_html( $booking->event->name ); ?></p>
 			<p><strong><?php esc_html_e( 'Start Date:', 'quillbooking' ); ?></strong> <?php echo esc_html( $start_date->format( 'F j, Y h:i A' ) . ' (' . $booking->timezone . ')' ); ?></p>
 			<p><strong><?php esc_html_e( 'Status:', 'quillbooking' ); ?></strong> <?php echo esc_html( $booking->status ); ?></p>
-		</div>	
+		</div>
 		<?php
 	}
 

@@ -18,6 +18,8 @@ use WPEloquent\Eloquent\Model;
  */
 class Booking_Order_Model extends Model {
 
+
+
 	/**
 	 * Table name
 	 *
@@ -52,6 +54,7 @@ class Booking_Order_Model extends Model {
 		'currency',
 		'payment_method',
 		'status',
+		'transaction_id',
 	);
 
 	/**
@@ -60,10 +63,11 @@ class Booking_Order_Model extends Model {
 	 * @var array
 	 */
 	protected $casts = array(
-		'booking_id' => 'integer',
-		'discount'   => 'float',
-		'total'      => 'float',
-		'items'      => 'array',
+		'booking_id'     => 'integer',
+		'discount'       => 'float',
+		'total'          => 'float',
+		'items'          => 'array',
+		'transaction_id' => 'string',
 	);
 
 	/**
@@ -96,6 +100,17 @@ class Booking_Order_Model extends Model {
 	);
 
 	/**
+	 * Get transaction ID
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string|null Transaction ID or null if not available
+	 */
+	public function get_transaction_id() {
+		return $this->transaction_id;
+	}
+
+	/**
 	 * Booking
 	 *
 	 * @since 1.0.0
@@ -103,6 +118,6 @@ class Booking_Order_Model extends Model {
 	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function booking() {
-		return $this->belongsTo( 'QuillBooking\Models\Booking_Model', 'booking_id', 'id' );
+		 return $this->belongsTo( 'QuillBooking\Models\Booking_Model', 'booking_id', 'id' );
 	}
 }

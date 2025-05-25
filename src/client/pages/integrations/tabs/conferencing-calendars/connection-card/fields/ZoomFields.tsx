@@ -2,7 +2,6 @@ import { __ } from '@wordpress/i18n';
 import { Flex, Form, Input, Divider, Typography, Skeleton, Button } from 'antd';
 import { useEffect, useState } from 'react';
 import { useApi, useNotice } from '@quillbooking/hooks';
-import { addQueryArgs } from '@wordpress/url';
 
 const { Text } = Typography;
 
@@ -18,30 +17,17 @@ interface ZoomAccount {
 	};
 }
 
-interface Calendar {
-	id: string;
-	name: string;
-}
-
 const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 	const { callApi } = useApi();
 	const { errorNotice, successNotice } = useNotice();
 	const [loadingAccount, setLoadingAccount] = useState(false);
-	const [calendar, setCalendar] = useState<Calendar | null>(null);
 	const [accountData, setAccountData] = useState<ZoomAccount | null>(null);
 	const [saving, setSaving] = useState(false);
 
-	// Fetch calendars on component mount
+	// Fetch Zoom account data on component mount
 	useEffect(() => {
-		fetchCalendars();
+		fetchZoomAccount();
 	}, []);
-
-	// When calendar changes, fetch Zoom account data
-	useEffect(() => {
-		if (calendar?.id) {
-			fetchZoomAccount();
-		}
-	}, [calendar]);
 
 	// When account data is available, set form values
 	useEffect(() => {
@@ -52,47 +38,23 @@ const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 				client_secret: accountData.app_credentials.client_secret || '',
 			});
 		}
+		console.log(accountData);
 	}, [accountData, form]);
 
-	const fetchCalendars = () => {
-		setLoadingAccount(true);
-		callApi({
-			path: addQueryArgs(`calendars`, {
-				user: 'own',
-			}),
-			onSuccess: (response) => {
-				if (response.data && response.data.length > 0) {
-					const currentCalendar = response.data[0];
-					setCalendar(currentCalendar);
-				} else {
-					setLoadingAccount(false);
-					errorNotice(
-						__('No calendars found for this user', 'quillbooking')
-					);
-				}
-			},
-			onError: (error) => {
-				setLoadingAccount(false);
-				errorNotice(
-					error.message ||
-						__('Failed to fetch calendars', 'quillbooking')
-				);
-			},
-		});
-	};
-
 	const fetchZoomAccount = () => {
-		if (!calendar) return;
-
 		setLoadingAccount(true);
 		callApi({
-			path: `integrations/zoom/${calendar.id}/accounts`,
+			path: `integrations/zoom`,
 			method: 'GET',
 			onSuccess(response) {
-				const firstKey = Object.keys(response)[0];
-				const account = response[firstKey];
-				if (account) {
-					setAccountData(account);
+				// check is array
+				if (
+					Array.isArray(response.settings) &&
+					response.settings.length <= 0
+				) {
+					setAccountData(null);
+				} else {
+					setAccountData(response.settings);
 				}
 				setLoadingAccount(false);
 			},
@@ -107,15 +69,20 @@ const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 	};
 
 	const handleDisconnect = () => {
-		if (!accountData?.id) {
+		if (!accountData) {
 			errorNotice(__('No account to disconnect', 'quillbooking'));
 			return;
 		}
 
 		setSaving(true);
 		callApi({
-			path: `integrations/zoom/accounts/${accountData.id}`,
+			path: `integrations/zoom`,
 			method: 'DELETE',
+			data: {
+				settings: {
+					id: accountData.id || '',
+				},
+			},
 			onSuccess() {
 				successNotice(
 					__('Zoom account disconnected successfully', 'quillbooking')
@@ -136,22 +103,20 @@ const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 
 	// Custom save handler for Zoom integration
 	const handleSaveZoomSettings = (values: any) => {
-		if (!calendar) {
-			errorNotice(__('No calendar selected', 'quillbooking'));
-			return;
-		}
-
 		setSaving(true);
 		callApi({
-			path: `integrations/zoom/${calendar.id}/accounts`,
+			path: `integrations/zoom`,
 			method: 'POST',
 			data: {
-				app_credentials: {
-					account_id: values.account_id,
-					client_id: values.client_id,
-					client_secret: values.client_secret,
+				settings: {
+					id: '',
+					app_credentials: {
+						account_id: values.account_id,
+						client_id: values.client_id,
+						client_secret: values.client_secret,
+					},
+					config: {},
 				},
-				config: {},
 			},
 			onSuccess() {
 				successNotice(
@@ -191,7 +156,7 @@ const ZoomFields = ({ fields, form }: { fields: any; form: any }) => {
 		return () => {
 			parentForm.submit = originalOnFinish;
 		};
-	}, [form, calendar]);
+	}, [form]);
 
 	if (loadingAccount) {
 		return <Skeleton active paragraph={{ rows: 4 }} />;

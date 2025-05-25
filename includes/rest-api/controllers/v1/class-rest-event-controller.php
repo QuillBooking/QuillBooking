@@ -889,6 +889,7 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			$event->save();
+			$event->updateSystemFields( $location );
 
 			$wpdb->query( 'COMMIT' );
 			return new WP_REST_Response( $event, 200 );

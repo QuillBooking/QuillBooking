@@ -1,19 +1,81 @@
 import { __ } from '@wordpress/i18n';
-import { Flex, Form, Select } from 'antd';
-import { useEffect } from 'react';
+import { Button, Flex, Form, Select, message } from 'antd';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const OutlookFields = ({ CACHE_TIME_OPTIONS, form }) => {
+const OutlookFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
 	const cacheTime = Form.useWatch('cache_time', form);
-	
+	const navigate = useNavigate();
+	const location = useLocation();
+	const [isNavigating, setIsNavigating] = useState(false);
+
 	useEffect(() => {
 		console.log('Outlook cache_time:', cacheTime);
 	}, [cacheTime]);
-	
+
 	const handleCacheTimeChange = (value) => {
 		console.log('Outlook selection changed to:', value);
 		form.setFieldValue('cache_time', value);
 	};
-	
+
+	const handleNavigateToIntegration = async () => {
+		if (!calendar?.id) {
+			message.error({
+				content: __(
+					'No calendar selected. Please select a calendar first.',
+					'quillbooking'
+				),
+				key: 'navigate',
+			});
+			return;
+		}
+
+		try {
+			setIsNavigating(true);
+
+			// Show loading message
+			message.loading({
+				content: __(
+					'Preparing to navigate to integration...',
+					'quillbooking'
+				),
+				key: 'navigate',
+				duration: 0,
+			});
+
+			// Small delay to show loading state and ensure smooth transition
+			await new Promise((resolve) => setTimeout(resolve, 300));
+
+			// Navigate to the full path
+			const path = `calendars/${calendar.id}`;
+			navigate(
+				`/wordpress/wp-admin/admin.php?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=outlook`
+			);
+
+			// Show success message briefly
+			message.success({
+				content: __(
+					'Navigating to integration settings...',
+					'quillbooking'
+				),
+				key: 'navigate',
+				duration: 1,
+			});
+		} catch (error) {
+			console.error('Navigation error:', error);
+			message.error({
+				content: __(
+					'Failed to navigate to integration settings. Please try again.',
+					'quillbooking'
+				),
+				key: 'navigate',
+				duration: 3,
+			});
+		} finally {
+			setIsNavigating(false);
+		}
+	};
+
 	return (
 		<div className="outlook-fields">
 			<Flex vertical gap={10} className="w-full">
@@ -48,6 +110,15 @@ const OutlookFields = ({ CACHE_TIME_OPTIONS, form }) => {
 							'quillbooking'
 						)}
 					</div>
+					<Button
+						type="link"
+						onClick={handleNavigateToIntegration}
+						loading={isNavigating}
+						className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+						disabled={!calendar?.id}
+					>
+						{__('Manage accounts', 'quillbooking')}
+					</Button>
 				</Form.Item>
 			</Flex>
 		</div>

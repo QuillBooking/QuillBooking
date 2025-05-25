@@ -203,16 +203,15 @@ const CardBody: React.FC<CardBodyProps> = ({
 					requiresPayment,
 					bookingData: data.data.booking,
 				});
-				//if we want to redirect to paypal without going to payment step
-				// if (data.data.redirect_url) {
-				// 	console.log(
-				// 		'PayPal payment, redirecting to:',
-				// 		data.data.redirect_url
-				// 	);
-				// 	(window.top || window).location.href =
-				// 		data.data.redirect_url;
-				// 	return;
-				// }
+				if (data.data.redirect_url) {
+					console.log(
+						'PayPal payment, redirecting to:',
+						data.data.redirect_url
+					);
+					(window.top || window).location.href =
+						data.data.redirect_url;
+					return;
+				}
 				setBookingData(data?.data?.booking);
 				setStep(3); // Payment step
 			} else {

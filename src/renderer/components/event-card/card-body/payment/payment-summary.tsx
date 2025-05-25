@@ -7,190 +7,206 @@ import woocommerceIcon from '../../../../../../assets/icons/woocommerce/woocomme
 import { Booking, Event } from 'renderer/types';
 
 interface PaymentSummaryProps {
-  ajax_url: string;
-  setStep: (step: number) => void;
-  bookingData: Booking;
-  event: Event;
-  totalPrice: number;
+	ajax_url: string;
+	setStep: (step: number) => void;
+	bookingData: Booking;
+	event: Event;
+	totalPrice: number;
 }
 
 // Payment Summary component that allows selection between payment methods
-const PaymentSummary: React.FC<PaymentSummaryProps> = ({ 
-  ajax_url, 
-  setStep, 
-  bookingData, 
-  event, 
-  totalPrice 
+const PaymentSummary: React.FC<PaymentSummaryProps> = ({
+	ajax_url,
+	setStep,
+	bookingData,
+	event,
+	totalPrice,
 }) => {
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Determine available payment methods from event settings
-  const paymentMethods = {
-    stripe: event?.payments_settings?.enable_stripe,
-    paypal: event?.payments_settings?.enable_paypal,
-    woocommerce: event?.payments_settings?.enable_woocommerce
-  };
+	const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+		string | null
+	>(null);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-  // Check if any payment method is enabled
-  const hasEnabledPaymentMethods = paymentMethods.stripe || paymentMethods.paypal || paymentMethods.woocommerce;
+	// Determine available payment methods from event settings
+	const paymentMethods = {
+		stripe: event?.payments_settings?.enable_stripe,
+		paypal: event?.payments_settings?.enable_paypal,
+		woocommerce: event?.payments_settings?.enable_woocommerce,
+	};
 
-  useEffect(() => {
-    // If no payment methods are enabled, show an error
-    if (!hasEnabledPaymentMethods) {
-      setError('No payment methods are enabled for this event.');
-    }
-  }, [hasEnabledPaymentMethods]);
+	// Check if any payment method is enabled
+	const hasEnabledPaymentMethods =
+		paymentMethods.stripe ||
+		paymentMethods.paypal ||
+		paymentMethods.woocommerce;
 
-  const handlePaymentMethodSelect = (method: string) => {
-    setSelectedPaymentMethod(method);
-  };
+	useEffect(() => {
+		// If no payment methods are enabled, show an error
+		if (!hasEnabledPaymentMethods) {
+			setError('No payment methods are enabled for this event.');
+		}
+	}, [hasEnabledPaymentMethods]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: event?.payments_settings?.currency || 'USD',
-    }).format(price);
-  };
+	const handlePaymentMethodSelect = (method: string) => {
+		setSelectedPaymentMethod(method);
+	};
 
-  const handleContinueToPayment = async () => {
-    if (!selectedPaymentMethod) {
-      setError('Please select a payment method');
-      return;
-    }
+	// Get the selected duration from the booking data slot_time or fallback to event duration
+	const selectedDuration = bookingData?.slot_time || event?.duration;
 
-    setIsLoading(true);
-    setError(null);
+	const formatPrice = (price: number) => {
+		return new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: event?.payments_settings?.currency || 'USD',
+		}).format(price);
+	};
 
-    try {
-      const formData = new FormData();
-      formData.append('action', 'quillbooking_process_payment');
-      formData.append('booking_hash_id', bookingData?.hash_id);
-      formData.append('payment_method', selectedPaymentMethod);
+	const handleContinueToPayment = async () => {
+		if (!selectedPaymentMethod) {
+			setError('Please select a payment method');
+			return;
+		}
 
-      const response = await fetch(ajax_url, {
-        method: 'POST',
-        body: formData
-      });
+		setIsLoading(true);
+		setError(null);
 
-      const data = await response.json();
-      
-      if (!data?.success) {
-        throw new Error(data?.data?.message || 'Failed to process payment');
-      }
+		try {
+			const formData = new FormData();
+			formData.append('action', 'quillbooking_process_payment');
+			formData.append('booking_hash_id', bookingData?.hash_id);
+			formData.append('payment_method', selectedPaymentMethod);
 
-      // For PayPal, redirect to payment URL
-      if (selectedPaymentMethod === 'paypal' && data?.data?.redirect_url) {
-        window.location.href = data?.data?.redirect_url;
-        return;
-      }
+			const response = await fetch(ajax_url, {
+				method: 'POST',
+				body: formData,
+			});
 
-      // For WooCommerce, redirect to checkout URL
-      if (selectedPaymentMethod === 'woocommerce' && data?.data?.url) {
-        window.location.href = data?.data?.url;
-        return;
-      }
+			const data = await response.json();
 
-      // For Stripe, proceed to payment form
-      if (selectedPaymentMethod === 'stripe') {
-        setStep(4); // Move to Stripe payment form
-      }
-    } catch (err: any) {
-      setError(err?.message || 'An error occurred');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+			if (!data?.success) {
+				throw new Error(
+					data?.data?.message || 'Failed to process payment'
+				);
+			}
 
-  const handleGoBack = () => {
-    setStep(2); // Back to questions
-  };
+			// For PayPal, redirect to payment URL
+			if (
+				selectedPaymentMethod === 'paypal' &&
+				data?.data?.redirect_url
+			) {
+				window.location.href = data?.data?.redirect_url;
+				return;
+			}
 
-  return (
-    <div className="payment-summary-container">
-      <div className="payment-summary-header">
-        <div
-          className="payment-summary-header-icon"
-          onClick={handleGoBack}
-        >
-          <LeftArrowIcon />
-        </div>
-        <p>Payment Summary</p>
-      </div>
-      
-      <div className="payment-amount">
-        <div className="info-icon">ℹ️</div>
-        <p>You are now about to pay {formatPrice(totalPrice)} to attend the event under the name <strong>{event?.name} - For {event?.duration} Minutes</strong> as the online booking fees.</p>
-      </div>
-      
-      {hasEnabledPaymentMethods ? (
-        <div className="payment-method-selection">
-          <p>Select Payment Way</p>
-          
-          <div className="payment-methods">
-            {paymentMethods.paypal && (
-              <label className={`payment-method-radio ${selectedPaymentMethod === 'paypal' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="payment-method"
-                  value="paypal"
-                  checked={selectedPaymentMethod === 'paypal'}
-                  onChange={() => handlePaymentMethodSelect('paypal')}
-                />
-                <img src={paypalIcon} alt="PayPal" />
-              </label>
-            )}
-            
-            {paymentMethods.stripe && (
-              <label className={`payment-method-radio ${selectedPaymentMethod === 'stripe' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="payment-method"
-                  value="stripe"
-                  checked={selectedPaymentMethod === 'stripe'}
-                  onChange={() => handlePaymentMethodSelect('stripe')}
-                />
-                <img src={stripeIcon} alt="Stripe" />
-              </label>
-            )}
+			// For WooCommerce, redirect to checkout URL
+			if (selectedPaymentMethod === 'woocommerce' && data?.data?.url) {
+				window.location.href = data?.data?.url;
+				return;
+			}
 
-            {paymentMethods.woocommerce && (
-              <label className={`payment-method-radio ${selectedPaymentMethod === 'woocommerce' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="payment-method"
-                  value="woocommerce"
-                  checked={selectedPaymentMethod === 'woocommerce'}
-                  onChange={() => handlePaymentMethodSelect('woocommerce')}
-                />
-                <img src={woocommerceIcon} alt="WooCommerce" />
-              </label>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="payment-error-message">
-          <p>No payment methods are available for this event. Please contact the event organizer.</p>
-        </div>
-      )}
-      
-      {error && (
-        <div className="error-message">{error}</div>
-      )}
-      
-      <div className="payment-actions">
-        <button 
-          type="button" 
-          className="continue-to-payment-button"
-          onClick={handleContinueToPayment}
-          disabled={isLoading || !selectedPaymentMethod}
-        >
-          {isLoading ? 'Processing...' : 'Continue to Payments'}
-        </button>
-      </div>
-    </div>
-  );
+			// For Stripe, proceed to payment form
+			if (selectedPaymentMethod === 'stripe') {
+				setStep(4); // Move to Stripe payment form
+			}
+		} catch (err: any) {
+			setError(err?.message || 'An error occurred');
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const handleGoBack = () => {
+		setStep(2); // Back to questions
+	};
+
+	return (
+		<div className="payment-summary-container">
+			<div className="payment-summary-header">
+				<div
+					className="payment-summary-header-icon"
+					onClick={handleGoBack}
+				>
+					<LeftArrowIcon />
+				</div>
+				<p>Payment Summary</p>
+			</div>
+
+			<div className="payment-amount">
+				<div className="info-icon">ℹ️</div>
+				<p>
+					You are now about to pay {formatPrice(totalPrice)} to attend
+					the event under the name{' '}
+					<strong>
+						{event?.name} - For {selectedDuration} Minutes
+					</strong>{' '}
+					as the online booking fees.
+				</p>
+			</div>
+
+			{hasEnabledPaymentMethods ? (
+				<div className="payment-method-selection">
+					<p>Select Payment Way</p>
+
+					<div className="payment-methods">
+						{paymentMethods.paypal && (
+							<label
+								className={`payment-method-radio ${selectedPaymentMethod === 'paypal' ? 'selected' : ''}`}
+							>
+								<input
+									type="radio"
+									name="payment-method"
+									value="paypal"
+									checked={selectedPaymentMethod === 'paypal'}
+									onChange={() =>
+										handlePaymentMethodSelect('paypal')
+									}
+								/>
+								<img src={paypalIcon} alt="PayPal" />
+							</label>
+						)}
+
+						{paymentMethods.stripe && (
+							<label
+								className={`payment-method-radio ${selectedPaymentMethod === 'stripe' ? 'selected' : ''}`}
+							>
+								<input
+									type="radio"
+									name="payment-method"
+									value="stripe"
+									checked={selectedPaymentMethod === 'stripe'}
+									onChange={() =>
+										handlePaymentMethodSelect('stripe')
+									}
+								/>
+								<img src={stripeIcon} alt="Stripe" />
+							</label>
+						)}
+					</div>
+				</div>
+			) : (
+				<div className="payment-error-message">
+					<p>
+						No payment methods are available for this event. Please
+						contact the event organizer.
+					</p>
+				</div>
+			)}
+
+			{error && <div className="error-message">{error}</div>}
+
+			<div className="payment-actions">
+				<button
+					type="button"
+					className="continue-to-payment-button"
+					onClick={handleContinueToPayment}
+					disabled={isLoading || !selectedPaymentMethod}
+				>
+					{isLoading ? 'Processing...' : 'Continue to Payments'}
+				</button>
+			</div>
+		</div>
+	);
 };
 
-export default PaymentSummary; 
+export default PaymentSummary;

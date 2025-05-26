@@ -25,10 +25,6 @@ use QuillBooking\Renderer;
 class Booking_Actions {
 
 
-
-
-
-
 	// --- Dependency Properties ---
 	private string $calendarModelClass;
 	private string $eventModelClass;
@@ -396,9 +392,9 @@ class Booking_Actions {
 			$booking_array['formatted_time_range'] = '';
 		}
 
-		// Split location on underscore if it exists and rejoin on space
-		if ( ! empty( $booking_array['location'] ) && strpos( $booking_array['location'], '_' ) !== false ) {
-			$booking_array['location'] = implode( ' ', explode( '_', $booking_array['location'] ) );
+		// handle location formatting
+		if ( ! empty( $booking_array['location'] ) ) {
+			$booking_array['location'] = $booking_array['location']['label'] . ' : ' . $booking_array['location']['value'];
 		}
 
 		$booking_array['hosts'] = $this->getEventHosts( $booking->event );

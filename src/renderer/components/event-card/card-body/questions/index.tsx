@@ -22,16 +22,12 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 
 	const allFields = {
 		...fields.system,
-		...(fields.location['location-select'] && {
-			'location-select': fields.location['location-select'],
-		}),
+		...(fields.location['location-select']
+			? { 'location-select': fields.location['location-select'] }
+			: { ...fields.location }),
 		...fields.custom,
 	};
 
-	const locationFields = {
-		attendee_address: fields.location.address,
-		attendee_phone: fields.location.phone,
-	};
 	const sortedFields = Object.keys(allFields).sort(
 		(a, b) => allFields[a].order - allFields[b].order
 	);
@@ -73,17 +69,18 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 					form={form}
 					requiredMark={false}
 				>
-					{sortedFields.map((fieldKey, index) => (
-						(allFields[fieldKey].enabled || allFields[fieldKey].enabled === undefined) && (
-							<FormField
-								key={index}
-								id={fieldKey}
-								field={allFields[fieldKey]}
-								form={form}
-								locationFields={locationFields}
-							/>
-						)
-					))}
+					{sortedFields.map(
+						(fieldKey, index) =>
+							(allFields[fieldKey].enabled ||
+								allFields[fieldKey].enabled === undefined) && (
+								<FormField
+									key={index}
+									id={fieldKey}
+									field={allFields[fieldKey]}
+									form={form}
+								/>
+							)
+					)}
 					<Form.Item className="schedule-btn-container">
 						<button 
 							className="schedule-btn" 

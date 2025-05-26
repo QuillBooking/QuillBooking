@@ -38,6 +38,7 @@ class REST_Booking_Controller extends REST_Controller {
 
 
 
+
 	/**
 	 * REST Base
 	 *
@@ -444,9 +445,6 @@ class REST_Booking_Controller extends REST_Controller {
 			$current_url         = $request->get_param( 'current_url' );
 			$fields              = $request->get_param( 'fields' );
 			$ignore_availability = $request->get_param( 'ignore_availability' );
-
-			// will be updated later
-			$location = 'zoom';
 
 			$event    = Booking_Validator::validate_event( $event_id );
 			$duration = Booking_Validator::validate_duration( $duration, $event->duration );

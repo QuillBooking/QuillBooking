@@ -166,7 +166,11 @@ const Locations: React.FC<{
 	// Modified handleCheckboxChange to prevent checking if integration isn't connected
 	const handleCheckboxChange = (type: string, checked: boolean) => {
 		// First check if this is an integration-dependent location that requires connection
-		if (checked) {
+		if (
+			checked &&
+			!isIntegrationConnected(type) &&
+			!isIntegrationGolbalConnected(type)
+		) {
 			console.log('Checking location checked1:', checked);
 			// If trying to check but integration isn't connected, navigate to integration page
 			switch (type) {

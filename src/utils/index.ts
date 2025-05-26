@@ -199,7 +199,19 @@ export function get_location(
 			label: 'Online',
 			value: location.fields.meeting_url || '',
 			type: location.type
-		})
+		}),
+		zoom: () => ({
+			label: 'Zoom',
+			type: location.type,
+		}),
+		'ms-teams': () => ({
+			label: 'Microsoft Teams',
+			type: location.type,
+		}),
+		'google-meet': () => ({
+			label: 'Google Meet',
+			type: location.type,
+		}),
 	};
 
 	const locationBuilder = locationMap[location_type];

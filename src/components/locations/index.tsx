@@ -607,7 +607,8 @@ const Locations: React.FC<{
 									</div>
 								</Flex>
 							</Flex>
-							{!connected_integrations.zoom.has_settings ? (
+							{!connected_integrations.zoom.has_settings &&
+							!connected_integrations.zoom.has_accounts ? (
 								<Button
 									onClick={() =>
 										navigateToIntegrations(

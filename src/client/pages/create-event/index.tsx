@@ -22,7 +22,6 @@ import {
  * Internal dependencies
  */
 import {
-	CollectiveIcon,
 	GroupIcon,
 	Header,
 	RoundRobinIcon,
@@ -32,12 +31,7 @@ import {
 	ColorSelector,
 	NoticeBanner,
 } from '@quillbooking/components';
-import {
-	useApi,
-	useNotice,
-	useNavigate,
-	useCurrentUser,
-} from '@quillbooking/hooks';
+import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import type {
 	Event,
 	AdditionalSettings,
@@ -68,10 +62,8 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 }) => {
 	const [current, setCurrent] = useState(0);
 	const { callApi, loading } = useApi();
-	const currentUser = useCurrentUser();
-	const { successNotice, errorNotice } = useNotice();
+	const { successNotice } = useNotice();
 	const navigate = useNavigate();
-	const [selectedUser, setSelectedUser] = useState<number>(0);
 	const [teamMembers, setTeamMembers] = useState<Host[]>([]);
 	const [event, setEvent] = useState<Partial<Event>>({
 		name: '',
@@ -239,15 +231,13 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 			data: transformedEvent,
 			onSuccess: (response: Event) => {
 				successNotice(__('Event created successfully', 'quillbooking'));
-				navigate(`calendars/${calendarId}/events/${response.id}`, {
-					state: {
-						notice: {
-							title: 'Complete Your Setup',
-							message:
-								'The event has been created successfully. Please complete your event setup and settings to finish.',
-						},
-					},
-				});
+				// Navigate without state to avoid type error
+				navigate(`calendars/${calendarId}/events/${response.id}`);
+
+				// Show success message instead
+				successNotice(
+					'Complete Your Setup: The event has been created successfully. Please complete your event setup and settings to finish.'
+				);
 			},
 			onError: (error: string) => {
 				setErrorBanner({

@@ -34,6 +34,8 @@ class REST_Event_Controller extends REST_Controller {
 
 
 
+
+
 	/**
 	 * REST Base
 	 *
@@ -487,6 +489,7 @@ class REST_Event_Controller extends REST_Controller {
 			$location          = $request->get_param( 'location' );
 			$hosts             = $request->get_param( 'hosts' );
 			$payments_settings = $request->get_param( 'payments_settings' );
+			$group_settings    = $request->get_param( 'group_settings' );
 
 			if ( empty( $location ) ) {
 				return new WP_Error( 'rest_event_error', __( 'Event location is required.', 'quillbooking' ), array( 'status' => 400 ) );
@@ -574,7 +577,7 @@ class REST_Event_Controller extends REST_Controller {
 			$event->sms_notifications   = Event_Fields::instance()->get_default_sms_notification_settings();
 			$event->payments_settings   = $payments_settings ?? Event_Fields::instance()->get_default_payments_settings();
 			if ( 'group' === $type ) {
-				$event->group_settings = array(
+				$event->group_settings = $group_settings ?? array(
 					'max_invites'    => 2,
 					'show_remaining' => true,
 				);

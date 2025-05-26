@@ -31,9 +31,6 @@ class Event_Model extends Model {
 
 
 
-
-
-
 	/**
 	 * Table name
 	 *
@@ -303,7 +300,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getTeamMembersAttribute() {
-		  return $this->get_meta( 'team_members', array() );
+		 return $this->get_meta( 'team_members', array() );
 	}
 
 	/**
@@ -475,7 +472,7 @@ class Event_Model extends Model {
 	 * @return bool
 	 */
 	public function getDynamicDurationAttribute() {
-		  return $this->get_meta( 'dynamic_duration', false );
+		 return $this->get_meta( 'dynamic_duration', false );
 	}
 
 	/**
@@ -535,7 +532,7 @@ class Event_Model extends Model {
 	 */
 	public function getConnectedIntegrationsAttribute() {
 		$connected_integrations = array();
-		$integrations           = \QuillBooking\Managers\Integrations_Manager::instance()->get_integrations();
+		$integrations           = Integrations_Manager::instance()->get_integrations();
 
 		$calendar_ids = array( $this->calendar_id );
 		if ( in_array( $this->type, array( 'round-robin', 'collective' ) ) ) {
@@ -638,7 +635,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setSystemFields() {
-		  $event_location = $this->location ?? null;
+		 $event_location = $this->location ?? null;
 
 		if ( ! $event_location || ! is_array( $event_location ) ) {
 			throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
@@ -836,13 +833,9 @@ class Event_Model extends Model {
 		$payment_gateways_manager = \QuillBooking\Managers\Payment_Gateways_Manager::instance();
 		$payment_gateways         = $payment_gateways_manager->get_items();
 
-		$payment_gateways         = $payment_gateways_manager->get_items();
-
 		// If no payment gateways are registered or available, we can't require payment
 		if ( empty( $payment_gateways ) ) {
-		if ( empty( $payment_gateways ) ) {
 			// Log this issue since it's a configuration problem
-			error_log( 'QuillBooking: Payment is enabled but no payment gateways are registered in the system.' );
 			error_log( 'QuillBooking: Payment is enabled but no payment gateways are registered in the system.' );
 			return false;
 		}
@@ -851,18 +844,13 @@ class Event_Model extends Model {
 		$gateway_enabled = false;
 		foreach ( $payment_gateways as $gateway ) {
 			if ( Arr::get( $payments_settings, 'enable_' . $gateway->slug, false ) ) {
-		foreach ( $payment_gateways as $gateway ) {
-			if ( Arr::get( $payments_settings, 'enable_' . $gateway->slug, false ) ) {
 				$gateway_enabled = true;
 				break;
 			}
 		}
 
 		if ( ! $gateway_enabled ) {
-
-		if ( ! $gateway_enabled ) {
 			// Instead of throwing an exception, we'll just log and return false
-			error_log( 'QuillBooking: Payment is enabled but no payment gateway is selected for this event.' );
 			error_log( 'QuillBooking: Payment is enabled but no payment gateway is selected for this event.' );
 			return false;
 		}
@@ -1252,19 +1240,13 @@ class Event_Model extends Model {
 			case 'round-robin':
 			case 'collective':
 				$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
-				$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
 
 				$slots_query->whereIn( 'calendar_id', $team_members )
 					->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
 					->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
-				$slots_query->whereIn( 'calendar_id', $team_members )
-					->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
-					->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
 
-				// For round-robin, set the number of event spots.
 				// For round-robin, set the number of event spots.
 				if ( 'round-robin' === $this->type ) {
-					$event_spots = count( $team_members );
 					$event_spots = count( $team_members );
 				}
 				break;
@@ -1349,7 +1331,6 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public static function boot() {
-		 parent::boot();
 		 parent::boot();
 
 		static::creating(

@@ -221,9 +221,9 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 		// For group events, explicitly set group_settings from additional_settings
 		if (event.type === 'group') {
 			transformedEvent.group_settings = {
-				max_invites: event.additional_settings?.max_invitees || 2,
+				max_invites: event.group_settings?.max_invites || 2,
 				show_remaining:
-					event.additional_settings?.show_remaining || true,
+					event.group_settings?.show_remaining || true,
 			};
 		}
 

@@ -163,7 +163,7 @@ export function get_location(
 	// Find the matching location
 	const location = event_locations.find(loc => {
 		// If location has an ID, it matches
-		if (loc.id) return true;
+		if (loc.id == location_type) return true;
 
 		// Otherwise, match by type
 		return loc.type === location_type;
@@ -199,7 +199,19 @@ export function get_location(
 			label: 'Online',
 			value: location.fields.meeting_url || '',
 			type: location.type
-		})
+		}),
+		zoom: () => ({
+			label: 'Zoom',
+			type: location.type,
+		}),
+		'ms-teams': () => ({
+			label: 'Microsoft Teams',
+			type: location.type,
+		}),
+		'google-meet': () => ({
+			label: 'Google Meet',
+			type: location.type,
+		}),
 	};
 
 	const locationBuilder = locationMap[location_type];

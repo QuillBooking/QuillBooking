@@ -45,7 +45,7 @@ $icons_url = plugins_url( 'src/templates/icons/', QUILLBOOKING_PLUGIN_FILE );
 				<span>
 					<img src="<?php echo esc_url( $icons_url . 'location.svg' ); ?>" alt="Outlook" />
 				</span>
-				<?php echo esc_html( $booking_array['location'] ?? '' ); ?>
+				<?php echo wp_kses_post( $booking_array['location'] ?? '' ); ?>
 			</p>
 		</div>
 

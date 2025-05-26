@@ -140,8 +140,27 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 					<div className="detail-row">
 						<LocationIcon height={20} width={20} />
 						<p>
-							{booking.location['label']} :{' '}
-							{booking.location['value']}
+							{booking.location['label']}
+							{[
+								'online',
+								'zoom',
+								'ms-teams',
+								'google-meet',
+							].includes(booking.location['type']) ? (
+								<>
+									:{' '}
+									<a
+										href={booking.location['value']}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="link"
+									>
+										{booking.location['value']}
+									</a>
+								</>
+							) : (
+								<>: {booking.location['value']}</>
+							)}
 						</p>
 					</div>
 				)}

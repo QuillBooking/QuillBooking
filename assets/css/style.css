@@ -71,7 +71,7 @@
 
 .booking-card p {
 	display: flex;
-  gap: 10px;
+	gap: 10px;
 	align-items: center;
 	font-weight: 400;
 	font-size: 16px;
@@ -142,10 +142,10 @@
 	width: 100%;
 	text-align: center;
 	font-weight: 500;
-  font-size: 20px;
-  text-align: center;
-  color: #737373;
-  padding: 10px 0;
+	font-size: 20px;
+	text-align: center;
+	color: #737373;
+	padding: 10px 0;
 }
 
 .cancellation-input-container textarea {
@@ -158,13 +158,13 @@
 
 .cancel-btn {
 	cursor: pointer;
-	color: #FFFFFF;
+	color: #ffffff;
 	font-weight: 400;
 	font-size: 14px;
 	border-radius: 100px;
 	border: none;
 	padding: 12px 24px;
-	background-color: #953AE4;
+	background-color: #953ae4;
 	text-decoration: none;
 }
 
@@ -180,37 +180,46 @@
 }
 
 .validation-message {
-  color: #d93025;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  display: block;
+	color: #d93025;
+	font-size: 0.9rem;
+	margin-bottom: 0.5rem;
+	display: block;
 }
 
 .cancellation-reason.error {
-  border-color: #d93025;
-  background-color: #fce8e6;
+	border-color: #d93025;
+	background-color: #fce8e6;
 }
 
 .success-message {
-  padding: 1rem;
-  background-color: #e6f4ea;
-  border: 1px solid #34a853;
-  border-radius: 4px;
-  font-size: 1rem;
-  color: #202124;
-  margin-top: 1rem;
+	padding: 1rem;
+	background-color: #e6f4ea;
+	border: 1px solid #34a853;
+	border-radius: 4px;
+	font-size: 1rem;
+	color: #202124;
+	margin-top: 1rem;
 }
 
 .already-cancelled-message {
-  padding: 1rem;
-  background-color: #f1f3f4;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 1rem;
-  color: #5f6368;
+	padding: 1rem;
+	background-color: #f1f3f4;
+	border: 1px solid #dadce0;
+	border-radius: 4px;
+	font-size: 1rem;
+	color: #5f6368;
 }
 
 .help-text {
 	font-size: 16px;
 	color: #6b7280;
+}
+
+.link {
+	color: #0b69c7;
+	text-decoration: underline;
+	overflow: hidden;
+}
+.link:hover {
+	text-decoration: none;
 }

@@ -33,6 +33,7 @@ type Integration = {
 	name: string;
 	connected: boolean;
 	has_accounts?: boolean;
+	has_settings: boolean;
 };
 
 const Locations: React.FC<{
@@ -80,6 +81,8 @@ const Locations: React.FC<{
 	const navigate = useNavigate();
 	const locationTypes = ConfigAPI.getLocations();
 
+	console.log('Calendar', calendar);
+
 	// Check if an integration is connected
 	const isIntegrationConnected = (type: string): boolean => {
 		switch (type) {
@@ -89,6 +92,19 @@ const Locations: React.FC<{
 				return connected_integrations.zoom.connected;
 			case 'ms-teams':
 				return connected_integrations.outlook.connected;
+			default:
+				return true; // For non-integration locations
+		}
+	};
+
+	const isIntegrationGolbalConnected = (type: string): boolean => {
+		switch (type) {
+			case 'google-meet':
+				return connected_integrations.google.has_settings;
+			case 'zoom':
+				return connected_integrations.zoom.has_settings;
+			case 'ms-teams':
+				return connected_integrations.outlook.has_settings;
 			default:
 				return true; // For non-integration locations
 		}
@@ -115,48 +131,65 @@ const Locations: React.FC<{
 		setIsModalVisible(true);
 	};
 
-	console.log(locationTypes);
-
 	// Navigate to integration settings page
 	const navigateToIntegrations = (
 		integrationType: string,
+		hasSettings = false,
 		hasAccounts = false
 	) => {
+		const adminUrl = ConfigAPI.getAdminUrl();
 		const path = `calendars/${calendar?.id}`;
-		const baseUrl = '';
 
-		if (!calendar?.id) {
-			// If no calendar ID, go to global settings
-			navigate(
-				`${baseUrl}&path=settings&tab=integrations&subtab=${integrationType}`
-			);
+		// If no settings, go to global integrations page
+		if (!hasSettings) {
+			// Go to global settings
+			// navigate(
+			// 	`/${adminUrl}?page=quillbooking&path=integrations&subtab=${integrationType}`
+			// );
+			window.location.href = `${adminUrl}?page=quillbooking&path=integrations&subtab=${integrationType}`;
 		} else if (!hasAccounts) {
 			// If the integration is configured but no accounts are added
-			navigate(
-				`${baseUrl}&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`
-			);
+			// navigate(
+			// 	`/${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`
+			// );
+			window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`;
 		} else {
 			// If integration is configured and has accounts
-			navigate(
-				`${baseUrl}&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`
-			);
+			// navigate(
+			// 	`/${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`
+			// );
+
+			window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`;
 		}
 	};
 
 	// Modified handleCheckboxChange to prevent checking if integration isn't connected
 	const handleCheckboxChange = (type: string, checked: boolean) => {
 		// First check if this is an integration-dependent location that requires connection
-		if (checked && !isIntegrationConnected(type)) {
+		if (checked) {
+			console.log('Checking location checked1:', checked);
 			// If trying to check but integration isn't connected, navigate to integration page
 			switch (type) {
 				case 'google-meet':
-					navigateToIntegrations('google', false);
+					navigateToIntegrations(
+						'google',
+						isIntegrationGolbalConnected(type),
+						isIntegrationConnected(type)
+					);
 					break;
 				case 'zoom':
-					navigateToIntegrations('zoom', false);
+					navigateToIntegrations(
+						'zoom',
+						isIntegrationGolbalConnected(type),
+						isIntegrationConnected(type)
+					);
 					break;
 				case 'ms-teams':
-					navigateToIntegrations('outlook', false);
+					navigateToIntegrations(
+						'outlook',
+						isIntegrationGolbalConnected(type),
+						isIntegrationConnected(type)
+					);
 					break;
 			}
 			// Prevent checking the checkbox
@@ -165,13 +198,14 @@ const Locations: React.FC<{
 
 		// If integration is connected but doesn't have accounts
 		if (checked) {
+			console.log('Checking location checked2:', checked);
 			switch (type) {
 				case 'google-meet':
 					if (
 						connected_integrations.google.connected &&
 						!connected_integrations.google.has_accounts
 					) {
-						navigateToIntegrations('google', false);
+						navigateToIntegrations('google', true, false);
 						return;
 					}
 					break;
@@ -180,7 +214,7 @@ const Locations: React.FC<{
 						connected_integrations.zoom.connected &&
 						!connected_integrations.zoom.has_accounts
 					) {
-						navigateToIntegrations('zoom', false);
+						navigateToIntegrations('zoom', true, false);
 						return;
 					}
 					break;
@@ -189,7 +223,7 @@ const Locations: React.FC<{
 						connected_integrations.outlook.connected &&
 						!connected_integrations.outlook.has_accounts
 					) {
-						navigateToIntegrations('outlook', false);
+						navigateToIntegrations('outlook', true, false);
 						return;
 					}
 					break;
@@ -522,7 +556,8 @@ const Locations: React.FC<{
 										{__('Google Meet', 'quillbooking')}
 									</div>
 									<div className="text-[#9197A4] text-[12px] italic">
-										{connected_integrations.google.connected
+										{connected_integrations.google
+											.has_settings
 											? __('Connected', 'quillbooking')
 											: __(
 													'Need to be Connect First - Visit the Google Meet integration page from Settings.',
@@ -531,10 +566,14 @@ const Locations: React.FC<{
 									</div>
 								</Flex>
 							</Flex>
-							{!connected_integrations.google.connected ? (
+							{!connected_integrations.google.has_settings ? (
 								<Button
 									onClick={() =>
-										navigateToIntegrations('google', false)
+										navigateToIntegrations(
+											'google',
+											false,
+											false
+										)
 									}
 									className="bg-transparent shadow-none border border-color-primary text-color-primary"
 								>
@@ -543,7 +582,11 @@ const Locations: React.FC<{
 							) : !connected_integrations.google.has_accounts ? (
 								<Button
 									onClick={() =>
-										navigateToIntegrations('google', false)
+										navigateToIntegrations(
+											'google',
+											true,
+											false
+										)
 									}
 									className="bg-transparent shadow-none border border-color-primary text-color-primary"
 								>
@@ -552,7 +595,11 @@ const Locations: React.FC<{
 							) : (
 								<Button
 									onClick={() =>
-										navigateToIntegrations('google', true)
+										navigateToIntegrations(
+											'google',
+											true,
+											true
+										)
 									}
 									className="bg-transparent border-none text-[#3F4254] shadow-none"
 								>

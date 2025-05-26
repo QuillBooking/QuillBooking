@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Events_Model
  *
@@ -26,6 +27,11 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  * Calendar Events Model class
  */
 class Event_Model extends Model {
+
+
+
+
+
 
 	/**
 	 * Table name
@@ -296,7 +302,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getTeamMembersAttribute() {
-		return $this->get_meta( 'team_members', array() );
+		 return $this->get_meta( 'team_members', array() );
 	}
 
 	/**
@@ -468,7 +474,7 @@ class Event_Model extends Model {
 	 * @return bool
 	 */
 	public function getDynamicDurationAttribute() {
-		return $this->get_meta( 'dynamic_duration', false );
+		 return $this->get_meta( 'dynamic_duration', false );
 	}
 
 	/**
@@ -528,7 +534,7 @@ class Event_Model extends Model {
 	 */
 	public function getConnectedIntegrationsAttribute() {
 		$connected_integrations = array();
-		$integrations           = Integrations_Manager::instance()->get_integrations();
+		$integrations           = \QuillBooking\Managers\Integrations_Manager::instance()->get_integrations();
 
 		$calendar_ids = array( $this->calendar_id );
 		if ( in_array( $this->type, array( 'round-robin', 'collective' ) ) ) {
@@ -537,9 +543,28 @@ class Event_Model extends Model {
 		}
 
 		foreach ( $integrations as $integration_class ) {
-			/** @var \QuillBooking\Abstracts\Integration $integration */
-			$integration   = new $integration_class();
-			$all_connected = true;
+			$integration         = new $integration_class();
+			$all_connected       = true;
+			$has_accounts        = false;
+			$global_settings     = $integration->get_settings();
+			$set_global_settings = false;
+
+			if ( $integration->slug == 'zoom' ) {
+				$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
+				if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['client_id'] ) && ! empty( $app_credentials['client_secret'] ) ) {
+					$set_global_settings = true;
+					$has_accounts        = true;
+				} else {
+					$set_global_settings = false;
+				}
+			} else {
+				$app = Arr::get( $global_settings, 'app', null );
+				if ( $app && is_array( $app ) && ! empty( $app['cache_time'] ) ) {
+					$set_global_settings = true;
+				} else {
+					$set_global_settings = false;
+				}
+			}
 
 			foreach ( $calendar_ids as $calendar_id ) {
 				$integration->set_host( $calendar_id );
@@ -547,13 +572,16 @@ class Event_Model extends Model {
 
 				if ( empty( $accounts ) ) {
 					$all_connected = false;
-					break;
+				} else {
+					$has_accounts = true;
 				}
 			}
 
 			$connected_integrations[ $integration->slug ] = array(
-				'name'      => $integration->name,
-				'connected' => $all_connected,
+				'name'         => $integration->name,
+				'connected'    => $all_connected,
+				'has_accounts' => $has_accounts,
+				'has_settings' => $set_global_settings,
 			);
 		}
 
@@ -633,7 +661,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setSystemFields() {
-		$event_location = $this->location ?? null;
+		 $event_location = $this->location ?? null;
 
 		if ( ! $event_location || ! is_array( $event_location ) ) {
 			throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
@@ -820,8 +848,8 @@ class Event_Model extends Model {
 
 		// Check if WooCommerce integration is enabled
 		$woocommerce_enabled = Arr::get( $payments_settings, 'enable_woocommerce', false );
-		$woo_product_set = Arr::get( $payments_settings, 'woo_product', false );
-		
+		$woo_product_set     = Arr::get( $payments_settings, 'woo_product', false );
+
 		// If WooCommerce is enabled and properly configured, payment is required
 		if ( $woocommerce_enabled && $woo_product_set && class_exists( 'WooCommerce' ) ) {
 			return true;
@@ -829,27 +857,27 @@ class Event_Model extends Model {
 
 		// Check if payment gateways are registered in the system
 		$payment_gateways_manager = \QuillBooking\Managers\Payment_Gateways_Manager::instance();
-		$payment_gateways = $payment_gateways_manager->get_items();
-		
+		$payment_gateways         = $payment_gateways_manager->get_items();
+
 		// If no payment gateways are registered or available, we can't require payment
-		if (empty($payment_gateways)) {
+		if ( empty( $payment_gateways ) ) {
 			// Log this issue since it's a configuration problem
-			error_log('QuillBooking: Payment is enabled but no payment gateways are registered in the system.');
+			error_log( 'QuillBooking: Payment is enabled but no payment gateways are registered in the system.' );
 			return false;
 		}
 
 		// Check if at least one payment gateway is enabled for this event
 		$gateway_enabled = false;
-		foreach ($payment_gateways as $gateway) {
-			if (Arr::get($payments_settings, 'enable_' . $gateway->slug, false)) {
+		foreach ( $payment_gateways as $gateway ) {
+			if ( Arr::get( $payments_settings, 'enable_' . $gateway->slug, false ) ) {
 				$gateway_enabled = true;
 				break;
 			}
 		}
-		
-		if (!$gateway_enabled) {
+
+		if ( ! $gateway_enabled ) {
 			// Instead of throwing an exception, we'll just log and return false
-			error_log('QuillBooking: Payment is enabled but no payment gateway is selected for this event.');
+			error_log( 'QuillBooking: Payment is enabled but no payment gateway is selected for this event.' );
 			return false;
 		}
 
@@ -1237,15 +1265,15 @@ class Event_Model extends Model {
 				break;
 			case 'round-robin':
 			case 'collective':
-					$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
+				$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
 
-					$slots_query->whereIn( 'calendar_id', $team_members )
-							->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
-							->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
+				$slots_query->whereIn( 'calendar_id', $team_members )
+					->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
+					->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
 
-					// For round-robin, set the number of event spots.
+				// For round-robin, set the number of event spots.
 				if ( 'round-robin' === $this->type ) {
-							$event_spots = count( $team_members );
+					$event_spots = count( $team_members );
 				}
 				break;
 		}
@@ -1329,7 +1357,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public static function boot() {
-		parent::boot();
+		 parent::boot();
 
 		static::creating(
 			function ( $event ) {

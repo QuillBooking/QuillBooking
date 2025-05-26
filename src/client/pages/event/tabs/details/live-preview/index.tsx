@@ -83,8 +83,10 @@ const LivePreview: React.FC<LivePreviewProps> = ({
 					<span className="text-[16px] text-[#1A1A1A99] font-[500] capitalize">
 						{locations.map((loc, index) => (
 							<span key={index}>
-								{loc.type.split('_').join(' ')}
-								{index !== locations.length - 1 && ', '}
+								{loc.type === 'custom'
+									? loc.fields.location
+									: loc.type.split('_').join(' ')}
+								{index !== locations.length - 1 && ' | '}
 							</span>
 						))}
 					</span>

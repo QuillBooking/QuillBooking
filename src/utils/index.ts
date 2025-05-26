@@ -1,7 +1,7 @@
 import { isToday, isTomorrow } from 'date-fns';
 import { format, fromZonedTime, toZonedTime } from 'date-fns-tz';
 
-import { Booking, DateOverrides } from '@quillbooking/client';
+import { Booking, DateOverrides, Location } from '@quillbooking/client';
 
 export const getCurrentTimeInTimezone = (timezone: string): string => {
 	const options: Intl.DateTimeFormatOptions = {
@@ -136,4 +136,72 @@ export function isValidDateOverrides(dateOverrides: DateOverrides) {
 			);
 		});
 	});
+}
+
+export function get_location(
+	event_locations: Location[],
+	location_type: string,
+	location_data?: string
+) {
+	// Handle attendee-specific cases first
+	if (location_type === 'attendee_address' && location_data) {
+		return {
+			label: 'Attendee Address',
+			value: location_data,
+			type: location_type
+		};
+	}
+
+	if (location_type === 'attendee_phone' && location_data) {
+		return {
+			label: 'Attendee Phone',
+			value: location_data,
+			type: location_type
+		};
+	}
+
+	// Find the matching location
+	const location = event_locations.find(loc => {
+		// If location has an ID, it matches
+		if (loc.id) return true;
+
+		// Otherwise, match by type
+		return loc.type === location_type;
+	});
+
+	if (!location) {
+		return null; // No matching location found
+	}
+
+	// Handle ID-based locations
+	if (location.id) {
+		return {
+			label: location.fields.location || '',
+			value: location.fields.description || '',
+			type: location.type,
+			id: location.id
+		};
+	}
+
+	// Handle type-based locations
+	const locationMap = {
+		person_address: () => ({
+			label: 'Person Address',
+			value: location.fields.location || '',
+			type: location.type
+		}),
+		person_phone: () => ({
+			label: 'Person Phone',
+			value: location.fields.phone || '',
+			type: location.type
+		}),
+		online: () => ({
+			label: 'Online',
+			value: location.fields.meeting_url || '',
+			type: location.type
+		})
+	};
+
+	const locationBuilder = locationMap[location_type];
+	return locationBuilder ? locationBuilder() : null;
 }

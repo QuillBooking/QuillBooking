@@ -64,19 +64,22 @@ const TimePicker: React.FC<TimePickerProps> = ({
 		if (spots === 1) {
 			return (
 				<span className="time-slot-spots time-slot-spots-single">
-					{__('Last spot!', 'quillbooking')}
+					<span>1</span>
+					<span>{__('last spot', 'quillbooking')}</span>
 				</span>
 			);
 		} else if (spots < 5) {
 			return (
 				<span className="time-slot-spots time-slot-spots-few">
-					{spots} {__('spots left', 'quillbooking')}
+					<span>{spots}</span>
+					<span>{__('spots left', 'quillbooking')}</span>
 				</span>
 			);
 		} else {
 			return (
 				<span className="time-slot-spots">
-					{spots} {__('spots available', 'quillbooking')}
+					<span>{spots}</span>
+					<span>{__('spots available', 'quillbooking')}</span>
 				</span>
 			);
 		}

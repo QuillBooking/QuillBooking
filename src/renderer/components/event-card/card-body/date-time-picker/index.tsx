@@ -36,7 +36,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 		string | null
 	>(null);
 
-	const isTimezoneLocked = event.limits_data.timezone_lock.enable;
+	const isTimezoneLocked = event.limits_data?.timezone_lock?.enable ?? false;
 
 	return (
 		<div className="date-time-container">

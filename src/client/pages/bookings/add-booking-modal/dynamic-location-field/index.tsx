@@ -46,14 +46,7 @@ const DynamicLocationFields = ({ locations }: DynamicLocationFieldsProps) => {
 											name="location-data"
 											label={
 												<div className="form-label">
-													<p>
-														{field.label}
-														{field.required && (
-															<span className="required">
-																*
-															</span>
-														)}
-													</p>
+													<p>{field.label}</p>
 												</div>
 											}
 											rules={
@@ -68,6 +61,7 @@ const DynamicLocationFields = ({ locations }: DynamicLocationFieldsProps) => {
 											}
 										>
 											<Input
+												size="large"
 												placeholder={field.placeholder}
 											/>
 										</Form.Item>

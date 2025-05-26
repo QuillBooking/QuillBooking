@@ -56,7 +56,11 @@ const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 				/>
 				<InfoItem
 					title={__('Event Location', 'quillbooking')}
-					content={booking.location.split('_').join(' ')}
+					content={
+						booking.location['label'] +
+						': ' +
+						booking.location['value']
+					}
 					icon={
 						<LocationIcon width={24} height={24} rectFill={false} />
 					}

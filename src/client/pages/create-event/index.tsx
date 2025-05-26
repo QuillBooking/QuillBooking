@@ -22,7 +22,6 @@ import {
  * Internal dependencies
  */
 import {
-	CollectiveIcon,
 	GroupIcon,
 	Header,
 	RoundRobinIcon,
@@ -32,17 +31,12 @@ import {
 	ColorSelector,
 	NoticeBanner,
 } from '@quillbooking/components';
-import {
-	useApi,
-	useNotice,
-	useNavigate,
-	useCurrentUser,
-} from '@quillbooking/hooks';
+import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import type {
 	Event,
-	AdditionalSettings,
 	Host,
 	NoticeMessage,
+	GroupSettings,
 } from '@quillbooking/client';
 import './style.scss';
 
@@ -68,10 +62,8 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 }) => {
 	const [current, setCurrent] = useState(0);
 	const { callApi, loading } = useApi();
-	const currentUser = useCurrentUser();
-	const { successNotice, errorNotice } = useNotice();
+	const { successNotice } = useNotice();
 	const navigate = useNavigate();
-	const [selectedUser, setSelectedUser] = useState<number>(0);
 	const [teamMembers, setTeamMembers] = useState<Host[]>([]);
 	const [event, setEvent] = useState<Partial<Event>>({
 		name: '',
@@ -91,6 +83,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 			default_duration: 15,
 			allow_attendees_to_select_duration: false,
 			allow_additional_guests: false,
+		},
+		group_settings: {
+			max_invites: 2,
+			show_remaining: true,
 		},
 	});
 
@@ -178,34 +174,23 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 		setEvent({ ...event, [key]: value });
 	};
 
-	const handleAdditionalSettingsChange = (
-		key: keyof AdditionalSettings,
+	const handleGroupSettingsChange = (
+		key: keyof GroupSettings,
 		value: any
 	) => {
-		if (!event.additional_settings) {
-			// Initialize additional_settings if it doesn't exist
-			setEvent({
-				...event,
-				additional_settings: {
-					max_invitees: 1,
-					show_remaining: true,
-					selectable_durations: [],
-					default_duration: 15,
-					allow_attendees_to_select_duration: false,
-					allow_additional_guests: false,
-					[key]: value,
-				},
-			});
-		} else {
-			// Update existing additional_settings
-			setEvent({
-				...event,
-				additional_settings: {
-					...event.additional_settings,
-					[key]: value,
-				},
-			});
-		}
+		setEvent({
+			...event,
+			group_settings: {
+				max_invites:
+					key === 'max_invites'
+						? value
+						: (event.group_settings?.max_invites ?? 2),
+				show_remaining:
+					key === 'show_remaining'
+						? value
+						: (event.group_settings?.show_remaining ?? true),
+			},
+		});
 	};
 
 	const handleSubmit = async () => {
@@ -670,15 +655,15 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 										<Input
 											type="number"
 											value={
-												event.additional_settings
-													?.max_invitees
+												event.group_settings
+													?.max_invites
 											}
-											onChange={(e) =>
-												handleAdditionalSettingsChange(
-													'max_invitees',
+											onChange={(e) => {
+												handleGroupSettingsChange(
+													'max_invites',
 													Number(e.target.value)
-												)
-											}
+												);
+											}}
 											placeholder={__(
 												'Enter Max invitees',
 												'quillbooking'
@@ -688,11 +673,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 									</Flex>
 									<Checkbox
 										checked={
-											event.additional_settings
-												?.show_remaining
+											event.group_settings?.show_remaining
 										}
 										onChange={(e) =>
-											handleAdditionalSettingsChange(
+											handleGroupSettingsChange(
 												'show_remaining',
 												e.target.checked
 											)

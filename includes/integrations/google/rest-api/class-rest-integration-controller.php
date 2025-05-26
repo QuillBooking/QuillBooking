@@ -70,6 +70,12 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 							'required' => true,
 							'context'  => array(),
 						),
+						'cache_time' => array(
+							'label'    => __('Cache Time', 'quillbooking'),
+							'type'     => 'number',
+							'required' => true,
+							'context'  => array('view'),
+						),
 					),
 				),
 				'hosts' => array(

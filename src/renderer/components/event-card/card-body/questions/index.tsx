@@ -2,8 +2,9 @@ import { __ } from '@wordpress/i18n';
 import { Fields } from '../../../../types';
 import './style.scss';
 import LeftArrowIcon from '../../../../icons/left-arrow-icon';
-import { Form } from 'antd';
+import { Form, Spin } from 'antd';
 import FormField from '../../../inputs';
+import { useState } from 'react';
 
 interface QuestionsComponentsProps {
 	fields: Fields;
@@ -17,6 +18,8 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 	onSubmit,
 }) => {
 	const [form] = Form.useForm();
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
 	const allFields = {
 		...fields.system,
 		...(fields.location['location-select']
@@ -29,9 +32,16 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 		(a, b) => allFields[a].order - allFields[b].order
 	);
 
-	// called when the user clicks “Schedule Event”
-	const handleFinish = (values: Record<string, any>) => {
-		onSubmit(values);
+	// called when the user clicks "Schedule Event"
+	const handleFinish = async (values: Record<string, any>) => {
+		try {
+			setIsSubmitting(true);
+			await onSubmit(values);
+		} catch (error) {
+			console.error('Error submitting form:', error);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
@@ -65,8 +75,22 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 							)
 					)}
 					<Form.Item className="schedule-btn-container">
-						<button className="schedule-btn" type="submit">
-							{__('Schedule Event', '@quillbooking')}
+						<button
+							className="schedule-btn"
+							type="submit"
+							disabled={isSubmitting}
+						>
+							{isSubmitting ? (
+								<>
+									<Spin
+										size="small"
+										style={{ marginRight: '8px' }}
+									/>
+									{__('Scheduling...', '@quillbooking')}
+								</>
+							) : (
+								__('Schedule Event', '@quillbooking')
+							)}
 						</button>
 					</Form.Item>
 				</Form>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Emails: class Emails
  *
@@ -8,6 +9,25 @@
  */
 
 namespace QuillBooking\Emails;
+
+use function add_action;
+use function add_filter;
+use function remove_filter;
+use function get_bloginfo;
+use function get_option;
+use function is_email;
+use function apply_filters;
+use function wp_mail;
+use function wpautop;
+use function make_clickable;
+use function load_template;
+use function trailingslashit;
+use function get_stylesheet_directory;
+use function get_template_directory;
+use function wp_check_invalid_utf8;
+use function wp_pre_kses_less_than;
+use function wp_strip_all_tags;
+use function wp_kses_decode_entities;
 
 /**
  * Emails.
@@ -20,6 +40,8 @@ namespace QuillBooking\Emails;
  * @since 1.0.0
  */
 class Emails {
+
+
 
 	/**
 	 * Store the from address.
@@ -94,12 +116,20 @@ class Emails {
 	public $template;
 
 	/**
+	 * Store the recipient email address.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
+	private $to;
+
+	/**
 	 * Get things going.
 	 *
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-
 		if ( 'none' === $this->get_template() ) {
 			$this->html = false;
 		}
@@ -116,7 +146,6 @@ class Emails {
 	 * @return string The email from name
 	 */
 	public function get_from_name() {
-
 		if ( ! empty( $this->from_name ) ) {
 			$this->from_name = $this->from_name;
 		} else {
@@ -134,11 +163,13 @@ class Emails {
 	 * @return string The email from address.
 	 */
 	public function get_from_address() {
+		// Always use WordPress admin email as the default sender
+		$admin_email = get_option( 'admin_email' );
 
-		if ( ! empty( $this->from_address ) ) {
+		if ( ! empty( $this->from_address ) && $this->from_address !== $this->to ) {
 			$this->from_address = $this->from_address;
 		} else {
-			$this->from_address = get_option( 'admin_email' );
+			$this->from_address = $admin_email;
 		}
 
 		return apply_filters( 'quillbooking_email_from_address', $this->decode_string( $this->from_address ), $this );
@@ -152,7 +183,6 @@ class Emails {
 	 * @return string The email reply-to address.
 	 */
 	public function get_reply_to() {
-
 		if ( ! empty( $this->reply_to ) ) {
 
 			$this->reply_to = $this->reply_to;
@@ -173,7 +203,6 @@ class Emails {
 	 * @return string The email reply-to address.
 	 */
 	public function get_cc() {
-
 		if ( ! empty( $this->cc ) ) {
 
 			$this->cc = $this->cc;
@@ -200,7 +229,6 @@ class Emails {
 	 * @return string The email content type.
 	 */
 	public function get_content_type() {
-
 		if ( ! $this->content_type && $this->html ) {
 			$this->content_type = apply_filters( 'quillbooking_email_default_content_type', 'text/html', $this );
 		} elseif ( ! $this->html ) {
@@ -218,9 +246,10 @@ class Emails {
 	 * @return string The email headers.
 	 */
 	public function get_headers() {
-
 		if ( ! $this->headers ) {
-			$this->headers = "From: {$this->get_from_name()} <{$this->get_from_address()}>\r\n";
+			$from_address = $this->get_from_address();
+
+			$this->headers = "From: {$this->get_from_name()} <{$from_address}>\r\n";
 			if ( $this->get_reply_to() ) {
 				$this->headers .= "Reply-To: {$this->get_reply_to()}\r\n";
 			}
@@ -295,17 +324,19 @@ class Emails {
 	public function send( $to, $subject, $message, $attachments = array() ) {
 		// Don't send if email address is invalid.
 		if ( ! is_email( $to ) ) {
+			error_log( sprintf( '[QuillBooking] Error: Invalid recipient email address: %s', $to ) );
 			return false;
 		}
+
+		// Store recipient for later use
+		$this->to = $to;
 
 		// Hooks before email is sent.
 		do_action( 'quillbooking_email_send_before', $this );
 
-		/*
-		 * Allow to filter data on per-email basis,
-		 * useful for localizations based on recipient email address, form settings,
-		 * or for specific notifications - whatever available in Emails class.
-		 */
+		// Reset headers to ensure they are regenerated with correct from address
+		$this->headers = null;
+
 		$data = apply_filters(
 			'quillbooking_emails_send_email_data',
 			array(
@@ -322,7 +353,7 @@ class Emails {
 		$prepared_subject = $this->get_prepared_subject( $data['subject'] );
 		$prepared_message = $this->build_email( $data['message'] );
 
-		// Let's do this NOW.
+		// Send the email
 		$result = wp_mail(
 			$data['to'],
 			$prepared_subject,
@@ -343,8 +374,7 @@ class Emails {
 	 * @since 1.0.0
 	 */
 	public function send_before() {
-
-		add_filter( 'wp_mail_from', array( $this, 'get_from_address' ) );
+		 add_filter( 'wp_mail_from', array( $this, 'get_from_address' ) );
 		add_filter( 'wp_mail_from_name', array( $this, 'get_from_name' ) );
 		add_filter( 'wp_mail_content_type', array( $this, 'get_content_type' ) );
 	}
@@ -355,7 +385,6 @@ class Emails {
 	 * @since 1.0.0
 	 */
 	public function send_after() {
-
 		remove_filter( 'wp_mail_from', array( $this, 'get_from_address' ) );
 		remove_filter( 'wp_mail_from_name', array( $this, 'get_from_name' ) );
 		remove_filter( 'wp_mail_content_type', array( $this, 'get_content_type' ) );
@@ -388,7 +417,6 @@ class Emails {
 	 * @return string When filtering return 'none' to switch to text/plain email.
 	 */
 	public function get_template() {
-
 		if ( ! $this->template ) {
 			$this->template = 'default';
 		}
@@ -478,7 +506,6 @@ class Emails {
 	 * @return array
 	 */
 	public function get_theme_template_paths() {
-
 		$template_dir = 'quillbooking-email';
 
 		$file_paths = array(

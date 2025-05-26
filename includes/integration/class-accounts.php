@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Integration Accounts
  *
@@ -56,20 +57,36 @@ class Accounts {
 	 * @return array
 	 */
 	public function get_cache_data( $account_id, $key, $callback, $cache_time = null ) {
+
+		error_log( 'Account ID: ' . $account_id );
+
+		error_log( 'Cache time is before: ' . $cache_time );
+
 		if ( $cache_time == null ) {
 			$cache_time = MINUTE_IN_SECONDS * 5;
+		} else {
+			$cache_time = $cache_time * MINUTE_IN_SECONDS;
 		}
+
+		error_log( 'Cache time is after: ' . $cache_time );
 
 		$cache_key = "{$this->integration->slug}_cache_$account_id";
 		$cache     = $this->integration->host->get_meta( $cache_key, array() );
 		$cached    = Arr::get( $cache, $key );
+
+		$current_time = time();
+		$cached_time  = Arr::get( $cached, 'time' );
+		$is_valid     = $cached_time > $current_time - $cache_time;
+
+		error_log( "Current time: $current_time, Cached time: $cached_time, Cache valid: " . ( $is_valid ? 'yes' : 'no' ) . ", Cache time: $cache_time" );
 
 		if ( ! empty( $cached ) && Arr::get( $cached, 'time' ) > time() - $cache_time ) {
 			error_log( 'Using cache: ' . wp_json_encode( $cached['data'] ) );
 			return $cached['data'];
 		}
 
-		$data          = $callback();
+		$data = $callback();
+		error_log( "Cache UPDATED for key $key at time " . time() );
 		$cache[ $key ] = array(
 			'time' => time(),
 			'data' => $data,

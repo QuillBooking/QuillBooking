@@ -115,6 +115,7 @@ export type AdditionalSettings = {
 
 export type Location = {
 	type: string;
+	id?: string;
 	fields: {
 		[key: string]: string;
 	};

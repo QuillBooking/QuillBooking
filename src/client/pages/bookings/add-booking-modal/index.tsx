@@ -26,7 +26,12 @@ import {
 	AddCalendarOutlinedIcon,
 	TimezoneSelect,
 } from '@quillbooking/components';
-import { fetchAjax, getCurrentTimezone, getFields } from '@quillbooking/utils';
+import {
+	fetchAjax,
+	get_location,
+	getCurrentTimezone,
+	getFields,
+} from '@quillbooking/utils';
 import {
 	Booking,
 	Calendar,
@@ -36,7 +41,6 @@ import {
 } from 'client/types';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { CurrentTimeInTimezone } from '@quillbooking/components';
-import { DynamicFormField } from '@quillbooking/components';
 import QuestionsComponents from './questions';
 
 interface AddBookingModalProps {
@@ -211,38 +215,43 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			values;
 
 		const fields = getFields(values);
-		const location = form.getFieldValue('fields-location-select');
-		console.log('location', location);
+		const location = form.getFieldValue('location');
+		const location_data = form.getFieldValue('location-data');
+		const locationField = get_location(
+			event.location,
+			location,
+			location_data
+		);
 		const startDateTime =
 			selectDate.clone().format('YYYY-MM-DD') + ` ${selectTime}:00`;
-
-		// try {
-		// 	await form.validateFields();
-		// 	await callApi({
-		// 		path: 'bookings',
-		// 		method: 'POST',
-		// 		data: {
-		// 			event_id: event,
-		// 			start_date: startDateTime,
-		// 			slot_time: duration,
-		// 			timezone: currentTimezone,
-		// 			fields,
-		// 			name,
-		// 			email,
-		// 			status,
-		// 			ignore_availability: ignoreAvailability,
-		// 		},
-		// 		onSuccess: () => {
-		// 			onSaved();
-		// 			onClose();
-		// 		},
-		// 		onError: () => {
-		// 			errorNotice('error adding booking');
-		// 		},
-		// 	});
-		// } catch (error) {
-		// 	errorNotice('Validation failed');
-		// }
+		try {
+			await form.validateFields();
+			await callApi({
+				path: 'bookings',
+				method: 'POST',
+				data: {
+					event_id: event,
+					start_date: startDateTime,
+					slot_time: duration,
+					timezone: currentTimezone,
+					fields,
+					name,
+					email,
+					status,
+					ignore_availability: ignoreAvailability,
+					location: locationField,
+				},
+				onSuccess: () => {
+					onSaved();
+					onClose();
+				},
+				onError: () => {
+					errorNotice('error adding booking');
+				},
+			});
+		} catch (error) {
+			errorNotice('Validation failed');
+		}
 	};
 
 	useEffect(() => {
@@ -442,7 +451,10 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 								>
 									{selectedEvent.hosts &&
 										selectedEvent.hosts.map((host) => (
-											<Option value={host.id} key={host.id}>
+											<Option
+												value={host.id}
+												key={host.id}
+											>
 												{host.name}
 											</Option>
 										))}

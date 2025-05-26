@@ -1,61 +1,73 @@
-import { Checkbox, Form, Input } from 'antd';
+import { Form, Input } from 'antd';
 
-const renderField = (field) => {
-	switch (field.type) {
-		case 'text':
-			return <Input size='large' placeholder={field.desc} />;
-		case 'checkbox':
-			return <Checkbox>{field.desc}</Checkbox>;
-		case 'url':
-			return <Input size='large' type="url" placeholder={field.desc} />;
-		default:
-			return <Input size='large' placeholder={field.desc} />;
-	}
-};
 /**
  * Renders dynamic fields for a selected location type
  */
 interface Field {
 	label: string;
-	desc: string;
 	type: string;
 	required?: boolean;
+	placeholder?: string;
+}
+
+interface Option {
+	value: string;
+	label: string;
+	fields?: Record<string, Field>;
 }
 
 interface DynamicLocationFieldsProps {
-	fieldKey?: string;
-	locationFields: Record<string, Field>;
+	locations: Option[];
 }
 
-const DynamicLocationFields = ({
-	fieldKey = 'location-select',
-	locationFields,
-}: DynamicLocationFieldsProps) => {
+const DynamicLocationFields = ({ locations }: DynamicLocationFieldsProps) => {
+	console.log(locations);
 	return (
 		<Form.Item noStyle shouldUpdate>
 			{({ getFieldValue }) => {
-				const selectedType = getFieldValue('fields-location-select');
-				if (!locationFields[selectedType]) return null;
-				const field = locationFields[selectedType];
+				const selectedType = getFieldValue('location');
+				console.log(selectedType);
+				if (
+					selectedType !== 'attendee_address' &&
+					selectedType !== 'attendee_phone'
+				)
+					return null;
 
 				return (
 					<>
-						<Form.Item
-							key={fieldKey}
-							name={['field-', fieldKey]}
-							label={
-								<div className="form-label">
-									<p className='text-[14px]'>
-										{field.label}
-										{field.required && (
-											<span className="required">*</span>
-										)}
-									</p>
-								</div>
-							}
-						>
-							{renderField(field)}
-						</Form.Item>
+						{locations.map(
+							(location) =>
+								location.value === selectedType &&
+								location.fields &&
+								Object.entries(location.fields).map(
+									([_, field]) => (
+										<Form.Item
+											key="location-data"
+											name="location-data"
+											label={
+												<div className="form-label">
+													<p>{field.label}</p>
+												</div>
+											}
+											rules={
+												field.required
+													? [
+															{
+																required: true,
+																message: `${field.label} is required`,
+															},
+														]
+													: []
+											}
+										>
+											<Input
+												size="large"
+												placeholder={field.placeholder}
+											/>
+										</Form.Item>
+									)
+								)
+						)}
 					</>
 				);
 			}}

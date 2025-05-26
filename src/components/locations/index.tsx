@@ -570,9 +570,9 @@ const Locations: React.FC<{
 							handleCheckboxChange('zoom', e.target.checked)
 						}
 						disabled={
-							(!connected_integrations.zoom.connected ||
-								!connected_integrations.zoom.has_settings ||
-								(connected_integrations.zoom.connected &&
+							((!connected_integrations.zoom.has_settings &&
+								!connected_integrations.zoom.has_accounts) ||
+								(!connected_integrations.zoom.connected &&
 									!connected_integrations.zoom
 										.has_accounts)) &&
 							!locations.some((loc) => loc.type === 'zoom')

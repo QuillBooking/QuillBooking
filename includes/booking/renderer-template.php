@@ -45,7 +45,7 @@ defined( 'ABSPATH' ) || exit;
 	// Render the correct root div for React or PHP template
 	if ( isset( $_GET['type'] ) && $_GET['type'] === 'reschedule' ) {
 		echo '<div id="quillbooking-reschedule-page"></div>';
-	} elseif ( isset( $_GET['type'] ) && $_GET['type'] === 'confrim' || isset( $_GET['type'] ) && $_GET['type'] === 'cancel' ) {
+	} elseif ( ! isset( $_GET['type'] ) || ( $_GET['type'] !== 'reschedule' && $_GET['type'] !== 'confirm' && $_GET['type'] !== 'cancel' ) ) {
 		echo '<div id="quillbooking-booking-page"></div>';
 	}
 	?>

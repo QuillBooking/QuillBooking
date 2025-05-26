@@ -500,7 +500,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 												)}
 											</span>
 											{__(
-												'for a Ccheduled event with',
+												'for a Scheduled event with',
 												'quillbooking'
 											)}
 											<span className="font-semibold ml-1">

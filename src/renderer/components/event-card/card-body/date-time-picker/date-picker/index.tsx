@@ -34,7 +34,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 	setSelectedAvailability,
 	ajax_url,
 	selectedDuration,
-	setSelectedTime
+	setSelectedTime,
 }) => {
 	const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
 	useEffect(() => {
@@ -62,10 +62,23 @@ const DatePicker: React.FC<DatePickerProps> = ({
 			});
 			if (response.ok) {
 				const data = await response.json();
-				setSelectedAvailability(data.data.slots);
+				// Verify that data.data.slots exists and is valid
+				if (data && data.data && data.data.slots) {
+					setSelectedAvailability(data.data.slots);
+				} else {
+					console.error('Invalid slots data received:', data);
+					setSelectedAvailability({}); // Set empty object to prevent null errors
+				}
+			} else {
+				console.error(
+					'Error fetching availability: Server returned',
+					response.status
+				);
+				setSelectedAvailability({});
 			}
 		} catch (error) {
 			console.error('Error fetching availability:', error);
+			setSelectedAvailability({});
 		}
 	};
 
@@ -79,9 +92,10 @@ const DatePicker: React.FC<DatePickerProps> = ({
 		const isSameDay =
 			selectedDate &&
 			value.format('YYYY-MM-DD') === selectedDate.format('YYYY-MM-DD');
-		const isAvailable =
+		const availableSlots =
 			selectedAvailability &&
-			selectedAvailability[value.format('YYYY-MM-DD')] !== undefined;
+			selectedAvailability[value.format('YYYY-MM-DD')];
+		const isAvailable = availableSlots !== undefined;
 		const isCurrentDay = value.isSame(dayjs(), 'day');
 
 		const className = isSameDay

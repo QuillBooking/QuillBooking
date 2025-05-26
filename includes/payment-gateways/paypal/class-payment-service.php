@@ -31,7 +31,12 @@ class Payment_Service extends Abstract_Payment_Service {
 			wp_send_json_error( $payment_url->get_error_message() );
 		}
 
-		wp_send_json_success( $payment_url );
+		wp_send_json_success(
+			array(
+				'redirect_url' => $payment_url,
+				'booking'      => $this->booking,
+			)
+		);
 	}
 
 	/**
@@ -170,13 +175,13 @@ class Payment_Service extends Abstract_Payment_Service {
 	}
 
 		/**
-	 * Set booking for the payment service.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param \QuillBooking\Models\Booking_Model $booking The booking model.
-	 * @return self
-	 */
+		 * Set booking for the payment service.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param \QuillBooking\Models\Booking_Model $booking The booking model.
+		 * @return self
+		 */
 	public function set_booking( $booking ) {
 		$this->booking       = $booking;
 		$this->mode_settings = $this->payment_gateway->get_mode_settings();

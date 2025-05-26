@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Locations Manager
  * This class is responsible for handling the locations manager
@@ -18,6 +19,7 @@ use QuillBooking\Traits\Singleton;
  * Locations Manager class
  */
 class Locations_Manager extends Manager {
+
 
 	use Singleton;
 
@@ -64,5 +66,36 @@ class Locations_Manager extends Manager {
 	 */
 	public function get_locations() {
 		return $this->get_items();
+	}
+
+	public function get_location_label( $location ) {
+
+		if ( ! $location ) {
+			return null;
+		}
+
+		$location_fields = $location['fields'] ?? array();
+
+		if ( empty( $location_fields ) ) {
+			return $this->get_location( $location['type'] )->title;
+		}
+
+		if ( isset( $location_fields['display_on_booking'] ) && $location_fields['display_on_booking'] ) {
+			switch ( $location['type'] ) {
+				case 'online':
+					return $location_fields['meeting_url'];
+				case 'person_address':
+					return $location_fields['location'];
+				case 'person_phone':
+					return $location_fields['phone'];
+				case 'custom':
+					return $location_fields['description'];
+			}
+		} else {
+			if ( $location['type'] === 'custom' ) {
+				return $location_fields['location'];
+			}
+			return $this->get_location( $location['type'] )->title;
+		}
 	}
 }

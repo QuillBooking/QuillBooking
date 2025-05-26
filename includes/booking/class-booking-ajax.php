@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Booking Ajax
  * Handles the booking ajax actions
@@ -15,6 +16,7 @@ use QuillBooking\Booking_Service;
 
 
 class Booking_Ajax {
+
 
 	// --- Dependency Properties ---
 	private string $bookingValidatorClass;
@@ -45,7 +47,7 @@ class Booking_Ajax {
 	 * @return void
 	 */
 	public function booking() {
-		// check_ajax_referer( 'quillbooking', 'nonce' );
+		 // check_ajax_referer( 'quillbooking', 'nonce' );
 
 		try {
 			$id    = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
@@ -70,7 +72,7 @@ class Booking_Ajax {
 			$duration = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : $event->duration;
 			$duration = $this->bookingValidatorClass::validate_duration( $duration, $event->duration );
 
-			$location = isset( $_POST['location'] ) ? sanitize_text_field( $_POST['location'] ) : null;
+			$location = isset( $_POST['location'] ) ? json_decode( stripslashes( $_POST['location'] ), true ) : null;
 			if ( ! $location ) {
 				throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
 			}
@@ -105,7 +107,7 @@ class Booking_Ajax {
 
 			$fields = array();
 			if ( isset( $_POST['fields'] ) ) {
-				$fields = json_decode(wp_unslash($_POST['fields']), true);
+				$fields = json_decode( wp_unslash( $_POST['fields'] ), true );
 			}
 
 			$calendar_id = $event->calendar_id;
@@ -131,7 +133,7 @@ class Booking_Ajax {
 	 * @return void
 	 */
 	public function booking_details() {
-		// check_ajax_referer( 'quillbooking', 'nonce' );
+		 // check_ajax_referer( 'quillbooking', 'nonce' );
 
 		try {
 			$id          = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
@@ -170,7 +172,7 @@ class Booking_Ajax {
 	 * @return void
 	 */
 	public function ajax_cancel_booking() {
-		// check_ajax_referer( 'quillbooking', 'nonce' );
+		 // check_ajax_referer( 'quillbooking', 'nonce' );
 
 		try {
 			$id                  = isset( $_POST['id'] ) ? sanitize_text_field( $_POST['id'] ) : null;
@@ -212,7 +214,7 @@ class Booking_Ajax {
 	 * @return void
 	 */
 	public function ajax_reschedule_booking() {
-		// check_ajax_referer( 'quillbooking', 'nonce' );
+		 // check_ajax_referer( 'quillbooking', 'nonce' );
 
 		try {
 			$id                = isset( $_POST['id'] ) ? sanitize_text_field( $_POST['id'] ) : null;
@@ -315,14 +317,14 @@ class Booking_Ajax {
 			if ( ! isset( $event->payments_settings[ $method_enabled_key ] ) || ! $event->payments_settings[ $method_enabled_key ] ) {
 				throw new \Exception( __( 'Selected payment method is not available', 'quillbooking' ) );
 			}
-			
+
 			// Additional validation for WooCommerce payment method
 			if ( 'woocommerce' === $payment_method ) {
 				// Check if WooCommerce is active
 				if ( ! class_exists( 'WooCommerce' ) ) {
 					throw new \Exception( __( 'WooCommerce is not active', 'quillbooking' ) );
 				}
-				
+
 				// Check if product is set
 				if ( ! isset( $event->payments_settings['woo_product'] ) || empty( $event->payments_settings['woo_product'] ) ) {
 					throw new \Exception( __( 'No WooCommerce product configured for this event', 'quillbooking' ) );

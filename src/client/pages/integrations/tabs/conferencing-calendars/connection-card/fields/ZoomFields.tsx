@@ -1,17 +1,9 @@
 import { __ } from '@wordpress/i18n';
-import {
-	Flex,
-	Form,
-	Input,
-	Divider,
-	Typography,
-	Skeleton,
-	Button,
-	message,
-} from 'antd';
+import { Flex, Form, Input, Divider, Typography, Skeleton, Button } from 'antd';
 import { useEffect, useState } from 'react';
 import { useApi, useNotice } from '@quillbooking/hooks';
-import { useNavigate, useLocation } from 'react-router-dom';
+
+import { NavLink } from '@quillbooking/navigation';
 
 const { Text } = Typography;
 
@@ -38,12 +30,9 @@ const ZoomFields = ({
 }) => {
 	const { callApi } = useApi();
 	const { errorNotice, successNotice } = useNotice();
-	const navigate = useNavigate();
-	const location = useLocation();
 	const [loadingAccount, setLoadingAccount] = useState(false);
 	const [accountData, setAccountData] = useState<ZoomAccount | null>(null);
 	const [saving, setSaving] = useState(false);
-	const [isNavigating, setIsNavigating] = useState(false);
 
 	// Fetch Zoom account data on component mount
 	useEffect(() => {
@@ -120,64 +109,6 @@ const ZoomFields = ({
 				setSaving(false);
 			},
 		});
-	};
-
-	const handleNavigateToIntegration = async () => {
-		if (!calendar?.id) {
-			message.error({
-				content: __(
-					'No calendar selected. Please select a calendar first.',
-					'quillbooking'
-				),
-				key: 'navigate',
-			});
-			return;
-		}
-
-		try {
-			setIsNavigating(true);
-
-			// Show loading message
-			message.loading({
-				content: __(
-					'Preparing to navigate to integration...',
-					'quillbooking'
-				),
-				key: 'navigate',
-				duration: 0,
-			});
-
-			// Small delay to show loading state and ensure smooth transition
-			await new Promise((resolve) => setTimeout(resolve, 300));
-
-			// Navigate to the full path
-			const path = `calendars/${calendar.id}`;
-			navigate(
-				`/wordpress/wp-admin/admin.php?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=zoom`
-			);
-
-			// Show success message briefly
-			message.success({
-				content: __(
-					'Navigating to integration settings...',
-					'quillbooking'
-				),
-				key: 'navigate',
-				duration: 1,
-			});
-		} catch (error) {
-			console.error('Navigation error:', error);
-			message.error({
-				content: __(
-					'Failed to navigate to integration settings. Please try again.',
-					'quillbooking'
-				),
-				key: 'navigate',
-				duration: 3,
-			});
-		} finally {
-			setIsNavigating(false);
-		}
 	};
 
 	// Custom save handler for Zoom integration
@@ -346,15 +277,18 @@ const ZoomFields = ({
 				)}
 
 				{calendar?.id && (
-					<Button
-						type="link"
-						onClick={handleNavigateToIntegration}
-						loading={isNavigating}
-						className="flex items-center gap-2 hover:text-blue-600 transition-colors mt-4"
-						disabled={!calendar?.id}
+					<NavLink
+						to={`calendars/${calendar.id}&tab=integrations&subtab=zoom`}
 					>
+						<span className="text-blue-500 hover:text-blue-600 transition-colors font-medium cursor-pointer">
+							{__('Manage accounts', 'quillbooking')}
+						</span>
+					</NavLink>
+				)}
+				{!calendar?.id && (
+					<span className="text-gray-400 cursor-not-allowed font-medium">
 						{__('Manage accounts', 'quillbooking')}
-					</Button>
+					</span>
 				)}
 			</Flex>
 		</div>

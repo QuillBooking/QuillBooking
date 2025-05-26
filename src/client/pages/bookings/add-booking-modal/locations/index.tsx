@@ -63,23 +63,37 @@ const Locations = ({ locationFields }: LocationsProps) => {
 							placeholder?: string;
 						};
 						return (
-							<Form.Item
-								key={fieldKey}
-								name={['field', fieldKey]}
-								label={
-									<div className="form-label">
-										<p>
-											{typedField.label}
-											<span className="required">*</span>
-										</p>
-									</div>
-								}
-							>
-								<Input
-									placeholder={typedField.placeholder}
-									type={typedField.type}
-								/>
-							</Form.Item>
+							<>
+								<Form.Item
+									key="location"
+									name="location"
+									initialValue={
+										locationFields.options[0].value
+									}
+									style={{ display: 'none' }}
+								>
+									<Input type="hidden" />
+								</Form.Item>
+								<Form.Item
+									key={fieldKey}
+									name={['field', fieldKey]}
+									label={
+										<div className="form-label">
+											<p>
+												{typedField.label}
+												<span className="required">
+													*
+												</span>
+											</p>
+										</div>
+									}
+								>
+									<Input
+										placeholder={typedField.placeholder}
+										type={typedField.type}
+									/>
+								</Form.Item>
+							</>
 						);
 					}
 				)

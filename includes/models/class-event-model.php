@@ -31,6 +31,8 @@ class Event_Model extends Model {
 
 
 
+
+
 	/**
 	 * Table name
 	 *
@@ -126,6 +128,7 @@ class Event_Model extends Model {
 		'dynamic_duration',
 		'location',
 		'additional_settings',
+		'group_settings',
 		'booking_count',
 		'connected_integrations',
 		'price',

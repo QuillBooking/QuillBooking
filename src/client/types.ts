@@ -56,6 +56,8 @@ export type CalendarResponse = Response & {
 export type ConnectedIntegrationsFields = {
 	name: string;
 	connected: boolean;
+	has_settings: boolean;
+	has_accounts: boolean;
 };
 
 export type Event = {

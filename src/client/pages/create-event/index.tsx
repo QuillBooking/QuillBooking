@@ -707,26 +707,36 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								}}
 								onKeepDialogOpen={() => setVisible(true)}
 								connected_integrations={
-									event.connected_integrations || {
+									event.connected_integrations ?? {
 										apple: {
 											name: 'apple',
 											connected: false,
+											has_settings: false,
+											has_accounts: false,
 										},
 										google: {
 											name: 'google',
 											connected: false,
+											has_settings: false,
+											has_accounts: false,
 										},
 										outlook: {
 											name: 'outlook',
 											connected: false,
+											has_settings: false,
+											has_accounts: false,
 										},
 										twilio: {
 											name: 'twilio',
 											connected: false,
+											has_settings: false,
+											has_accounts: false,
 										},
 										zoom: {
 											name: 'zoom',
 											connected: false,
+											has_settings: false,
+											has_accounts: false,
 										},
 									}
 								}

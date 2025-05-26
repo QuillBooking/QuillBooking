@@ -140,6 +140,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 			if (event) {
 				setIsInitialLoading(false);
 			}
+			console.log('Event Details Component Mounted', event);
 		}, [event]);
 
 		// Implement useImperativeHandle to expose the saveSettings method
@@ -382,6 +383,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 											)
 										}
 										onKeepDialogOpen={onKeepDialogOpen}
+										calendar={event.calendar}
 									/>
 								</Flex>
 							</Flex>

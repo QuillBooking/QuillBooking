@@ -8,7 +8,7 @@ import { useEffect, useState } from '@wordpress/element';
  * External dependencies
  */
 import { Card } from 'antd';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 /**
  * Internal dependencies
@@ -25,10 +25,21 @@ import {
 import { NoticeMessage } from '@quillbooking/client';
 import SelectionCard from '../../../integrations/tabs/conferencing-calendars/selection-card';
 
-const IntegrationCards: React.FC = () => {
+const IntegrationCards: React.FC<{
+	hasSelectedCalendar: boolean;
+	hasAccounts: boolean;
+	setHasSelectedCalendar: (hasSelectedCalendar: boolean) => void;
+	setHasAccounts: (hasAccounts: boolean) => void;
+}> = ({
+	hasSelectedCalendar,
+	hasAccounts,
+	setHasSelectedCalendar,
+	setHasAccounts,
+}) => {
 	const { id } = useParams<{
 		id: string;
 	}>();
+	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<string | null>(null);
 	const integrations = Object.entries(ConfigAPI.getIntegrations())
 		.filter(([key]) => key !== 'twilio')
@@ -39,15 +50,49 @@ const IntegrationCards: React.FC = () => {
 	const { loading } = useApi();
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 
+	// Handle URL parameters for tab and subtab
 	useEffect(() => {
-		if (integrations.length > 0 && !activeTab) {
+		const urlParams = new URLSearchParams(window.location.search);
+		const tabParam = urlParams.get('tab');
+		const subtabParam = urlParams.get('subtab');
+
+		// If we're in the integrations tab and have a subtab, set it as active
+		if (tabParam === 'integrations' && subtabParam) {
+			setActiveTab(subtabParam);
+		} else if (integrations.length > 0 && !activeTab) {
+			// Otherwise set first integration as default
 			setActiveTab(integrations[0].id);
+		}
+		if (activeTab == 'zoom') {
+			setHasSelectedCalendar(true);
 		}
 	}, [integrations, activeTab]);
 
+	// Handle tab change
+	const handleTabChange = (newTab: string) => {
+		// If we have accounts but no calendar selected, prevent tab change
+		if (hasAccounts && !hasSelectedCalendar) {
+			window.alert(
+				__(
+					'Please select a remote calendar before changing tabs.',
+					'quillbooking'
+				)
+			);
+			return;
+		}
+
+		setActiveTab(newTab);
+		// Update only the subtab parameter while preserving other URL parameters
+		const urlParams = new URLSearchParams(window.location.search);
+		urlParams.set('subtab', newTab);
+		// Keep the current URL path and only update the search params
+		const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+		window.history.pushState({}, '', newUrl);
+	};
+
 	// Find the active integration
-	const activeIntegration = activeTab 
-		? integrations.find(int => int.id === activeTab) 
+	const activeIntegration = activeTab
+		? integrations.find((int) => int.id === activeTab)
 		: null;
 
 	return (
@@ -77,14 +122,17 @@ const IntegrationCards: React.FC = () => {
 					<SelectionCard
 						integrations={integrations}
 						activeTab={activeTab}
-						setActiveTab={setActiveTab}
+						setActiveTab={handleTabChange}
 						isLoading={loading}
 					/>
 					{activeTab && activeIntegration && id && (
 						<IntegrationDetailsPage
 							integration={activeIntegration}
+							setNotice={setNotice}
 							calendarId={id}
 							slug={activeTab}
+							onCalendarSelect={setHasSelectedCalendar}
+							hasAccounts={setHasAccounts}
 						/>
 					)}
 				</div>

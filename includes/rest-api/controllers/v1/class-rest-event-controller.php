@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Rest_Event_Controller
  *
@@ -31,6 +32,7 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  * Event Controller class
  */
 class REST_Event_Controller extends REST_Controller {
+
 
 
 
@@ -1277,7 +1279,7 @@ class REST_Event_Controller extends REST_Controller {
 			'duration'    => $event->duration,
 			'type'        => $event->type,
 			'booking_no'  => $event->id,
-			'location'    => $event->location[0]['type'],
+			'location'    => $event->location,
 			'calendar_id' => $event->calendar_id,
 		);
 

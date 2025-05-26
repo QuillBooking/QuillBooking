@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Email_Notifications
  *
@@ -28,6 +29,7 @@ use QuillBooking\QuillBooking;
  */
 final class Email_Notifications {
 
+
 	/**
 	 * Merge Tags Manager
 	 *
@@ -43,7 +45,7 @@ final class Email_Notifications {
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-		$this->merge_tags_manager = Merge_Tags_Manager::instance();
+		 $this->merge_tags_manager = Merge_Tags_Manager::instance();
 		$this->init_hooks();
 	}
 
@@ -149,7 +151,6 @@ final class Email_Notifications {
 				);
 			}
 		}
-
 	}
 
 	/**
@@ -546,7 +547,16 @@ final class Email_Notifications {
 		$body    = $this->merge_tags_manager->process_merge_tags( $body, $booking );
 
 		$emails = new Emails();
-		return $emails->send( $email, $subject, $body );
+		$result = $emails->send( $email, $subject, $body );
+
+		// Log the result
+		if ( $result ) {
+			error_log( sprintf( '[QuillBooking] Email sent successfully to %s. Subject: %s', $email, $subject ) );
+		} else {
+			error_log( sprintf( '[QuillBooking] Failed to send email to %s. Subject: %s', $email, $subject ) );
+		}
+
+		return $result;
 	}
 
 	/**

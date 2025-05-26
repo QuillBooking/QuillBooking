@@ -15,8 +15,14 @@ import { Card, Flex, Skeleton } from 'antd';
 import { NoticeComponent } from '@quillbooking/components';
 import type { Integration } from '@quillbooking/config';
 
+// Define additional properties that might be on integrations in this context
+type IntegrationWithId = Integration & {
+    id?: string;
+    title?: string;
+};
+
 export interface SelectionCardProps {
-    integrations: Integration[];
+    integrations: IntegrationWithId[];
     activeTab: string | null;
     setActiveTab: (tab: string) => void;
     isLoading?: boolean;
@@ -30,6 +36,11 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
 }) => {
     const [isNoticeVisible, setNoticeVisible] = useState(true);
 
+    // Helper to safely get ID using a fallback approach
+    const getIntegrationId = (integration: IntegrationWithId): string => {
+        return integration.id || integration.name?.toLowerCase().replace(/\s+/g, '-') || '';
+    };
+
     return (
         <Card className="rounded-lg mb-6 w-full">
             <Flex vertical gap={15}>
@@ -40,48 +51,53 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
                 {isLoading ? (
                     <Skeleton active paragraph={{ rows: 2 }} />
                 ) : (
-                    integrations.map((integration) => (
-                        <Card
-                            key={integration.id}
-                            className={`w-full cursor-pointer ${activeTab === integration.id ? 'bg-color-secondary border-color-primary' : ''}`}
-                            onClick={() => {
-                                if (activeTab !== integration.id) {
-                                    setActiveTab(integration.id);
-                                }
-                            }}
-                        >
-                            <Flex gap={18} align="center">
-                                <img
-                                    src={integration.icon}
-                                    alt={`${integration.id}.png`}
-                                    className="size-12"
-                                />
-                                <Flex vertical gap={2}>
-                                    <div
-                                        className={`text-base font-semibold ${activeTab === integration.id ? 'text-color-primary' : 'text-[#3F4254]'}`}
-                                    >
-                                        {integration.title ||
-                                            __(
-                                                integration.id
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                    integration.id.slice(1),
-                                                'quillbooking'
-                                            )}
-                                    </div>
-                                    <div
-                                        className={`text-xs ${activeTab === integration.id ? 'text-color-primary' : 'text-[#9197A4]'}`}
-                                    >
-                                        {integration.description ||
-                                            __(
-                                                'Connect your calendar for scheduling.',
-                                                'quillbooking'
-                                            )}
-                                    </div>
+                    integrations.map((integration) => {
+                        const id = getIntegrationId(integration);
+                        const isActive = activeTab === id;
+                        
+                        return (
+                            <Card
+                                key={id}
+                                className={`w-full cursor-pointer ${isActive ? 'bg-color-secondary border-color-primary' : ''}`}
+                                onClick={() => {
+                                    if (activeTab !== id) {
+                                        setActiveTab(id);
+                                    }
+                                }}
+                            >
+                                <Flex gap={18} align="center">
+                                    <img
+                                        src={integration.icon}
+                                        alt={`${id}.png`}
+                                        className="size-12"
+                                    />
+                                    <Flex vertical gap={2}>
+                                        <div
+                                            className={`text-base font-semibold ${isActive ? 'text-color-primary' : 'text-[#3F4254]'}`}
+                                        >
+                                            {integration.title ||
+                                                __(
+                                                    id
+                                                        .charAt(0)
+                                                        .toUpperCase() +
+                                                        id.slice(1),
+                                                    'quillbooking'
+                                                )}
+                                        </div>
+                                        <div
+                                            className={`text-xs ${isActive ? 'text-color-primary' : 'text-[#9197A4]'}`}
+                                        >
+                                            {integration.description ||
+                                                __(
+                                                    'Connect your calendar for scheduling.',
+                                                    'quillbooking'
+                                                )}
+                                        </div>
+                                    </Flex>
                                 </Flex>
-                            </Flex>
-                        </Card>
-                    ))
+                            </Card>
+                        );
+                    })
                 )}
             </Flex>
         </Card>

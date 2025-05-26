@@ -191,34 +191,29 @@ const LatestBookings: React.FC = () => {
 																		.length >
 																		0 && (
 																		<>
-																			<span>•</span>
-																			<div className="flex flex-wrap gap-1">
-																				{booking.event.location.map(
-																					(
-																						location,
-																						index
-																					) => (
-																						<span
-																							key={
-																								index
-																							}
-																							className="max-w-[150px] truncate capitalize"
-																						>
-																							{
-																								location.type.split('_').join(' ')
-																							}
-																							{index <
-																								booking
-																									.event
-																									.location
-																									.length -
-																									1 &&
-																								', '}
-																						</span>
-																					)
-																				)}
+																			<span>
+																				•
+																			</span>
+																			<div className="text-xs">
+																				{
+																					booking
+																						.location[
+																						'label'
+																					]
+																				}{' '}
+																				{
+																					': '
+																				}
+																				{
+																					booking
+																						.location[
+																						'value'
+																					]
+																				}
 																			</div>
-																			<span>•</span>
+																			<span>
+																				•
+																			</span>
 																		</>
 																	)}
 																	<p>

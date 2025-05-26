@@ -8,7 +8,7 @@ import { Dayjs } from 'dayjs';
 import QuestionsComponents from './questions';
 import Reschedule from '../../reschedule';
 import Payment from './payment';
-import { get } from 'lodash';
+import { filter, get } from 'lodash';
 import { get_location } from '@quillbooking/utils';
 
 interface CardBodyProps {
@@ -154,6 +154,10 @@ const CardBody: React.FC<CardBodyProps> = ({
 			delete filteredValues['name'];
 			delete filteredValues['email'];
 			delete filteredValues['field'];
+			delete filteredValues['location'];
+			if (filteredValues['location-data']) {
+				delete filteredValues['location-data'];
+			}
 
 			if (values['location-select']) {
 				delete filteredValues['location-select'];

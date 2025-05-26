@@ -83,7 +83,7 @@ const Event: React.FC = () => {
 	const [event, setEvent] = useState<EventType | null>(null);
 	const [open, setOpen] = useState(!!id);
 	const [modalShareId, setModalShareId] = useState<string | null>(null);
-	const [saveDisabled, setSaveDisabled] = useState(false);
+	const [saveDisabled, setSaveDisabled] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
 	const location = useLocation();
 	const [notice, setNotice] = useState<NoticeType | null>(null);

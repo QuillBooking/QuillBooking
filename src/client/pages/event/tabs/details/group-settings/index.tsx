@@ -21,14 +21,12 @@ interface GroupSettingsProps {
 		key: 'max_invites' | 'show_remaining',
 		value: number | boolean
 	) => void;
-	disabled?: boolean;
 }
 
 const GroupSettings: React.FC<GroupSettingsProps> = ({
 	maxInvites,
 	showRemaining,
 	onChange,
-	disabled = false,
 }) => {
 	return (
 		<Card className="rounded-lg">
@@ -54,7 +52,6 @@ const GroupSettings: React.FC<GroupSettingsProps> = ({
 						}}
 						placeholder={__('Enter Max invitees', 'quillbooking')}
 						className="h-[48px] rounded-lg"
-						disabled={disabled}
 					/>
 				</Flex>
 				<Checkbox
@@ -63,7 +60,6 @@ const GroupSettings: React.FC<GroupSettingsProps> = ({
 						onChange('show_remaining', e.target.checked)
 					}
 					className="custom-check text-[#5E6278] font-semibold"
-					disabled={disabled}
 				>
 					{__(
 						'Display Remaining Spots on Booking Page',

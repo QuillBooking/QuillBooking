@@ -36,8 +36,9 @@ import type {
 	Event,
 	Host,
 	NoticeMessage,
-	GroupSettings,
+	GroupSettings as GroupSettingsType,
 } from '@quillbooking/client';
+import GroupSettings from '../event/tabs/details/group-settings';
 import './style.scss';
 
 /**
@@ -175,7 +176,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 	};
 
 	const handleGroupSettingsChange = (
-		key: keyof GroupSettings,
+		key: keyof GroupSettingsType,
 		value: any
 	) => {
 		setEvent({
@@ -624,54 +625,18 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 						</Card>
 						{event.type == 'group' && (
 							<Card>
-								<Flex gap={20} vertical>
-									<Flex vertical gap={8}>
-										<div className="text-[#09090B] text-[16px]">
-											{__(
-												'Max invitees in a spot',
-												'quillbooking'
-											)}
-											<span className="text-red-500">
-												*
-											</span>
-										</div>
-										<Input
-											type="number"
-											value={
-												event.group_settings
-													?.max_invites
-											}
-											onChange={(e) => {
-												handleGroupSettingsChange(
-													'max_invites',
-													Number(e.target.value)
-												);
-											}}
-											placeholder={__(
-												'Enter Max invitees',
-												'quillbooking'
-											)}
-											className="h-[48px] rounded-lg"
-										/>
-									</Flex>
-									<Checkbox
-										checked={
-											event.group_settings?.show_remaining
-										}
-										onChange={(e) =>
-											handleGroupSettingsChange(
-												'show_remaining',
-												e.target.checked
-											)
-										}
-										className="custom-check text-[#5E6278] font-semibold"
-									>
-										{__(
-											'Display Remaining Spots on Booking Page',
-											'quillbooking'
-										)}
-									</Checkbox>
-								</Flex>
+								<GroupSettings
+									maxInvites={
+										event.group_settings?.max_invites ?? 2
+									}
+									showRemaining={
+										event.group_settings?.show_remaining ??
+										true
+									}
+									onChange={(key, value) =>
+										handleGroupSettingsChange(key, value)
+									}
+								/>
 							</Card>
 						)}
 					</Flex>

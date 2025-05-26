@@ -333,7 +333,6 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 										true
 									}
 									onChange={handleGroupSettingsChange}
-									disabled={disabled}
 								/>
 							)}
 						</Flex>

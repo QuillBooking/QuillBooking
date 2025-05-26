@@ -32,6 +32,12 @@ class Integration extends Abstract_Integration {
 
 
 
+
+
+
+
+
+
 	/**
 	 * Integration Name
 	 *
@@ -264,8 +270,7 @@ class Integration extends Abstract_Integration {
 	 * @return Booking_Model
 	 */
 	public function add_event_to_calendars( $booking ) {
-		error_log( 'Event Location: ' . $booking->location );
-		if ( ! in_array( $booking->location, array( Zoom::instance()->slug ) ) ) {
+		if ( $booking->location['type'] !== Zoom::instance()->slug ) {
 			return $booking;
 		}
 
@@ -426,6 +431,15 @@ class Integration extends Abstract_Integration {
 					array(
 						'meeting'    => $meeting,
 						'account_id' => $account_id,
+					)
+				);
+
+				$booking->update_meta(
+					'location',
+					array(
+						'type'  => Zoom::instance()->slug,
+						'label' => 'Zoom',
+						'value' => $meeting['join_url'],
 					)
 				);
 

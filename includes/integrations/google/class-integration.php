@@ -25,6 +25,10 @@ use WP_Error;
  */
 class Integration extends Abstract_Integration {
 
+
+
+
+
 	/**
 	 * Integration Name
 	 *
@@ -262,7 +266,7 @@ class Integration extends Abstract_Integration {
 	public function add_event_to_calendars( $booking ) {
 		try {
 			// Early return if booking location is not Google Meet
-			if ( ! in_array( $booking->location, array( Google_Meet::instance()->slug ) ) ) {
+			if ( $booking->location['type'] !== Google_Meet::instance()->slug ) {
 				return $booking;
 			}
 
@@ -359,7 +363,7 @@ class Integration extends Abstract_Integration {
 			$event_data = array(
 				'summary'                 => sprintf( __( '%1$s: %2$s', 'quillbooking' ), $booking->guest->name, $event->name ),
 				'description'             => $this->get_event_description( $booking ),
-				'location'                => $booking->location ?? 'Google Meet',
+				'location'                => $booking->location['label'],
 				'source'                  => array(
 					'title' => $event->calendar->name,
 					'url'   => $booking->event_url,
@@ -428,6 +432,15 @@ class Integration extends Abstract_Integration {
 			);
 
 			$booking->update_meta( 'google_events_details', $meta );
+
+			$booking->update_meta(
+				'location',
+				array(
+					'type'  => Google_Meet::instance()->slug,
+					'label' => 'Google Meet',
+					'value' => Arr::get( $event, 'hangoutLink', '' ),
+				)
+			);
 
 			$booking->logs()->create(
 				array(

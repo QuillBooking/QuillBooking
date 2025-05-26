@@ -36,6 +36,18 @@ class Integration extends Abstract_Integration {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 	/**
 	 * Integration Name
 	 *
@@ -270,7 +282,7 @@ class Integration extends Abstract_Integration {
 			}
 
 			// Check if location is MS Teams
-			if ( ! in_array( $booking->location, array( MS_Teams::instance()->slug ) ) ) {
+			if ( $booking->location['type'] !== MS_Teams::instance()->slug ) {
 				return $booking;
 			}
 
@@ -353,7 +365,7 @@ class Integration extends Abstract_Integration {
 				'subject'               => sprintf( __( '%1$s: %2$s', 'quillbooking' ), $booking->guest->name, $event->name ),
 				// 'description'           => $event->description,
 				'location'              => array(
-					'displayName' => $booking->location ?? 'MS Meet',
+					'displayName' => $booking->location['lable'],
 				),
 				'organizer'             => array(
 					'emailAddress' => array(
@@ -379,7 +391,7 @@ class Integration extends Abstract_Integration {
 			);
 
 			// Add MS Teams meeting if location is ms_meet
-			if ( 'ms_meet' === $booking->location ) {
+			if ( 'ms-teams' === $booking->location['type'] ) {
 				$event_data['isOnlineMeeting']       = true;
 				$event_data['onlineMeetingProvider'] = 'teamsForBusiness';
 			}
@@ -417,6 +429,15 @@ class Integration extends Abstract_Integration {
 			);
 
 			$booking->update_meta( 'outlook_events_details', $meta );
+
+			$booking->update_meta(
+				'location',
+				array(
+					'type'  => MS_Teams::instance()->slug,
+					'label' => 'Microsoft Teams',
+					'value' => Arr::get( $event, 'webLink', '' ),
+				)
+			);
 
 			// Log success
 			$booking->logs()->create(

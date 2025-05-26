@@ -13,7 +13,7 @@ import {
 import { UploadOutlined } from '@ant-design/icons';
 import { __ } from '@wordpress/i18n';
 import './style.scss';
-// import DynamicLocationFields from '../dynamic-location-field';
+import DynamicLocationFields from '../dynamic-location-field';
 import getValidationRules from './validation-rules';
 
 const { TextArea, Password } = Input;
@@ -127,12 +127,12 @@ const FormField = ({ field, id, form, locationFields }) => {
 				</Form.Item>
 				{helpText && <div className="help-text">{helpText}</div>}
 			</div>
-			{/* {id === 'location-select' && form && (
+			{id === 'location-select' && form && (
 				<DynamicLocationFields
 					fieldKey={id}
 					locationFields={locationFields}
 				/>
-			)} */}
+			)}
 		</>
 	);
 };

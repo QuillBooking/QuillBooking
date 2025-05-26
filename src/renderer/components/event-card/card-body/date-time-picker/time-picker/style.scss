@@ -61,14 +61,29 @@
 
 .time-slot-spots {
 	font-size: 12px;
-	font-weight: 500;
-	color: #6b7280;
+	font-weight: 600;
+	color: #4b5563;
 	background-color: #f3f4f6;
-	padding: 4px 10px;
+	padding: 6px 10px;
 	border-radius: 16px;
-	white-space: nowrap;
+	white-space: normal;
 	transition: all 0.2s ease;
 	letter-spacing: 0.2px;
+	border: 1px solid #e5e7eb;
+	display: flex;
+	flex-direction: column;
+	line-height: 1.2;
+	min-width: 70px;
+	text-align: center;
+	
+	span:first-child {
+		font-size: 14px;
+		font-weight: 700;
+	}
+	
+	span:last-child {
+		font-size: 11px;
+	}
 }
 
 .time-slot-spots-single {
@@ -80,7 +95,8 @@
 .time-slot:hover .time-slot-spots,
 .time-slot.active .time-slot-spots {
 	background-color: #e9d5ff;
-	color: #9333ea;
+	color: #6d28d9;
+	font-weight: 600;
 }
 
 .time-slot:hover .time-slot-spots-single,

@@ -26,7 +26,12 @@ import {
 	AddCalendarOutlinedIcon,
 	TimezoneSelect,
 } from '@quillbooking/components';
-import { fetchAjax, getCurrentTimezone, getFields } from '@quillbooking/utils';
+import {
+	fetchAjax,
+	get_location,
+	getCurrentTimezone,
+	getFields,
+} from '@quillbooking/utils';
 import {
 	Booking,
 	Calendar,
@@ -36,9 +41,6 @@ import {
 } from 'client/types';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { CurrentTimeInTimezone } from '@quillbooking/components';
-import ConfigAPI from '@quillbooking/config';
-import { find, map } from 'lodash';
-import { DynamicFormField } from '@quillbooking/components';
 import QuestionsComponents from './questions';
 
 interface AddBookingModalProps {
@@ -71,7 +73,6 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		useState<EventAvailability>();
 	const [timeOptions, setTimeOptions] = useState<string[]>([]);
 	const [showAllTimes, setShowAllTimes] = useState<boolean>(false);
-	const locationTypes = ConfigAPI.getLocations();
 	const [ignoreAvailability, setIgnoreAvailability] =
 		useState<boolean>(false);
 	const [fields, setFields] = useState<Fields>();
@@ -214,9 +215,15 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			values;
 
 		const fields = getFields(values);
+		const location = form.getFieldValue('location');
+		const location_data = form.getFieldValue('location-data');
+		const locationField = get_location(
+			event.location,
+			location,
+			location_data
+		);
 		const startDateTime =
 			selectDate.clone().format('YYYY-MM-DD') + ` ${selectTime}:00`;
-
 		try {
 			await form.validateFields();
 			await callApi({
@@ -232,6 +239,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					email,
 					status,
 					ignore_availability: ignoreAvailability,
+					location: locationField,
 				},
 				onSuccess: () => {
 					onSaved();
@@ -443,7 +451,10 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 								>
 									{selectedEvent.hosts &&
 										selectedEvent.hosts.map((host) => (
-											<Option value={host.id} key={host.id}>
+											<Option
+												value={host.id}
+												key={host.id}
+											>
 												{host.name}
 											</Option>
 										))}
@@ -636,54 +647,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							)}
 						/>
 					</Form.Item>
-					{selectedEvent && selectedEvent.location.length > 1 && (
-						<Form.Item
-							name="location"
-							label={__('Location', 'quillbooking')}
-							rules={[{ required: true }]}
-						>
-							<Select
-								placeholder={__(
-									'Select Location',
-									'quillbooking'
-								)}
-								options={
-									selectedEvent.location.map((location) => ({
-										label: locationTypes[location.type]
-											.title,
-										value: location.type,
-									})) || []
-								}
-								getPopupContainer={(trigger) =>
-									trigger.parentElement
-								}
-								size="large"
-							/>
-						</Form.Item>
-					)}
 				</Flex>
-				<Form.Item shouldUpdate>
-					{({ getFieldValue }) => {
-						const locationType = getFieldValue('location');
-						const location = find(locationTypes, (_, key) => {
-							return key === locationType;
-						});
-
-						if (!location) return null;
-
-						return (
-							<>
-								{map(location.frontend_fields, (field, key) => (
-									<DynamicFormField
-										key={key}
-										field={field}
-										fieldKey={key}
-									/>
-								))}
-							</>
-						);
-					}}
-				</Form.Item>
 				{fields && <QuestionsComponents fields={fields} />}
 			</Form>
 		</Modal>

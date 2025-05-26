@@ -13,8 +13,8 @@ import {
 import { UploadOutlined } from '@ant-design/icons';
 import { __ } from '@wordpress/i18n';
 import './style.scss';
-// import DynamicLocationFields from '../dynamic-location-field';
 import getValidationRules from './validation-rules';
+import Locations from '../locations';
 
 const { TextArea, Password } = Input;
 const { Option } = Select;
@@ -76,7 +76,7 @@ const FIELD_COMPONENTS = {
 	),
 };
 
-const FormField = ({ field, id, form, locationFields }) => {
+const FormField = ({ field, id, form }) => {
 	const {
 		type,
 		label,
@@ -103,36 +103,39 @@ const FormField = ({ field, id, form, locationFields }) => {
 		...otherProps,
 	};
 
+	console.log('FormField', id);
+
+	if (id === 'name' || id === 'email') return null;
 	const rules = getValidationRules(field);
 
 	return (
 		<>
-			<div style={{ marginBottom: '16px' }}>
-				<Form.Item
-					style={{ marginBottom: 0 }}
-					label={
-						type !== 'checkbox' && (
-							<div>
-								<p className="form-label">{label}</p>
-							</div>
-						)
-					}
-					name={`fields-${id}`}
-					key={id}
-					rules={rules}
-					validateTrigger={['onChange', 'onBlur']}
-					valuePropName={type === 'checkbox' ? 'checked' : 'value'}
-				>
-					{FieldComponent(fieldProps)}
-				</Form.Item>
-				{helpText && <div className="help-text">{helpText}</div>}
-			</div>
-			{/* {id === 'location-select' && form && (
-				<DynamicLocationFields
-					fieldKey={id}
-					locationFields={locationFields}
-				/>
-			)} */}
+			{id === 'location-select' ? (
+				<Locations locationFields={field} />
+			) : (
+				<div style={{ marginBottom: '24px' }}>
+					<Form.Item
+						style={{ marginBottom: 0 }}
+						label={
+							type !== 'checkbox' && (
+								<div className="form-label">
+									<p>{label}</p>
+								</div>
+							)
+						}
+						name={'fields-' + id}
+						key={id}
+						rules={rules}
+						validateTrigger={['onChange', 'onBlur']}
+						valuePropName={
+							type === 'checkbox' ? 'checked' : 'value'
+						}
+					>
+						{FieldComponent(fieldProps)}
+					</Form.Item>
+					{helpText && <div className="help-text">{helpText}</div>}
+				</div>
+			)}
 		</>
 	);
 };

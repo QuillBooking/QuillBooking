@@ -44,15 +44,8 @@ const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 				</Flex>
 				<Flex gap={3} align="center">
 					<LocationIcon rectFill={false} width={18} height={18} />
-					{booking.event.location.length > 0 &&
-						booking.event.location.map((location, index) => (
-							<p
-								key={index}
-								className="break-words text-s capitalize"
-							>
-								{location.type.split('_').join(' ')}
-							</p>
-						))}
+					{booking.location['label']} {': '}
+					{booking.location['value']}
 				</Flex>
 			</div>
 

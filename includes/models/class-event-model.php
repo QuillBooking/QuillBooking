@@ -33,6 +33,7 @@ class Event_Model extends Model {
 
 
 
+
 	/**
 	 * Table name
 	 *
@@ -302,7 +303,7 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getTeamMembersAttribute() {
-		 return $this->get_meta( 'team_members', array() );
+		  return $this->get_meta( 'team_members', array() );
 	}
 
 	/**
@@ -474,7 +475,7 @@ class Event_Model extends Model {
 	 * @return bool
 	 */
 	public function getDynamicDurationAttribute() {
-		 return $this->get_meta( 'dynamic_duration', false );
+		  return $this->get_meta( 'dynamic_duration', false );
 	}
 
 	/**
@@ -596,7 +597,7 @@ class Event_Model extends Model {
 	 *
 	 * @return array Processed fields
 	 */
-	private function processLocationFields( $event_location, $existing_fields = array() ) {
+	private function processLocationFields( $event_location ) {
 		$fields = array();
 		if ( 1 <= count( $event_location ) ) {
 			$fields['location-select'] = array(
@@ -608,12 +609,10 @@ class Event_Model extends Model {
 			);
 		}
 
-		if ( 1 === count( $event_location ) && isset( $fields['location-select'] ) ) {
-			unset( $fields['location-select'] );
-		}
-
 		foreach ( $event_location as $location ) {
-			$location_type = Locations_Manager::instance()->get_location( $location['type'] );
+			$location_manager = Locations_Manager::instance();
+			$location_type    = $location_manager->get_location( $location['type'] );
+
 			if ( ! $location_type ) {
 				throw new \Exception( __( 'Location does not exist', 'quillbooking' ) );
 			}
@@ -623,36 +622,14 @@ class Event_Model extends Model {
 				throw new \Exception( $validation->get_error_message() );
 			}
 
-			if ( 1 < count( $event_location ) ) {
-				$fields['location-select']['options'][] = array(
-					'label' => $location_type->title,
-					'value' => $location['type'],
-				);
-			}
-
-			$location_fields = $location_type->get_fields();
-			if ( ! empty( $location_fields ) ) {
-				$location_fields = array_map(
-					function ( $field ) use ( $location ) {
-						$field['event_location'] = $location['type'];
-						$field['hidden']         = isset( $fields['location-select'] );
-						return $field;
-					},
-					$location_fields
-				);
-
-				foreach ( $location_fields as $field_key => $location_field ) {
-					$existing_field_key = array_search( $field_key, array_column( $existing_fields, 'key' ) );
-					if ( $existing_field_key === false ) {
-						$fields[ $field_key ] = $location_field;
-					} else {
-						$fields[ $existing_field_key ] = Arr::add( $existing_fields[ $existing_field_key ], 'hidden', isset( $fields['location-select'] ) );
-					}
-				}
-			}
+			$fields['location-select']['options'][] = array(
+				'label'  => $location_manager->get_location_label( $location ),
+				'value'  => $location['type'] === 'custom' ? $location['id'] : $location['type'],
+				'fields' => $location_type->get_fields( $location['fields'] ?? array() ),
+			);
 		}
 
-		return array_merge( $fields, $existing_fields );
+		return $fields;
 	}
 
 	/**
@@ -661,7 +638,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public function setSystemFields() {
-		 $event_location = $this->location ?? null;
+		  $event_location = $this->location ?? null;
 
 		if ( ! $event_location || ! is_array( $event_location ) ) {
 			throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
@@ -692,7 +669,7 @@ class Event_Model extends Model {
 		}
 
 		$fields             = $this->fields ?? array();
-		$location_fields    = $this->processLocationFields( $event_location, $this->fields['location'] ?? array() );
+		$location_fields    = $this->processLocationFields( $event_location );
 		$fields['location'] = $location_fields;
 
 		$this->update_meta( 'fields', $fields );
@@ -859,9 +836,13 @@ class Event_Model extends Model {
 		$payment_gateways_manager = \QuillBooking\Managers\Payment_Gateways_Manager::instance();
 		$payment_gateways         = $payment_gateways_manager->get_items();
 
+		$payment_gateways         = $payment_gateways_manager->get_items();
+
 		// If no payment gateways are registered or available, we can't require payment
 		if ( empty( $payment_gateways ) ) {
+		if ( empty( $payment_gateways ) ) {
 			// Log this issue since it's a configuration problem
+			error_log( 'QuillBooking: Payment is enabled but no payment gateways are registered in the system.' );
 			error_log( 'QuillBooking: Payment is enabled but no payment gateways are registered in the system.' );
 			return false;
 		}
@@ -870,13 +851,18 @@ class Event_Model extends Model {
 		$gateway_enabled = false;
 		foreach ( $payment_gateways as $gateway ) {
 			if ( Arr::get( $payments_settings, 'enable_' . $gateway->slug, false ) ) {
+		foreach ( $payment_gateways as $gateway ) {
+			if ( Arr::get( $payments_settings, 'enable_' . $gateway->slug, false ) ) {
 				$gateway_enabled = true;
 				break;
 			}
 		}
 
 		if ( ! $gateway_enabled ) {
+
+		if ( ! $gateway_enabled ) {
 			// Instead of throwing an exception, we'll just log and return false
+			error_log( 'QuillBooking: Payment is enabled but no payment gateway is selected for this event.' );
 			error_log( 'QuillBooking: Payment is enabled but no payment gateway is selected for this event.' );
 			return false;
 		}
@@ -1266,13 +1252,19 @@ class Event_Model extends Model {
 			case 'round-robin':
 			case 'collective':
 				$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
+				$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
 
+				$slots_query->whereIn( 'calendar_id', $team_members )
+					->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
+					->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
 				$slots_query->whereIn( 'calendar_id', $team_members )
 					->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
 					->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
 
 				// For round-robin, set the number of event spots.
+				// For round-robin, set the number of event spots.
 				if ( 'round-robin' === $this->type ) {
+					$event_spots = count( $team_members );
 					$event_spots = count( $team_members );
 				}
 				break;
@@ -1357,6 +1349,7 @@ class Event_Model extends Model {
 	 * @return void
 	 */
 	public static function boot() {
+		 parent::boot();
 		 parent::boot();
 
 		static::creating(

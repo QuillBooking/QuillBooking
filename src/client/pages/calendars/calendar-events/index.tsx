@@ -27,9 +27,7 @@ import {
 	ShareModal,
 	EventPrice,
 } from '@quillbooking/components';
-import {
-	useCopyToClipboard,
-} from '@quillbooking/hooks';
+import { useCopyToClipboard } from '@quillbooking/hooks';
 import EventActions from '../event-actions';
 import CreateEvent from '../../create-event';
 
@@ -179,8 +177,8 @@ const CalendarEvents: React.FC<{
 									</Flex>
 									<Flex vertical justify="center" gap={10}>
 										<Flex gap={10} className="items-center">
-											<div className='flex-shrink-0'>
-											<LocationIcon/>
+											<div className="flex-shrink-0">
+												<LocationIcon />
 											</div>
 											<div className="flex flex-col">
 												<span className="text-[#71717A] text-[12px]">
@@ -189,21 +187,74 @@ const CalendarEvents: React.FC<{
 														'quillbooking'
 													)}
 												</span>
-												<span className="text-[#09090B] text-[14px] font-[500] capitalize">
-													{event.location.map(
-														(loc, index) => (
-															<span key={index}>
-																{loc.type.split('_').join(' ')}
-																{index !==
-																	event
-																		.location
-																		.length -
-																		1 &&
-																	', '}
-															</span>
-														)
-													)}
-												</span>
+												{event.location.length === 1 ? (
+													<span className="text-[#09090B] text-[14px] font-[500] capitalize">
+														{event.location[0].type
+															.split('_')
+															.join(' ')}
+													</span>
+												) : (
+													<Popover
+														content={
+															<div>
+																{event.location.map(
+																	(
+																		loc,
+																		index
+																	) => {
+																		let displayText =
+																			'';
+																		if (
+																			loc.type ===
+																				'custom' &&
+																			loc.fields &&
+																			loc
+																				.fields
+																				.location
+																		) {
+																			displayText =
+																				loc
+																					.fields
+																					.location;
+																		} else {
+																			displayText =
+																				loc.type
+																					.split(
+																						'_'
+																					)
+																					.join(
+																						' '
+																					);
+																		}
+																		return (
+																			<div
+																				key={
+																					index
+																				}
+																				className="capitalize"
+																			>
+																				{
+																					displayText
+																				}
+																			</div>
+																		);
+																	}
+																)}
+															</div>
+														}
+													>
+														<span className="text-[#09090B] text-[14px] font-[500] capitalize cursor-pointer">
+															{
+																event.location
+																	.length
+															}{' '}
+															{__(
+																'Locations',
+																'quillbooking'
+															)}
+														</span>
+													</Popover>
+												)}
 											</div>
 										</Flex>
 										<Flex gap={10} className="items-center">
@@ -237,7 +288,15 @@ const CalendarEvents: React.FC<{
 											</div>
 										</Flex>
 
-										<EventPrice payments_settings={event.payments_settings} duration={event.additional_settings.default_duration} />
+										<EventPrice
+											payments_settings={
+												event.payments_settings
+											}
+											duration={
+												event.additional_settings
+													.default_duration
+											}
+										/>
 									</Flex>
 									<Flex
 										justify="space-between"
@@ -284,7 +343,11 @@ const CalendarEvents: React.FC<{
 													setModalShareId(null)
 												}
 												url={`${siteUrl}?quillbooking_calendar=${calendar.slug}&event=${
-													events.find(event => event.id === modalShareId)?.slug || ''
+													events.find(
+														(event) =>
+															event.id ===
+															modalShareId
+													)?.slug || ''
 												}`}
 											/>
 										)}

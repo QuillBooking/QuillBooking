@@ -8,7 +8,8 @@ import { Dayjs } from 'dayjs';
 import QuestionsComponents from './questions';
 import Reschedule from '../../reschedule';
 import Payment from './payment';
-import { get } from 'lodash';
+import { filter, get } from 'lodash';
+import { get_location } from '@quillbooking/utils';
 
 interface CardBodyProps {
 	event: Event;
@@ -28,8 +29,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 	const [selectedTime, setSelectedTime] = useState<string | null>(null);
 	const [timeZone, setTimeZone] = useState<string>(
-		event.limits_data.timezone_lock.enable
-			? event.limits_data.timezone_lock.timezone
+		event.limits_data?.timezone_lock?.enable
+			? event.limits_data?.timezone_lock?.timezone
 			: Intl.DateTimeFormat().resolvedOptions().timeZone
 	);
 	const [step, setStep] = useState<number>(1);
@@ -90,6 +91,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 	};
 
 	const handleSave = async (values: any) => {
+		console.log('Submitting booking form', { values, event });
+
 		try {
 			console.log('Submitting booking form', { values, event });
 
@@ -139,20 +142,22 @@ const CardBody: React.FC<CardBodyProps> = ({
 			);
 
 			// Handle location field
-			if (values['location-select']) {
-				formData.append(
-					'location',
-					JSON.stringify(values['location-select'])
-				);
-			} else {
-				formData.append('location', event.location[0].type);
-			}
+			const location = get_location(
+				event.location,
+				values.location,
+				values['location-data']
+			);
+			formData.append('location', JSON.stringify(location));
 
 			// Filter values for custom fields
 			const filteredValues = { ...values };
 			delete filteredValues['name'];
 			delete filteredValues['email'];
 			delete filteredValues['field'];
+			delete filteredValues['location'];
+			if (filteredValues['location-data']) {
+				delete filteredValues['location-data'];
+			}
 
 			if (values['location-select']) {
 				delete filteredValues['location-select'];
@@ -253,6 +258,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 				step={step}
 				selectedDate={selectedDate}
 				selectedTime={selectedTime}
+				booking={booking ?? null}
 			/>
 			{selectedTime && step === 2 ? (
 				type === 'reschedule' ? (

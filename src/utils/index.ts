@@ -163,7 +163,7 @@ export function get_location(
 	// Find the matching location
 	const location = event_locations.find(loc => {
 		// If location has an ID, it matches
-		if (loc.id) return true;
+		if (loc.id == location_type) return true;
 
 		// Otherwise, match by type
 		return loc.type === location_type;

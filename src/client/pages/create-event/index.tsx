@@ -84,6 +84,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 			allow_attendees_to_select_duration: false,
 			allow_additional_guests: false,
 		},
+		group_settings: {
+			max_invites: 2,
+			show_remaining: true,
+		},
 	});
 
 	const [validationErrors, setValidationErrors] = useState({
@@ -174,11 +178,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 		key: keyof AdditionalSettings,
 		value: any
 	) => {
-		if (!event.additional_settings) {
-			// Initialize additional_settings if it doesn't exist
-			setEvent({
-				...event,
-				additional_settings: {
+		// Create updated additional settings
+		const updatedAdditionalSettings = event.additional_settings
+			? { ...event.additional_settings, [key]: value }
+			: {
 					max_invitees: 1,
 					show_remaining: true,
 					selectable_durations: [],
@@ -186,16 +189,34 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 					allow_attendees_to_select_duration: false,
 					allow_additional_guests: false,
 					[key]: value,
-				},
-			});
-		} else {
-			// Update existing additional_settings
+				};
+
+		// For group events, also update group_settings when max_invitees or show_remaining changes
+		if (
+			event.type === 'group' &&
+			(key === 'max_invitees' || key === 'show_remaining')
+		) {
+			const updatedGroupSettings = {
+				...event.group_settings,
+				max_invites:
+					key === 'max_invitees'
+						? value
+						: event.additional_settings?.max_invitees || 2,
+				show_remaining:
+					key === 'show_remaining'
+						? value
+						: event.additional_settings?.show_remaining || true,
+			};
+
 			setEvent({
 				...event,
-				additional_settings: {
-					...event.additional_settings,
-					[key]: value,
-				},
+				additional_settings: updatedAdditionalSettings,
+				group_settings: updatedGroupSettings,
+			});
+		} else {
+			setEvent({
+				...event,
+				additional_settings: updatedAdditionalSettings,
 			});
 		}
 	};
@@ -224,6 +245,15 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 			...event,
 			hosts: event.hosts?.map((host) => host.id) || [],
 		};
+
+		// For group events, explicitly set group_settings from additional_settings
+		if (event.type === 'group') {
+			transformedEvent.group_settings = {
+				max_invites: event.additional_settings?.max_invitees || 2,
+				show_remaining:
+					event.additional_settings?.show_remaining || true,
+			};
+		}
 
 		callApi({
 			path: 'events',

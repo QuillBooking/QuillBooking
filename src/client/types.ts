@@ -56,7 +56,7 @@ export type CalendarResponse = Response & {
 export type ConnectedIntegrationsFields = {
 	name: string;
 	connected: boolean;
-}
+};
 
 export type Event = {
 	id: number;
@@ -79,9 +79,10 @@ export type Event = {
 	updated_at: string;
 	calendar: Calendar;
 	additional_settings: AdditionalSettings;
+	group_settings?: GroupSettings;
 	hosts?: Host[];
 	fields?: EventMetaData[];
-	availability_data?: Availability,
+	availability_data?: Availability;
 	reserve: boolean;
 	payments_settings?: {
 		enable_payment: boolean;
@@ -109,7 +110,12 @@ export type AdditionalSettings = {
 	default_duration: number;
 	selectable_durations: number[];
 	allow_additional_guests: boolean;
-	max_invitees: number;
+	max_invitees?: number;
+	show_remaining?: boolean;
+};
+
+export type GroupSettings = {
+	max_invites: number;
 	show_remaining: boolean;
 };
 
@@ -153,7 +159,7 @@ export interface CustomAvailability {
 export interface Availability extends CustomAvailability {
 	id: string;
 	user_id: string | number;
-};
+}
 
 export type AvailabilityRange = {
 	type: 'days' | 'date_range' | 'infinity';
@@ -201,16 +207,6 @@ export interface EventLimits {
 		enable: boolean;
 		timezone: string;
 	};
-}
-
-export interface EventMetaData {
-	id: number;
-	event_id: number;
-	event: Event;
-	meta_key: string;
-	meta_value: string;
-	updated_at: string;
-	create_at: string;
 }
 
 export interface EventMetaData {
@@ -344,7 +340,6 @@ export interface EventTabProps {
 	setDisabled: (disabled: boolean) => void;
 }
 
-
 export type FieldType = {
 	label: string;
 	type: string;
@@ -376,7 +371,6 @@ export type Fields = {
 export type FieldsGroup = {
 	[key: string]: FieldType;
 };
-
 
 export interface LimitBaseProps {
 	limits: EventLimits;

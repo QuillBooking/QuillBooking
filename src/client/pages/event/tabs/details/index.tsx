@@ -23,6 +23,7 @@ import { useEventContext } from '../../state/context';
 import EventInfo from './event-info';
 import LivePreview from './live-preview';
 import Duration from './duration';
+import GroupSettings from './group-settings';
 import {
 	CardHeader,
 	EventLocIcon,
@@ -211,17 +212,52 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 			setDisabled(false);
 		};
 
+		const handleGroupSettingsChange = (
+			key: 'max_invites' | 'show_remaining',
+			value: number | boolean
+		) => {
+			actions.setEvent({
+				...event,
+				group_settings: {
+					max_invites:
+						key === 'max_invites'
+							? (value as number)
+							: (event.group_settings?.max_invites ?? 30),
+					show_remaining:
+						key === 'show_remaining'
+							? (value as boolean)
+							: (event.group_settings?.show_remaining ?? true),
+				},
+			});
+			setDisabled(false);
+		};
+
 		const validate = () => {
 			if (!event.name) {
-				throw new Error(__('Please enter a name for the event.', 'quillbooking'));
+				throw new Error(
+					__('Please enter a name for the event.', 'quillbooking')
+				);
 			}
 
 			if (!event.duration || event.duration <= 0) {
-				throw new Error(__('Please enter a valid duration for the event.', 'quillbooking'));
+				throw new Error(
+					__(
+						'Please enter a valid duration for the event.',
+						'quillbooking'
+					)
+				);
 			}
 
-			if (event.additional_settings.allow_attendees_to_select_duration && event.additional_settings.selectable_durations.length === 0) {
-				throw new Error(__('Please select at least one duration for the event.', 'quillbooking'));
+			if (
+				event.additional_settings.allow_attendees_to_select_duration &&
+				event.additional_settings.selectable_durations.length === 0
+			) {
+				throw new Error(
+					__(
+						'Please select at least one duration for the event.',
+						'quillbooking'
+					)
+				);
 			}
 
 			return true;
@@ -286,6 +322,19 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 									event.additional_settings.default_duration
 								}
 							/>
+							{event.type === 'group' && (
+								<GroupSettings
+									maxInvites={
+										event.group_settings?.max_invites ?? 2
+									}
+									showRemaining={
+										event.group_settings?.show_remaining ??
+										true
+									}
+									onChange={handleGroupSettingsChange}
+									disabled={disabled}
+								/>
+							)}
 						</Flex>
 					</Flex>
 					<Flex vertical gap={20}>

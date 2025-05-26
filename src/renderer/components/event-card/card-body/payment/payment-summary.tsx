@@ -3,7 +3,6 @@ import './style.scss';
 import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import paypalIcon from '../../../../../../assets/icons/paypal/paypal.png';
 import stripeIcon from '../../../../../../assets/icons/stripe/stripe.png';
-import woocommerceIcon from '../../../../../../assets/icons/woocommerce/woocommerce.png';
 import { Booking, Event } from 'renderer/types';
 
 interface PaymentSummaryProps {
@@ -32,16 +31,20 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 	const paymentMethods = {
 		stripe: event?.payments_settings?.enable_stripe,
 		paypal: event?.payments_settings?.enable_paypal,
-		woocommerce: event?.payments_settings?.enable_woocommerce,
 	};
 
 	// Check if any payment method is enabled
 	const hasEnabledPaymentMethods =
-		paymentMethods.stripe ||
-		paymentMethods.paypal ||
-		paymentMethods.woocommerce;
+		paymentMethods.stripe || paymentMethods.paypal;
 
 	useEffect(() => {
+		// Set a default payment method if available
+		if (paymentMethods.stripe) {
+			setSelectedPaymentMethod('stripe');
+		} else if (paymentMethods.paypal) {
+			setSelectedPaymentMethod('paypal');
+		}
+
 		// If no payment methods are enabled, show an error
 		if (!hasEnabledPaymentMethods) {
 			setError('No payment methods are enabled for this event.');
@@ -96,12 +99,6 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 				data?.data?.redirect_url
 			) {
 				window.location.href = data?.data?.redirect_url;
-				return;
-			}
-
-			// For WooCommerce, redirect to checkout URL
-			if (selectedPaymentMethod === 'woocommerce' && data?.data?.url) {
-				window.location.href = data?.data?.url;
 				return;
 			}
 

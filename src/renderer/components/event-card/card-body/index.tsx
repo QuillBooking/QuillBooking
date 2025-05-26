@@ -36,7 +36,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 	const [selectedDuration, setSelectedDuration] = useState<number>(
 		event.duration
 	);
-	const [bookingData, setBookingData] = useState<any>(null);
+	const [bookingData, setBookingData] = useState<Booking | null>(null);
 	const [totalPrice, setTotalPrice] = useState<number>(0);
 
 	// Calculate price based on whether it's multi-duration or not
@@ -105,20 +105,26 @@ const CardBody: React.FC<CardBodyProps> = ({
 			);
 			formData.append('duration', selectedDuration.toString());
 
+			// Check if WooCommerce is enabled
+			const isWooCommerceEnabled =
+				event.payments_settings?.enable_woocommerce;
+
 			// If payment is required, we need to include a payment method
-			// Add default payment method if available, to be selected properly in payment step
 			if (requiresPayment && hasPaymentGateways) {
-				// Default to the first available payment method
-				const defaultMethod = event.payments_settings?.enable_stripe
-					? 'stripe'
-					: event.payments_settings?.enable_paypal
-						? 'paypal'
-						: event.payments_settings?.enable_woocommerce
-							? 'woocommerce'
+				// If WooCommerce is enabled, use it directly
+				if (isWooCommerceEnabled) {
+					formData.append('payment_method', 'woocommerce');
+				} else {
+					// Default to the first available payment method for Stripe/PayPal flow
+					const defaultMethod = event.payments_settings?.enable_stripe
+						? 'stripe'
+						: event.payments_settings?.enable_paypal
+							? 'paypal'
 							: null;
 
-				if (defaultMethod) {
-					formData.append('payment_method', defaultMethod);
+					if (defaultMethod) {
+						formData.append('payment_method', defaultMethod);
+					}
 				}
 			}
 
@@ -187,13 +193,26 @@ const CardBody: React.FC<CardBodyProps> = ({
 				return;
 			}
 
-			// If payment is required and we have payment gateways, go to payment step
-			if (requiresPayment && hasPaymentGateways) {
+			// If payment is required and we have Stripe/PayPal payment gateways, go to payment step
+			if (
+				requiresPayment &&
+				hasPaymentGateways &&
+				!isWooCommerceEnabled
+			) {
 				console.log('Payment required, transitioning to payment step', {
 					requiresPayment,
 					bookingData: data.data.booking,
 				});
-				setBookingData(data.data.booking);
+				if (data.data.redirect_url) {
+					console.log(
+						'PayPal payment, redirecting to:',
+						data.data.redirect_url
+					);
+					(window.top || window).location.href =
+						data.data.redirect_url;
+					return;
+				}
+				setBookingData(data?.data?.booking);
 				setStep(3); // Payment step
 			} else {
 				// Otherwise redirect to confirmation

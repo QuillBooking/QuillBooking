@@ -218,15 +218,6 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 			hosts: event.hosts?.map((host) => host.id) || [],
 		};
 
-		// For group events, explicitly set group_settings from additional_settings
-		if (event.type === 'group') {
-			transformedEvent.group_settings = {
-				max_invites: event.group_settings?.max_invites || 2,
-				show_remaining:
-					event.group_settings?.show_remaining || true,
-			};
-		}
-
 		callApi({
 			path: 'events',
 			method: 'POST',

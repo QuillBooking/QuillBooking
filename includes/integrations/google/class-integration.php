@@ -29,6 +29,10 @@ class Integration extends Abstract_Integration {
 
 
 
+
+
+
+
 	/**
 	 * Integration Name
 	 *
@@ -373,6 +377,8 @@ class Integration extends Abstract_Integration {
 					'display_name' => $event->calendar->user->display_name,
 				),
 				'attendees'               => $attendees,
+				'guestsCanSeeOtherGuests' => Arr::get( $default_account['data'], 'config.settings.guests_can_see_others', true ),
+				'sendUpdates'             => Arr::get( $default_account['data'], 'config.settings.enable_notifications', false ) ? 'all' : 'none',
 				'start'                   => array(
 					'dateTime' => $start_date->format( 'Y-m-d\TH:i:s' ),
 					'timeZone' => 'UTC',
@@ -381,8 +387,15 @@ class Integration extends Abstract_Integration {
 					'dateTime' => $end_date->format( 'Y-m-d\TH:i:s' ),
 					'timeZone' => 'UTC',
 				),
+				'conferenceData'          => array(
+					'createRequest' => array(
+						'requestId'             => $booking->hash_id,
+						'conferenceSolutionKey' => array(
+							'type' => 'hangoutsMeet',
+						),
+					),
+				),
 				'guestsCanInviteOthers'   => false,
-				'guestsCanSeeOtherGuests' => Arr::get( $default_account['data'], 'config.settings.show_guests', false ),
 				'extendedProperties'      => array(
 					'shared' => array(
 						'created_by' => 'quillbooking',
@@ -393,17 +406,6 @@ class Integration extends Abstract_Integration {
 				),
 				'transactionId'           => "{$this->get_site_uid()}-{$booking->id}",
 			);
-
-			if ( Arr::get( $default_account['data'], 'config.settings.enable_notifications', false ) ) {
-				$event_data['conferenceData'] = array(
-					'createRequest' => array(
-						'requestId'             => $booking->hash_id,
-						'conferenceSolutionKey' => array(
-							'type' => 'hangoutsMeet',
-						),
-					),
-				);
-			}
 
 			$response = $api->add_event( $default_account['default_calendar']['calendar_id'], $event_data );
 

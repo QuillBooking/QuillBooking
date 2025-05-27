@@ -28,6 +28,8 @@ class Booking_Actions {
 
 
 
+
+
 	// --- Dependency Properties ---
 	private string $calendarModelClass;
 	private string $eventModelClass;
@@ -403,12 +405,12 @@ class Booking_Actions {
 
 			$link_types = array( 'online', 'zoom', 'ms-teams', 'google-meet' );
 			if ( in_array( $type, $link_types, true ) && filter_var( $value, FILTER_VALIDATE_URL ) ) {
-				$value = sprintf( '<a class="link" href="%s" target="_blank" rel="noopener noreferrer">%s</a>', esc_url( $value ), esc_html( $value ) );
+				$value                     = sprintf( '<a class="link" href="%s" target="_blank" rel="noopener noreferrer">%s</a>', esc_url( $value ), esc_html( $label ) );
+				$booking_array['location'] = $value;
 			} else {
-				$value = esc_html( $value );
+				$value                     = esc_html( $value );
+				$booking_array['location'] = $label . ' : ' . $value;
 			}
-
-			$booking_array['location'] = $label . ' : ' . $value;
 		}
 
 		$booking_array['hosts'] = $this->getEventHosts( $booking->event );

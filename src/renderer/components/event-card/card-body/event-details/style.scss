@@ -25,6 +25,7 @@
 	font-weight: 400;
 	font-size: 16px;
 	text-transform: capitalize;
+	margin-bottom: 8px;
 }
 
 .event-description {
@@ -51,4 +52,35 @@
 .duration-btn.selected {
 	background-color: #9333ea;
 	color: white;
+}
+
+.link {
+	color: #0b69c7;
+	text-decoration: underline;
+	overflow: hidden;
+}
+.link:hover {
+	text-decoration: none;
+}
+
+.product-name {
+	font-size: 14px;
+	color: #666;
+	font-style: italic;
+}
+
+@keyframes pulse {
+	0% {
+		opacity: 0.6;
+	}
+	50% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0.6;
+	}
+}
+
+.detail-row p:has(+ .loading) {
+	animation: pulse 1.5s infinite ease-in-out;
 }

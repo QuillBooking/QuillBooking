@@ -223,3 +223,7 @@
 .link:hover {
 	text-decoration: none;
 }
+
+.icons > a {
+	text-decoration: none !important;
+}

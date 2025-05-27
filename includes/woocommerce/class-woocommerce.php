@@ -19,6 +19,8 @@ use Illuminate\Support\Arr;
  */
 class WooCommerce {
 
+
+
 	use Singleton;
 
 	/**
@@ -239,9 +241,12 @@ class WooCommerce {
 			$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
 			$start_date->setTimezone( new \DateTimeZone( $booking->timezone ) );
 			?>
-			<p><strong><?php esc_html_e( 'Event:', 'quillbooking' ); ?></strong> <?php echo esc_html( $booking->event->name ); ?></p>
-			<p><strong><?php esc_html_e( 'Start Date:', 'quillbooking' ); ?></strong> <?php echo esc_html( $start_date->format( 'F j, Y h:i A' ) . ' (' . $booking->timezone . ')' ); ?></p>
-			<p><strong><?php esc_html_e( 'Status:', 'quillbooking' ); ?></strong> <?php echo esc_html( $booking->status ); ?></p>
+			<p><strong><?php esc_html_e( 'Event:', 'quillbooking' ); ?></strong>
+				<?php echo esc_html( $booking->event->name ); ?></p>
+			<p><strong><?php esc_html_e( 'Start Date:', 'quillbooking' ); ?></strong>
+				<?php echo esc_html( $start_date->format( 'F j, Y h:i A' ) . ' (' . $booking->timezone . ')' ); ?></p>
+			<p><strong><?php esc_html_e( 'Status:', 'quillbooking' ); ?></strong> <?php echo esc_html( $booking->status ); ?>
+			</p>
 		</div>
 		<?php
 	}
@@ -287,5 +292,37 @@ class WooCommerce {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Get product price for an event.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $event_payments_settings Event payment settings.
+	 *
+	 * @return array|false Price data or false if not available.
+	 */
+	public static function get_product_price( $event_payments_settings ) {
+		if ( ! Arr::get( $event_payments_settings, 'enable_payment' ) || 'woocommerce' !== Arr::get( $event_payments_settings, 'type' ) ) {
+			return false;
+		}
+
+		$product_id = Arr::get( $event_payments_settings, 'woo_product', false );
+		if ( ! $product_id ) {
+			return false;
+		}
+
+		$product = wc_get_product( $product_id );
+		if ( ! $product || ! $product->get_id() ) {
+			return false;
+		}
+
+		return array(
+			'price'        => $product->get_price(),
+			'currency'     => get_woocommerce_currency(),
+			'product_id'   => $product->get_id(),
+			'product_name' => $product->get_name(),
+		);
 	}
 }

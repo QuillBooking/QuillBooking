@@ -289,9 +289,16 @@ export interface BookingResponse {
 	updated_at: string;
 	timezone: string;
 	fields: any | null;
-	location: string;
+	location: BookingLocation;
 	event: Event;
 	meta: EventMetaData[];
+}
+
+export type BookingLocation = {
+	type: string;
+	id?: string;
+	label: string;
+	value: string;
 }
 
 export interface Booking extends BookingResponse {

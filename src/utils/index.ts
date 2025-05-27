@@ -1,5 +1,6 @@
 import { isToday, isTomorrow } from 'date-fns';
 import { format, fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { __ } from '@wordpress/i18n';
 
 import { Booking, DateOverrides, Location } from '@quillbooking/client';
 
@@ -109,11 +110,10 @@ export const getFields = (formData: Record<string, any>) => {
 	return groupedFields;
 };
 
-
 export function isValidDateOverrides(dateOverrides: DateOverrides) {
 	return Object.entries(dateOverrides).every(([key, value]) => {
 		// Check if the key is empty
-		if (!key || key.trim() === "") {
+		if (!key || key.trim() === '') {
 			return false;
 		}
 
@@ -122,17 +122,21 @@ export function isValidDateOverrides(dateOverrides: DateOverrides) {
 			return false;
 		}
 
-		return value.every(entry => {
+		return value.every((entry) => {
 			// Ensure each entry is a valid object
-			if (typeof entry !== "object" || entry === null) {
+			if (typeof entry !== 'object' || entry === null) {
 				return false;
 			}
 
 			// Ensure all fields are non-empty
-			return Object.values(entry).every(fieldValue =>
-				fieldValue !== undefined &&
-				fieldValue !== null &&
-				!(typeof fieldValue === "string" && fieldValue.trim() === "")
+			return Object.values(entry).every(
+				(fieldValue) =>
+					fieldValue !== undefined &&
+					fieldValue !== null &&
+					!(
+						typeof fieldValue === 'string' &&
+						fieldValue.trim() === ''
+					)
 			);
 		});
 	});
@@ -148,7 +152,7 @@ export function get_location(
 		return {
 			label: 'Attendee Address',
 			value: location_data,
-			type: location_type
+			type: location_type,
 		};
 	}
 
@@ -156,12 +160,12 @@ export function get_location(
 		return {
 			label: 'Attendee Phone',
 			value: location_data,
-			type: location_type
+			type: location_type,
 		};
 	}
 
 	// Find the matching location
-	const location = event_locations.find(loc => {
+	const location = event_locations.find((loc) => {
 		// If location has an ID, it matches
 		if (loc.id == location_type) return true;
 
@@ -179,7 +183,7 @@ export function get_location(
 			label: location.fields.location || '',
 			value: location.fields.description || '',
 			type: location.type,
-			id: location.id
+			id: location.id,
 		};
 	}
 
@@ -188,17 +192,17 @@ export function get_location(
 		person_address: () => ({
 			label: 'Person Address',
 			value: location.fields.location || '',
-			type: location.type
+			type: location.type,
 		}),
 		person_phone: () => ({
 			label: 'Person Phone',
 			value: location.fields.phone || '',
-			type: location.type
+			type: location.type,
 		}),
 		online: () => ({
 			label: 'Online',
 			value: location.fields.meeting_url || '',
-			type: location.type
+			type: location.type,
 		}),
 		zoom: () => ({
 			label: 'Zoom',
@@ -217,3 +221,66 @@ export function get_location(
 	const locationBuilder = locationMap[location_type];
 	return locationBuilder ? locationBuilder() : null;
 }
+
+export const getCurrencySymbol = (currencyCode: string) => {
+	const symbols: { [key: string]: string } = {
+		USD: '$',
+		EUR: '€',
+		GBP: '£',
+		JPY: '¥',
+		AUD: 'A$',
+		CAD: 'C$',
+		CHF: 'CHF',
+		CNY: '¥',
+		INR: '₹',
+		BRL: 'R$',
+		// Add more currencies as needed
+	};
+	return symbols[currencyCode] || currencyCode;
+};
+
+export const formatPrice = (
+	price: number | string,
+	currency: string = 'USD'
+) => {
+	// If price is 0 or falsy (undefined, null, etc.), return 'Free'
+	if (price === 0 || !price) {
+		return __('Free', 'quillbooking');
+	}
+
+	const symbol = getCurrencySymbol(currency);
+
+	// Handle different price formats for different currencies
+	if (typeof price === 'number') {
+		// For JPY and other zero-decimal currencies, don't show decimals
+		if (
+			[
+				'JPY',
+				'BIF',
+				'CLP',
+				'DJF',
+				'GNF',
+				'KMF',
+				'KRW',
+				'MGA',
+				'PYG',
+				'RWF',
+				'VND',
+				'VUV',
+				'XAF',
+				'XOF',
+				'XPF',
+			].includes(currency)
+		) {
+			return `${symbol}${Math.round(price)}`;
+		}
+
+		// Standard format with 2 decimal places
+		return `${symbol}${price.toFixed(2)}`;
+	}
+
+	// If price is already a string (e.g., "Free")
+	return typeof price === 'string' && price.toLowerCase() === 'free'
+		? __('Free', 'quillbooking')
+		: `${symbol}${price}`;
+};

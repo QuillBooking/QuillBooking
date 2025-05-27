@@ -26,15 +26,18 @@ const EventPrice: React.FC<{
 
 	useEffect(() => {
 		if (payments_settings.enable_items_based_on_duration) {
-			setPrice(payments_settings.multi_duration_items[duration]?.price);
+			setPrice(
+				payments_settings.multi_duration_items[duration]?.price ??
+					__('Free', 'quillbooking')
+			);
 			return;
 		}
 
 		if (payments_settings.enable_payment) {
 			const totalPrice = payments_settings.items
-				.map((item) => item.price)
+				.map((item) => item.price ?? 0)
 				.reduce((sum, price) => sum + price, 0);
-			setPrice(totalPrice);
+			setPrice(totalPrice || __('Free', 'quillbooking'));
 			return;
 		}
 	}, [payments_settings]);

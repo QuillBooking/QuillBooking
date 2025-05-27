@@ -76,7 +76,7 @@ const FIELD_COMPONENTS = {
 	),
 };
 
-const FormField = ({ field, id, form }) => {
+const FormField = ({ field, id }) => {
 	const {
 		type,
 		label,

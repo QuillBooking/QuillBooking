@@ -24,6 +24,7 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  */
 class REST_Settings_Controller extends REST_Controller {
 
+
 	/**
 	 * REST Base
 	 *
@@ -201,7 +202,7 @@ class REST_Settings_Controller extends REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
-	public function get( $request ) { // phpcs:ignore
+	public function get( $request ) 	{ // phpcs:ignore
 		$settings = Settings::get_all();
 
 		$result = array();
@@ -237,20 +238,6 @@ class REST_Settings_Controller extends REST_Controller {
 	 */
 	public function update( $request ) {
 		$settings = $request->get_json_params();
-
-		// Validate payment settings if they're being updated
-		if ( isset( $settings['payments'] ) ) {
-			$payments_settings = $settings['payments'];
-			
-			// Use Payment_Validator to validate payment settings
-			$validation_result = Payment_Validator::validate_payment_gateways( $payments_settings );
-			
-			// If validation fails, add a warning header but proceed (since we don't want to block settings update)
-			if ( is_wp_error( $validation_result ) ) {
-				error_log( 'QuillBooking Settings API: ' . $validation_result->get_error_message() );
-				header( 'X-QuillBooking-Warning: ' . $validation_result->get_error_message() );
-			}
-		}
 
 		Settings::update_many( $settings );
 		return new WP_REST_Response( array( 'success' => true ), 200 );

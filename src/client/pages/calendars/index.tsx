@@ -22,11 +22,7 @@ import CalendarEvents from './calendar-events';
 import AddCalendarModal from './add-calendar-modal';
 import CalendarSkeleton from './shimmer/calendar-skeleton';
 import TeamCalendarSkeleton from './shimmer/team-calendar-skeleton';
-import {
-	useApi,
-	useNavigate,
-	useCurrentUser,
-} from '@quillbooking/hooks';
+import { useApi, useNavigate, useCurrentUser } from '@quillbooking/hooks';
 import {
 	Header,
 	AddIcon,
@@ -66,10 +62,14 @@ const Calendars: React.FC = () => {
 	);
 	const [excludedUserIds, setExcludedUserIds] = useState<number[]>([]);
 	const [hostSelectKey, setHostSelectKey] = useState<number>(0);
-	const [eventStatusMessage, setEventStatusMessage] = useState<boolean>(false);
-	const [deleteEventMessage, setDeleteEventMessage] = useState<boolean>(false);
-	const [deleteCalendarMessage, setDeleteCalendarMessage] = useState<boolean>(false);
-	const [createCalendarMessage, setCreateCalendarMessage] = useState<boolean>(false);
+	const [eventStatusMessage, setEventStatusMessage] =
+		useState<boolean>(false);
+	const [deleteEventMessage, setDeleteEventMessage] =
+		useState<boolean>(false);
+	const [deleteCalendarMessage, setDeleteCalendarMessage] =
+		useState<boolean>(false);
+	const [createCalendarMessage, setCreateCalendarMessage] =
+		useState<boolean>(false);
 	const [cloneMessage, setCloneMessage] = useState<boolean>(false);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const navigate = useNavigate();
@@ -82,12 +82,35 @@ const Calendars: React.FC = () => {
 	// Add useEffect for handling notice timeouts
 	useEffect(() => {
 		const messages = [
-			{ state: eventStatusMessage, setState: setEventStatusMessage as (value: boolean | null) => void },
-			{ state: deleteEventMessage, setState: setDeleteEventMessage as (value: boolean | null) => void },
-			{ state: deleteCalendarMessage, setState: setDeleteCalendarMessage as (value: boolean | null) => void },
-			{ state: createCalendarMessage, setState: setCreateCalendarMessage as (value: boolean | null) => void },
-			{ state: cloneMessage, setState: setCloneMessage as (value: boolean | null) => void },
-			{ state: errorMessage, setState: setErrorMessage }
+			{
+				state: eventStatusMessage,
+				setState: setEventStatusMessage as (
+					value: boolean | null
+				) => void,
+			},
+			{
+				state: deleteEventMessage,
+				setState: setDeleteEventMessage as (
+					value: boolean | null
+				) => void,
+			},
+			{
+				state: deleteCalendarMessage,
+				setState: setDeleteCalendarMessage as (
+					value: boolean | null
+				) => void,
+			},
+			{
+				state: createCalendarMessage,
+				setState: setCreateCalendarMessage as (
+					value: boolean | null
+				) => void,
+			},
+			{
+				state: cloneMessage,
+				setState: setCloneMessage as (value: boolean | null) => void,
+			},
+			{ state: errorMessage, setState: setErrorMessage },
 		];
 
 		messages.forEach(({ state, setState }) => {
@@ -98,7 +121,14 @@ const Calendars: React.FC = () => {
 				return () => clearTimeout(timer);
 			}
 		});
-	}, [eventStatusMessage, deleteEventMessage, deleteCalendarMessage, createCalendarMessage, cloneMessage, errorMessage]);
+	}, [
+		eventStatusMessage,
+		deleteEventMessage,
+		deleteCalendarMessage,
+		createCalendarMessage,
+		cloneMessage,
+		errorMessage,
+	]);
 
 	const fetchCalendars = async (shouldUpdateExcludedUsers = true) => {
 		if (loading) return;
@@ -162,7 +192,6 @@ const Calendars: React.FC = () => {
 		}
 	};
 
-
 	const deleteCalendar = async (calendar: Calendar) => {
 		await callApi({
 			path: `calendars/${calendar.id}`,
@@ -186,7 +215,6 @@ const Calendars: React.FC = () => {
 					const userIds = uniq(map(updatedAllCalendars, 'user_id'));
 					setExcludedUserIds(userIds);
 				}
-
 			},
 			onError: (error) => {
 				setErrorMessage(error.message);
@@ -479,7 +507,7 @@ const Calendars: React.FC = () => {
 										icon={<PlusOutlined />}
 									>
 										{__(
-											'Create Team Event',
+											'Create Team Calendar',
 											'quillbooking'
 										)}
 									</Button>

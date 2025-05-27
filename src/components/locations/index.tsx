@@ -6,7 +6,7 @@ import { __, sprintf } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Flex, Button, Input, Modal, Form, Checkbox } from 'antd';
+import { Flex, Button, Input, Modal, Form, Checkbox, message } from 'antd';
 import { map, isEmpty, get, uniqueId } from 'lodash';
 import { FaPlus } from 'react-icons/fa';
 /**
@@ -16,6 +16,7 @@ import ConfigAPI from '@quillbooking/config';
 import type { LocationField } from '@quillbooking/config';
 import type {
 	ConnectedIntegrationsFields,
+	ConnectedIntegrationsFieldsMicrosoft,
 	Location,
 } from '@quillbooking/client';
 import { EditIcon, TrashIcon } from '@quillbooking/components';
@@ -25,6 +26,7 @@ import meet from '../../../assets/icons/google/google_meet.png';
 import zoom from '../../../assets/icons/zoom/zoom_video.png';
 import teams from '../../../assets/icons/teams/teams.png';
 import TextArea from 'antd/es/input/TextArea';
+import { NavLink } from '../../navigation';
 
 // Extended Location type to include custom ID for multiple custom locations
 interface ExtendedLocation extends Location {
@@ -38,7 +40,7 @@ const Locations: React.FC<{
 	connected_integrations: {
 		apple: ConnectedIntegrationsFields;
 		google: ConnectedIntegrationsFields;
-		outlook: ConnectedIntegrationsFields;
+		outlook: ConnectedIntegrationsFieldsMicrosoft;
 		twilio: ConnectedIntegrationsFields;
 		zoom: ConnectedIntegrationsFields;
 	};
@@ -56,7 +58,6 @@ const Locations: React.FC<{
 	>(null);
 	const [newLocationType, setNewLocationType] = useState<string | null>(null);
 	const [editingCustomId, setEditingCustomId] = useState<string | null>(null);
-	// Track custom locations separately
 	const [customLocations, setCustomLocations] = useState<
 		{ id: string; fields?: Record<string, any>; visible: boolean }[]
 	>(
@@ -68,12 +69,12 @@ const Locations: React.FC<{
 				visible: true,
 			}))
 	);
-	// Cache for non-custom locations
 	const [cachedLocationData, setCachedLocationData] = useState<
 		Record<string, any>
 	>({});
 	const [form] = Form.useForm();
 	const locationTypes = ConfigAPI.getLocations();
+	const [messageApi, contextHolder] = message.useMessage();
 
 	console.log('Calendar', calendar);
 
@@ -134,7 +135,7 @@ const Locations: React.FC<{
 		const adminUrl = ConfigAPI.getAdminUrl();
 		const path = `calendars/${calendar?.id}`;
 		if (!hasSettings) {
-			window.location.href = `${adminUrl}?page=quillbooking&path=integrations&subtab=${integrationType}`;
+			window.location.href = `${adminUrl}?page=quillbooking&path=integrations&tab=conferencing-calendars&subtab=${integrationType}`;
 		} else if (!hasAccounts) {
 			window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`;
 		} else {
@@ -150,7 +151,6 @@ const Locations: React.FC<{
 			!isIntegrationConnected(type) &&
 			!isIntegrationGolbalConnected(type)
 		) {
-			console.log('Checking location checked1:', checked);
 			// If trying to check but integration isn't connected, navigate to integration page
 			switch (type) {
 				case 'google-meet':
@@ -168,6 +168,17 @@ const Locations: React.FC<{
 					);
 					break;
 				case 'ms-teams':
+					// Check if Teams is enabled for the default account
+					if (!connected_integrations.outlook.teams_enabled) {
+						messageApi.error({
+							content: __(
+								'Microsoft Teams is not enabled for your default account. Please enable it in the Outlook integration settings.',
+								'quillbooking'
+							),
+							duration: 5,
+						});
+						return;
+					}
 					navigateToIntegrations(
 						'outlook',
 						isIntegrationGolbalConnected(type),
@@ -458,6 +469,7 @@ const Locations: React.FC<{
 
 	return (
 		<>
+			{contextHolder}
 			<Flex vertical gap={15}>
 				<Flex vertical gap={10} className="justify-start items-start">
 					<div className="text-[#09090B] text-[16px]">
@@ -570,11 +582,8 @@ const Locations: React.FC<{
 							handleCheckboxChange('zoom', e.target.checked)
 						}
 						disabled={
-							((!connected_integrations.zoom.has_settings &&
-								!connected_integrations.zoom.has_accounts) ||
-								(!connected_integrations.zoom.connected &&
-									!connected_integrations.zoom
-										.has_accounts)) &&
+							!connected_integrations.zoom.has_settings &&
+							!connected_integrations.zoom.has_accounts &&
 							!locations.some((loc) => loc.type === 'zoom')
 						}
 					>
@@ -598,12 +607,25 @@ const Locations: React.FC<{
 									</div>
 									<div className="text-[#9197A4] text-[12px] italic">
 										{connected_integrations.zoom
-											.has_settings
-											? __('Connected', 'quillbooking')
-											: __(
-													'Need to be Connect First - Visit the Zoom integration page from Settings.',
-													'quillbooking'
-												)}
+											.has_settings &&
+										!connected_integrations.zoom
+											.has_accounts ? (
+											<NavLink
+												to={`integrations&tab=conferencing-calendars&subtab=zoom`}
+											>
+												<span className="text-blue-500 hover:text-blue-600 transition-colors font-medium cursor-pointer">
+													{__(
+														'Connected By Your Global Settings',
+														'quillbooking'
+													)}
+												</span>
+											</NavLink>
+										) : (
+											__(
+												'Connected By Your Host Settings',
+												'quillbooking'
+											)
+										)}
 									</div>
 								</Flex>
 							</Flex>
@@ -613,13 +635,13 @@ const Locations: React.FC<{
 									onClick={() =>
 										navigateToIntegrations(
 											'zoom',
-											false,
+											true,
 											false
 										)
 									}
 									className="bg-transparent shadow-none border border-color-primary text-color-primary"
 								>
-									{__('Connect', 'quillbooking')}
+									{__('Add Account', 'quillbooking')}
 								</Button>
 							) : !connected_integrations.zoom.has_accounts ? (
 								<Button
@@ -665,6 +687,7 @@ const Locations: React.FC<{
 						}
 						disabled={
 							(!connected_integrations.outlook.connected ||
+								!connected_integrations.outlook.teams_enabled ||
 								!connected_integrations.outlook.has_settings ||
 								(connected_integrations.outlook.connected &&
 									!connected_integrations.outlook
@@ -698,6 +721,23 @@ const Locations: React.FC<{
 													'Need to be Connect First - Visit the MS Teams integration page from Settings.',
 													'quillbooking'
 												)}
+
+										{connected_integrations.outlook
+											.teams_enabled ? (
+											<div className="text-[#9197A4] text-[12px] italic">
+												{__(
+													'Teams is enabled',
+													'quillbooking'
+												)}
+											</div>
+										) : (
+											<div className="text-[#9197A4] text-[12px] italic">
+												{__(
+													'Teams is not enabled',
+													'quillbooking'
+												)}
+											</div>
+										)}
 									</div>
 								</Flex>
 							</Flex>

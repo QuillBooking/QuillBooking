@@ -60,6 +60,10 @@ export type ConnectedIntegrationsFields = {
 	has_accounts: boolean;
 };
 
+export type ConnectedIntegrationsFieldsMicrosoft = ConnectedIntegrationsFields & {
+	teams_enabled: boolean;
+};
+
 export type Event = {
 	id: number;
 	hash_id: string;
@@ -90,7 +94,7 @@ export type Event = {
 	connected_integrations: {
 		apple: ConnectedIntegrationsFields;
 		google: ConnectedIntegrationsFields;
-		outlook: ConnectedIntegrationsFields;
+		outlook: ConnectedIntegrationsFieldsMicrosoft;
 		twilio: ConnectedIntegrationsFields;
 		zoom: ConnectedIntegrationsFields;
 	};

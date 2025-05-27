@@ -33,6 +33,10 @@ class API extends Abstract_API {
 
 
 
+
+
+
+
 	/**
 	 * Access token
 	 *
@@ -130,11 +134,6 @@ class API extends Abstract_API {
 	 * @return array|WP_Error
 	 */
 	public function request_remote( $method, $path, $body = null ) {
-		// Add xdebug breakpoint for debugging API requests
-		if ( function_exists( 'xdebug_break' ) ) {
-			error_log( 'Zoom API Debug - Breaking at request_remote method with xdebug_break()' );
-			xdebug_break();
-		}
 		return wp_remote_request(
 			"{$this->endpoint}/$path",
 			array(
@@ -160,12 +159,6 @@ class API extends Abstract_API {
 	 * @return array
 	 */
 	public function request( $method, $path, $body = null, $maybe_refresh_token = true ) {
-		// Add xdebug breakpoint for debugging API requests
-		if ( function_exists( 'xdebug_break' ) ) {
-			error_log( 'Zoom API Debug - Breaking at request method with xdebug_break()' );
-			xdebug_break();
-		}
-
 		$response = $this->request_remote( $method, $path, $body );
 
 		// Log the request and response for debugging
@@ -223,12 +216,7 @@ class API extends Abstract_API {
 	 * @return boolean
 	 */
 	private function refresh_tokens() {
-		 // Add xdebug breakpoint for debugging token refresh
-		if ( function_exists( 'xdebug_break' ) ) {
-			error_log( 'Zoom Integration Debug - Breaking at refresh_tokens method with xdebug_break()' );
-			xdebug_break();
-		}
-		error_log( 'Zoom Integration Debug - Attempting to refresh tokens for account: ' . $this->account_id );
+		 error_log( 'Zoom Integration Debug - Attempting to refresh tokens for account: ' . $this->account_id );
 		try {
 			// Check if integration and app are available
 			if ( ! $this->integration ) {
@@ -326,12 +314,6 @@ class API extends Abstract_API {
 	 * @return array
 	 */
 	private function get_tokens( $app_credentials ) {
-		// Add xdebug breakpoint for debugging token fetching
-		if ( function_exists( 'xdebug_break' ) ) {
-			error_log( 'Zoom Integration Debug - Breaking at get_tokens method with xdebug_break()' );
-			xdebug_break();
-		}
-
 		// Direct API request as fallback
 		error_log( 'Zoom Integration Debug - Getting tokens via direct API request' );
 

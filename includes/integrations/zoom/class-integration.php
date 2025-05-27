@@ -25,6 +25,8 @@ use QuillBooking\Utils;
 class Integration extends Abstract_Integration {
 
 
+
+
 	/**
 	 * Integration Name
 	 *
@@ -255,9 +257,6 @@ class Integration extends Abstract_Integration {
 	 * @return Booking_Model
 	 */
 	public function add_event_to_calendars( $booking ) {
-		// Simple xdebug breakpoint
-		xdebug_break();
-
 		if ( $booking->location['type'] !== Zoom::instance()->slug ) {
 			return $booking;
 		}
@@ -487,8 +486,6 @@ class Integration extends Abstract_Integration {
 	 * @return bool|API
 	 */
 	public function connect( $host_id, $account_id ) {
-		// add xdebug breakpoint
-		xdebug_break();
 		parent::connect( $host_id, $account_id );
 
 		// First try to get account from host

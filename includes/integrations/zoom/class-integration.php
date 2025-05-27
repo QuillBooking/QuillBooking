@@ -25,19 +25,6 @@ use QuillBooking\Utils;
 class Integration extends Abstract_Integration {
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 	/**
 	 * Integration Name
 	 *
@@ -109,7 +96,6 @@ class Integration extends Abstract_Integration {
 	 */
 	public function __construct() {
 		 parent::__construct();
-		$this->app = new App( $this );
 		add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
 		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
@@ -259,7 +245,6 @@ class Integration extends Abstract_Integration {
 			)
 		);
 	}
-
 	/**
 	 * Add event to calendars
 	 *
@@ -270,6 +255,9 @@ class Integration extends Abstract_Integration {
 	 * @return Booking_Model
 	 */
 	public function add_event_to_calendars( $booking ) {
+		// Simple xdebug breakpoint
+		xdebug_break();
+
 		if ( $booking->location['type'] !== Zoom::instance()->slug ) {
 			return $booking;
 		}
@@ -354,75 +342,21 @@ class Integration extends Abstract_Integration {
 				$meeting_data = array_filter( $meeting_data );
 				error_log( 'Zoom Integration Debug - Meeting data to be sent: ' . print_r( $meeting_data, true ) );
 
-				// Add retry logic for API requests
-				$max_retries = 3;
-				$retry_count = 0;
-				$success     = false;
-				$response    = null;
-
-				while ( ! $success && $retry_count < $max_retries ) {
-					try {
-						// Increase timeout for API requests
-						add_filter(
-							'http_request_timeout',
-							function () {
-								return 30;
-							}
-						);
-						$response = $api->create_meeting( $meeting_data );
-						remove_filter(
-							'http_request_timeout',
-							function () {
-								return 30;
-							}
-						);
-
-						error_log( 'Zoom Integration Debug - API Response (Attempt ' . ( $retry_count + 1 ) . '): ' . print_r( $response, true ) );
-
-						if ( $response['success'] ) {
-							$success = true;
-						} else {
-							$error_message = Arr::get( $response, 'data.error.message', 'Unknown error' );
-							$error_code    = Arr::get( $response, 'data.wp_error.code', '' );
-
-							// Check if it's a timeout error
-							if ( $error_code === 'http_request_failed' && strpos( $error_message, 'timed out' ) !== false ) {
-								$retry_count++;
-								if ( $retry_count < $max_retries ) {
-									error_log( 'Zoom Integration Debug - Timeout occurred, retrying... (Attempt ' . ( $retry_count + 1 ) . ' of ' . $max_retries . ')' );
-									sleep( 2 ); // Wait 2 seconds before retrying
-									continue;
-								}
-							}
-
-							error_log( 'Zoom Integration Debug - Error creating meeting: ' . $error_message );
-							$booking->logs()->create(
-								array(
-									'type'    => 'error',
-									'message' => __( 'Error creating meeting in Zoom.', 'quillbooking' ),
-									'details' => sprintf(
-										__( 'Error adding event to Zoom Account %1$s: %2$s', 'quillbooking' ),
-										$account_id,
-										$error_message
-									),
-								)
-							);
-							break;
-						}
-					} catch ( \Exception $e ) {
-						error_log( 'Zoom Integration Debug - Exception during API call: ' . $e->getMessage() );
-						$retry_count++;
-						if ( $retry_count < $max_retries ) {
-							error_log( 'Zoom Integration Debug - Retrying after exception... (Attempt ' . ( $retry_count + 1 ) . ' of ' . $max_retries . ')' );
-							sleep( 2 );
-							continue;
-						}
-						throw $e;
-					}
-				}
-
-				if ( ! $success ) {
-					continue;
+				$response = $api->create_meeting( $meeting_data );
+				if ( ! $response['success'] ) {
+					$error_message = Arr::get( $response, 'data.error.message', 'Unknown error' );
+					error_log( 'Zoom Integration Debug - Error creating meeting: ' . $error_message );
+					$booking->logs()->create(
+						array(
+							'type'    => 'error',
+							'message' => __( 'Error creating meeting in Zoom.', 'quillbooking' ),
+							'details' => sprintf(
+								__( 'Error adding event to Zoom Account %1$s: %2$s', 'quillbooking' ),
+								$account_id,
+								$error_message
+							),
+						)
+					);
 				}
 
 				$meeting = Arr::get( $response, 'data' );
@@ -553,6 +487,8 @@ class Integration extends Abstract_Integration {
 	 * @return bool|API
 	 */
 	public function connect( $host_id, $account_id ) {
+		// add xdebug breakpoint
+		xdebug_break();
 		parent::connect( $host_id, $account_id );
 
 		// First try to get account from host
@@ -560,12 +496,15 @@ class Integration extends Abstract_Integration {
 
 		// If no account found, try to get global settings
 		if ( empty( $account ) ) {
-			$global_settings = get_option( 'quillbooking_zoom_settings', array() );
+			$global_settings = $this->get_settings();
 			if ( ! empty( $global_settings ) && ! empty( $global_settings['app_credentials'] ) ) {
-				$account = array(
+				$account        = array(
 					'id'              => 'global',
 					'app_credentials' => $global_settings['app_credentials'],
 					'tokens'          => $global_settings['tokens'] ?? array(),
+				);
+				$this->accounts = array(
+					'global' => $account,
 				);
 				error_log( 'Zoom Integration Debug - Using global settings' );
 			}
@@ -585,64 +524,13 @@ class Integration extends Abstract_Integration {
 		// If we have an access token but no refresh token, we can still proceed
 		if ( ! empty( $access_token ) ) {
 			try {
-				$this->api = new API( $access_token, $refresh_token, $this->app, $account_id, $this );
+				$this->api = new API( $access_token, $this, $refresh_token, $account_id );
 				error_log( 'Zoom Integration Debug - API initialized successfully with access token' );
 				return $this->api;
 			} catch ( \Exception $e ) {
 				error_log( 'Zoom Integration Debug - API initialization failed: ' . $e->getMessage() );
 			}
 		}
-
-		// If we get here, we need to try refreshing the tokens
-		error_log( 'Zoom Integration Debug - Attempting to refresh tokens' );
-		$app_credentials = Arr::get( $account, 'app_credentials', array() );
-		if ( ! empty( $app_credentials ) ) {
-			try {
-				$tokens = $this->app->get_tokens(
-					array(
-						'client_id'     => Arr::get( $app_credentials, 'client_id' ),
-						'client_secret' => Arr::get( $app_credentials, 'client_secret' ),
-						'grant_type'    => 'client_credentials',
-					),
-					$account_id
-				);
-
-				if ( ! empty( $tokens ) ) {
-					// Update global settings if we're using them
-					if ( $account['id'] === 'global' ) {
-						$global_settings           = get_option( 'quillbooking_zoom_settings', array() );
-						$global_settings['tokens'] = $tokens;
-						update_option( 'quillbooking_zoom_settings', $global_settings );
-						error_log( 'Zoom Integration Debug - Updated global tokens' );
-					} else {
-						$this->accounts->update_account(
-							$account_id,
-							array(
-								'tokens' => $tokens,
-							)
-						);
-						error_log( 'Zoom Integration Debug - Updated account tokens' );
-					}
-
-					$access_token  = Arr::get( $tokens, 'access_token', '' );
-					$refresh_token = Arr::get( $tokens, 'refresh_token', '' );
-					error_log( 'Zoom Integration Debug - Tokens refreshed successfully' );
-
-					if ( ! empty( $access_token ) ) {
-						try {
-							$this->api = new API( $access_token, $refresh_token, $this->app, $account_id, $this );
-							error_log( 'Zoom Integration Debug - API initialized successfully after token refresh' );
-							return $this->api;
-						} catch ( \Exception $e ) {
-							error_log( 'Zoom Integration Debug - API initialization failed after token refresh: ' . $e->getMessage() );
-						}
-					}
-				}
-			} catch ( \Exception $e ) {
-				error_log( 'Zoom Integration Debug - Token refresh failed: ' . $e->getMessage() );
-			}
-		}
-
 		error_log( 'Zoom Integration Debug - Failed to initialize API after all attempts' );
 		$this->api = new \WP_Error( 'zoom_integration_error', __( 'Zoom Integration Error: Unable to initialize API.', 'quillbooking' ) );
 		return false;

@@ -16,15 +16,22 @@ import { Dialog } from '@mui/material';
  */
 import { useParams } from '@quillbooking/navigation';
 import { useApi } from '@quillbooking/hooks';
-import { useNavigate } from '@quillbooking/navigation';
 import type { Booking, NoticeMessage } from '@quillbooking/client';
-import { convertTimezone, getCurrentTimezone, groupBookingsByDate } from '@quillbooking/utils';
+import {
+	convertTimezone,
+	getCurrentTimezone,
+	groupBookingsByDate,
+} from '@quillbooking/utils';
 import AddBookingModal from '../bookings/add-booking-modal';
 import BookingList from './booking-list';
 import MeetingInformation from './meeting-information';
 import InviteeInformation from './invitee-information';
 import MeetingActivities from './booking-activities';
-import { CancelIcon, UpcomingCalendarIcon, NoticeBanner } from '@quillbooking/components';
+import {
+	CancelIcon,
+	UpcomingCalendarIcon,
+	NoticeBanner,
+} from '@quillbooking/components';
 import { BookingActions } from '@quillbooking/components';
 import BookingQuestion from './booking-question';
 import PaymentHistory from './payment-history';
@@ -51,49 +58,60 @@ function getNextTenDays(): DayInfo[] {
 	return days;
 }
 
+function formatTime(time: string, timeFormat: string): string {
+	if (!time) return '';
+	const [h, m] = time.split(':').map(Number);
+	if (timeFormat === '12') {
+		const ampm = h >= 12 ? 'PM' : 'AM';
+		const hour12 = h % 12 === 0 ? 12 : h % 12;
+		return `${hour12.toString().padStart(2, '0')}:${m
+			.toString()
+			.padStart(2, '0')} ${ampm}`;
+	}
+	return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
 const days = getNextTenDays();
 
 const ShimmerLoader = () => (
 	<div className="p-16 pt-8 animate-pulse">
-	  {/* Header */}
-	  <div className="flex justify-between border-b border-[#E5E5E5] pb-7 mb-10">
-		<div className="h-8 w-48 bg-gray-200 rounded-md" />
-		<div className="h-8 w-32 bg-gray-200 rounded-md" />
-	  </div>
-  
-	  {/* Main Flex Row */}
-	  <div className="flex gap-8">
-		{/* Left Column: 4 Cards (2/3 width) */}
-		<div className="w-2/3 flex flex-col gap-6">
-		  {Array.from({ length: 4 }).map((_, index) => (
-			<div
-			  key={index}
-			  className="bg-white shadow border border-gray-200 rounded-xl p-6"
-			>
-			  <div className="h-5 w-1/3 bg-gray-200 rounded" />
-			  <div className="mt-4 h-4 w-2/3 bg-gray-200 rounded" />
-			  <div className="mt-2 h-4 w-1/2 bg-gray-200 rounded" />
-			</div>
-		  ))}
+		{/* Header */}
+		<div className="flex justify-between border-b border-[#E5E5E5] pb-7 mb-10">
+			<div className="h-8 w-48 bg-gray-200 rounded-md" />
+			<div className="h-8 w-32 bg-gray-200 rounded-md" />
 		</div>
-  
-		{/* Right Column: 3 Cards (1/3 width) */}
-		<div className="w-1/3 flex flex-col gap-6">
-		  {Array.from({ length: 3 }).map((_, index) => (
-			<div
-			  key={index}
-			  className="bg-white shadow border border-gray-200 rounded-xl p-6"
-			>
-			  <div className="h-5 w-1/2 bg-gray-200 rounded" />
-			  <div className="mt-4 h-4 w-3/4 bg-gray-200 rounded" />
-			  <div className="mt-2 h-4 w-full bg-gray-200 rounded" />
+
+		{/* Main Flex Row */}
+		<div className="flex gap-8">
+			{/* Left Column: 4 Cards (2/3 width) */}
+			<div className="w-2/3 flex flex-col gap-6">
+				{Array.from({ length: 4 }).map((_, index) => (
+					<div
+						key={index}
+						className="bg-white shadow border border-gray-200 rounded-xl p-6"
+					>
+						<div className="h-5 w-1/3 bg-gray-200 rounded" />
+						<div className="mt-4 h-4 w-2/3 bg-gray-200 rounded" />
+						<div className="mt-2 h-4 w-1/2 bg-gray-200 rounded" />
+					</div>
+				))}
 			</div>
-		  ))}
+
+			{/* Right Column: 3 Cards (1/3 width) */}
+			<div className="w-1/3 flex flex-col gap-6">
+				{Array.from({ length: 3 }).map((_, index) => (
+					<div
+						key={index}
+						className="bg-white shadow border border-gray-200 rounded-xl p-6"
+					>
+						<div className="h-5 w-1/2 bg-gray-200 rounded" />
+						<div className="mt-4 h-4 w-3/4 bg-gray-200 rounded" />
+						<div className="mt-2 h-4 w-full bg-gray-200 rounded" />
+					</div>
+				))}
+			</div>
 		</div>
-	  </div>
 	</div>
-  );
-  
+);
 
 const BookingDetails: React.FC = () => {
 	// Destructure params at the top.
@@ -116,16 +134,18 @@ const BookingDetails: React.FC = () => {
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(true);
 	const [isDeleted, setIsDeleted] = useState(false);
+	const [timeFormat, setTimeFormat] = useState<string>('12'); // Default to 24-hour format
 
 	const handleStatusUpdated = (action?: string) => {
 		console.log('Action received:', action); // Add logging to debug
-		
+
 		switch (action) {
 			case 'delete':
 				handleClose();
 				break;
 			case 'rebook':
-				if (!open) { // Only open if not already open
+				if (!open) {
+					// Only open if not already open
 					setOpen(true);
 				}
 				break;
@@ -150,12 +170,11 @@ const BookingDetails: React.FC = () => {
 	const fetchBooking = async () => {
 		if (isDeleted) return; // Don't fetch if booking is deleted
 		setIsLoading(true);
-		
+
 		callApi({
 			path: `bookings/${bookingId}`,
 			method: 'GET',
 			onSuccess: (response) => {
-				console.log('Booking details:', response);
 				setBooking(response);
 				setIsLoading(false);
 			},
@@ -165,7 +184,12 @@ const BookingDetails: React.FC = () => {
 					handleNotice({
 						type: 'error',
 						title: __('Error', 'quillbooking'),
-						message: error.message || __('Error fetching booking details', 'quillbooking')
+						message:
+							error.message ||
+							__(
+								'Error fetching booking details',
+								'quillbooking'
+							),
 					});
 				}
 				setIsLoading(false);
@@ -190,14 +214,18 @@ const BookingDetails: React.FC = () => {
 			}),
 			method: 'GET',
 			onSuccess: (res) => {
-				const bookings = groupBookingsByDate(res.bookings.data);
+				const bookings = groupBookingsByDate(
+					res.bookings.data,
+					res.time_format
+				);
+				setTimeFormat(res.time_format);
 				setBookings(bookings);
 			},
 			onError: () => {
 				handleNotice({
 					type: 'error',
 					title: __('Error', 'quillbooking'),
-					message: __('Error fetching bookings', 'quillbooking')
+					message: __('Error fetching bookings', 'quillbooking'),
 				});
 			},
 		});
@@ -222,22 +250,24 @@ const BookingDetails: React.FC = () => {
 		? convertTimezone(booking.start_time, getCurrentTimezone())
 		: { date: '', time: '' };
 
-	const endTime = booking && booking.start_time && booking.slot_time
-		? (() => {
-			const [hours, minutes] = time.split(':').map(Number);
-			const totalMinutes = hours * 60 + minutes + Number(booking.slot_time);
-			const endHours = Math.floor(totalMinutes / 60);
-			const endMinutes = totalMinutes % 60;
-			return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-		})()
-		: '';
+	const endTime =
+		booking && booking.start_time && booking.slot_time
+			? (() => {
+					const [hours, minutes] = time.split(':').map(Number);
+					const totalMinutes =
+						hours * 60 + minutes + Number(booking.slot_time);
+					const endHours = Math.floor(totalMinutes / 60);
+					const endMinutes = totalMinutes % 60;
+					return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+				})()
+			: '';
 
 	return (
 		<Dialog
 			open={isDialogOpen}
 			onClose={handleClose}
 			fullScreen
-			className='z-[160000]'
+			className="z-[160000]"
 		>
 			{isLoading ? (
 				<ShimmerLoader />
@@ -249,7 +279,7 @@ const BookingDetails: React.FC = () => {
 					>
 						<div>
 							<Flex gap={10} align="center">
-								<div 
+								<div
 									className="text-color-primary-text cursor-pointer"
 									onClick={handleClose}
 								>
@@ -272,11 +302,11 @@ const BookingDetails: React.FC = () => {
 						)}
 					</Flex>
 					{notice && (
-					<div className='mt-4 mx-16'>
-						<NoticeBanner
-							notice={notice}
-							closeNotice={() => setNotice(null)}
-						/>
+						<div className="mt-4 mx-16">
+							<NoticeBanner
+								notice={notice}
+								closeNotice={() => setNotice(null)}
+							/>
 						</div>
 					)}
 					<Flex gap={40} align="start" className="p-16 pt-8">
@@ -299,7 +329,9 @@ const BookingDetails: React.FC = () => {
 									{__('Event Date/Time', 'quillbooking')}
 								</p>
 								<p className="text-2xl font-medium">
-									{date} - {time} - {endTime}
+									{date} - {formatTime(time, timeFormat)}
+									{' - '}
+									{formatTime(endTime, timeFormat)}
 								</p>
 							</div>
 							{booking && <MeetingActivities booking={booking} />}

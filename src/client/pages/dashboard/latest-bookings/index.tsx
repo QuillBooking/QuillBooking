@@ -83,7 +83,10 @@ const LatestBookings: React.FC = () => {
 			method: 'GET',
 			onSuccess: (res) => {
 				// Get all bookings grouped by date
-				const allBookings = groupBookingsByDate(res.bookings.data);
+				const allBookings = groupBookingsByDate(
+					res.bookings.data,
+					res.time_format
+				);
 				setBookings(allBookings);
 				setLoading(false);
 			},

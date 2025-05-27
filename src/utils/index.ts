@@ -40,10 +40,9 @@ export const convertTimezone = (
 	};
 };
 
-export const groupBookingsByDate = (bookings: Booking[]) => {
+export const groupBookingsByDate = (bookings: Booking[], timeFormat = "12") => {
 	return bookings.reduce<Record<string, Booking[]>>((groups, booking) => {
 		const currentTimezone = getCurrentTimezone();
-		// Convert booking.start_time into a Date object in the current timezone.
 		const { date, time: startTime } = convertTimezone(
 			booking.start_time,
 			currentTimezone
@@ -53,14 +52,16 @@ export const groupBookingsByDate = (bookings: Booking[]) => {
 			currentTimezone
 		);
 
-		// Format startTime and endTime to 12-hour format with AM/PM
+		// Choose format based on timeFormat value
+		const timeFormatString = timeFormat === '24' ? 'HH:mm' : 'hh:mm a';
+
 		const formattedStartTime = format(
 			new Date(`1970-01-01T${startTime}:00`),
-			'hh:mm a'
+			timeFormatString
 		);
 		const formattedEndTime = format(
 			new Date(`1970-01-01T${endTime}:00`),
-			'hh:mm a'
+			timeFormatString
 		);
 
 		const bookingWithTimeSpan = {

@@ -27,12 +27,16 @@ use QuillBooking\Booking_Service;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Models\Guest_Model;
 use QuillBooking\Capabilities;
+use QuillBooking\Settings;
 use QuillBooking\Utils;
 
 /**
  * Booking Controller class
  */
 class REST_Booking_Controller extends REST_Controller {
+
+
+
 
 
 
@@ -393,12 +397,14 @@ class REST_Booking_Controller extends REST_Controller {
 
 			$bookings = $query->with( 'event', 'event.calendar', 'guest', 'calendar.user', 'order' )->get();
 
+			$time_format = Settings::get_all();
 			// The 'bookings' array data is designed to compensate for pagination when it gets added.
 			return new WP_REST_Response(
 				array(
 					'bookings'        => array(
 						'data' => $bookings,
 					),
+					'time_format'     => $time_format['general']['time_format'],
 					'pending_count'   => $status_counts[ $this->STATUS_PENDING ] ?? 0,
 					'cancelled_count' => $status_counts[ $this->STATUS_CANCELLED ] ?? 0,
 					'noshow_count'    => $status_counts[ $this->STATUS_NO_SHOW ] ?? 0,

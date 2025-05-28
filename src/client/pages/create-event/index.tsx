@@ -89,6 +89,39 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 			max_invites: 2,
 			show_remaining: true,
 		},
+		connected_integrations: {
+			apple: {
+				name: 'apple',
+				connected: false,
+				has_settings: false,
+				has_accounts: false,
+			},
+			google: {
+				name: 'google',
+				connected: false,
+				has_settings: false,
+				has_accounts: false,
+			},
+			outlook: {
+				name: 'outlook',
+				connected: false,
+				has_settings: false,
+				has_accounts: false,
+				teams_enabled: false,
+			},
+			twilio: {
+				name: 'twilio',
+				connected: false,
+				has_settings: false,
+				has_accounts: false,
+			},
+			zoom: {
+				name: 'zoom',
+				connected: false,
+				has_settings: false,
+				has_accounts: false,
+			},
+		},
 	});
 
 	const [validationErrors, setValidationErrors] = useState({
@@ -259,8 +292,28 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 		});
 	};
 
+	const fetchConnectedIntegrations = () => {
+		console.log('fetchConnectedIntegrations');
+		console.log(calendarId);
+		callApi({
+			path: `calendars/${calendarId}/integrations`,
+			method: 'GET',
+			onSuccess: (response) => {
+				console.log(response);
+				setEvent((prev) => ({
+					...prev,
+					connected_integrations: response,
+				}));
+			},
+			onError: (error) => {
+				console.log(error);
+			},
+		});
+	};
+
 	useEffect(() => {
 		fetchCalendarTeam();
+		fetchConnectedIntegrations();
 	}, []);
 
 	const steps = [
@@ -672,39 +725,9 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								}}
 								onKeepDialogOpen={() => setVisible(true)}
 								connected_integrations={
-									event.connected_integrations ?? {
-										apple: {
-											name: 'apple',
-											connected: false,
-											has_settings: false,
-											has_accounts: false,
-										},
-										google: {
-											name: 'google',
-											connected: false,
-											has_settings: false,
-											has_accounts: false,
-										},
-										outlook: {
-											name: 'outlook',
-											connected: false,
-											has_settings: false,
-											has_accounts: false,
-										},
-										twilio: {
-											name: 'twilio',
-											connected: false,
-											has_settings: false,
-											has_accounts: false,
-										},
-										zoom: {
-											name: 'zoom',
-											connected: false,
-											has_settings: false,
-											has_accounts: false,
-										},
-									}
+									event.connected_integrations!
 								}
+								calendar={{ id: calendarId }}
 							/>
 						</div>
 						{validationErrors.location && (

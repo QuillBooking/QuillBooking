@@ -23,12 +23,18 @@ use QuillBooking\Availability_service;
 use QuillBooking\Models\Calendar_Model;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Capabilities;
+use QuillBooking\Managers\Integrations_Manager;
 use QuillBooking\Models\User_Model;
 
 /**
  * Calendar Controller class
  */
 class REST_Calendar_Controller extends REST_Controller {
+
+
+
+
+
 
 
 
@@ -165,6 +171,25 @@ class REST_Calendar_Controller extends REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item_team' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
+							'type'        => 'integer',
+						),
+					),
+				),
+			)
+		);
+
+		// Register route for getting calendar integrations
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)' . '/integrations',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_item_integrations' ),
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => array(
 						'id' => array(
@@ -842,6 +867,93 @@ class REST_Calendar_Controller extends REST_Controller {
 
 		if ( is_wp_error( $result ) ) {
 			throw new Exception( $result->get_error_message(), 400 );
+		}
+	}
+
+	/**
+	 * Get calendar integrations
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
+	 */
+	public function get_item_integrations( $request ) {
+		try {
+			$calendar_id = $request->get_param( 'id' );
+			$calendar    = Calendar_Model::find( $calendar_id );
+
+			if ( ! $calendar ) {
+				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
+			$connected_integrations = array();
+			$integrations           = Integrations_Manager::instance()->get_integrations();
+
+			$calendar_ids = array( $calendar_id );
+			if ( in_array( $calendar->type, array( 'round-robin', 'collective' ) ) ) {
+				$team_members = $calendar->getTeamMembers();
+				$calendar_ids = $team_members;
+			}
+
+			foreach ( $integrations as $integration_class ) {
+				$integration         = new $integration_class();
+				$all_connected       = true;
+				$has_accounts        = false;
+				$global_settings     = $integration->get_settings();
+				$set_global_settings = false;
+				$teams_enabled       = false;
+
+				if ( $integration->slug == 'zoom' ) {
+					$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
+					if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['client_id'] ) && ! empty( $app_credentials['client_secret'] ) ) {
+						$set_global_settings = true;
+					} else {
+						$set_global_settings = false;
+					}
+				} else {
+					$app = Arr::get( $global_settings, 'app', null );
+					if ( $app && is_array( $app ) && ! empty( $app['cache_time'] ) ) {
+						$set_global_settings = true;
+					} else {
+						$set_global_settings = false;
+					}
+				}
+
+				foreach ( $calendar_ids as $calendar_id ) {
+					$integration->set_host( $calendar_id );
+					$accounts = $integration->accounts->get_accounts();
+
+					if ( empty( $accounts ) ) {
+						$all_connected = false;
+					} else {
+						$has_accounts = true;
+						// Check if this is the default account and has Teams enabled
+						if ( $integration->slug === 'outlook' ) {
+							foreach ( $accounts as $account ) {
+								if ( isset( $account['config']['default_calendar'] ) ) {
+									// Check if Teams is explicitly enabled in the account settings
+									$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
+										$account['config']['settings']['enable_teams'] === true;
+									break;
+								}
+							}
+						}
+					}
+				}
+
+				$connected_integrations[ $integration->slug ] = array(
+					'name'          => $integration->name,
+					'connected'     => $all_connected,
+					'has_accounts'  => $has_accounts,
+					'has_settings'  => $set_global_settings,
+					'teams_enabled' => $teams_enabled,
+				);
+			}
+
+			return rest_ensure_response( $connected_integrations );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
 };

@@ -22,7 +22,6 @@ import {
  */
 import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
-import { addQueryArgs } from '@wordpress/url';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
 
 const { Text } = Typography;
@@ -37,17 +36,10 @@ const SMSIntegration: React.FC = () => {
 	const [saving, setSaving] = useState(false);
 	const [accountData, setAccountData] = useState<any>(null);
 	const [loadingAccount, setLoadingAccount] = useState(true);
-	const [calendar, setCalendar] = useState<any>(null);
 
 	useEffect(() => {
-		fetchCalendars();
+		fetchTwilioAccount();
 	}, []);
-
-	useEffect(() => {
-		if (calendar?.id) {
-			fetchTwilioAccount();
-		}
-	}, [calendar]);
 
 	useEffect(() => {
 		if (accountData) {
@@ -60,42 +52,20 @@ const SMSIntegration: React.FC = () => {
 		}
 	}, [accountData]);
 
-	const fetchCalendars = () => {
-		callApi({
-			path: addQueryArgs(`calendars`, {
-				user: 'own',
-			}),
-			onSuccess: (response) => {
-				if (response.data && response.data.length > 0) {
-					const currentCalendar = response.data[0];
-					setCalendar(currentCalendar);
-				} else {
-					setLoadingAccount(false);
-					errorNotice(
-						__('No calendars found for this user', 'quillbooking')
-					);
-				}
-			},
-			onError: (error) => {
-				setLoadingAccount(false);
-				errorNotice(
-					error.message ||
-						__('Failed to fetch calendars', 'quillbooking')
-				);
-			},
-		});
-	};
-
 	const fetchTwilioAccount = () => {
 		setLoadingAccount(true);
 		callApi({
-			path: `integrations/twilio/${calendar.id}/accounts`,
+			path: `integrations/twilio`,
 			method: 'GET',
 			onSuccess(response) {
-				const firstKey = Object.keys(response)[0];
-				const account = response[firstKey];
-				if (account) {
-					setAccountData(account);
+				// check is array
+				if (
+					Array.isArray(response.settings) &&
+					response.settings.length <= 0
+				) {
+					setAccountData(null);
+				} else {
+					setAccountData(response.settings);
 				}
 				setLoadingAccount(false);
 			},
@@ -112,16 +82,18 @@ const SMSIntegration: React.FC = () => {
 	const handleSaveSettings = (values: any) => {
 		setSaving(true);
 		callApi({
-			path: `integrations/twilio/${calendar.id}/accounts`,
+			path: `integrations/twilio`,
 			method: 'POST',
 			data: {
-				credentials: {
-					sms_number: values.sms_number,
-					whatsapp_number: values.whatsapp_number,
-					account_sid: values.account_sid,
-					auth_token: values.auth_token,
+				settings: {
+					credentials: {
+						sms_number: values.sms_number,
+						whatsapp_number: values.whatsapp_number,
+						account_sid: values.account_sid,
+						auth_token: values.auth_token,
+					},
+					config: {},
 				},
-				config: {},
 			},
 			onSuccess() {
 				successNotice(
@@ -143,8 +115,13 @@ const SMSIntegration: React.FC = () => {
 	const handleDisconnect = () => {
 		setSaving(true);
 		callApi({
-			path: `integrations/twilio/accounts/${accountData?.id}`,
+			path: `integrations/twilio`,
 			method: 'DELETE',
+			data: {
+				settings: {
+					id: accountData.id || '',
+				},
+			},
 			onSuccess() {
 				successNotice(
 					__(

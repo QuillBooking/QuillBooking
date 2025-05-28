@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useEffect, useState } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import { addQueryArgs } from '@wordpress/url';
 
 /**
@@ -20,10 +20,11 @@ import {
 	Spin,
 	Form,
 	Input,
+	CheckboxChangeEvent,
 } from 'antd';
 
 import { PlusSquareOutlined, DeleteOutlined } from '@ant-design/icons';
-import { filter, isEmpty, map } from 'lodash';
+import { isEmpty, map } from 'lodash';
 
 /**
  * Internal dependencies
@@ -46,7 +47,21 @@ interface Props {
 interface Account {
 	id: string;
 	name: string;
-	config: any;
+	config: {
+		calendars?: string[];
+		email?: string;
+		default_calendar?: {
+			calendar_id: string;
+			account_id: string;
+		} | null;
+		settings?: {
+			enable_notifications?: boolean;
+			guests_can_see_others?: boolean;
+			enable_teams?: boolean;
+			[key: string]: any;
+		};
+		[key: string]: any;
+	};
 	calendars: any[];
 	app_credentials: any;
 }
@@ -65,8 +80,7 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 	const { callApi: connectApi, loading: connectLoading } = useApi();
 	const { callApi: toggleCalendarApi, loading: toggleCalendarLoading } =
 		useApi();
-	const { callApi: updateSettingsApi, loading: updateSettingsLoading } =
-		useApi();
+	const { callApi: updateSettingsApi } = useApi();
 	const { callApi: deleteApi } = useApi();
 	const [visible, setVisible] = useState(false);
 	const [integrationSlug, setIntegrationSlug] = useState(
@@ -124,7 +138,29 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 
 				// Set form values from first account's app_credentials if available
 				if (accounts.length > 0 && accounts[0].app_credentials) {
-					form.setFieldsValue(accounts[0].app_credentials);
+					const formValues = { ...accounts[0].app_credentials };
+
+					// Add integration-specific settings to form values
+					if (accounts[0].config?.settings) {
+						// For Google Calendar
+						if (integrationSlug === 'google') {
+							formValues.enable_notifications =
+								accounts[0].config.settings
+									.enable_notifications || false;
+							formValues.guests_can_see_others =
+								accounts[0].config.settings
+									.guests_can_see_others || false;
+						}
+
+						// For Outlook
+						if (integrationSlug === 'outlook') {
+							formValues.enable_teams =
+								accounts[0].config.settings.enable_teams ||
+								false;
+						}
+					}
+
+					form.setFieldsValue(formValues);
 				}
 			},
 			onError(error) {
@@ -135,6 +171,46 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 				});
 			},
 		});
+	};
+
+	const handleCheckTeamsCapabilities = async (
+		account: any,
+		type: string,
+		e: any
+	) => {
+		try {
+			const response = await callApi({
+				path: `integrations/${integrationSlug}/${calendarId}/accounts/${account.id}/check-teams`,
+				method: 'GET',
+			});
+
+			if (response.success) {
+				// User has Teams capability, proceed with enabling Teams
+				handleSettingsChange(account.id, type, e.target.checked);
+			} else {
+				// User doesn't have Teams capability
+				setNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message:
+						response.message ||
+						__(
+							'Failed to verify Teams capabilities',
+							'quillbooking'
+						),
+				});
+			}
+		} catch (error) {
+			console.error('Error checking Teams capabilities:', error);
+			setNotice({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message: __(
+					'Failed to verify Teams capabilities. Please try again later.',
+					'quillbooking'
+				),
+			});
+		}
 	};
 
 	const handleDeleteAccount = async (accountId: string) => {
@@ -202,12 +278,44 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 	const handleConnectBasic = () => {
 		form.validateFields()
 			.then((values) => {
+				// Extract integration-specific settings from form values
+				const appCredentials = { ...values };
+				const settings = {};
+
+				// Handle Google Calendar specific settings
+				if (integrationSlug === 'google') {
+					// Remove these settings from credentials and move to config.settings
+					if ('enable_notifications' in appCredentials) {
+						settings['enable_notifications'] =
+							appCredentials.enable_notifications;
+						delete appCredentials.enable_notifications;
+					}
+					if ('guests_can_see_others' in appCredentials) {
+						settings['guests_can_see_others'] =
+							appCredentials.guests_can_see_others;
+						delete appCredentials.guests_can_see_others;
+					}
+				}
+
+				// Handle Outlook specific settings
+				if (integrationSlug === 'outlook') {
+					if ('enable_teams' in appCredentials) {
+						settings['enable_teams'] = appCredentials.enable_teams;
+						delete appCredentials.enable_teams;
+					}
+				}
+
 				callApi({
 					path: `integrations/${integrationSlug}/${calendarId}/accounts`,
 					method: 'POST',
 					data: {
-						app_credentials: values,
-						config: {},
+						app_credentials: appCredentials,
+						config: {
+							settings:
+								Object.keys(settings).length > 0
+									? settings
+									: undefined,
+						},
 					},
 					onSuccess() {
 						fetchAccounts();
@@ -588,6 +696,106 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 									)}
 								</Flex>
 							)}
+
+							{/* Additional integration-specific settings for existing accounts */}
+							{integrationSlug === 'google' && (
+								<Flex
+									vertical
+									gap={10}
+									className="w-full border-b pb-4 mb-4"
+								>
+									<Text
+										type="secondary"
+										className="text-[#9197A4] font-semibold"
+									>
+										{__(
+											'Google Calendar Settings',
+											'quillbooking'
+										)}
+									</Text>
+									<Flex vertical gap={8}>
+										<Checkbox
+											checked={
+												account.config?.settings
+													?.enable_notifications ===
+												true
+											}
+											onChange={(e) =>
+												handleSettingsChange(
+													account.id,
+													'enable_notifications',
+													e.target.checked
+												)
+											}
+											className="custom-checkbox text-color-primary-text font-semibold"
+										>
+											{__(
+												'Enable Google Calendar Notifications',
+												'quillbooking'
+											)}
+										</Checkbox>
+										<Checkbox
+											checked={
+												account.config?.settings
+													?.guests_can_see_others ===
+												true
+											}
+											onChange={(e) =>
+												handleSettingsChange(
+													account.id,
+													'guests_can_see_others',
+													e.target.checked
+												)
+											}
+											className="custom-checkbox text-color-primary-text font-semibold"
+										>
+											{__(
+												'Guests can see other guests of the slot',
+												'quillbooking'
+											)}
+										</Checkbox>
+									</Flex>
+								</Flex>
+							)}
+
+							{integrationSlug === 'outlook' && (
+								<Flex
+									vertical
+									gap={10}
+									className="w-full border-b pb-4 mb-4"
+								>
+									<Text
+										type="secondary"
+										className="text-[#9197A4] font-semibold"
+									>
+										{__(
+											'Microsoft Settings',
+											'quillbooking'
+										)}
+									</Text>
+									<Flex vertical gap={8}>
+										<Checkbox
+											checked={
+												account.config?.settings
+													?.enable_teams === true
+											}
+											onChange={(e) =>
+												handleCheckTeamsCapabilities(
+													account,
+													'enable_teams',
+													e
+												)
+											}
+											className="custom-checkbox text-color-primary-text font-semibold"
+										>
+											{__(
+												'Enable Microsoft Teams (Requires work/school account)',
+												'quillbooking'
+											)}
+										</Checkbox>
+									</Flex>
+								</Flex>
+							)}
 						</Card>
 					))
 				)}
@@ -732,6 +940,69 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 										)}
 									</Form.Item>
 								))}
+
+								{/* Additional integration-specific settings */}
+								{integrationSlug === 'google' && (
+									<>
+										<Divider
+											orientation="left"
+											className="mt-4"
+										>
+											{__(
+												'Additional Google Calendar Settings',
+												'quillbooking'
+											)}
+										</Divider>
+										<Form.Item
+											name="enable_notifications"
+											valuePropName="checked"
+											className="mb-2"
+										>
+											<Checkbox className="custom-checkbox text-color-primary-text font-semibold">
+												{__(
+													'Enable Google Calendar Notifications',
+													'quillbooking'
+												)}
+											</Checkbox>
+										</Form.Item>
+										<Form.Item
+											name="guests_can_see_others"
+											valuePropName="checked"
+										>
+											<Checkbox className="custom-checkbox text-color-primary-text font-semibold">
+												{__(
+													'Guests can see other guests of the slot',
+													'quillbooking'
+												)}
+											</Checkbox>
+										</Form.Item>
+									</>
+								)}
+
+								{integrationSlug === 'outlook' && (
+									<>
+										<Divider
+											orientation="left"
+											className="mt-4"
+										>
+											{__(
+												'Additional Microsoft Settings',
+												'quillbooking'
+											)}
+										</Divider>
+										<Form.Item
+											name="enable_teams"
+											valuePropName="checked"
+										>
+											<Checkbox className="custom-checkbox text-color-primary-text font-semibold">
+												{__(
+													'Enable Microsoft Teams (Requires work/school account)',
+													'quillbooking'
+												)}
+											</Checkbox>
+										</Form.Item>
+									</>
+								)}
 							</Form>
 
 							<Divider />
@@ -883,7 +1154,7 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 									type="primary"
 									onClick={() => {
 										form.validateFields()
-											.then((values) => {
+											.then(() => {
 												handleConnectBasic();
 												setVisible(false);
 											})

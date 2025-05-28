@@ -2,7 +2,7 @@ import { __ } from '@wordpress/i18n';
 import { Fields } from '../../../../types';
 import './style.scss';
 import LeftArrowIcon from '../../../../icons/left-arrow-icon';
-import { Form } from 'antd';
+import { Form, Spin } from 'antd';
 import FormField from '../../../inputs';
 import { useState } from 'react';
 
@@ -33,22 +33,15 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 	);
 
 	// called when the user clicks "Schedule Event"
-	const handleFinish = (values: Record<string, any>) => {
-		setIsSubmitting(true);
-		
-		// Call the onSubmit function passed from parent
+	const handleFinish = async (values: Record<string, any>) => {
 		try {
-			onSubmit(values);
+			setIsSubmitting(true);
+			await onSubmit(values);
 		} catch (error) {
-			// If there's an error, re-enable the button
-			console.error('Form submission error:', error);
+			console.error('Error submitting form:', error);
+		} finally {
 			setIsSubmitting(false);
 		}
-		
-		// Note: You might want to handle re-enabling the button depending on your
-		// overall application structure. If onSubmit is asynchronous and you need to
-		// re-enable the button after it completes, you would need to modify onSubmit
-		// to return a Promise and handle it appropriately.
 	};
 
 	return (
@@ -82,12 +75,22 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 							)
 					)}
 					<Form.Item className="schedule-btn-container">
-						<button 
-							className="schedule-btn" 
-							type="submit" 
+						<button
+							className="schedule-btn"
+							type="submit"
 							disabled={isSubmitting}
 						>
-							{!isSubmitting ? __('Schedule Event', '@quillbooking') : 'Scheduling...'}
+							{isSubmitting ? (
+								<>
+									<Spin
+										size="small"
+										style={{ marginRight: '8px' }}
+									/>
+									{__('Scheduling...', '@quillbooking')}
+								</>
+							) : (
+								__('Schedule Event', '@quillbooking')
+							)}
 						</button>
 					</Form.Item>
 				</Form>

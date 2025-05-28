@@ -33,3 +33,4 @@ export { default as ColorSelector } from './color-selector';
 export { default as ShareModal } from './share-modal';
 export { default as EventPrice } from './event-price';
 export { default as SelectionCard } from './selection-card';
+export { default as LocationDisplay } from './location-display';

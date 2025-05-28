@@ -31,6 +31,10 @@ export type Event = {
 	fields: Fields;
 	availability_data?: Availability;
 	reserve: boolean;
+	group_settings?: {
+		max_invites: number;
+		show_remaining: boolean;
+	};
 	payments_settings?: {
 		enable_payment: boolean;
 		enable_paypal?: boolean;

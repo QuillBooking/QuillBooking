@@ -9,7 +9,7 @@ import { addQueryArgs } from '@wordpress/url';
 /**
  * External dependencies
  */
-import { Button, Card, Flex, Typography } from 'antd';
+import { Button, Card, Flex, Popover, Typography } from 'antd';
 import { GoArrowRight } from 'react-icons/go';
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -31,17 +31,9 @@ import {
 	UpcomingCalendarIcon,
 } from '@quillbooking/components';
 import ConfigAPI from '@quillbooking/config';
+import { Event } from 'client/types';
 
 const MAX_EVENTS = 7; // Maximum number of events to display
-
-interface Event {
-	id: number;
-	name: string;
-	duration: number;
-	type: string;
-	location: string;
-	calendar_id: number;
-}
 
 const EventShimmer: React.FC = () => {
 	return (
@@ -199,7 +191,67 @@ const LatestEvents: React.FC = () => {
 										</div>
 									</Flex>
 									<div className="font-medium text-[#09090B] pt-1 capitalize">
-										{event.location.split('_').join(' ')}
+										{event.location.length === 1 ? (
+											<span className="text-[#09090B] text-[14px] font-[500] capitalize">
+												{event.location[0].type
+													.split('_')
+													.join(' ')}
+											</span>
+										) : (
+											<Popover
+												content={
+													<div>
+														{event.location.map(
+															(loc, index) => {
+																let displayText =
+																	'';
+																if (
+																	loc.type ===
+																		'custom' &&
+																	loc.fields &&
+																	loc.fields
+																		.location
+																) {
+																	displayText =
+																		loc
+																			.fields
+																			.location;
+																} else {
+																	displayText =
+																		loc.type
+																			.split(
+																				'_'
+																			)
+																			.join(
+																				' '
+																			);
+																}
+																return (
+																	<div
+																		key={
+																			index
+																		}
+																		className="capitalize"
+																	>
+																		{
+																			displayText
+																		}
+																	</div>
+																);
+															}
+														)}
+													</div>
+												}
+											>
+												<span className="text-[#09090B] text-[14px] font-[500] capitalize cursor-pointer">
+													{event.location.length}{' '}
+													{__(
+														'Locations',
+														'quillbooking'
+													)}
+												</span>
+											</Popover>
+										)}
 									</div>
 								</Flex>
 							</Flex>

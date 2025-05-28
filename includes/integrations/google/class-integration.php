@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Google Calendar / Meet Integration
  *
@@ -12,15 +13,21 @@
 namespace QuillBooking\Integrations\Google;
 
 use Illuminate\Support\Arr;
+use QuillBooking\Event_Locations\Google_Meet;
 use QuillBooking\Integration\Integration as Abstract_Integration;
 use QuillBooking\Models\Event_Model;
 use QuillBooking\Integrations\Google\REST_API\REST_API;
 use QuillBooking\Utils;
+use WP_Error;
 
 /**
  * Google Integration class
  */
 class Integration extends Abstract_Integration {
+
+
+
+
 
 	/**
 	 * Integration Name
@@ -64,13 +71,13 @@ class Integration extends Abstract_Integration {
 	 * Constructor
 	 */
 	public function __construct() {
-		parent::__construct();
+		 parent::__construct();
 		$this->app = new App( $this );
-		add_filter( 'quillbooking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
-		// add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
-		// add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
-		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
-		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
+		\add_filter( 'quillbooking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
+		\add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		\add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
+		\add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
+		\add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
 	}
 
 	/**
@@ -98,7 +105,7 @@ class Integration extends Abstract_Integration {
 			$calendar_id = Arr::get( $google_event, 'calendar_id' );
 
 			$api = $this->connect( $host, $account_id );
-			if ( ! $api || is_wp_error( $api ) ) {
+			if ( ! $api || \is_wp_error( $api ) ) {
 				$booking->logs()->create(
 					array(
 						'type'    => 'error',
@@ -248,7 +255,7 @@ class Integration extends Abstract_Integration {
 	}
 
 	/**
-	 * Add event to calendars
+	 * Add event to Google Calendar using default calendar only
 	 *
 	 * @since 1.0.0
 	 *
@@ -257,20 +264,70 @@ class Integration extends Abstract_Integration {
 	 * @return Booking_Model
 	 */
 	public function add_event_to_calendars( $booking ) {
-		$event = $booking->event;
-		$host  = $event->calendar->id;
-		$this->set_host( $host );
+		try {
+			// Early return if booking location is not Google Meet
+			if ( $booking->location['type'] !== Google_Meet::instance()->slug ) {
+				return $booking;
+			}
 
-		$google_integration = $this->host->get_meta( $this->meta_key, array() );
-		if ( empty( $google_integration ) ) {
-			return $booking;
-		}
+			// Validate event and calendar
+			if ( ! $booking->event || ! $booking->event->calendar ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Invalid event or calendar configuration.', 'quillbooking' ),
+					)
+				);
+				return $booking;
+			}
 
-		$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
-		$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
+			$event = $booking->event;
+			$host  = $event->calendar->id;
 
-		foreach ( $google_integration as $account_id => $data ) {
-			$api = $this->connect( $host, $account_id );
+			// Set host and get integration data
+			$this->set_host( $host );
+			$google_integration = $this->host->get_meta( $this->meta_key, array() );
+
+			if ( empty( $google_integration ) ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Google Calendar integration not configured.', 'quillbooking' ),
+					)
+				);
+				return $booking;
+			}
+
+			// Find the account with the default calendar
+			$default_account = null;
+			foreach ( $google_integration as $account_id => $data ) {
+				if ( empty( $data ) || empty( $data['config'] ) ) {
+					continue;
+				}
+
+				$default_calendar = Arr::get( $data, 'config.default_calendar' );
+				if ( ! empty( $default_calendar ) && isset( $default_calendar['calendar_id'] ) && isset( $default_calendar['account_id'] ) ) {
+					$default_account = array(
+						'id'               => $account_id,
+						'data'             => $data,
+						'default_calendar' => $default_calendar,
+					);
+					break;
+				}
+			}
+
+			if ( ! $default_account ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'No default calendar found in any Google account.', 'quillbooking' ),
+					)
+				);
+				return $booking;
+			}
+
+			// Connect to Google API
+			$api = $this->connect( $host, $default_account['id'] );
 			if ( ! $api ) {
 				$booking->logs()->create(
 					array(
@@ -279,17 +336,15 @@ class Integration extends Abstract_Integration {
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with Google Account %2$s.', 'quillbooking' ),
 							$host->name,
-							$account_id
+							$default_account['id']
 						),
 					)
 				);
-				continue;
+				return $booking;
 			}
 
-			$calendars = Arr::get( $data, 'config.calendars', '' );
-			if ( empty( $calendars ) ) {
-				continue;
-			}
+			$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
+			$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
 
 			$attendees = array(
 				array(
@@ -301,15 +356,14 @@ class Integration extends Abstract_Integration {
 				array(
 					'email'          => $booking->guest->email,
 					'display_name'   => $booking->guest->name,
-					// 'comment'        => $booking->message,
 					'responseStatus' => 'accepted',
 				),
 			);
 
 			$event_data = array(
 				'summary'                 => sprintf( __( '%1$s: %2$s', 'quillbooking' ), $booking->guest->name, $event->name ),
-				'description'             => $event->description,
-				'location'                => $booking->location ?? 'Google Meet',
+				'description'             => $this->get_event_description( $booking ),
+				'location'                => $booking->location['label'],
 				'source'                  => array(
 					'title' => $event->calendar->name,
 					'url'   => $booking->event_url,
@@ -328,7 +382,7 @@ class Integration extends Abstract_Integration {
 					'timeZone' => 'UTC',
 				),
 				'guestsCanInviteOthers'   => false,
-				'guestsCanSeeOtherGuests' => true,
+				'guestsCanSeeOtherGuests' => Arr::get( $default_account['data'], 'config.settings.show_guests', false ),
 				'extendedProperties'      => array(
 					'shared' => array(
 						'created_by' => 'quillbooking',
@@ -337,63 +391,82 @@ class Integration extends Abstract_Integration {
 						'booking_id' => $booking->id,
 					),
 				),
-				'description'             => $this->get_event_description( $booking ),
+				'transactionId'           => "{$this->get_site_uid()}-{$booking->id}",
 			);
 
-			// if ( 'google_meet' === $booking->location ) {
-			$event_data['conferenceData'] = array(
-				'createRequest' => array(
-					'requestId'             => $booking->hash_id,
-					'conferenceSolutionKey' => array(
-						'type' => 'hangoutsMeet',
+			if ( Arr::get( $default_account['data'], 'config.settings.enable_notifications', false ) ) {
+				$event_data['conferenceData'] = array(
+					'createRequest' => array(
+						'requestId'             => $booking->hash_id,
+						'conferenceSolutionKey' => array(
+							'type' => 'hangoutsMeet',
+						),
 					),
-				),
-			);
-			// }
-
-			foreach ( $calendars as $calendar_id ) {
-				$response = $api->add_event( $calendar_id, $event_data );
-				if ( ! $response['success'] ) {
-					$booking->logs()->create(
-						array(
-							'type'    => 'error',
-							'message' => __( 'Error adding event to Google Calendar.', 'quillbooking' ),
-							'details' => sprintf(
-								__( 'Error adding event to Google Calendar %1$s: %2$s', 'quillbooking' ),
-								$calendar_id,
-								Arr::get( $response, 'data.error.message' )
-							),
-						)
-					);
-					continue;
-				}
-
-				$event       = Arr::get( $response, 'data' );
-				$meta        = $booking->get_meta( 'google_events_details', array() );
-				$id          = Arr::get( $event, 'id' );
-				$meta[ $id ] = array(
-					'event'       => $event,
-					'calendar_id' => $calendar_id,
-					'account_id'  => $account_id,
 				);
+			}
 
-				$booking->update_meta(
-					'google_events_details',
-					$meta
-				);
+			$response = $api->add_event( $default_account['default_calendar']['calendar_id'], $event_data );
 
+			if ( ! $response['success'] ) {
 				$booking->logs()->create(
 					array(
-						'type'    => 'info',
-						'message' => __( 'Event added to Google Calendar.', 'quillbooking' ),
+						'type'    => 'error',
+						'message' => __( 'Error adding event to Google Calendar.', 'quillbooking' ),
 						'details' => sprintf(
-							__( 'Event %1$s added to Google Calendar %2$s.', 'quillbooking' ),
-							$id,
-							$calendar_id
+							__( 'Error adding event to Google Calendar %1$s: %2$s', 'quillbooking' ),
+							$default_account['default_calendar']['calendar_id'],
+							Arr::get( $response, 'data.error.message' )
 						),
 					)
 				);
+				return $booking;
 			}
+
+			$event       = Arr::get( $response, 'data' );
+			$id          = Arr::get( $event, 'id' );
+			$meta        = $booking->get_meta( 'google_events_details', array() );
+			$meta[ $id ] = array(
+				'event'       => $event,
+				'calendar_id' => $default_account['default_calendar']['calendar_id'],
+				'account_id'  => $default_account['id'],
+			);
+
+			$booking->update_meta( 'google_events_details', $meta );
+
+			$booking->update_meta(
+				'location',
+				array(
+					'type'  => Google_Meet::instance()->slug,
+					'label' => 'Google Meet',
+					'value' => Arr::get( $event, 'hangoutLink', '' ),
+				)
+			);
+
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Event added to Google Calendar.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Event %1$s added to Google Calendar %2$s.', 'quillbooking' ),
+						$id,
+						$default_account['default_calendar']['calendar_id']
+					),
+				)
+			);
+
+			return $booking;
+		} catch ( \Exception $e ) {
+			error_log( 'Google Integration Error in add_event_to_calendars: ' . $e->getMessage() );
+			if ( isset( $booking ) ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Error adding event to Google Calendar.', 'quillbooking' ),
+						'details' => $e->getMessage(),
+					)
+				);
+			}
+			return $booking;
 		}
 	}
 
@@ -443,12 +516,11 @@ class Integration extends Abstract_Integration {
 	 * @return string
 	 */
 	public function get_site_uid() {
-		$site_uid = get_option( 'quillbooking_site_uid', '' );
-		if ( empty( $site_uid ) ) {
-			$site_uid = Utils::generate_hash_key();
-			update_option( 'quillbooking_site_uid', $site_uid );
+		$site_uid = \get_option( 'quillbooking_site_uid' );
+		if ( ! $site_uid ) {
+			$site_uid = \wp_generate_uuid4();
+			\update_option( 'quillbooking_site_uid', $site_uid );
 		}
-
 		return $site_uid;
 	}
 
@@ -466,34 +538,66 @@ class Integration extends Abstract_Integration {
 	 * @return array
 	 */
 	public function get_available_slots( $slots, $event, $start_date, $end_date, $timezone ) {
-		$this->set_host( $event->calendar );
-		$google_integration = $this->host->get_meta( $this->meta_key, array() );
-		if ( empty( $google_integration ) ) {
+		// Early return if event or calendar is not valid
+		if ( ! $event || ! $event->calendar ) {
 			return $slots;
 		}
 
-		foreach ( $google_integration as $account_id => $data ) {
-			$callback = function () use ( $event, $account_id, $start_date, $end_date, $timezone ) {
-				return $this->get_account_data( $event->calendar->id, $account_id, $start_date, $end_date, $timezone );
-			};
+		try {
+			// Set host and get integration data
+			$this->set_host( $event->calendar );
+			$google_integration = $this->host->get_meta( $this->meta_key, array() );
 
-			$key         = "slots_{$start_date}_{$end_date}";
-			$cached_data = $this->accounts->get_cache_data( $account_id, $key, $callback );
-			if ( empty( $cached_data ) ) {
-				continue;
+			// Early return if no integration data
+			if ( empty( $google_integration ) ) {
+				return $slots;
 			}
 
-			foreach ( $cached_data as $calendar_id => $events ) {
-				foreach ( $events as $event ) {
-					$start = Arr::get( $event, 'start.dateTime' );
-					$end   = Arr::get( $event, 'end.dateTime' );
+			foreach ( $google_integration as $account_id => $data ) {
+				// Skip if account data is invalid
+				if ( empty( $data ) || empty( $data['config'] ) || empty( $data['config']['calendars'] ) ) {
+					continue;
+				}
 
-					$slots = $this->remove_booked_slot( $slots, $start, $end, $timezone );
+				$callback = function () use ( $event, $account_id, $start_date, $end_date, $timezone ) {
+					return $this->get_account_data( $event->calendar->id, $account_id, $start_date, $end_date, $timezone );
+				};
+
+				// Get cache time from account data
+				$settings    = $this->get_settings();
+				$cache_time  = Arr::get( $settings, 'app.cache_time', null );
+				$key         = "slots_{$start_date}_{$end_date}";
+				$cached_data = $this->accounts->get_cache_data( $account_id, $key, $callback, $cache_time );
+
+				if ( empty( $cached_data ) ) {
+					continue;
+				}
+
+				foreach ( $cached_data as $calendar_id => $events ) {
+					if ( ! is_array( $events ) ) {
+						continue;
+					}
+					foreach ( $events as $event ) {
+						if ( ! is_array( $event ) ) {
+							continue;
+						}
+						$start = Arr::get( $event, 'start.dateTime' );
+						$end   = Arr::get( $event, 'end.dateTime' );
+
+						if ( ! $start || ! $end ) {
+							continue;
+						}
+
+						$slots = $this->remove_booked_slot( $slots, $start, $end, $timezone );
+					}
 				}
 			}
-		}
 
-		return $slots;
+			return $slots;
+		} catch ( \Exception $e ) {
+			error_log( 'Google Integration Error in get_available_slots: ' . $e->getMessage() );
+			return $slots;
+		}
 	}
 
 	/**
@@ -510,13 +614,21 @@ class Integration extends Abstract_Integration {
 	 * @return array
 	 */
 	public function get_account_data( $host_id, $account_id, $start_date, $end_date, $timezone ) {
+		if ( ! $host_id || ! $account_id ) {
+			return array();
+		}
+
 		$google_integration = $this->host->get_meta( $this->meta_key, array() );
 		if ( empty( $google_integration ) ) {
 			return array();
 		}
 
 		$account_data = Arr::get( $google_integration, $account_id, array() );
-		$calendars    = Arr::get( $account_data, 'config.calendars', array() );
+		if ( empty( $account_data ) ) {
+			return array();
+		}
+
+		$calendars = Arr::get( $account_data, 'config.calendars', array() );
 		if ( empty( $calendars ) ) {
 			return array();
 		}
@@ -528,6 +640,10 @@ class Integration extends Abstract_Integration {
 
 		$start_date = Utils::create_date_time( $start_date, $timezone );
 		$end_date   = Utils::create_date_time( $end_date, $timezone );
+
+		if ( ! $start_date || ! $end_date ) {
+			return array();
+		}
 
 		$free_busy_args = array(
 			'timeMin'  => $start_date->format( 'Y-m-d\TH:i:s\Z' ),
@@ -552,8 +668,8 @@ class Integration extends Abstract_Integration {
 			}
 
 			$busy_slots = Arr::get( $calendar_data, 'busy', array() );
-			foreach ( $busy_slots as $busy_slot ) {
-				$calendars_data[ $calendar_id ] = $busy_slot;
+			if ( ! empty( $busy_slots ) ) {
+				$calendars_data[ $calendar_id ] = $busy_slots;
 			}
 		}
 
@@ -635,19 +751,19 @@ class Integration extends Abstract_Integration {
 	 * @return array
 	 */
 	public function get_auth_fields() {
-		return array(
-			'client_id'     => array(
-				'label'       => __( 'Client ID', 'quillbooking' ),
-				'type'        => 'text',
-				'placeholder' => __( 'Enter your Google Client ID', 'quillbooking' ),
-				'required'    => true,
-			),
-			'client_secret' => array(
-				'label'       => __( 'Client Secret', 'quillbooking' ),
-				'type'        => 'text',
-				'placeholder' => __( 'Enter your Google Client Secret', 'quillbooking' ),
-				'required'    => true,
-			),
-		);
+		 return array(
+			 'client_id'     => array(
+				 'label'       => __( 'Client ID', 'quillbooking' ),
+				 'type'        => 'text',
+				 'placeholder' => __( 'Enter your Google Client ID', 'quillbooking' ),
+				 'required'    => true,
+			 ),
+			 'client_secret' => array(
+				 'label'       => __( 'Client Secret', 'quillbooking' ),
+				 'type'        => 'text',
+				 'placeholder' => __( 'Enter your Google Client Secret', 'quillbooking' ),
+				 'required'    => true,
+			 ),
+		 );
 	}
 }

@@ -15,6 +15,7 @@ use QuillBooking\REST_API\Controllers\V1\REST_Event_Controller;
 use QuillBooking\REST_API\Controllers\V1\REST_Booking_Controller;
 use QuillBooking\REST_API\Controllers\v1\REST_Availability_Controller;
 use QuillBooking\REST_API\Controllers\v1\REST_Settings_Controller;
+use QuillBooking\REST_API\Controllers\v1\REST_WooCommerce_Controller;
 use QuillBooking\Traits\Singleton;
 
 /**
@@ -24,6 +25,8 @@ use QuillBooking\Traits\Singleton;
  */
 class REST_API {
 
+
+
 	use Singleton;
 
 	/**
@@ -31,8 +34,7 @@ class REST_API {
 	 *
 	 * @since 1.0.0
 	 */
-	private function __clone() {
-	} /* do nothing */
+	private function __clone() {    } /* do nothing */
 
 	/**
 	 * REST_API constructor.
@@ -56,6 +58,7 @@ class REST_API {
 			REST_Booking_Controller::class,
 			REST_Availability_Controller::class,
 			REST_Settings_Controller::class,
+			REST_WooCommerce_Controller::class,
 		);
 
 		foreach ( $controllers as $controller ) {

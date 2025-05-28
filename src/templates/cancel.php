@@ -28,7 +28,7 @@ $status              = $booking_array['status'] ?? '';
 			<p><span><img src="<?php echo esc_url( $icons_url . 'calendar.svg' ); ?>" alt="Time" /></span><?php echo esc_html( $booking_array['formatted_time_range'] ?? '' ); ?>
 			</p>
 			<p><span><img src="<?php echo esc_url( $icons_url . 'icon.svg' ); ?>" alt="Timezone" /></span><?php echo esc_html( $booking_array['timezone'] ?? '' ); ?></p>
-			<p><span><img src="<?php echo esc_url( $icons_url . 'location.svg' ); ?>" alt="Location" /></span><?php echo esc_html( $booking_array['location'] ?? '' ); ?></p>
+			<p><span><img src="<?php echo esc_url( $icons_url . 'location.svg' ); ?>" alt="Location" /></span> <?php echo wp_kses_post( $booking_array['location'] ?? '' ); ?></p>
 		</div>
 
 		<?php if ( strtolower( $status ) == 'cancelled' ) : ?>
@@ -54,7 +54,7 @@ $status              = $booking_array['status'] ?? '';
 					</div>
 					<?php if ( $cancellation_reason['helpText'] ) : ?>
 						<p class="help-text"><?php echo $cancellation_reason['helpText']; ?></p>
-						<?php endif; ?>
+					<?php endif; ?>
 				<?php endif; ?>
 
 				<div class="calendar-buttons-container" id="buttons_container">

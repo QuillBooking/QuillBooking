@@ -224,7 +224,7 @@ const Event: React.FC = () => {
 			setStatusMessage({
 				title,
 				message,
-				type: 'success'
+				type: 'success',
 			});
 			setShowStatusBanner(true);
 			setTimeout(() => setShowStatusBanner(false), 5000);
@@ -235,11 +235,17 @@ const Event: React.FC = () => {
 				prev ? { ...prev, is_disabled: newStatus } : null
 			);
 		} catch (error: unknown) {
-			const errorMsg = error instanceof Error ? error.message : __('Failed to update event status. Please try again.', 'quillbooking');
+			const errorMsg =
+				error instanceof Error
+					? error.message
+					: __(
+							'Failed to update event status. Please try again.',
+							'quillbooking'
+						);
 			setStatusMessage({
 				title: __('Status Update Failed', 'quillbooking'),
 				message: errorMsg,
-				type: 'error'
+				type: 'error',
 			});
 			setShowStatusBanner(true);
 			setTimeout(() => setShowStatusBanner(false), 5000);

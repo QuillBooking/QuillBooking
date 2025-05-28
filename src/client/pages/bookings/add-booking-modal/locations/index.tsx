@@ -56,33 +56,49 @@ const Locations = ({ locationFields }: LocationsProps) => {
 					<DynamicLocationFields locations={locationFields.options} />
 				</>
 			) : (
-				locationFields.options[0].fields &&
-				Object.entries(locationFields.options[0].fields).map(
-					([fieldKey, field]) => {
-						const typedField = field as Field & {
-							placeholder?: string;
-						};
-						return (
-							<Form.Item
-								key={fieldKey}
-								name={['field', fieldKey]}
-								label={
-									<div className="form-label">
-										<p>
-											{typedField.label}
-											<span className="required">*</span>
-										</p>
-									</div>
-								}
-							>
-								<Input
-									placeholder={typedField.placeholder}
-									type={typedField.type}
-								/>
-							</Form.Item>
-						);
-					}
-				)
+				<>
+					<Form.Item
+						key="location"
+						name="location"
+						initialValue={locationFields.options[0].value}
+						style={{ display: 'none' }}
+					>
+						<Input type="hidden" />
+					</Form.Item>
+					{locationFields.options[0].fields &&
+						Object.entries(locationFields.options[0].fields).map(
+							([fieldKey, field]) => {
+								const typedField = field as Field & {
+									placeholder?: string;
+								};
+								return (
+									<>
+										<Form.Item
+											key={fieldKey}
+											name="location-data"
+											label={
+												<div className="form-label">
+													<p>
+														{typedField.label}
+														<span className="required">
+															*
+														</span>
+													</p>
+												</div>
+											}
+										>
+											<Input
+												placeholder={
+													typedField.placeholder
+												}
+												type={typedField.type}
+											/>
+										</Form.Item>
+									</>
+								);
+							}
+						)}
+				</>
 			)}
 		</>
 	);

@@ -37,6 +37,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 	>(null);
 
 	const isTimezoneLocked = event.limits_data?.timezone_lock?.enable ?? false;
+	const showRemaining =
+		event.type === 'group'
+			? (event.group_settings?.show_remaining ?? true)
+			: true;
 
 	return (
 		<div className="date-time-container">
@@ -64,6 +68,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 						selectedDate={selectedDate}
 						setSelectedTime={setSelectedTime}
 						eventType={event.type}
+						showRemaining={showRemaining}
 					/>
 				)}
 			</div>

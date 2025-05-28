@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Apple Calendar / Meet Integration
  *
@@ -22,6 +23,10 @@ use QuillBooking\Utils;
  * Apple Integration class
  */
 class Integration extends Abstract_Integration {
+
+
+
+
 
 	/**
 	 * Integration Name
@@ -72,10 +77,10 @@ class Integration extends Abstract_Integration {
 	 * Constructor
 	 */
 	public function __construct() {
-		parent::__construct();
+		 parent::__construct();
 		add_filter( 'quillbooking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
-		// add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
-		// add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
+		add_action( 'quillbooking_booking_created', array( $this, 'add_event_to_calendars' ) );
+		add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
 		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
 	}
@@ -267,6 +272,10 @@ class Integration extends Abstract_Integration {
 	 * @return Booking_Model
 	 */
 	public function add_event_to_calendars( $booking ) {
+		error_log( 'Event Location: ' . $booking->location );
+		if ( ! in_array( $booking->location, array( 'apple', 'apple_meet' ) ) ) {
+			return $booking;
+		}
 		$event = $booking->event;
 		$host  = $event->calendar->id;
 		$this->set_host( $host );
@@ -399,24 +408,25 @@ class Integration extends Abstract_Integration {
 			PHP_EOL
 		);
 
-		return $description;$description = sprintf(
+		return $description;
+		$description  = sprintf(
 			__( 'Event Detials:', 'quillbooking' ),
 			$booking->event->name
 		);
-		$description                    .= PHP_EOL;
-		$description                    .= sprintf(
+		$description .= PHP_EOL;
+		$description .= sprintf(
 			__( 'Invitee: %s', 'quillbooking' ),
 			$booking->guest->name
 		);
-		$description                    .= PHP_EOL;
-		$description                    .= sprintf(
+		$description .= PHP_EOL;
+		$description .= sprintf(
 			__( 'Invitee Email: %s', 'quillbooking' ),
 			$booking->guest->email
 		);
-		$description                    .= PHP_EOL . PHP_EOL;
-		$start_date                      = new \DateTime( $booking->start_time, new \DateTimeZone( $booking->calendar->timezone ) );
-		$end_date                        = new \DateTime( $booking->end_time, new \DateTimeZone( $booking->calendar->timezone ) );
-		$description                    .= sprintf(
+		$description .= PHP_EOL . PHP_EOL;
+		$start_date   = new \DateTime( $booking->start_time, new \DateTimeZone( $booking->calendar->timezone ) );
+		$end_date     = new \DateTime( $booking->end_time, new \DateTimeZone( $booking->calendar->timezone ) );
+		$description .= sprintf(
 			__( 'When:%4$s%1$s to %2$s (%3$s)', 'quillbooking' ),
 			$start_date->format( 'Y-m-d H:i' ),
 			$end_date->format( 'Y-m-d H:i' ),
@@ -448,12 +458,13 @@ class Integration extends Abstract_Integration {
 		}
 
 		foreach ( $apple_integration as $account_id => $data ) {
-			$callback = function () use ( $event, $account_id, $start_date, $end_date, $timezone ) {
+			$callback    = function () use ( $event, $account_id, $start_date, $end_date, $timezone ) {
 				return $this->get_account_data( $event->calendar->id, $account_id, $start_date, $end_date, $timezone );
 			};
-
+			$settings    = $this->get_settings();
+			$cache_time  = Arr::get( $settings, 'app.cache_time', null );
 			$key         = "slots_{$start_date}_{$end_date}";
-			$cached_data = $this->accounts->get_cache_data( $account_id, $key, $callback );
+			$cached_data = $this->accounts->get_cache_data( $account_id, $key, $callback, $cache_time );
 			if ( empty( $cached_data ) ) {
 				continue;
 			}

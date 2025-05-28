@@ -218,7 +218,7 @@ const GeneralSettingsCard = ({ settings, updateSettings }) => {
 					/>
 				</Flex>
 
-				<Flex vertical gap={4}>
+				{/* <Flex vertical gap={4}>
 					<div className="font-semibold text-[16px]">
 						{__('Summary Email', 'quillbooking')}
 					</div>
@@ -237,7 +237,7 @@ const GeneralSettingsCard = ({ settings, updateSettings }) => {
 							'quillbooking'
 						)}
 					</Checkbox>
-				</Flex>
+				</Flex> */}
 
 				{settings.enable_summary_email && (
 					<Flex vertical gap={4}>

@@ -20,24 +20,32 @@ const EventPrice: React.FC<{
 	payments_settings: PaymentsSettings;
 	duration: number;
 }> = ({ payments_settings, duration }) => {
-	const [price, setPrice] = useState<string | number>(
-		__('Free', 'quillbooking')
-	);
+	const [price, setPrice] = useState<number>(0);
 
 	useEffect(() => {
 		if (payments_settings.enable_items_based_on_duration) {
-			setPrice(payments_settings.multi_duration_items[duration]?.price);
+			setPrice(
+				payments_settings.multi_duration_items[duration]?.price ?? 0
+			);
 			return;
 		}
 
 		if (payments_settings.enable_payment) {
-			const totalPrice = payments_settings.items
-				.map((item) => item.price)
-				.reduce((sum, price) => sum + price, 0);
+			// Check if items array exists before mapping
+			const totalPrice =
+				payments_settings.items && payments_settings.items.length > 0
+					? payments_settings.items
+							.map((item) => item.price ?? 0)
+							.reduce((sum, price) => sum + price, 0)
+					: 0;
 			setPrice(totalPrice);
 			return;
 		}
-	}, [payments_settings]);
+
+		// Reset price if payment is not enabled
+		setPrice(0);
+	}, [payments_settings, duration]);
+
 	return (
 		<Flex gap={10} className="items-center">
 			<PriceIcon />
@@ -46,14 +54,22 @@ const EventPrice: React.FC<{
 					{__('Price', 'quillbooking')}
 				</span>
 				<span className="text-[#007AFF] text-[14px] font-[500] capitalize">
-					{payments_settings.type === 'native' ? (
-						price
+					{payments_settings.enable_payment ? (
+						payments_settings.type === 'native' ? (
+							price !== null && price > 0 ? (
+								price.toString()
+							) : (
+								__('Free', 'quillbooking')
+							)
+						) : (
+							<img
+								src={woocommerce}
+								alt="WooCommerce"
+								className="w-6 h-4"
+							/>
+						)
 					) : (
-						<img
-							src={woocommerce}
-							alt="WooCommerce"
-							className="w-6 h-4"
-						/>
+						<span>{__('Free', 'quillbooking')}</span>
 					)}
 				</span>
 			</div>

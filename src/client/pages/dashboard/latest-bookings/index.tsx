@@ -14,7 +14,7 @@ import { PlusOutlined } from '@ant-design/icons';
 /**
  * Internal dependencies
  */
-import { BookingIcon } from '@quillbooking/components';
+import { BookingIcon, LocationDisplay } from '@quillbooking/components';
 import MonthSelector from '../../../pages/bookings/month-selector';
 import { Booking } from '@quillbooking/client';
 import {
@@ -83,7 +83,10 @@ const LatestBookings: React.FC = () => {
 			method: 'GET',
 			onSuccess: (res) => {
 				// Get all bookings grouped by date
-				const allBookings = groupBookingsByDate(res.bookings.data);
+				const allBookings = groupBookingsByDate(
+					res.bookings.data,
+					res.time_format
+				);
 				setBookings(allBookings);
 				setLoading(false);
 			},
@@ -194,35 +197,12 @@ const LatestBookings: React.FC = () => {
 																			<span>
 																				•
 																			</span>
-																			<div className="flex flex-wrap gap-1">
-																				{booking?.event?.location?.map(
-																					(
-																						location,
-																						index
-																					) => (
-																						<span
-																							key={
-																								index
-																							}
-																							className="max-w-[150px] truncate capitalize"
-																						>
-																							{location.type
-																								.split(
-																									'_'
-																								)
-																								.join(
-																									' '
-																								)}
-																							{index <
-																								booking
-																									.event
-																									.location
-																									.length -
-																									1 &&
-																								', '}
-																						</span>
-																					)
-																				)}
+																			<div className="text-xs">
+																				<LocationDisplay
+																					location={
+																						booking.location
+																					}
+																				/>
 																			</div>
 																			<span>
 																				•

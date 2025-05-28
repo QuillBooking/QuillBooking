@@ -56,6 +56,8 @@ export type CalendarResponse = Response & {
 export type ConnectedIntegrationsFields = {
 	name: string;
 	connected: boolean;
+	has_settings: boolean;
+	has_accounts: boolean;
 };
 
 export type Event = {
@@ -84,18 +86,7 @@ export type Event = {
 	fields?: EventMetaData[];
 	availability_data?: Availability;
 	reserve: boolean;
-	payments_settings?: {
-		enable_payment: boolean;
-		enable_paypal?: boolean;
-		enable_stripe?: boolean;
-		enable_woocommerce?: boolean;
-		woo_product?: number;
-		items: Array<{
-			item: string;
-			price: number;
-		}>;
-		currency: string;
-	};
+	payments_settings?: PaymentsSettings;
 	connected_integrations: {
 		apple: ConnectedIntegrationsFields;
 		google: ConnectedIntegrationsFields;
@@ -287,9 +278,16 @@ export interface BookingResponse {
 	updated_at: string;
 	timezone: string;
 	fields: any | null;
-	location: string;
+	location: BookingLocation;
 	event: Event;
 	meta: EventMetaData[];
+}
+
+export type BookingLocation = {
+	type: string;
+	id?: string;
+	label: string;
+	value: string;
 }
 
 export interface Booking extends BookingResponse {
@@ -403,6 +401,7 @@ export interface PaymentsSettings {
 	payment_methods?: string[];
 	enable_paypal: boolean;
 	enable_stripe: boolean;
+	currency?: string;
 }
 
 export interface GettingStartedComponentProps {

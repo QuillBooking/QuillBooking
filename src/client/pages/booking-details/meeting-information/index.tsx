@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies
  */
 import type { Booking } from '@quillbooking/client';
-import { CardHeader } from '@quillbooking/components';
+import { CardHeader, LocationDisplay } from '@quillbooking/components';
 import {
 	AllCalendarIcon,
 	CalendarInformationIcon,
@@ -56,11 +56,7 @@ const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 				/>
 				<InfoItem
 					title={__('Event Location', 'quillbooking')}
-					content={
-						booking.location['label'] +
-						': ' +
-						booking.location['value']
-					}
+					content={<LocationDisplay location={booking.location} />}
 					icon={
 						<LocationIcon width={24} height={24} rectFill={false} />
 					}

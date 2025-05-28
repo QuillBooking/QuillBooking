@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Outlook Remote Data
  *
@@ -19,6 +20,10 @@ use QuillBooking\Integration\Remote_Data as Abstracts_Remote_Data;
  */
 class Remote_Data extends Abstracts_Remote_Data {
 
+
+
+
+
 	/**
 	 * Fetch Calendars
 	 *
@@ -27,24 +32,27 @@ class Remote_Data extends Abstracts_Remote_Data {
 	 * @return array
 	 */
 	public function fetch_calendars() {
-		$response = $this->integration->api->get_calendars();
+		 $response = $this->integration->api->get_calendars();
 		if ( ! $response['success'] ) {
 			return array();
 		}
 
 		$calendars = array();
 		foreach ( Arr::get( $response, 'data.value', array() ) as $calendar ) {
-			$name        = Arr::get( $calendar, 'name' );
-			$owner_name  = Arr::get( $calendar, 'owner.address' );
-			$id          = Arr::get( $calendar, 'id' );
+			$name       = Arr::get( $calendar, 'name' );
+			$owner_name = Arr::get( $calendar, 'owner.address' );
+			$id         = Arr::get( $calendar, 'id' );
+			$can_edit   = Arr::get( $calendar, 'canEdit', true );
+
 			$calendars[] = array(
-				'id'   => $id,
-				'name' => sprintf( '%s (%s)', $name, $owner_name ),
+				'id'       => $id,
+				'name'     => sprintf( '%s (%s)', $name, $owner_name ),
+				'can_edit' => $can_edit,
 			);
 		}
-
 		return $calendars;
 	}
+
 
 	/**
 	 * Fetch Events

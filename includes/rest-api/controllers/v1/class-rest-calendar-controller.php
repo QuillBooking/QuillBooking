@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Calendar_Controller
  *
@@ -28,6 +29,9 @@ use QuillBooking\Models\User_Model;
  * Calendar Controller class
  */
 class REST_Calendar_Controller extends REST_Controller {
+
+
+
 
 	/**
 	 * REST Base
@@ -181,120 +185,120 @@ class REST_Calendar_Controller extends REST_Controller {
 	 * @return array
 	 */
 	public function get_item_schema() {
-		return array(
-			'$schema'    => 'http://json-schema.org/draft-04/schema#',
-			'title'      => 'calendar',
-			'type'       => 'object',
-			'properties' => array(
-				'id'             => array(
-					'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
-					'type'        => 'integer',
-					'context'     => array( 'view' ),
-					'readonly'    => true,
-				),
-				'hash_id'        => array(
-					'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view' ),
-					'readonly'    => true,
-				),
-				'user_id'        => array(
-					'description'  => __( 'User ID.', 'quillbooking' ),
-					'type'         => 'integer',
-					'context'      => array( 'view', 'edit' ),
-					'args_options' => array(
-						'sanitize_callback' => 'absint',
-					),
-				),
-				'name'           => array(
-					'description'  => __( 'Name of the calendar.', 'quillbooking' ),
-					'type'         => 'string',
-					'context'      => array( 'view', 'edit' ),
-					'required'     => true,
-					'args_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-				'description'    => array(
-					'description'  => __( 'Description of the calendar.', 'quillbooking' ),
-					'type'         => 'string',
-					'context'      => array( 'view', 'edit' ),
-					'args_options' => array(
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-				),
-				'slug'           => array(
-					'description'  => __( 'Slug of the calendar.', 'quillbooking' ),
-					'type'         => 'string',
-					'context'      => array( 'view', 'edit' ),
-					'args_options' => array(
-						'sanitize_callback' => 'sanitize_title',
-					),
-				),
-				'status'         => array(
-					'description' => __( 'Status of the calendar.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'enum'        => array( 'active', 'inactive' ),
-				),
-				'type'           => array(
-					'description' => __( 'Type of the calendar.', 'quillbooking' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-					'enum'        => array( 'host', 'team', 'one-off' ),
-					'required'    => true,
-				),
-				'members'        => array(
-					'description' => __( 'Members.', 'quillbooking' ),
-					'type'        => 'array',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'avatar'         => array(
-					'description' => __( 'Avatar.', 'quillbooking' ),
-					'type'        => 'object',
-					'context'     => array( 'view', 'edit' ),
-					'properties'  => array(
-						'url' => array(
-							'description' => __( 'Avatar URL.', 'quillbooking' ),
-							'type'        => 'string',
-						),
-						'id'  => array(
-							'description' => __( 'Avatar ID.', 'quillbooking' ),
-							'type'        => 'integer',
-						),
-					),
-				),
-				'featured_image' => array(
-					'description' => __( 'Featured.', 'quillbooking' ),
-					'type'        => 'object',
-					'context'     => array( 'view', 'edit' ),
-					'properties'  => array(
-						'url' => array(
-							'description' => __( 'Avatar URL.', 'quillbooking' ),
-							'type'        => 'string',
-						),
-						'id'  => array(
-							'description' => __( 'Avatar ID.', 'quillbooking' ),
-							'type'        => 'integer',
-						),
-					),
-				),
-				'created_at'     => array(
-					'description' => __( 'Date and time when the calendar was created.', 'quillbooking' ),
-					'type'        => 'string',
-					'format'      => 'date-time',
-					'context'     => array( 'view' ),
-					'readonly'    => true,
-				),
-				'updated_at'     => array(
-					'description' => __( 'Date and time when the calendar was last updated.', 'quillbooking' ),
-					'type'        => 'string',
-					'format'      => 'date-time',
-					'context'     => array( 'view' ),
-					'readonly'    => true,
-				),
-			),
-		);
+		 return array(
+			 '$schema'    => 'http://json-schema.org/draft-04/schema#',
+			 'title'      => 'calendar',
+			 'type'       => 'object',
+			 'properties' => array(
+				 'id'             => array(
+					 'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
+					 'type'        => 'integer',
+					 'context'     => array( 'view' ),
+					 'readonly'    => true,
+				 ),
+				 'hash_id'        => array(
+					 'description' => __( 'Unique identifier for the resource.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view' ),
+					 'readonly'    => true,
+				 ),
+				 'user_id'        => array(
+					 'description'  => __( 'User ID.', 'quillbooking' ),
+					 'type'         => 'integer',
+					 'context'      => array( 'view', 'edit' ),
+					 'args_options' => array(
+						 'sanitize_callback' => 'absint',
+					 ),
+				 ),
+				 'name'           => array(
+					 'description'  => __( 'Name of the calendar.', 'quillbooking' ),
+					 'type'         => 'string',
+					 'context'      => array( 'view', 'edit' ),
+					 'required'     => true,
+					 'args_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+				 ),
+				 'description'    => array(
+					 'description'  => __( 'Description of the calendar.', 'quillbooking' ),
+					 'type'         => 'string',
+					 'context'      => array( 'view', 'edit' ),
+					 'args_options' => array(
+						 'sanitize_callback' => 'sanitize_text_field',
+					 ),
+				 ),
+				 'slug'           => array(
+					 'description'  => __( 'Slug of the calendar.', 'quillbooking' ),
+					 'type'         => 'string',
+					 'context'      => array( 'view', 'edit' ),
+					 'args_options' => array(
+						 'sanitize_callback' => 'sanitize_title',
+					 ),
+				 ),
+				 'status'         => array(
+					 'description' => __( 'Status of the calendar.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'enum'        => array( 'active', 'inactive' ),
+				 ),
+				 'type'           => array(
+					 'description' => __( 'Type of the calendar.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'context'     => array( 'view', 'edit' ),
+					 'enum'        => array( 'host', 'team', 'one-off' ),
+					 'required'    => true,
+				 ),
+				 'members'        => array(
+					 'description' => __( 'Members.', 'quillbooking' ),
+					 'type'        => 'array',
+					 'context'     => array( 'view', 'edit' ),
+				 ),
+				 'avatar'         => array(
+					 'description' => __( 'Avatar.', 'quillbooking' ),
+					 'type'        => 'object',
+					 'context'     => array( 'view', 'edit' ),
+					 'properties'  => array(
+						 'url' => array(
+							 'description' => __( 'Avatar URL.', 'quillbooking' ),
+							 'type'        => 'string',
+						 ),
+						 'id'  => array(
+							 'description' => __( 'Avatar ID.', 'quillbooking' ),
+							 'type'        => 'integer',
+						 ),
+					 ),
+				 ),
+				 'featured_image' => array(
+					 'description' => __( 'Featured.', 'quillbooking' ),
+					 'type'        => 'object',
+					 'context'     => array( 'view', 'edit' ),
+					 'properties'  => array(
+						 'url' => array(
+							 'description' => __( 'Avatar URL.', 'quillbooking' ),
+							 'type'        => 'string',
+						 ),
+						 'id'  => array(
+							 'description' => __( 'Avatar ID.', 'quillbooking' ),
+							 'type'        => 'integer',
+						 ),
+					 ),
+				 ),
+				 'created_at'     => array(
+					 'description' => __( 'Date and time when the calendar was created.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'format'      => 'date-time',
+					 'context'     => array( 'view' ),
+					 'readonly'    => true,
+				 ),
+				 'updated_at'     => array(
+					 'description' => __( 'Date and time when the calendar was last updated.', 'quillbooking' ),
+					 'type'        => 'string',
+					 'format'      => 'date-time',
+					 'context'     => array( 'view' ),
+					 'readonly'    => true,
+				 ),
+			 ),
+		 );
 	}
 
 	/**
@@ -313,7 +317,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			$keyword  = $request->get_param( 'keyword' ) ? $request->get_param( 'keyword' ) : '';
 			$filter   = $request->get_param( 'filters' ) ? $request->get_param( 'filters' ) : array();
 			$type     = Arr::get( $filter, 'type', 'all' );
-			$user     = current_user_can( 'quillbooking_read_all_calendars' ) ? 'all' : 'own';
+			$user     = $request->get_param( 'user' ) ?? ( current_user_can( 'quillbooking_read_all_calendars' ) ? 'all' : 'own' );
 			$ids      = $request->get_param( 'ids' ) ? $request->get_param( 'ids' ) : array();
 
 			if ( 'own' === $user ) {
@@ -331,7 +335,7 @@ class REST_Calendar_Controller extends REST_Controller {
 					'events',
 					function ( $query ) use ( $keyword ) {
 						$query->where( 'name', 'like', '%' . $keyword . '%' )
-						  ->orWhere( 'description', 'like', '%' . $keyword . '%' );
+							->orWhere( 'description', 'like', '%' . $keyword . '%' );
 					}
 				);
 			}
@@ -350,7 +354,7 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			$calendars = $query->with(
 				array(
-					'events' => function( $query ) use ( $keyword ) {
+					'events' => function ( $query ) use ( $keyword ) {
 						$query->select( 'id', 'calendar_id', 'name', 'duration', 'type', 'slug', 'is_disabled' );
 						if ( $keyword ) {
 							$query->where( 'name', 'like', '%' . $keyword . '%' );
@@ -391,11 +395,14 @@ class REST_Calendar_Controller extends REST_Controller {
 		global $wpdb;
 		$wpdb->query( 'START TRANSACTION' );
 		try {
-			$name         = $request->get_param( 'name' );
-			$description  = $request->get_param( 'description' );
-			$type         = $request->get_param( 'type' );
-			$members      = $request->get_param( 'members' );
-			$timezone     = $request->get_param( 'timezone' );
+			$name        = $request->get_param( 'name' );
+			$description = $request->get_param( 'description' );
+			$type        = $request->get_param( 'type' );
+			$members     = $request->get_param( 'members' );
+			$timezone    = $request->get_param( 'timezone' );
+			if ( empty( $timezone ) ) {
+				$timezone = wp_timezone_string();
+			}
 			$availability = $request->get_param( 'availability' );
 
 			if ( ! in_array( $type, array( 'team', 'host' ), true ) ) {
@@ -416,14 +423,15 @@ class REST_Calendar_Controller extends REST_Controller {
 					'name'        => $name,
 					'description' => $description,
 					'type'        => $type,
-					'timezone'    => $timezone,
 				)
 			);
+
+			$calendar->timezone = $timezone;
 
 			if ( $type === 'team' ) {
 				$calendar->syncTeamMembers( $members );
 			} elseif ( $type === 'host' ) {
-					$this->create_availability( $user_id, $availability, $timezone );
+				$this->create_availability( $user_id, $availability, $timezone );
 			}
 
 			$wpdb->query( 'COMMIT' );
@@ -523,14 +531,14 @@ class REST_Calendar_Controller extends REST_Controller {
 		return Capabilities::can_read_calendar( $id );
 	}
 
-		/**
-		 * Get item team
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param WP_REST_Request $request Full data about the request.
-		 * @return WP_REST_Response|WP_Error
-		 */
+	/**
+	 * Get item team
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 * @return WP_REST_Response|WP_Error
+	 */
 	public function get_item_team( $request ) {
 		try {
 			$id       = $request->get_param( 'id' );
@@ -589,8 +597,8 @@ class REST_Calendar_Controller extends REST_Controller {
 				}
 
 				$calendars = Calendar_Model::whereIn( 'ID', $members )
-							->where( 'type', 'host' )
-							->get();
+					->where( 'type', 'host' )
+					->get();
 
 				if ( $calendars->count() !== count( $members ) ) {
 					return new WP_Error( 'rest_calendar_error', __( 'Please make sure that you selected the right hosts', 'quillbooking' ), array( 'status' => 400 ) );

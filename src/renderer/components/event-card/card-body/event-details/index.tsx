@@ -8,6 +8,8 @@ import { __ } from '@wordpress/i18n';
 import CalendarIcon from '../../../../icons/calendar-icon';
 import { PriceIcon } from '../../../../../components/icons';
 import { get } from 'lodash';
+import { useEffect, useState } from 'react';
+import { useApi } from '@quillbooking/hooks';
 
 interface EventDetailsProps {
 	event: Event;
@@ -23,6 +25,26 @@ interface PaymentItem {
 	price: number;
 }
 
+interface WooProductPrice {
+	price: string;
+	currency: string;
+	product_id: number;
+	product_name: string;
+}
+
+// Define payment settings type
+interface PaymentSettings {
+	enable_payment: boolean;
+	type: 'woocommerce' | 'stripe' | 'paypal' | string;
+	woo_product?: number;
+	items?: PaymentItem[];
+	multi_duration_items?: {
+		[key: string]: {
+			price: number;
+		};
+	};
+}
+
 const EventDetails: React.FC<EventDetailsProps> = ({
 	event,
 	setSelectedDuration,
@@ -34,6 +56,34 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 }) => {
 	const isMultiDurations =
 		event.additional_settings.allow_attendees_to_select_duration;
+
+	const [wooPrice, setWooPrice] = useState<WooProductPrice | null>(null);
+	const { callApi, loading: isLoadingPrice } = useApi();
+
+	useEffect(() => {
+		// Check if the event uses WooCommerce for payments
+		const paymentSettings = get(
+			event,
+			'payments_settings',
+			{}
+		) as PaymentSettings;
+		if (
+			paymentSettings.enable_payment &&
+			paymentSettings.type === 'woocommerce'
+		) {
+			callApi({
+				path: `/quillbooking/v1/woocommerce/product-price/${event.id}`,
+				method: 'GET',
+				onSuccess: (response) => {
+					setWooPrice(response);
+				},
+				onError: (error) => {
+					console.error('Error fetching WooCommerce price:', error);
+				},
+				isCore: false, // Set isCore to false to use the full path
+			});
+		}
+	}, [event.id]);
 
 	let timeRangeText = '';
 	if (selectedDate && selectedTime) {
@@ -66,13 +116,23 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 		return `${symbol}${price}`;
 	};
 
-	// Get price based on whether it's multi-duration or not
+	// Get price based on whether it's multi-duration, WooCommerce, or regular pricing
 	const getPrice = () => {
-		const paymentSettings = get(event, 'payments_settings', {});
-		const isPaymentEnabled = get(paymentSettings, 'enable_payment', false);
+		const paymentSettings = get(
+			event,
+			'payments_settings',
+			{}
+		) as PaymentSettings;
+		const isPaymentEnabled = paymentSettings.enable_payment;
 
 		if (!isPaymentEnabled) return null;
 
+		// If using WooCommerce and we have the price data
+		if (paymentSettings.type === 'woocommerce' && wooPrice) {
+			return parseFloat(wooPrice.price);
+		}
+
+		// Otherwise use the standard pricing logic
 		if (isMultiDurations) {
 			const durationStr = selectedDuration.toString();
 			return get(
@@ -81,7 +141,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 				0
 			);
 		} else {
-			const items = get(paymentSettings, 'items', []) as PaymentItem[];
+			const items = paymentSettings.items || [];
 			if (items.length > 0) {
 				return items[0].price;
 			}
@@ -91,7 +151,10 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 	};
 
 	const price = getPrice();
-	const currency = get(event, 'currency', 'USD');
+	// Use WooCommerce currency if available, otherwise use event currency
+	const currency = wooPrice
+		? wooPrice.currency
+		: get(event, 'currency', 'USD');
 
 	return (
 		<div className="event-details-container">
@@ -122,12 +185,25 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 					)}
 				</div>
 				{/* price */}
-				{price !== null && price > 0 && (
+				{isLoadingPrice ? (
 					<div className="detail-row">
 						<PriceIcon width={20} height={20} rectFill={false} />
-						<p>{formatPrice(price, currency)}</p>
+						<p>{__('Loading price...', '@quillbooking')}</p>
 					</div>
-				)}
+				) : price !== null && price > 0 ? (
+					<div className="detail-row">
+						<PriceIcon width={20} height={20} rectFill={false} />
+						<p>
+							{formatPrice(price, currency)}
+							{/* {wooPrice && (
+								// <span className="product-name">
+								// 	{' '}
+								// 	({wooPrice.product_name})
+								// </span>
+							)} */}
+						</p>
+					</div>
+				) : null}
 				{/* location */}
 				{event.location.length === 1 && (
 					<div className="detail-row">
@@ -140,8 +216,27 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 					<div className="detail-row">
 						<LocationIcon height={20} width={20} />
 						<p>
-							{booking.location['label']} :{' '}
-							{booking.location['value']}
+							{booking.location['label']}
+							{[
+								'online',
+								'zoom',
+								'ms-teams',
+								'google-meet',
+							].includes(booking.location['type']) ? (
+								<>
+									:{' '}
+									<a
+										href={booking.location['value']}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="link"
+									>
+										{booking.location['value']}
+									</a>
+								</>
+							) : (
+								<>: {booking.location['value']}</>
+							)}
 						</p>
 					</div>
 				)}

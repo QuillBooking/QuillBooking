@@ -25,4 +25,4 @@ yarn.lock
 
 .codegpt
 
-.vscode
+.vscode/launch.json

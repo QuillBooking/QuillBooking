@@ -21,10 +21,6 @@ use QuillBooking\Integrations\Twilio\REST_API\REST_API;
  */
 class Integration extends Abstract_Integration {
 
-
-
-
-
 	/**
 	 * Integration Name
 	 *
@@ -164,5 +160,24 @@ class Integration extends Abstract_Integration {
 		$this->api = new API( $sms_number, $whatsapp_number, $account_sid, $auth_token );
 
 		return $this->api;
+	}
+
+	/**
+	 * Delete settings
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string|int $account_id Account ID. If empty, deletes global settings.
+	 * @return void
+	 */
+	public function delete_settings( $account_id = '' ) {
+		if ( empty( $account_id ) ) {
+			// Delete global settings
+			delete_option( $this->option_name );
+			return;
+		}
+
+		// Delete account-specific settings
+		$this->accounts->delete_account( $account_id );
 	}
 }

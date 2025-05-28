@@ -30,6 +30,7 @@ use QuillBooking\QuillBooking;
 final class Email_Notifications {
 
 
+
 	/**
 	 * Merge Tags Manager
 	 *
@@ -547,7 +548,7 @@ final class Email_Notifications {
 		$body    = $this->merge_tags_manager->process_merge_tags( $body, $booking );
 
 		$emails = new Emails();
-		$result = $emails->send( $email, $subject, $body );
+		$result = $emails->send( $email, $subject, $body, array(), $booking );
 
 		// Log the result
 		if ( $result ) {

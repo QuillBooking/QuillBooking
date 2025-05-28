@@ -138,19 +138,7 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 
 		// Single state for all payment settings with default values
 		const [paymentSettings, setPaymentSettings] =
-			useState<PaymentsSettings>({
-				enable_payment: false,
-				enable_items_based_on_duration: false,
-				enable_paypal: false,
-				enable_stripe: false,
-				items: [
-					{ item: __('Booking Item', 'quillbooking'), price: 100 },
-				],
-				multi_duration_items: {},
-				payment_methods: [], // Initialize with empty array to fix TypeScript error
-				type: 'native',
-				woo_product: 0,
-			});
+			useState<PaymentsSettings>({} as PaymentsSettings);
 
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {

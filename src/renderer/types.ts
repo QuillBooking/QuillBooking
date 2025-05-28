@@ -284,6 +284,5 @@ export interface PaymentsSettings {
 	payment_methods?: string[];
 	enable_paypal: boolean;
 	enable_stripe: boolean;
-	enable_woocommerce: boolean;
 	currency?: string;
 }

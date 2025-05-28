@@ -79,7 +79,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 	const hasPaymentGateways =
 		event.payments_settings?.enable_stripe ||
 		event.payments_settings?.enable_paypal ||
-		event.payments_settings?.enable_woocommerce;
+		event.payments_settings?.type === 'woocommerce';
 
 	const handleSelectedTime = (time: string | null) => {
 		setSelectedTime(time);
@@ -110,7 +110,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 
 			// Check if WooCommerce is enabled
 			const isWooCommerceEnabled =
-				event.payments_settings?.enable_woocommerce;
+				event.payments_settings?.type === 'woocommerce';
 
 			// If payment is required, we need to include a payment method
 			if (requiresPayment && hasPaymentGateways) {

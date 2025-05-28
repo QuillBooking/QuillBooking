@@ -4,7 +4,8 @@ import './style.scss';
 import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import { Form, Spin } from 'antd';
 import FormField from '../../../inputs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useApi } from '@quillbooking/hooks';
 
 interface QuestionsComponentsProps {
 	fields: Fields;
@@ -19,6 +20,8 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 }) => {
 	const [form] = Form.useForm();
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [countryCode, setCountryCode] = useState<string>('us');
+	const { callApi } = useApi();
 
 	const allFields = {
 		...fields.system,
@@ -43,6 +46,24 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 			setIsSubmitting(false);
 		}
 	};
+
+	const fetchCountryCode = () => {
+		callApi({
+			path: 'settings',
+			method: 'GET',
+			onSuccess: (data) => {
+				console.log('Country code fetched:', data);
+				setCountryCode(data.general.default_country_code.toLowerCase());
+			},
+			onError: (error) => {
+				console.error('Error fetching country code:', error);
+			},
+		});
+	};
+
+	useEffect(() => {
+		fetchCountryCode();
+	}, []);
 
 	return (
 		<div className="questions-container">
@@ -70,7 +91,7 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 									key={index}
 									id={fieldKey}
 									field={allFields[fieldKey]}
-									form={form}
+									countryCode={countryCode}
 								/>
 							)
 					)}

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Attendee_Phone
  *
@@ -17,6 +18,7 @@ use QuillBooking\Abstracts\Location;
  * Attendee Phone class
  */
 class Attendee_Phone extends Location {
+
 
 	/**
 	 * Title
@@ -43,7 +45,7 @@ class Attendee_Phone extends Location {
 		return array(
 			'phone' => array(
 				'label'       => __( 'Your Phone', 'quillbooking' ),
-				'type'        => 'text',
+				'type'        => 'phone',
 				'required'    => true,
 				'group'       => 'system',
 				'placeholder' => __( 'Enter your phone', 'quillbooking' ),

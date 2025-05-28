@@ -282,10 +282,17 @@ export interface BookingResponse {
 	updated_at: string;
 	timezone: string;
 	fields: any | null;
-	location: string;
+	location: BookingLocation;
 	event: Event;
 	meta: EventMetaData[];
 }
+
+export type BookingLocation = {
+	type: string;
+	id?: string;
+	label: string;
+	value: string;
+};
 
 export interface Booking extends BookingResponse {
 	time_span: string;
@@ -393,9 +400,10 @@ export interface PaymentsSettings {
 	enable_items_based_on_duration: boolean;
 	items: PaymentItem[];
 	multi_duration_items: {
-		[key: string]: PaymentItem & { duration: string };
+		[key: string]: PaymentItem;
 	};
 	payment_methods?: string[];
 	enable_paypal: boolean;
 	enable_stripe: boolean;
+	currency?: string;
 }

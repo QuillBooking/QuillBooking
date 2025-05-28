@@ -510,10 +510,7 @@ const Locations: React.FC<{
 									alt="google_meet.png"
 									className="size-7"
 								/>
-								<Flex
-									vertical
-									className={`${connected_integrations.google.connected ? 'w-[415px]' : 'w-[480px]'}`}
-								>
+								<Flex vertical>
 									<div className="text-[#3F4254] text-[16px] font-semibold">
 										{__('Google Meet', 'quillbooking')}
 									</div>
@@ -571,7 +568,7 @@ const Locations: React.FC<{
 											true
 										)
 									}
-									className="bg-transparent border-none text-[#3F4254] shadow-none"
+									className="bg-transparent border-none text-[#3F4254] shadow-none p-0"
 								>
 									<EditIcon />
 									{__('Manage Accounts', 'quillbooking')}
@@ -606,10 +603,7 @@ const Locations: React.FC<{
 									alt="zoom.png"
 									className="size-7"
 								/>
-								<Flex
-									vertical
-									className={`${connected_integrations.zoom.connected ? 'w-[415px]' : 'w-[480px]'}`}
-								>
+								<Flex vertical>
 									<div className="text-[#3F4254] text-[16px] font-semibold">
 										{__('Zoom Video', 'quillbooking')}
 									</div>
@@ -673,7 +667,7 @@ const Locations: React.FC<{
 											true
 										)
 									}
-									className="bg-transparent border-none text-[#3F4254] shadow-none"
+									className="bg-transparent border-none text-[#3F4254] shadow-none p-0"
 								>
 									<EditIcon />
 									{__('Manage Accounts', 'quillbooking')}
@@ -714,10 +708,7 @@ const Locations: React.FC<{
 									alt="teams.png"
 									className="size-7"
 								/>
-								<Flex
-									vertical
-									className={`${connected_integrations.outlook.connected ? 'w-[415px]' : 'w-[480px]'}`}
-								>
+								<Flex vertical>
 									<div className="text-[#3F4254] text-[16px] font-semibold">
 										{__('MS Teams', 'quillbooking')}
 									</div>
@@ -796,7 +787,7 @@ const Locations: React.FC<{
 											true
 										)
 									}
-									className="bg-transparent border-none text-[#3F4254] shadow-none"
+									className="bg-transparent border-none text-[#3F4254] shadow-none p-0"
 								>
 									<EditIcon />
 									{__('Manage Accounts', 'quillbooking')}

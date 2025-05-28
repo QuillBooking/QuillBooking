@@ -9,7 +9,7 @@ import CalendarIcon from '../../../../icons/calendar-icon';
 import { PriceIcon } from '../../../../../components/icons';
 import { get } from 'lodash';
 import { useEffect, useState } from 'react';
-import apiFetch from '@wordpress/api-fetch';
+import { useApi } from '@quillbooking/hooks';
 
 interface EventDetailsProps {
 	event: Event;
@@ -58,7 +58,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 		event.additional_settings.allow_attendees_to_select_duration;
 
 	const [wooPrice, setWooPrice] = useState<WooProductPrice | null>(null);
-	const [isLoadingPrice, setIsLoadingPrice] = useState<boolean>(false);
+	const { callApi, loading: isLoadingPrice } = useApi();
 
 	useEffect(() => {
 		// Check if the event uses WooCommerce for payments
@@ -71,20 +71,17 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 			paymentSettings.enable_payment &&
 			paymentSettings.type === 'woocommerce'
 		) {
-			setIsLoadingPrice(true);
-			apiFetch<WooProductPrice>({
+			callApi({
 				path: `/quillbooking/v1/woocommerce/product-price/${event.id}`,
 				method: 'GET',
-			})
-				.then((response) => {
+				onSuccess: (response) => {
 					setWooPrice(response);
-				})
-				.catch((error) => {
+				},
+				onError: (error) => {
 					console.error('Error fetching WooCommerce price:', error);
-				})
-				.finally(() => {
-					setIsLoadingPrice(false);
-				});
+				},
+				isCore: false, // Set isCore to false to use the full path
+			});
 		}
 	}, [event.id]);
 

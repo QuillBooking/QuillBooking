@@ -14,7 +14,7 @@ import { PlusOutlined } from '@ant-design/icons';
 /**
  * Internal dependencies
  */
-import { BookingIcon } from '@quillbooking/components';
+import { BookingIcon, LocationDisplay } from '@quillbooking/components';
 import MonthSelector from '../../../pages/bookings/month-selector';
 import { Booking } from '@quillbooking/client';
 import {
@@ -83,7 +83,10 @@ const LatestBookings: React.FC = () => {
 			method: 'GET',
 			onSuccess: (res) => {
 				// Get all bookings grouped by date
-				const allBookings = groupBookingsByDate(res.bookings.data);
+				const allBookings = groupBookingsByDate(
+					res.bookings.data,
+					res.time_format
+				);
 				setBookings(allBookings);
 				setLoading(false);
 			},
@@ -195,21 +198,11 @@ const LatestBookings: React.FC = () => {
 																				•
 																			</span>
 																			<div className="text-xs">
-																				{
-																					booking
-																						.location[
-																						'label'
-																					]
-																				}{' '}
-																				{
-																					': '
-																				}
-																				{
-																					booking
-																						.location[
-																						'value'
-																					]
-																				}
+																				<LocationDisplay
+																					location={
+																						booking.location
+																					}
+																				/>
 																			</div>
 																			<span>
 																				•

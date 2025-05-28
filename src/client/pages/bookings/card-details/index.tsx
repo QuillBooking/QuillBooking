@@ -15,6 +15,7 @@ import {
 	LinkIcon,
 	AttendeeIcon,
 	CopyWhiteIcon,
+	LocationDisplay,
 } from '@quillbooking/components';
 import { useCopyToClipboard } from '@quillbooking/hooks';
 import { NavLink as Link } from '@quillbooking/navigation';
@@ -44,8 +45,7 @@ const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 				</Flex>
 				<Flex gap={3} align="center">
 					<LocationIcon rectFill={false} width={18} height={18} />
-					{booking.location['label']} {': '}
-					{booking.location['value']}
+					<LocationDisplay location={booking.location} />
 				</Flex>
 			</div>
 

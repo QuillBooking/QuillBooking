@@ -1,5 +1,7 @@
 import { Form, Input, Radio } from 'antd';
 import DynamicLocationFields from '../dynamic-location-field';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 /**
  * Renders dynamic fields for a selected location type
@@ -22,9 +24,10 @@ interface LocationsProps {
 		label: string;
 		options: Option[];
 	};
+	countryCode: string;
 }
 
-const Locations = ({ locationFields }: LocationsProps) => {
+const Locations = ({ locationFields, countryCode }: LocationsProps) => {
 	console.log('Locations', locationFields);
 	return (
 		<>
@@ -50,50 +53,61 @@ const Locations = ({ locationFields }: LocationsProps) => {
 							))}
 						</Radio.Group>
 					</Form.Item>
-					<DynamicLocationFields locations={locationFields.options} />
+					<DynamicLocationFields
+						locations={locationFields.options}
+						countryCode={countryCode}
+					/>
 				</>
 			) : (
-				locationFields.options[0].fields &&
-				Object.entries(locationFields.options[0].fields).map(
-					([fieldKey, field]) => {
-						const typedField = field as Field & {
-							placeholder?: string;
-						};
-						return (
-							<>
-								<Form.Item
-									key="location"
-									name="location"
-									initialValue={
-										locationFields.options[0].value
-									}
-									style={{ display: 'none' }}
-								>
-									<Input type="hidden" />
-								</Form.Item>
-								<Form.Item
-									key={fieldKey}
-									name="location-data"
-									label={
-										<div className="form-label">
-											<p>
-												{typedField.label}
-												<span className="required">
-													*
-												</span>
-											</p>
-										</div>
-									}
-								>
-									<Input
-										placeholder={typedField.placeholder}
-										type={typedField.type}
-									/>
-								</Form.Item>
-							</>
-						);
-					}
-				)
+				<>
+					<Form.Item
+						key="location"
+						name="location"
+						initialValue={locationFields.options[0].value}
+						style={{ display: 'none' }}
+					>
+						<Input type="hidden" />
+					</Form.Item>
+					{locationFields.options[0].fields &&
+						Object.entries(locationFields.options[0].fields).map(
+							([fieldKey, field]) => {
+								const typedField = field as Field & {
+									placeholder?: string;
+								};
+								return (
+									<>
+										<Form.Item
+											key={fieldKey}
+											name="location-data"
+											label={
+												<div className="form-label">
+													<p>
+														{typedField.label}
+														<span className="required">
+															*
+														</span>
+													</p>
+												</div>
+											}
+										>
+											{typedField.type == 'phone' ? (
+												<PhoneInput
+													country={countryCode}
+												/>
+											) : (
+												<Input
+													placeholder={
+														typedField.placeholder
+													}
+													type={typedField.type}
+												/>
+											)}
+										</Form.Item>
+									</>
+								);
+							}
+						)}
+				</>
 			)}
 		</>
 	);

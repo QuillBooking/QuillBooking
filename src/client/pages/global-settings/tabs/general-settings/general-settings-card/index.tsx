@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Checkbox, Flex, Input, Radio, Select } from 'antd';
+import { Card, Flex, Input, Radio, Select } from 'antd';
 
 /**
  * Internal dependencies
@@ -46,19 +46,19 @@ const GeneralSettingsCard = ({ settings, updateSettings }) => {
 
 	// Country code options simplified
 	const countryOptions = [
-		{ value: '+1', label: 'United States (+1)' },
-		{ value: '+44', label: 'United Kingdom (+44)' },
-		{ value: '+91', label: 'India (+91)' },
-		{ value: '+49', label: 'Germany (+49)' },
-		{ value: '+33', label: 'France (+33)' },
-		{ value: '+81', label: 'Japan (+81)' },
-		{ value: '+86', label: 'China (+86)' },
-		{ value: '+7', label: 'Russia (+7)' },
-		{ value: '+61', label: 'Australia (+61)' },
-		{ value: '+55', label: 'Brazil (+55)' },
-		{ value: '+39', label: 'Italy (+39)' },
-		{ value: '+1', label: 'Canada (+1)' },
-		{ value: '+52', label: 'Mexico (+52)' },
+		{ value: 'US', label: 'United States (+1)' },
+		{ value: 'GB', label: 'United Kingdom (+44)' },
+		{ value: 'IN', label: 'India (+91)' },
+		{ value: 'DE', label: 'Germany (+49)' },
+		{ value: 'FR', label: 'France (+33)' },
+		{ value: 'JP', label: 'Japan (+81)' },
+		{ value: 'CN', label: 'China (+86)' },
+		{ value: 'RU', label: 'Russia (+7)' },
+		{ value: 'AU', label: 'Australia (+61)' },
+		{ value: 'BR', label: 'Brazil (+55)' },
+		{ value: 'IT', label: 'Italy (+39)' },
+		{ value: 'CA', label: 'Canada (+1)' },
+		{ value: 'MX', label: 'Mexico (+52)' },
 	];
 
 	// Day options
@@ -210,7 +210,7 @@ const GeneralSettingsCard = ({ settings, updateSettings }) => {
 					<Select
 						id="default_country_code"
 						className="w-full rounded-lg h-[48px]"
-						value={settings.default_country_code || 120}
+						value={settings.default_country_code || 'US'}
 						onChange={(value) =>
 							updateSettings('default_country_code', value)
 						}
@@ -218,7 +218,7 @@ const GeneralSettingsCard = ({ settings, updateSettings }) => {
 					/>
 				</Flex>
 
-				<Flex vertical gap={4}>
+				{/* <Flex vertical gap={4}>
 					<div className="font-semibold text-[16px]">
 						{__('Summary Email', 'quillbooking')}
 					</div>
@@ -237,7 +237,7 @@ const GeneralSettingsCard = ({ settings, updateSettings }) => {
 							'quillbooking'
 						)}
 					</Checkbox>
-				</Flex>
+				</Flex> */}
 
 				{settings.enable_summary_email && (
 					<Flex vertical gap={4}>

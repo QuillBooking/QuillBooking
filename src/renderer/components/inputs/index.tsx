@@ -15,6 +15,8 @@ import { __ } from '@wordpress/i18n';
 import './style.scss';
 import getValidationRules from './validation-rules';
 import Locations from '../locations';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const { TextArea, Password } = Input;
 const { Option } = Select;
@@ -34,7 +36,7 @@ const FIELD_COMPONENTS = {
 	textarea: (props) => <TextArea {...props} />,
 	password: (props) => <Password {...props} />,
 	number: (props) => <InputNumber {...props} />,
-	phone: (props) => <InputNumber {...props} />,
+	phone: (props) => <PhoneInput {...props} />,
 	date: (props) => <DatePicker {...props} />,
 	time: (props) => <TimePicker {...props} />,
 	datetime: (props) => <DatePicker showTime {...props} />,
@@ -76,7 +78,7 @@ const FIELD_COMPONENTS = {
 	),
 };
 
-const FormField = ({ field, id }) => {
+const FormField = ({ field, id, countryCode }) => {
 	const {
 		type,
 		label,
@@ -100,6 +102,7 @@ const FormField = ({ field, id }) => {
 		label,
 		required,
 		style,
+		country: countryCode,
 		...otherProps,
 	};
 
@@ -108,7 +111,7 @@ const FormField = ({ field, id }) => {
 	return (
 		<>
 			{id === 'location-select' ? (
-				<Locations locationFields={field} />
+				<Locations locationFields={field} countryCode={countryCode} />
 			) : (
 				<div style={{ marginBottom: '24px' }}>
 					<Form.Item

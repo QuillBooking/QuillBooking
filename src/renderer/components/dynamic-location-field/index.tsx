@@ -1,4 +1,6 @@
 import { Form, Input } from 'antd';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 /**
  * Renders dynamic fields for a selected location type
@@ -18,9 +20,13 @@ interface Option {
 
 interface DynamicLocationFieldsProps {
 	locations: Option[];
+	countryCode: string;
 }
 
-const DynamicLocationFields = ({ locations }: DynamicLocationFieldsProps) => {
+const DynamicLocationFields = ({
+	locations,
+	countryCode,
+}: DynamicLocationFieldsProps) => {
 	console.log(locations);
 	return (
 		<Form.Item noStyle shouldUpdate>
@@ -67,9 +73,17 @@ const DynamicLocationFields = ({ locations }: DynamicLocationFieldsProps) => {
 													: []
 											}
 										>
-											<Input
-												placeholder={field.placeholder}
-											/>
+											{field.type === 'phone' ? (
+												<PhoneInput
+													country={countryCode}
+												/>
+											) : (
+												<Input
+													placeholder={
+														field.placeholder
+													}
+												/>
+											)}
 										</Form.Item>
 									)
 								)

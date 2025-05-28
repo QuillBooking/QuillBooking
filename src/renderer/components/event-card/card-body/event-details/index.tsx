@@ -47,6 +47,60 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 	const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(false);
 	const { callApi } = useApi();
 
+	// Helper function to get product ID from multi_duration_items regardless of format
+	const getProductIdForDuration = (
+		paymentSettings: PaymentsSettings,
+		durationStr: string
+	): number => {
+		const multiDurationItems = paymentSettings.multi_duration_items;
+
+		// If it's an object with duration keys (not an array)
+		if (
+			multiDurationItems &&
+			typeof multiDurationItems === 'object' &&
+			!Array.isArray(multiDurationItems)
+		) {
+			return get(multiDurationItems, [durationStr, 'woo_product'], 0);
+		}
+
+		// If it's an array of items
+		if (Array.isArray(multiDurationItems)) {
+			const item = multiDurationItems.find(
+				(item) => item.duration === durationStr
+			);
+			return item?.woo_product || 0;
+		}
+
+		return 0;
+	};
+
+	// Helper function to get price from multi_duration_items regardless of format
+	const getPriceForDuration = (
+		paymentSettings: PaymentsSettings,
+		durationStr: string
+	): number => {
+		const multiDurationItems = paymentSettings.multi_duration_items;
+
+		// If it's an object with duration keys
+		if (
+			multiDurationItems &&
+			typeof multiDurationItems === 'object' &&
+			!Array.isArray(multiDurationItems)
+		) {
+			return get(multiDurationItems, [durationStr, 'price'], 0);
+		}
+
+		// If it's an array of items
+		if (Array.isArray(multiDurationItems)) {
+			const item = multiDurationItems.find(
+				(item) => item.duration === durationStr
+			);
+			return item?.price || 0;
+		}
+
+		return 0;
+	};
+
 	useEffect(() => {
 		// Check if the event uses WooCommerce for payments
 		const paymentSettings = get(
@@ -54,6 +108,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 			'payments_settings',
 			{}
 		) as PaymentsSettings;
+		console.log('hello payments:', paymentSettings);
 		if (
 			paymentSettings.enable_payment &&
 			paymentSettings.type === 'woocommerce'
@@ -65,10 +120,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 			) {
 				// We only need to fetch the price for the currently selected duration
 				const durationStr = selectedDuration.toString();
-				const productId = get(
+				const productId = getProductIdForDuration(
 					paymentSettings,
-					['multi_duration_items', durationStr, 'woo_product'],
-					0
+					durationStr
 				);
 
 				console.log(
@@ -200,10 +254,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 				}
 
 				// If we have a product ID but no price data yet, show loading
-				const productId = get(
+				const productId = getProductIdForDuration(
 					paymentSettings,
-					['multi_duration_items', durationStr, 'woo_product'],
-					0
+					durationStr
 				);
 				if (productId) {
 					// Try to fetch the price again
@@ -214,11 +267,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 				}
 
 				// Fall back to the configured price in the duration item if no WooCommerce product
-				return get(
-					paymentSettings,
-					['multi_duration_items', durationStr, 'price'],
-					0
-				);
+				return getPriceForDuration(paymentSettings, durationStr);
 			} else {
 				// For single product
 				const wooPrice = wooPrices.default;
@@ -239,11 +288,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 			paymentSettings.enable_items_based_on_duration
 		) {
 			const durationStr = selectedDuration.toString();
-			return get(
-				paymentSettings,
-				['multi_duration_items', durationStr, 'price'],
-				0
-			);
+			return getPriceForDuration(paymentSettings, durationStr);
 		} else {
 			const items = paymentSettings.items || [];
 			if (items.length > 0) {

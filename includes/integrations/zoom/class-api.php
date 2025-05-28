@@ -22,21 +22,6 @@ use Exception;
 class API extends Abstract_API {
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	/**
 	 * Access token
 	 *

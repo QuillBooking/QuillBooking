@@ -519,12 +519,20 @@ const Locations: React.FC<{
 									</div>
 									<div className="text-[#9197A4] text-[12px] italic">
 										{connected_integrations.google
-											.has_settings
+											.has_settings &&
+										connected_integrations.google
+											.has_accounts
 											? __('Connected', 'quillbooking')
-											: __(
-													'Need to be Connect First - Visit the Google Meet integration page from Settings.',
-													'quillbooking'
-												)}
+											: connected_integrations.google
+														.has_settings
+												? __(
+														'An account needs to be added first – visit the Google Meet tab in Calendar Settings.',
+														'quillbooking'
+													)
+												: __(
+														'Need to connect first – visit the Google Meet integration page from Settings.',
+														'quillbooking'
+													)}
 									</div>
 								</Flex>
 							</Flex>
@@ -715,29 +723,41 @@ const Locations: React.FC<{
 									</div>
 									<div className="text-[#9197A4] text-[12px] italic">
 										{connected_integrations.outlook
-											.has_settings
+											.has_settings &&
+										connected_integrations.outlook
+											.has_accounts
 											? __('Connected', 'quillbooking')
-											: __(
-													'Need to be Connect First - Visit the MS Teams integration page from Settings.',
-													'quillbooking'
-												)}
+											: connected_integrations.outlook
+														.has_settings
+												? __(
+														'An account needs to be added first – visit the MS Teams tab in Calendar Settings.',
+														'quillbooking'
+													)
+												: __(
+														'Need to connect first – visit the MS Teams integration page from Settings.',
+														'quillbooking'
+													)}
 
 										{connected_integrations.outlook
-											.teams_enabled ? (
-											<div className="text-[#9197A4] text-[12px] italic">
-												{__(
-													'Teams is enabled',
-													'quillbooking'
-												)}
-											</div>
-										) : (
-											<div className="text-[#9197A4] text-[12px] italic">
-												{__(
-													'Teams is not enabled',
-													'quillbooking'
-												)}
-											</div>
-										)}
+											.has_settings &&
+											connected_integrations.outlook
+												.has_accounts &&
+											(connected_integrations.outlook
+												.teams_enabled ? (
+												<div className="text-[#9197A4] text-[12px] italic">
+													{__(
+														'Teams is enabled',
+														'quillbooking'
+													)}
+												</div>
+											) : (
+												<div className="text-[#9197A4] text-[12px] italic">
+													{__(
+														'Teams is not enabled',
+														'quillbooking'
+													)}
+												</div>
+											))}
 									</div>
 								</Flex>
 							</Flex>

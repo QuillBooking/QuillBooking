@@ -33,6 +33,13 @@ class Event_Model extends Model {
 
 
 
+
+
+
+
+
+
+
 	/**
 	 * Table name
 	 *
@@ -549,12 +556,12 @@ class Event_Model extends Model {
 			$has_accounts        = false;
 			$global_settings     = $integration->get_settings();
 			$set_global_settings = false;
+			$teams_enabled       = false;
 
 			if ( $integration->slug == 'zoom' ) {
 				$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
 				if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['client_id'] ) && ! empty( $app_credentials['client_secret'] ) ) {
 					$set_global_settings = true;
-					$has_accounts        = true;
 				} else {
 					$set_global_settings = false;
 				}
@@ -575,14 +582,28 @@ class Event_Model extends Model {
 					$all_connected = false;
 				} else {
 					$has_accounts = true;
+					// Check if this is the default account and has Teams enabled
+					if ( $integration->slug === 'outlook' ) {
+						foreach ( $accounts as $account ) {
+							if (
+								isset( $account['config']['default_calendar'] )
+							) {
+								// Check if Teams is explicitly enabled in the account settings
+								$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
+									$account['config']['settings']['enable_teams'] === true;
+								break;
+							}
+						}
+					}
 				}
 			}
 
 			$connected_integrations[ $integration->slug ] = array(
-				'name'         => $integration->name,
-				'connected'    => $all_connected,
-				'has_accounts' => $has_accounts,
-				'has_settings' => $set_global_settings,
+				'name'          => $integration->name,
+				'connected'     => $all_connected,
+				'has_accounts'  => $has_accounts,
+				'has_settings'  => $set_global_settings,
+				'teams_enabled' => $teams_enabled,
 			);
 		}
 

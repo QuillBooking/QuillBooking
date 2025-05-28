@@ -28,6 +28,11 @@ class App {
 
 
 
+
+
+
+
+
 	/**
 	 * State prefix for Microsoft authentication
 	 *
@@ -88,7 +93,7 @@ class App {
 					'client_id'     => $custom_credentials['client_id'],
 					'redirect_uri'  => \urlencode( $this->get_redirect_uri() ),
 					'state'         => self::STATE_PREFIX . $host_id,
-					'scope'         => \urlencode( 'openid profile offline_access User.Read Calendars.ReadWrite' ),
+					'scope'         => urlencode( 'openid profile offline_access User.Read Calendars.ReadWrite OnlineMeetings.ReadWrite' ),
 				),
 				'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
 			);
@@ -107,7 +112,7 @@ class App {
 							'action'       => 'get_auth_url',
 							'host_id'      => $host_id,
 							'redirect_uri' => $this->get_redirect_uri(),
-							'scope'        => 'openid profile offline_access User.Read Calendars.ReadWrite',
+							'scope'        => 'openid profile offline_access User.Read Calendars.ReadWrite OnlineMeetings.ReadWrite',
 							'state'        => self::STATE_PREFIX . $host_id . '-' . admin_url(),
 						)
 					),

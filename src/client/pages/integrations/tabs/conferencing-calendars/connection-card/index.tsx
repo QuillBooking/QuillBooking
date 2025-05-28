@@ -58,6 +58,31 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 		}
 	}, [slug, previousSlug, form]);
 
+	// Listen for tab changes from URL
+	useEffect(() => {
+		const handleTabChange = () => {
+			const urlParams = new URLSearchParams(window.location.search);
+			const subtabParam = urlParams.get('subtab');
+
+			if (subtabParam && subtabParam !== slug) {
+				setPreviousSlug(subtabParam);
+			}
+		};
+
+		// Add event listener for URL changes
+		window.addEventListener('popstate', handleTabChange);
+		// Listen for custom event from parent component
+		window.addEventListener('quillbooking-tab-changed', handleTabChange);
+
+		return () => {
+			window.removeEventListener('popstate', handleTabChange);
+			window.removeEventListener(
+				'quillbooking-tab-changed',
+				handleTabChange
+			);
+		};
+	}, [slug]);
+
 	useEffect(() => {
 		fetchCalendars();
 	}, []);

@@ -48,6 +48,8 @@ class Integration extends Abstract_Integration {
 
 
 
+
+
 	/**
 	 * Integration Name
 	 *
@@ -361,11 +363,11 @@ class Integration extends Abstract_Integration {
 				),
 			);
 
-			$event_data = array(
+			$event_data  = array(
 				'subject'               => sprintf( __( '%1$s: %2$s', 'quillbooking' ), $booking->guest->name, $event->name ),
 				// 'description'           => $event->description,
 				'location'              => array(
-					'displayName' => $booking->location['lable'],
+					'displayName' => $booking->location['label'],
 				),
 				'organizer'             => array(
 					'emailAddress' => array(
@@ -389,9 +391,9 @@ class Integration extends Abstract_Integration {
 				),
 				'transactionId'         => "{$this->get_site_uid()}-{$booking->id}",
 			);
+			$enableTeams = Arr::get( $default_account['data'], 'config.settings.enable_teams', false );
 
-			// Add MS Teams meeting if location is ms_meet
-			if ( 'ms-teams' === $booking->location['type'] ) {
+			if ( $enableTeams ) {
 				$event_data['isOnlineMeeting']       = true;
 				$event_data['onlineMeetingProvider'] = 'teamsForBusiness';
 			}
@@ -430,12 +432,22 @@ class Integration extends Abstract_Integration {
 
 			$booking->update_meta( 'outlook_events_details', $meta );
 
+			$value = '';
+
+			if ( $enableTeams ) {
+				// If Teams meeting is enabled, get the join URL
+				$value = Arr::get( $event, 'onlineMeeting.joinUrl', '' );
+			} else {
+				// Otherwise, use the Outlook event link
+				$value = Arr::get( $event, 'webLink', '' );
+			}
+
 			$booking->update_meta(
 				'location',
 				array(
 					'type'  => MS_Teams::instance()->slug,
 					'label' => 'Microsoft Teams',
-					'value' => Arr::get( $event, 'webLink', '' ),
+					'value' => $value,
 				)
 			);
 

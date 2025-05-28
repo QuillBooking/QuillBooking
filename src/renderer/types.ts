@@ -35,23 +35,7 @@ export type Event = {
 		max_invites: number;
 		show_remaining: boolean;
 	};
-	payments_settings?: {
-		enable_payment: boolean;
-		enable_paypal?: boolean;
-		enable_stripe?: boolean;
-		enable_woocommerce?: boolean;
-		woo_product?: number;
-		items: Array<{
-			item: string;
-			price: number;
-		}>;
-		multi_duration_items?: {
-			[duration: string]: {
-				price: number;
-			};
-		};
-		currency: string;
-	};
+	payments_settings?: PaymentsSettings;
 	connected_integrations: {
 		apple: ConnectedIntegrationsFields;
 		google: ConnectedIntegrationsFields;
@@ -280,3 +264,25 @@ export type Location = {
 		[key: string]: string;
 	};
 };
+
+export interface PaymentItem {
+	item?: string;
+	price?: number;
+	woo_product?: number;
+	duration?: string;
+}
+
+export interface PaymentsSettings {
+	enable_payment: boolean;
+	type: 'native' | 'woocommerce';
+	woo_product: number | null;
+	enable_items_based_on_duration: boolean;
+	items: PaymentItem[];
+	multi_duration_items: {
+		[key: string]: PaymentItem;
+	};
+	payment_methods?: string[];
+	enable_paypal: boolean;
+	enable_stripe: boolean;
+	currency?: string;
+}

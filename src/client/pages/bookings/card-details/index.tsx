@@ -56,9 +56,12 @@ const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 						{__('Price', 'quillbooking')}
 					</span>
 					<span className="text-[#007AFF] text-sm font-[500] capitalize">
-						{booking.order
-							? booking.order.total
-							: __('Free', 'quillbooking')}
+						{booking.order == null &&
+							booking.event.payments_settings.enable_payment &&
+							__('Not Paied Yet', 'quillbooking')}
+						{booking.order != null && booking.order.total}
+						{!booking.event.payments_settings.enable_payment &&
+							__('Free', 'quillbooking')}
 					</span>
 				</Flex>
 

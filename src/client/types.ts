@@ -86,7 +86,7 @@ export type Event = {
 	fields?: EventMetaData[];
 	availability_data?: Availability;
 	reserve: boolean;
-	payments_settings?: PaymentsSettings;
+	payments_settings: PaymentsSettings;
 	connected_integrations: {
 		apple: ConnectedIntegrationsFields;
 		google: ConnectedIntegrationsFields;

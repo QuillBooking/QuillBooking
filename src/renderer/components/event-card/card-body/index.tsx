@@ -115,6 +115,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 			// If payment is required, we need to include a payment method
 			if (requiresPayment && hasPaymentGateways) {
 				// If WooCommerce is enabled, use it directly
+				formData.append('status', 'pending');
 				if (isWooCommerceEnabled) {
 					formData.append('payment_method', 'woocommerce');
 				} else {

@@ -60,9 +60,10 @@ export type ConnectedIntegrationsFields = {
 	has_accounts: boolean;
 };
 
-export type ConnectedIntegrationsFieldsMicrosoft = ConnectedIntegrationsFields & {
-	teams_enabled: boolean;
-};
+export type ConnectedIntegrationsFieldsMicrosoft =
+	ConnectedIntegrationsFields & {
+		teams_enabled: boolean;
+	};
 
 export type Event = {
 	id: number;
@@ -405,5 +406,6 @@ export interface PaymentsSettings {
 	payment_methods?: string[];
 	enable_paypal: boolean;
 	enable_stripe: boolean;
+	enable_woocommerce: boolean;
 	currency?: string;
 }

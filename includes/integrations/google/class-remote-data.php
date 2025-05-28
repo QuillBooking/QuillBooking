@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Google Remote Data
  *
@@ -18,6 +19,7 @@ use QuillBooking\Integration\Remote_Data as Abstracts_Remote_Data;
  */
 class Remote_Data extends Abstracts_Remote_Data {
 
+
 	/**
 	 * Fetch Calendars
 	 *
@@ -26,21 +28,26 @@ class Remote_Data extends Abstracts_Remote_Data {
 	 * @return array
 	 */
 	public function fetch_calendars() {
-		$response = $this->integration->api->get_calendars();
+		 $response = $this->integration->api->get_calendars();
 		if ( ! $response['success'] ) {
 			return array();
 		}
 
 		$calendars = array();
 		foreach ( $response['data']['items'] ?? array() as $calendar ) {
+			$access_role = $calendar['accessRole'] ?? 'reader';
+			$can_edit    = in_array( $access_role, array( 'owner', 'writer' ), true );
+
 			$calendars[] = array(
-				'id'   => $calendar['id'],
-				'name' => $calendar['summary'],
+				'id'       => $calendar['id'],
+				'name'     => $calendar['summary'],
+				'can_edit' => $can_edit,
 			);
 		}
 
 		return $calendars;
 	}
+
 
 	/**
 	 * Fetch Events

@@ -134,7 +134,10 @@ const Bookings: React.FC = () => {
 			}),
 			method: 'GET',
 			onSuccess: (res) => {
-				const bookings = groupBookingsByDate(res.bookings.data);
+				const bookings = groupBookingsByDate(
+					res.bookings.data,
+					res.time_format
+				);
 				setBookings(bookings);
 				setPendingBookingCount(res.pending_count);
 				setCancelledBookingCount(res.cancelled_count);

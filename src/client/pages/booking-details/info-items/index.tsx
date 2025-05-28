@@ -9,7 +9,7 @@ import { CopyWhiteIcon } from '@quillbooking/components';
 interface InfoItemProps {
 	icon: React.ReactNode;
 	title: string;
-	content: string | number | undefined;
+	content: string | number | React.ReactNode | undefined;
 	className?: string;
 	link?: boolean;
 }

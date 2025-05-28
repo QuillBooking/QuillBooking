@@ -1,4 +1,6 @@
 import { Form, Input } from 'antd';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 /**
  * Renders dynamic fields for a selected location type
@@ -67,9 +69,15 @@ const DynamicLocationFields = ({ locations }: DynamicLocationFieldsProps) => {
 													: []
 											}
 										>
-											<Input
-												placeholder={field.placeholder}
-											/>
+											{field.type === 'phone' ? (
+												<PhoneInput country={'ca'} />
+											) : (
+												<Input
+													placeholder={
+														field.placeholder
+													}
+												/>
+											)}
 										</Form.Item>
 									)
 								)

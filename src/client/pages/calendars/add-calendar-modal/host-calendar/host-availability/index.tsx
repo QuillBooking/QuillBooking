@@ -19,6 +19,8 @@ import {
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
 import { getCurrentTimezone } from '@quillbooking/utils';
 import { Calendar } from 'client/types';
+import { useEffect, useState } from '@wordpress/element';
+import { useApi } from '@quillbooking/hooks';
 
 const customAvailability = {
 	id: 'default',
@@ -48,6 +50,27 @@ const HostAvailability: React.FC<HostAvailabilityProps> = ({
 	saveCalendar,
 	updateFormData,
 }) => {
+	const [startDay, setStartDay] = useState<string>('monday');
+	const [timeFormat, setTimeFormat] = useState<string>('12');
+	const { callApi } = useApi();
+	const fetchGlobalSettings = () => {
+		callApi({
+			path: 'settings',
+			method: 'GET',
+			onSuccess: (data) => {
+				setStartDay(data.general?.start_from || 'monday');
+				setTimeFormat(data.general?.time_format || '12');
+			},
+			onError: (error) => {
+				console.error('Error fetching start day:', error);
+			},
+		});
+	};
+
+	useEffect(() => {
+		fetchGlobalSettings();
+	}, []);
+
 	return (
 		<Modal
 			open={open}
@@ -98,6 +121,8 @@ const HostAvailability: React.FC<HostAvailabilityProps> = ({
 					</div>
 					<Card>
 						<Schedule
+							timeFormat={timeFormat}
+							startDay={startDay}
 							availability={customAvailability}
 							onCustomAvailabilityChange={(day, field, value) => {
 								const updatedAvailability = {

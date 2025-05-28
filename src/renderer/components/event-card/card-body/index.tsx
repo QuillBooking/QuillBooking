@@ -9,7 +9,7 @@ import QuestionsComponents from './questions';
 import Reschedule from '../../reschedule';
 import Payment from './payment';
 import { Col, Row, Skeleton, Space } from 'antd';
-import { filter, get } from 'lodash';
+import { get } from 'lodash';
 import { get_location } from '@quillbooking/utils';
 
 interface CardBodyProps {

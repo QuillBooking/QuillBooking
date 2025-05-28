@@ -15,6 +15,10 @@ import { __ } from '@wordpress/i18n';
 import './style.scss';
 import getValidationRules from './validation-rules';
 import Locations from '../locations';
+import { useApi } from '@quillbooking/hooks';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { useEffect, useState } from '@wordpress/element';
 
 const { TextArea, Password } = Input;
 const { Option } = Select;
@@ -34,7 +38,7 @@ const FIELD_COMPONENTS = {
 	textarea: (props) => <TextArea {...props} />,
 	password: (props) => <Password {...props} />,
 	number: (props) => <InputNumber {...props} />,
-	phone: (props) => <InputNumber {...props} />,
+	phone: (props) => <PhoneInput country={'ca'} {...props} />,
 	date: (props) => <DatePicker {...props} />,
 	time: (props) => <TimePicker {...props} />,
 	datetime: (props) => <DatePicker showTime {...props} />,
@@ -76,7 +80,9 @@ const FIELD_COMPONENTS = {
 	),
 };
 
-const FormField = ({ field, id, form }) => {
+const FormField = ({ field, id }) => {
+	const [countryCode, setCountryCode] = useState<string>('+1');
+	const { callApi } = useApi();
 	const {
 		type,
 		label,
@@ -104,6 +110,24 @@ const FormField = ({ field, id, form }) => {
 	};
 
 	const rules = getValidationRules(field);
+
+	const fetchCountryCode = () => {
+		callApi({
+			path: 'settings',
+			method: 'GET',
+			onSuccess: (data) => {
+				console.log('Country code fetched:', data);
+				setCountryCode(data.general.default_country_code);
+			},
+			onError: (error) => {
+				console.error('Error fetching country code:', error);
+			},
+		});
+	};
+
+	useEffect(() => {
+		fetchCountryCode();
+	}, []);
 
 	return (
 		<>

@@ -68,8 +68,20 @@ const Calendar: React.FC = () => {
 	const [showErrorBanner, setShowErrorBanner] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
 	const [activeTab, setActiveTab] = useState('general');
+	const [hasSelectedCalendar, setHasSelectedCalendar] = useState(false);
+	const [hasAccounts, setHasAccounts] = useState(false);
 	const navigate = useNavigate();
 	const setBreadcrumbs = useBreadcrumbs();
+
+	// Get URL parameters
+	useEffect(() => {
+		const urlParams = new URLSearchParams(window.location.search);
+		const tabParam = urlParams.get('tab');
+		if (tabParam === 'integrations') {
+			setActiveTab('integrations');
+		}
+	}, []);
+
 	if (!id) {
 		return null;
 	}
@@ -119,6 +131,16 @@ const Calendar: React.FC = () => {
 	}, []);
 
 	const handleClose = () => {
+		if (hasAccounts && !hasSelectedCalendar) {
+			window.alert(
+				__(
+					'Please select a remote calendar before closing the settings.',
+					'quillbooking'
+				)
+			);
+			return;
+		}
+
 		setOpen(false);
 		navigate('calendars');
 	};
@@ -190,7 +212,14 @@ const Calendar: React.FC = () => {
 			case 'general':
 				return <GeneralSettings />;
 			case 'integrations':
-				return <Integrations />;
+				return (
+					<Integrations
+						hasSelectedCalendar={hasSelectedCalendar}
+						hasAccounts={hasAccounts}
+						setHasSelectedCalendar={setHasSelectedCalendar}
+						setHasAccounts={setHasAccounts}
+					/>
+				);
 			default:
 				return <GeneralSettings />;
 		}
@@ -208,6 +237,35 @@ const Calendar: React.FC = () => {
 			icon: <UpcomingCalendarIcon width={20} height={20} />,
 		},
 	];
+
+	const handleTabClick = (key: string) => {
+		// Check if we're trying to change tabs while in integrations with accounts but no calendar
+		if (
+			activeTab === 'integrations' &&
+			hasAccounts &&
+			!hasSelectedCalendar
+		) {
+			window.alert(
+				__(
+					'Please select a remote calendar before changing tabs.',
+					'quillbooking'
+				)
+			);
+			return;
+		}
+
+		// Update URL with the new tab
+		const urlParams = new URLSearchParams(window.location.search);
+		if (key === 'integrations') {
+			urlParams.set('tab', 'integrations');
+		} else {
+			urlParams.delete('tab');
+		}
+		const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+		window.history.pushState({}, '', newUrl);
+
+		setActiveTab(key);
+	};
 
 	return (
 		<Provider
@@ -264,31 +322,21 @@ const Calendar: React.FC = () => {
 				<div className="quillbooking-event">
 					<Box className="px-20 py-5">
 						<Card className="mb-5">
-							<Flex
-								gap={15}
-								align="center"
-								justify="flex-start"
-							>
-								{tabItems.map(
-									({ key, label, icon }) => (
-										<Button
-											key={key}
-											type="text"
-											onClick={() =>
-												setActiveTab(key)
-											}
-											className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
-										>
-											<TabButtons
-												label={label}
-												icon={icon}
-												isActive={
-													activeTab === key
-												}
-											/>
-										</Button>
-									)
-								)}
+							<Flex gap={15} align="center" justify="flex-start">
+								{tabItems.map(({ key, label, icon }) => (
+									<Button
+										key={key}
+										type="text"
+										onClick={() => handleTabClick(key)}
+										className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
+									>
+										<TabButtons
+											label={label}
+											icon={icon}
+											isActive={activeTab === key}
+										/>
+									</Button>
+								))}
 							</Flex>
 						</Card>
 						{isLoading ? (

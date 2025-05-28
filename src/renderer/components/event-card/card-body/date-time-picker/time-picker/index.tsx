@@ -19,6 +19,7 @@ interface TimePickerProps {
 	selectedTime: string | null;
 	setSelectedTime: (time: string) => void;
 	eventType?: EventTypes;
+	showRemaining?: boolean;
 }
 
 const TimePicker: React.FC<TimePickerProps> = ({
@@ -27,6 +28,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
 	selectedTime,
 	setSelectedTime,
 	eventType = 'one-to-one',
+	showRemaining,
 }) => {
 	const getTimeSlots = (): TimeSlot[] => {
 		if (!selectedAvailability) {
@@ -100,6 +102,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
 						>
 							<span className="time-slot-time">{slot.time}</span>
 							{isGroupEvent &&
+								showRemaining &&
 								slot.remaining > 0 &&
 								formatSpotsBadge(slot.remaining)}
 						</div>

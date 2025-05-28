@@ -29,6 +29,10 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
 class Event_Model extends Model {
 
 
+
+
+
+
 	/**
 	 * Table name
 	 *
@@ -124,6 +128,7 @@ class Event_Model extends Model {
 		'dynamic_duration',
 		'location',
 		'additional_settings',
+		'group_settings',
 		'booking_count',
 		'connected_integrations',
 		'price',
@@ -539,9 +544,28 @@ class Event_Model extends Model {
 		}
 
 		foreach ( $integrations as $integration_class ) {
-			/** @var \QuillBooking\Abstracts\Integration $integration */
-			$integration   = new $integration_class();
-			$all_connected = true;
+			$integration         = new $integration_class();
+			$all_connected       = true;
+			$has_accounts        = false;
+			$global_settings     = $integration->get_settings();
+			$set_global_settings = false;
+
+			if ( $integration->slug == 'zoom' ) {
+				$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
+				if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['client_id'] ) && ! empty( $app_credentials['client_secret'] ) ) {
+					$set_global_settings = true;
+					$has_accounts        = true;
+				} else {
+					$set_global_settings = false;
+				}
+			} else {
+				$app = Arr::get( $global_settings, 'app', null );
+				if ( $app && is_array( $app ) && ! empty( $app['cache_time'] ) ) {
+					$set_global_settings = true;
+				} else {
+					$set_global_settings = false;
+				}
+			}
 
 			foreach ( $calendar_ids as $calendar_id ) {
 				$integration->set_host( $calendar_id );
@@ -549,13 +573,16 @@ class Event_Model extends Model {
 
 				if ( empty( $accounts ) ) {
 					$all_connected = false;
-					break;
+				} else {
+					$has_accounts = true;
 				}
 			}
 
 			$connected_integrations[ $integration->slug ] = array(
-				'name'      => $integration->name,
-				'connected' => $all_connected,
+				'name'         => $integration->name,
+				'connected'    => $all_connected,
+				'has_accounts' => $has_accounts,
+				'has_settings' => $set_global_settings,
 			);
 		}
 

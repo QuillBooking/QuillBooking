@@ -1,4 +1,5 @@
 <?php
+
 /**
  * App class.
  *
@@ -17,6 +18,7 @@ use QuillBooking\Models\Calendar_Model;
  * @since 1.0.0
  */
 class App {
+
 
 	/**
 	 * Provider
@@ -157,7 +159,7 @@ class App {
 		echo esc_html__( 'Success, Account added!', 'quillbooking' );
 		wp_redirect(
 			admin_url(
-				"admin.php?page=quillbooking&path=calendars&id={$host_id}&tab=integrations&subtab={$this->integration->slug}"
+				"admin.php?page=quillbooking&path=calendars/{$host_id}&tab=integrations&subtab={$this->integration->slug}"
 			)
 		);
 		exit;
@@ -285,7 +287,6 @@ class App {
 	 * @return string
 	 */
 	public function get_redirect_uri() {
-		return admin_url( 'admin.php' ); // TODO: use https schema?
+		return 'https://app.quillbooking.com/Callback.php';
 	}
-
 }

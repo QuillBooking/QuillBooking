@@ -2,12 +2,11 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useState } from '@wordpress/element';
 
 /**
  * External dependencies
  */
-import { Card, Checkbox, Flex, Select } from 'antd';
+import { Card, Flex, Select } from 'antd';
 
 /**
  * Internal dependencies
@@ -18,7 +17,6 @@ import {
 } from '@quillbooking/components';
 
 const PaymentSettings = ({ settings, updateSettings }) => {
-	const [enablePaymentModule, setEnablePaymentModule] = useState(false);
 	// Currency options
 	const currencyOptions = [
 		{ value: 'USD', label: 'USD - US Dollar' },
@@ -49,32 +47,20 @@ const PaymentSettings = ({ settings, updateSettings }) => {
 					<div className="font-semibold text-[16px]">
 						{__('Payment Module', 'quillbooking')}
 					</div>
-					<Checkbox
-						className="custom-check text-[#3F4254] font-semibold"
-						checked={enablePaymentModule}
-						onChange={(e) =>
-							setEnablePaymentModule(e.target.checked)
-						}
-					>
-						{__('Enable Payment Module', 'quillbooking')}
-					</Checkbox>
 				</Flex>
-				{enablePaymentModule && (
-					<Flex vertical gap={4}>
-						<div className="text-[#3F4254] font-semibold text-[16px]">
-							{__('Currency', 'quillbooking')}
-						</div>
-						<Select
-							id="currency"
-							className="w-full rounded-lg h-[48px]"
-							value={settings.currency}
-							onChange={(value) =>
-								updateSettings('currency', value)
-							}
-							options={currencyOptions}
-						/>
-					</Flex>
-				)}
+
+				<Flex vertical gap={4}>
+					<div className="text-[#3F4254] font-semibold text-[16px]">
+						{__('Currency', 'quillbooking')}
+					</div>
+					<Select
+						id="currency"
+						className="w-full rounded-lg h-[48px]"
+						value={settings.currency}
+						onChange={(value) => updateSettings('currency', value)}
+						options={currencyOptions}
+					/>
+				</Flex>
 			</Flex>
 		</Card>
 	);

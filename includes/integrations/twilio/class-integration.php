@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Twilio Calendar / Meet Integration
  *
@@ -19,6 +20,10 @@ use QuillBooking\Integrations\Twilio\REST_API\REST_API;
  * Twilio Integration class
  */
 class Integration extends Abstract_Integration {
+
+
+
+
 
 	/**
 	 * Integration Name
@@ -75,8 +80,37 @@ class Integration extends Abstract_Integration {
 	 * Constructor
 	 */
 	public function __construct() {
-		parent::__construct();
-		// new Notifications( $this );
+		 parent::__construct();
+
+		// Set the host BEFORE logging or using it
+		try {
+			// Try different methods to set a default host
+			if ( class_exists( '\QuillBooking\Models\Calendar_Model' ) ) {
+				// Try to get the first available calendar
+				$calendar = \QuillBooking\Models\Calendar_Model::first();
+				if ( $calendar ) {
+					$this->set_host( $calendar );
+					\error_log( 'Twilio integration: Setting default host to first calendar: ' . $calendar->id );
+				} else {
+					\error_log( 'Twilio integration: No calendars found in the database' );
+				}
+			} elseif ( function_exists( '\get_current_blog_id' ) ) {
+				$this->set_host( \get_current_blog_id() );
+				\error_log( 'Twilio integration: Setting default host to blog ID' );
+			}
+		} catch ( \Exception $e ) {
+			\error_log( 'Twilio integration: Error setting default host: ' . $e->getMessage() );
+		}
+
+		// Only initialize notifications if host is properly set
+		if ( isset( $this->host ) && is_object( $this->host ) && isset( $this->host->id ) ) {
+			new Notifications( $this );
+			\error_log(
+				'Twilio integration: Notifications initialized with host ID: ' . $this->host->id
+			);
+		} else {
+			\error_log( 'Twilio integration: Host not properly set, notifications not initialized' );
+		}
 	}
 
 	/**
@@ -90,15 +124,41 @@ class Integration extends Abstract_Integration {
 	 * @return bool|API
 	 */
 	public function connect( $host_id, $account_id ) {
-		parent::connect( $host_id, $account_id );
-		$account         = $this->accounts->get_account( $account_id );
+		// If host_id is null, try to use the current host
+		if ( ! $host_id && isset( $this->host ) && isset( $this->host->id ) ) {
+			$host_id = $this->host->id;
+			\error_log( 'Twilio: Using existing host: ' . $host_id );
+		}
+
+		// Try to connect via parent method
+		$result = parent::connect( $host_id, $account_id );
+
+		// If parent returned an error, return it
+		if ( is_wp_error( $result ) ) {
+			\error_log( 'Twilio: Parent connect failed: ' . $result->get_error_message() );
+			return $result;
+		}
+
+		// Check if host was successfully set
+		if ( ! isset( $this->host ) || ! $this->host ) {
+			\error_log( 'Twilio: Host not found for ID: ' . $host_id );
+			return new \WP_Error( 'no_host', \__( 'Host not found or not set!', 'quillbooking' ) );
+		}
+
+		// Get account credentials
+		$account = $this->accounts->get_account( $account_id );
+		if ( empty( $account ) ) {
+			\error_log( 'Twilio: Account not found for ID: ' . $account_id );
+			return new \WP_Error( 'no_account', \__( 'Account not found!', 'quillbooking' ) );
+		}
+
 		$sms_number      = Arr::get( $account, 'credentials.sms_number' );
 		$whatsapp_number = Arr::get( $account, 'credentials.whatsapp_number' );
 		$account_sid     = Arr::get( $account, 'credentials.account_sid' );
 		$auth_token      = Arr::get( $account, 'credentials.auth_token' );
 
 		if ( empty( $sms_number ) || empty( $account_sid ) || empty( $auth_token ) ) {
-			return new \WP_Error( 'no_credentials', esc_html__( 'No credentials found!', 'quillbooking' ) );
+			return new \WP_Error( 'no_credentials', \__( 'No credentials found!', 'quillbooking' ) );
 		}
 
 		$this->api = new API( $sms_number, $whatsapp_number, $account_sid, $auth_token );

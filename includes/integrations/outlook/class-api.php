@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Outlook Calendar / Meet Integration API
  *
@@ -17,6 +18,7 @@ use QuillBooking\Integration\API as Abstract_API;
  * Outlook Integration API class
  */
 class API extends Abstract_API {
+
 
 	/**
 	 * App
@@ -124,7 +126,6 @@ class API extends Abstract_API {
 	 * @return array
 	 */
 	public function delete_event( $event_id ) {
-		error_log( "me/events/$event_id" );
 		return $this->delete( "me/events/$event_id" );
 	}
 
@@ -216,7 +217,7 @@ class API extends Abstract_API {
 	 * @return boolean
 	 */
 	private function refresh_tokens() {
-		$tokens = $this->app->refresh_tokens( $this->refresh_token, $this->account_id );
+		 $tokens = $this->app->refresh_tokens( $this->refresh_token, $this->account_id );
 		if ( ! is_array( $tokens ) ) {
 			return false;
 		}

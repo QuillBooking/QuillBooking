@@ -55,10 +55,11 @@ const AvailabilityDetails: React.FC = () => {
 		title: __('Success', 'quillbooking'),
 		message: __('Availability updated successfully', 'quillbooking'),
 	});
+	const [startDay, setStartDay] = useState<string>('monday');
+	const [timeFormat, setTimeFormat] = useState<string>('12');
 
 	const { callApi } = useApi();
 	const navigate = useNavigate();
-	const { state } = useNavigate();
 
 	const fetchAvailabilityDetails = () => {
 		setInitialLoading(true);
@@ -88,15 +89,38 @@ const AvailabilityDetails: React.FC = () => {
 		});
 	};
 
-	useEffect(fetchAvailabilityDetails, []);
+	// const { callApi } = useApi();
+	const fetchGlobalSettings = () => {
+		callApi({
+			path: 'settings',
+			method: 'GET',
+			onSuccess: (data) => {
+				setStartDay(data.general?.start_from || 'monday');
+				setTimeFormat(data.general?.time_format || '12');
+			},
+			onError: (error) => {
+				console.error('Error fetching start day:', error);
+			},
+		});
+	};
+	useEffect(() => {
+		fetchGlobalSettings();
+		fetchAvailabilityDetails();
+	}, []);
+
 	useEffect(() => {
 		// Show success notice if redirected from creation
-		const showSuccessNotice = sessionStorage.getItem('showNewScheduleNotice');
+		const showSuccessNotice = sessionStorage.getItem(
+			'showNewScheduleNotice'
+		);
 		if (showSuccessNotice) {
 			setNoticeMessage({
 				type: 'success',
 				title: __('Success', 'quillbooking'),
-				message: __('New availability schedule created successfully', 'quillbooking'),
+				message: __(
+					'New availability schedule created successfully',
+					'quillbooking'
+				),
 			});
 			setShowNotice(true);
 			sessionStorage.removeItem('showNewScheduleNotice');
@@ -265,7 +289,7 @@ const AvailabilityDetails: React.FC = () => {
 					/>
 				</div>
 			)}
-			<Flex gap={20} className='px-9 mb-4'>
+			<Flex gap={20} className="px-9 mb-4">
 				{initialLoading ? (
 					<>
 						<Card className="w-2/3">
@@ -289,24 +313,33 @@ const AvailabilityDetails: React.FC = () => {
 					<>
 						<Card className="w-2/3">
 							<Flex gap={20} vertical>
-								{(availabilityDetails.events_count ?? 0) > 0 && (
+								{(availabilityDetails.events_count ?? 0) >
+									0 && (
 									<InfoComponent
 										eventsNumber={
-											availabilityDetails.events_count ?? 0
+											availabilityDetails.events_count ??
+											0
 										}
 									/>
 								)}
 								<Card>
 									<label className="font-normal text-sm">
 										<div className="pb-1">
-											{__('Availability Name', 'quillbooking')}
-											<span className="text-[#EF4444]">*</span>
+											{__(
+												'Availability Name',
+												'quillbooking'
+											)}
+											<span className="text-[#EF4444]">
+												*
+											</span>
 										</div>
 										<Input
 											size="large"
 											value={availabilityName}
 											onChange={(e) => {
-												setAvailabilityName(e.target.value);
+												setAvailabilityName(
+													e.target.value
+												);
 												setIsSaveBtnDisabled(false);
 											}}
 											placeholder={__(
@@ -331,7 +364,10 @@ const AvailabilityDetails: React.FC = () => {
 												}
 											/>
 											<p className="text-color-primary-text font-bold">
-												{__('Set as Default', 'quillbooking')}
+												{__(
+													'Set as Default',
+													'quillbooking'
+												)}
 											</p>
 										</div>
 									</div>
@@ -345,6 +381,8 @@ const AvailabilityDetails: React.FC = () => {
 										onCustomAvailabilityChange={
 											onCustomAvailabilityChange
 										}
+										startDay={startDay}
+										timeFormat={timeFormat}
 									/>
 								</Card>
 

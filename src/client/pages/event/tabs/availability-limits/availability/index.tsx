@@ -76,7 +76,22 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 	const { callApi, loading } = useApi();
 	const { errorNotice } = useNotice();
 	const [selectedCard, setSelectedCard] = useState<number | null>(null);
+	const [startDay, setStartDay] = useState<string>('monday');
+	const [timeFormat, setTimeFormat] = useState<string>('12');
 	// const [isCustomAvailability, setIsCustomAvailability] = useState(false);
+	const fetchGlobalSettings = () => {
+		callApi({
+			path: 'settings',
+			method: 'GET',
+			onSuccess: (data) => {
+				setStartDay(data.general?.start_from || 'monday');
+				setTimeFormat(data.general?.time_format || '12');
+			},
+			onError: (error) => {
+				console.error('Error fetching start day:', error);
+			},
+		});
+	};
 
 	const fetchAvailability = () => {
 		if (!event) return;
@@ -222,7 +237,10 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 			setLastAvailability(selected);
 		}
 	};
-	useEffect(fetchAvailability, [event]);
+	useEffect(() => {
+		fetchAvailability();
+		fetchGlobalSettings();
+	}, [event]);
 
 	const onAvailabilityTypeChange = (value) => {
 		setAvailabilityType(value);
@@ -436,6 +454,8 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 					<Schedule
 						availability={availability}
 						onCustomAvailabilityChange={onTeamAvailabilityChange}
+						timeFormat={timeFormat}
+						startDay={startDay}
 					/>
 				</Card>
 			) : (
@@ -443,6 +463,8 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 					<Schedule
 						availability={availability}
 						onCustomAvailabilityChange={onCustomAvailabilityChange}
+						timeFormat={timeFormat}
+						startDay={startDay}
 					/>
 				</Card>
 			)}

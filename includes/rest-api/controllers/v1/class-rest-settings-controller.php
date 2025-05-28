@@ -1,4 +1,5 @@
 <?php
+
 /**
  * REST_Settings_Controller class.
  *
@@ -23,6 +24,8 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  * @since 1.0.0
  */
 class REST_Settings_Controller extends REST_Controller {
+
+
 
 
 	/**
@@ -107,7 +110,7 @@ class REST_Settings_Controller extends REST_Controller {
 						'default_country_code'    => array(
 							'type'        => 'string',
 							'description' => __( 'Default country Code', 'quillbooking' ),
-							'default'     => '+1',
+							'default'     => 'us',
 						),
 						'enable_summary_email'    => array(
 							'type'        => 'boolean',
@@ -254,5 +257,4 @@ class REST_Settings_Controller extends REST_Controller {
 	public function update_permissions_check( $request ) {
 		return current_user_can( 'manage_options' );
 	}
-
 }

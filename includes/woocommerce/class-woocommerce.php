@@ -21,6 +21,11 @@ class WooCommerce {
 
 
 
+
+
+
+
+
 	use Singleton;
 
 	/**
@@ -59,7 +64,31 @@ class WooCommerce {
 
 		$this->ajax_ensure_availability( $booking );
 		$this->booking = $booking;
-		$product       = wc_get_product( $booking->event->payments_settings['woo_product'] );
+
+		// Check if this is a multi-duration event with different products
+		$product_id     = null;
+		$event_settings = $booking->event->payments_settings;
+
+		if ( isset( $event_settings['enable_items_based_on_duration'] ) && $event_settings['enable_items_based_on_duration'] ) {
+			// Get the duration from the booking
+			$duration     = $booking->slot_time;
+			$duration_str = (string) $duration;
+
+			// Get the product ID for this duration
+			if ( isset( $event_settings['multi_duration_items'][ $duration_str ]['woo_product'] ) ) {
+				$product_id = $event_settings['multi_duration_items'][ $duration_str ]['woo_product'];
+			}
+		} else {
+			// Use the default product
+			$product_id = $booking->event->payments_settings['woo_product'];
+		}
+
+		if ( ! $product_id ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Product not found for this duration.', 'quillbooking' ) ), 400 );
+			exit;
+		}
+
+		$product = wc_get_product( $product_id );
 		if ( ! $product || ! $product->get_id() ) {
 			wp_send_json_error( array( 'message' => esc_html__( 'Product not found.', 'quillbooking' ) ), 400 );
 			exit;
@@ -299,30 +328,56 @@ class WooCommerce {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $event_payments_settings Event payment settings.
+	 * @param array       $event_payments_settings Event payment settings.
+	 * @param string|null $duration Optional duration for multi-duration events.
 	 *
 	 * @return array|false Price data or false if not available.
 	 */
-	public static function get_product_price( $event_payments_settings ) {
+	public static function get_product_price( $event_payments_settings, $duration = null ) {
+		error_log( 'QuillBooking WooCommerce: get_product_price called with duration: ' . $duration );
+		error_log( 'QuillBooking WooCommerce: Payment settings: ' . wp_json_encode( $event_payments_settings ) );
+
 		if ( ! Arr::get( $event_payments_settings, 'enable_payment' ) || 'woocommerce' !== Arr::get( $event_payments_settings, 'type' ) ) {
+			error_log( 'QuillBooking WooCommerce: Payment not enabled or not WooCommerce type' );
 			return false;
 		}
 
-		$product_id = Arr::get( $event_payments_settings, 'woo_product', false );
-		if ( ! $product_id ) {
-			return false;
+		// Check if this is a multi-duration request
+		if ( $duration && Arr::get( $event_payments_settings, 'enable_items_based_on_duration' ) ) {
+			error_log( 'QuillBooking WooCommerce: Processing multi-duration request for duration: ' . $duration );
+
+			// Get the product ID for this specific duration
+			$product_id = Arr::get( $event_payments_settings, "multi_duration_items.{$duration}.woo_product", false );
+			error_log( 'QuillBooking WooCommerce: Product ID for duration ' . $duration . ': ' . $product_id );
+
+			if ( ! $product_id ) {
+				error_log( 'QuillBooking WooCommerce: No product ID found for duration ' . $duration );
+				return false;
+			}
+		} else {
+			$product_id = Arr::get( $event_payments_settings, 'woo_product', false );
+			error_log( 'QuillBooking WooCommerce: Using default product ID: ' . $product_id );
+
+			if ( ! $product_id ) {
+				error_log( 'QuillBooking WooCommerce: No default product ID found' );
+				return false;
+			}
 		}
 
 		$product = wc_get_product( $product_id );
 		if ( ! $product || ! $product->get_id() ) {
+			error_log( 'QuillBooking WooCommerce: Product not found for ID: ' . $product_id );
 			return false;
 		}
 
-		return array(
+		$price_data = array(
 			'price'        => $product->get_price(),
 			'currency'     => get_woocommerce_currency(),
 			'product_id'   => $product->get_id(),
 			'product_name' => $product->get_name(),
 		);
+
+		error_log( 'QuillBooking WooCommerce: Returning price data: ' . wp_json_encode( $price_data ) );
+		return $price_data;
 	}
 }

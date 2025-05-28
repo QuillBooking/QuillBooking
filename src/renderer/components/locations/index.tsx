@@ -24,9 +24,10 @@ interface LocationsProps {
 		label: string;
 		options: Option[];
 	};
+	countryCode: string;
 }
 
-const Locations = ({ locationFields }: LocationsProps) => {
+const Locations = ({ locationFields, countryCode }: LocationsProps) => {
 	console.log('Locations', locationFields);
 	return (
 		<>
@@ -52,7 +53,10 @@ const Locations = ({ locationFields }: LocationsProps) => {
 							))}
 						</Radio.Group>
 					</Form.Item>
-					<DynamicLocationFields locations={locationFields.options} />
+					<DynamicLocationFields
+						locations={locationFields.options}
+						countryCode={countryCode}
+					/>
 				</>
 			) : (
 				<>
@@ -87,7 +91,9 @@ const Locations = ({ locationFields }: LocationsProps) => {
 											}
 										>
 											{typedField.type == 'phone' ? (
-												<PhoneInput country={'ca'} />
+												<PhoneInput
+													country={countryCode}
+												/>
 											) : (
 												<Input
 													placeholder={

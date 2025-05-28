@@ -20,9 +20,13 @@ interface Option {
 
 interface DynamicLocationFieldsProps {
 	locations: Option[];
+	countryCode: string;
 }
 
-const DynamicLocationFields = ({ locations }: DynamicLocationFieldsProps) => {
+const DynamicLocationFields = ({
+	locations,
+	countryCode,
+}: DynamicLocationFieldsProps) => {
 	console.log(locations);
 	return (
 		<Form.Item noStyle shouldUpdate>
@@ -70,7 +74,9 @@ const DynamicLocationFields = ({ locations }: DynamicLocationFieldsProps) => {
 											}
 										>
 											{field.type === 'phone' ? (
-												<PhoneInput country={'ca'} />
+												<PhoneInput
+													country={countryCode}
+												/>
 											) : (
 												<Input
 													placeholder={

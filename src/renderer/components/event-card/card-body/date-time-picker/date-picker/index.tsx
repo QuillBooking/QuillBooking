@@ -9,6 +9,7 @@ import { Event } from '../../../../../types';
 import { Dayjs } from 'dayjs';
 import PreviousIcon from '../../../../../icons/previous-icon';
 import NextIcon from '../../../../../icons/next-icon';
+import { css } from '@emotion/css';
 
 dayjs.extend(isBetween);
 dayjs.extend(isToday);
@@ -23,6 +24,8 @@ interface DatePickerProps {
 	ajax_url: string;
 	selectedDuration: number;
 	setSelectedTime: (time: string | null) => void;
+	baseColor: string;
+	lightColor: string;
 }
 
 const DatePicker: React.FC<DatePickerProps> = ({
@@ -35,8 +38,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
 	ajax_url,
 	selectedDuration,
 	setSelectedTime,
+	baseColor,
+	lightColor,
 }) => {
 	const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
+
 	useEffect(() => {
 		if (selectedDate) {
 			setCurrentMonth(selectedDate);
@@ -99,15 +105,26 @@ const DatePicker: React.FC<DatePickerProps> = ({
 		const isCurrentDay = value.isSame(dayjs(), 'day');
 
 		const className = isSameDay
-			? 'calendar-date selected-date'
+			? `calendar-date selected-date ${css`
+					background-color: ${baseColor};
+				`}`
 			: isAvailable
-				? 'calendar-date highlight-date'
+				? `calendar-date highlight-date ${css`
+						background-color: ${lightColor};
+						color: ${baseColor};
+					`}`
 				: 'calendar-date';
 
 		return (
 			<div className={className}>
 				<div className="date-number">{value.date()}</div>
-				{isCurrentDay && <div className="dot" />}
+				{isCurrentDay && (
+					<div
+						className={`dot ${css`
+							background-color: ${baseColor};
+						`}`}
+					/>
+				)}
 			</div>
 		);
 	};
@@ -125,11 +142,23 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
 		return (
 			<div className="calendar-header">
-				<button onClick={handlePrevMonth} className="nav-arrow">
+				<button
+					onClick={handlePrevMonth}
+					className={`nav-arrow ${css`
+						background-color: ${lightColor};
+						color: ${baseColor};
+					`}`}
+				>
 					<PreviousIcon />
 				</button>
 				<div className="month-label">{value.format('MMMM YYYY')}</div>
-				<button onClick={handleNextMonth} className="nav-arrow">
+				<button
+					onClick={handleNextMonth}
+					className={`nav-arrow ${css`
+						background-color: ${lightColor};
+						color: ${baseColor};
+					`}`}
+				>
 					<NextIcon />
 				</button>
 			</div>

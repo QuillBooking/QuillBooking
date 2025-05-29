@@ -11,6 +11,7 @@ import Payment from './payment';
 import { Col, Row, Skeleton, Space } from 'antd';
 import { get } from 'lodash';
 import { get_location } from '@quillbooking/utils';
+import tinycolor from 'tinycolor2';
 
 interface CardBodyProps {
 	event: Event;
@@ -68,6 +69,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 	booking,
 	url,
 }) => {
+	const baseColor = tinycolor(event.color);
+	const lightColor = baseColor.lighten(40).toString();
 	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 	const [selectedTime, setSelectedTime] = useState<string | null>(null);
 	const [timeZone, setTimeZone] = useState<string>(
@@ -326,12 +329,16 @@ const CardBody: React.FC<CardBodyProps> = ({
 						selectedTime={selectedTime}
 						timezone={timeZone}
 						url={url}
+						baseColor={event.color}
+						darkColor={tinycolor(event.color).darken(20).toString()}
 					/>
 				) : (
 					<QuestionsComponents
 						fields={event.fields}
 						setStep={setStep}
 						onSubmit={handleSave}
+						baseColor={event.color}
+						darkColor={tinycolor(event.color).darken(20).toString()}
 					/>
 				)
 			) : step === 3 &&
@@ -344,6 +351,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 					bookingData={bookingData}
 					event={event}
 					totalPrice={totalPrice}
+					baseColor={event.color}
+					darkColor={tinycolor(event.color).darken(20).toString()}
 				/>
 			) : (
 				<DateTimePicker
@@ -356,6 +365,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 					setSelectedTime={handleSelectedTime}
 					ajax_url={ajax_url}
 					selectedDuration={selectedDuration}
+					baseColor={event.color}
+					lightColor={lightColor}
 				/>
 			)}
 		</div>

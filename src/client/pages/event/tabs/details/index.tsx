@@ -352,6 +352,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 							hosts={event.hosts || []}
 							duration={event.duration}
 							locations={event.location}
+							color={event.color}
 						/>
 						<Card>
 							<Flex vertical gap={20}>

@@ -19,6 +19,8 @@ interface DateTimePickerProps {
 	setSelectedTime: (time: string | null) => void;
 	ajax_url: string;
 	selectedDuration: number;
+	baseColor: string;
+	lightColor: string;
 }
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
@@ -31,6 +33,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 	setSelectedTime,
 	ajax_url,
 	selectedDuration,
+	baseColor,
+	lightColor,
 }) => {
 	const [selectedAvailability, setSelectedAvailability] = useState<
 		string | null
@@ -60,6 +64,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 					selectedAvailability={selectedAvailability}
 					setSelectedAvailability={setSelectedAvailability}
 					ajax_url={ajax_url}
+					baseColor={baseColor}
+					lightColor={lightColor}
 				/>
 				{selectedDate && (
 					<TimePicker
@@ -69,6 +75,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 						setSelectedTime={setSelectedTime}
 						eventType={event.type}
 						showRemaining={showRemaining}
+						baseColor={baseColor}
+						lightColor={lightColor}
 					/>
 				)}
 			</div>

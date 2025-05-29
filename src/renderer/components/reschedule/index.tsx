@@ -4,6 +4,7 @@ import { Booking, Fields } from '../../types';
 import { Form, Input } from 'antd';
 import { Dayjs } from 'dayjs';
 import { useState } from '@wordpress/element';
+import { css } from '@emotion/css';
 
 interface RescheduleProps {
 	setStep: (step: number) => void;
@@ -14,6 +15,8 @@ interface RescheduleProps {
 	selectedTime: string | null;
 	timezone: string;
 	url: string;
+	baseColor: string;
+	darkColor: string;
 }
 
 const { TextArea } = Input;
@@ -27,6 +30,8 @@ const Reschedule: React.FC<RescheduleProps> = ({
 	selectedTime,
 	timezone: timeZone,
 	url,
+	baseColor,
+	darkColor,
 }) => {
 	const [form] = Form.useForm();
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,7 +60,7 @@ const Reschedule: React.FC<RescheduleProps> = ({
 
 		// Add reason for rescheduling from form values
 		if (values.reasonForReschedule) {
-		  formData.append('reschedule_reason', values.reasonForReschedule);
+			formData.append('reschedule_reason', values.reasonForReschedule);
 		}
 
 		try {
@@ -148,8 +153,19 @@ const Reschedule: React.FC<RescheduleProps> = ({
 						)}
 
 					<Form.Item className="schedule-btn-container">
-						<button className="schedule-btn" type="submit" disabled={isSubmitting}>
-							{isSubmitting ? __('Rescheduling...', 'quillbooking') : __('Reschedule Event', 'quillbooking')}
+						<button
+							className={`schedule-btn ${css`
+								background-color: ${baseColor};
+								&:hover {
+									background-color: ${darkColor};
+								}
+							`}`}
+							type="submit"
+							disabled={isSubmitting}
+						>
+							{isSubmitting
+								? __('Rescheduling...', 'quillbooking')
+								: __('Reschedule Event', 'quillbooking')}
 						</button>
 					</Form.Item>
 				</Form>

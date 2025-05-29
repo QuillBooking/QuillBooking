@@ -23,6 +23,7 @@ interface LivePreviewProps {
 	hosts: { id: number | string; name: string }[];
 	duration: number;
 	locations: Location[];
+	color: string;
 }
 
 const LivePreview: React.FC<LivePreviewProps> = ({
@@ -30,11 +31,15 @@ const LivePreview: React.FC<LivePreviewProps> = ({
 	hosts,
 	duration,
 	locations,
+	color,
 }) => {
 	return (
 		<Card className="rounded-lg shadow-none border-[#e5e7eb] border-[0.1px]">
 			<CardContent className="p-0">
-				<Flex className="justify-between items-center bg-color-primary px-[30px] py-5">
+				<Flex
+					className="justify-between items-center px-[30px] py-5"
+					style={{ backgroundColor: color }}
+				>
 					<div className="text-white text-[24px] font-[700]">
 						{__('Event Live Preview', 'quillbooking')}
 					</div>
@@ -63,13 +68,13 @@ const LivePreview: React.FC<LivePreviewProps> = ({
 								{name}
 							</div>
 						</Flex>
-						<Flex
+						{/* <Flex
 							gap={4}
 							className="text-color-primary text-[16px] font-semibold items-center"
 						>
 							<CiShare1 className="text-[20px]" />
 							<span>{__('Event Link', 'quillbooking')}</span>
-						</Flex>
+						</Flex> */}
 					</Flex>
 					<Flex
 						gap={4}

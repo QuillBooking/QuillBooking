@@ -2,6 +2,7 @@ import { Dayjs } from 'dayjs';
 import { __ } from '@wordpress/i18n';
 import { EventTypes } from '../../../../../types';
 import './style.scss';
+import { css } from '@emotion/css';
 
 interface TimeSlot {
 	time: string;
@@ -20,6 +21,8 @@ interface TimePickerProps {
 	setSelectedTime: (time: string) => void;
 	eventType?: EventTypes;
 	showRemaining?: boolean;
+	baseColor: string;
+	lightColor: string;
 }
 
 const TimePicker: React.FC<TimePickerProps> = ({
@@ -29,6 +32,8 @@ const TimePicker: React.FC<TimePickerProps> = ({
 	setSelectedTime,
 	eventType = 'one-to-one',
 	showRemaining,
+	baseColor,
+	lightColor,
 }) => {
 	const getTimeSlots = (): TimeSlot[] => {
 		if (!selectedAvailability) {
@@ -88,7 +93,15 @@ const TimePicker: React.FC<TimePickerProps> = ({
 	};
 
 	return (
-		<div className="time-picker-container">
+		<div
+			className={`time-picker-container ${css`
+				scrollbar-color: ${baseColor} #f5f5f5;
+				&::-webkit-scrollbar-thumb {
+					background: ${baseColor};
+					border-radius: 8px;
+				}
+			`}`}
+		>
 			<p className="time-picker-title">
 				{selectedDate.format('dddd, MMMM D')}
 			</p>
@@ -97,7 +110,13 @@ const TimePicker: React.FC<TimePickerProps> = ({
 					timeSlots.map((slot: TimeSlot, index: number) => (
 						<div
 							key={index}
-							className={`time-slot ${!isGroupEvent ? 'time-slot-centered' : ''} ${selectedTime === slot.time ? 'active' : ''}`}
+							className={`time-slot ${!isGroupEvent ? 'time-slot-centered' : ''} ${selectedTime === slot.time ? 'active' : ''} ${css`
+								&:hover {
+									background-color: ${lightColor};
+									color: ${baseColor};
+									border-color: ${baseColor};
+								}
+							`}`}
 							onClick={() => setSelectedTime(slot.time)}
 						>
 							<span className="time-slot-time">{slot.time}</span>

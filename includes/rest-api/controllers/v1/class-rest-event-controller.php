@@ -33,11 +33,6 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  */
 class REST_Event_Controller extends REST_Controller {
 
-
-
-
-
-
 	/**
 	 * REST Base
 	 *
@@ -492,6 +487,7 @@ class REST_Event_Controller extends REST_Controller {
 			$hosts             = $request->get_param( 'hosts' );
 			$payments_settings = $request->get_param( 'payments_settings' );
 			$group_settings    = $request->get_param( 'group_settings' );
+			$color             = $request->get_param( 'color' ) ?: '#953AE4'; // Default color if not provided
 
 			if ( empty( $location ) ) {
 				return new WP_Error( 'rest_event_error', __( 'Event location is required.', 'quillbooking' ), array( 'status' => 400 ) );
@@ -533,6 +529,7 @@ class REST_Event_Controller extends REST_Controller {
 				'color'       => $color,
 				'visibility'  => $visibility,
 				'is_disabled' => false,
+				'color'       => $color,
 			);
 
 			$event_data = array_filter( $event_data );

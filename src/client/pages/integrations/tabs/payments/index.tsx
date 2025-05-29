@@ -14,6 +14,7 @@ import { useApi } from '@quillbooking/hooks';
 import { NoticeBanner } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/client';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const PaymentsTab: React.FC = () => {
 	const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -71,8 +72,10 @@ const PaymentsTab: React.FC = () => {
 
 	const handleTabChange = useCallback(
 		(newTab: string) => {
+			// Don't set loading state immediately to prevent abrupt UI changes
+			// Instead, we'll handle loading states with animations
 			setActiveTab(newTab);
-			fetchGatewaySettings(newTab, true);
+			fetchGatewaySettings(newTab);
 		},
 		[fetchGatewaySettings]
 	);
@@ -165,17 +168,31 @@ const PaymentsTab: React.FC = () => {
 				setActiveTab={handleTabChange}
 				isLoading={isLoading}
 			/>
-			{activeTab && activeGateway && (
-				<PaymentGatewayCard
-					slug={activeTab}
-					gateway={activeGateway}
-					updateGatewayProperty={(property, value) =>
-						updateGatewayProperty(activeTab, property, value)
-					}
-					updateGatewaySettings={updateGatewaySettings}
-					isLoading={isLoading}
-				/>
-			)}
+			<AnimatePresence mode="wait">
+				{activeTab && activeGateway && (
+					<motion.div
+						key={activeTab}
+						initial={{ opacity: 0, x: 20 }}
+						animate={{ opacity: 1, x: 0 }}
+						exit={{ opacity: 0, x: -20 }}
+						transition={{ duration: 0.3 }}
+					>
+						<PaymentGatewayCard
+							slug={activeTab}
+							gateway={activeGateway}
+							updateGatewayProperty={(property, value) =>
+								updateGatewayProperty(
+									activeTab,
+									property,
+									value
+								)
+							}
+							updateGatewaySettings={updateGatewaySettings}
+							isLoading={isLoading}
+						/>
+					</motion.div>
+				)}
+			</AnimatePresence>
 		</div>
 	);
 };

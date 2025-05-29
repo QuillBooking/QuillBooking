@@ -30,14 +30,9 @@ import stripe from '../../../../../../../assets/icons/stripe/stripe.png';
 import type { PaymentGateway } from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 
-// Extend the PaymentGateway type for our component needs
-interface ExtendedPaymentGateway extends PaymentGateway {
-	enabled?: boolean;
-}
-
 export interface PaymentGatewayCardProps {
 	slug: string | null;
-	gateway: ExtendedPaymentGateway;
+	gateway: PaymentGateway;
 	updateGatewayProperty: (property: string, value: any) => void;
 	updateGatewaySettings: (gatewayId: string, settings: any) => void;
 	isLoading?: boolean;

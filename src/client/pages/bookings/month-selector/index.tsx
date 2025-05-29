@@ -47,7 +47,9 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 					<LeftOutlined />
 				</button>
 
-				<div className="font-semibold text-xl text-[#09090B]">{year}</div>
+				<div className="font-semibold text-xl text-[#09090B]">
+					{year}
+				</div>
 
 				<button
 					onClick={handleNextYear}
@@ -61,7 +63,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 
 			{/* Months row */}
 			<div className="border-t pt-4">
-				<div className="flex overflow-x-auto gap-2 justify-center">
+				<div className="flex gap-2 justify-center flex-wrap">
 					{MONTHS.map((month, index) => {
 						const monthNumber = index + 1;
 						const isActive = monthNumber === selectedMonth;
@@ -87,4 +89,3 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 };
 
 export default MonthSelector;
-

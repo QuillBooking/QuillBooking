@@ -107,21 +107,6 @@ const PaymentsTab: React.FC = () => {
 				path: `payment-gateways/${gatewayId}/enabled`,
 				method: 'POST',
 				data: { enabled: value },
-				onSuccess(response) {
-					setNotice({
-						type: 'success',
-						title: __('Success', 'quillbooking'),
-						message: value
-							? __(
-									'Payment gateway enabled successfully',
-									'quillbooking'
-								)
-							: __(
-									'Payment gateway disabled successfully',
-									'quillbooking'
-								),
-					});
-				},
 				onError(error) {
 					setNotice({
 						type: 'error',

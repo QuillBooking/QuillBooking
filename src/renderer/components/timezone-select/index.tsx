@@ -38,6 +38,11 @@ const TimezoneSelect: React.FC<TimezoneSelectProps> = ({
 			onChange={(newVal) => onChange(newVal)}
 			options={options}
 			{...rest}
+			getPopupContainer={(trigger) =>
+				trigger.parentElement || document.body
+			}
+			popupMatchSelectWidth={false}
+			dropdownStyle={{ minWidth: '100%', width: 'auto' }}
 		/>
 	);
 };

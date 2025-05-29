@@ -15,17 +15,17 @@ import {
 	Modal,
 	Form,
 	Popconfirm,
-	Checkbox,
 	Avatar,
 	Empty,
 	Col,
 	Row,
+	Radio,
 } from 'antd';
 
 /**
  * Internal dependencies
  */
-import { useApi } from '@quillbooking/hooks';
+import { useApi, useNotice } from '@quillbooking/hooks';
 import {
 	AddIcon,
 	CardHeader,
@@ -47,6 +47,7 @@ type TeamMember = {
 	capabilities: Record<string, boolean>;
 	is_admin: boolean;
 	is_host: boolean;
+	role: 'admin' | 'member';
 };
 
 type CapabilityGroup = {
@@ -114,6 +115,7 @@ const TeamTab: React.FC = () => {
 		title: string;
 	} | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const { errorNotice } = useNotice();
 
 	useEffect(() => {
 		fetchTeamMembers();
@@ -142,20 +144,11 @@ const TeamTab: React.FC = () => {
 	};
 
 	const handleEditMember = (member: TeamMember) => {
+		console.log('Editing member:', member);
 		setCurrentMember(member);
 
-		const groupedCapabilities = Object.entries(capabilities).reduce(
-			(acc, [groupKey, group]) => {
-				acc[groupKey] = Object.keys(group.capabilities).filter(
-					(cap) => member.capabilities[cap]
-				);
-				return acc;
-			},
-			{} as Record<string, string[]>
-		);
-
 		form.setFieldsValue({
-			capabilities: groupedCapabilities,
+			role: member.role,
 		});
 		setIsModalVisible(true);
 	};
@@ -194,17 +187,14 @@ const TeamTab: React.FC = () => {
 		});
 	};
 
-	const handleEditSubmit = (values: {
-		capabilities: Record<string, string[]>;
-	}) => {
+	const handleEditSubmit = (values: { role: string }) => {
 		if (!currentMember) return;
-		const allCapabilities = Object.values(values.capabilities || {}).flat();
 
 		saveApi({
 			path: `team-members/${currentMember.ID}`,
 			method: 'PUT',
 			data: {
-				capabilities: allCapabilities,
+				role: values.role,
 			},
 			onSuccess() {
 				setNotice({
@@ -232,26 +222,12 @@ const TeamTab: React.FC = () => {
 
 	const handleAddMember = () => {
 		if (!selectedUser) {
-			setNotice({
-				type: 'error',
-				title: __('Error', 'quillbooking'),
-				message: __('Please select a user', 'quillbooking'),
-			});
+			errorNotice(__('Please select a user', 'quillbooking'));
 			return;
 		}
 
-		const groupedCapabilities = form.getFieldValue('capabilities') || {};
-		const allCapabilities = Object.values(groupedCapabilities).flat();
-
-		if (!allCapabilities.length) {
-			setNotice({
-				type: 'error',
-				title: __('Error', 'quillbooking'),
-				message: __(
-					'Please select at least one capability',
-					'quillbooking'
-				),
-			});
+		if (form.getFieldValue('role') === undefined) {
+			errorNotice(__('Please select a role', 'quillbooking'));
 			return;
 		}
 
@@ -260,7 +236,7 @@ const TeamTab: React.FC = () => {
 			method: 'POST',
 			data: {
 				user_id: selectedUser,
-				capabilities: allCapabilities,
+				role: form.getFieldValue('role'),
 			},
 			onSuccess() {
 				setNotice({
@@ -292,34 +268,27 @@ const TeamTab: React.FC = () => {
 		return (
 			<>
 				<div className="text-[#09090B] text-[16px] mb-2">
-					{__('Access Permissions for this user', 'quillbooking')}
+					{__('User Role', 'quillbooking')}
 					<span className="text-red-500">*</span>
 				</div>
-				{Object.entries(capabilities).map(([key, group]) => (
-					<div key={key} className="capability-group mb-4">
-						<div className="text-[#3F4254] font-medium mb-2 capitalize">
-							{group.label || key}
-						</div>
-						<Form.Item
-							name={['capabilities', key]}
-							valuePropName="value"
+				<Form.Item name="role" rules={[{ required: true }]}>
+					<Radio.Group>
+						<Radio
+							key="admin"
+							value="admin"
+							className="custom-check text-[#3F4254] font-semibold"
 						>
-							<Checkbox.Group className="flex flex-col gap-2">
-								{Object.entries(group.capabilities).map(
-									([capKey, capLabel]) => (
-										<Checkbox
-											key={capKey}
-											value={capKey}
-											className="custom-check text-[#3F4254] font-semibold"
-										>
-											{capLabel}
-										</Checkbox>
-									)
-								)}
-							</Checkbox.Group>
-						</Form.Item>
-					</div>
-				))}
+							{__('Administrator', 'quillbooking')}
+						</Radio>
+						<Radio
+							key="member"
+							value="member"
+							className="custom-check text-[#3F4254] font-semibold"
+						>
+							{__('Member', 'quillbooking')}
+						</Radio>
+					</Radio.Group>
+				</Form.Item>
 			</>
 		);
 	};

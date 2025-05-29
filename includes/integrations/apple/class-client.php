@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Client class.
  *
@@ -18,6 +19,7 @@ use Sabre\VObject\Reader;
  * @since 1.0.0
  */
 class Client {
+
 
 	/**
 	 * SabreDAV Client instance.
@@ -269,8 +271,7 @@ XML;
 				'body'    => $ical_data,
 			)
 		);
-		error_log( wp_json_encode( $response ) );
-		$code = wp_remote_retrieve_response_code( $response );
+		$code     = wp_remote_retrieve_response_code( $response );
 		if ( $code !== 201 ) {
 			return array(
 				'success' => false,

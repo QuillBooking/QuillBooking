@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Google Rest Controller
  *
@@ -17,12 +18,12 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
-use QuillBooking\Integrations\Google\Integration;
 
 /**
  * Google Rest Controller
  */
 class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
+
 
 	/**
 	 * Register the routes for the objects of the controller.
@@ -30,7 +31,7 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 * @since 1.0.0
 	 */
 	public function register_routes() {
-		parent::register_routes();
+		 parent::register_routes();
 
 		register_rest_route(
 			$this->namespace,
@@ -51,41 +52,30 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 * @return array
 	 */
 	public function get_settings_schema() {
-		return array(
-			'type'       => 'object',
-			'properties' => array(
-				'app'   => array(
-					'type'       => 'object',
-					'context'    => array( 'view' ),
-					'properties' => array(
-						'client_id'     => array(
-							'label'    => __( 'Client ID', 'quillbooking' ),
-							'type'     => 'string',
-							'required' => true,
-							'context'  => array( 'view' ),
-						),
-						'client_secret' => array(
-							'label'    => __( 'Client Secret', 'quillbooking' ),
-							'type'     => 'string',
-							'required' => true,
-							'context'  => array(),
-						),
-						'cache_time' => array(
-							'label'    => __('Cache Time', 'quillbooking'),
-							'type'     => 'number',
-							'required' => true,
-							'context'  => array('view'),
-						),
-					),
-				),
-				'hosts' => array(
-					'type'                 => 'object',
-					'context'              => array( 'view' ),
-					'additionalProperties' => true,
-				),
-			),
-		);
+		 return array(
+			 'type'       => 'object',
+			 'properties' => array(
+				 'app'   => array(
+					 'type'       => 'object',
+					 'context'    => array( 'view' ),
+					 'properties' => array(
+						 'cache_time' => array(
+							 'label'    => __( 'Cache Time (minutes)', 'quillbooking' ),
+							 'type'     => 'number',
+							 'required' => true,
+							 'context'  => array( 'view' ),
+						 ),
+					 ),
+				 ),
+				 'hosts' => array(
+					 'type'                 => 'object',
+					 'context'              => array( 'view' ),
+					 'additionalProperties' => true,
+				 ),
+			 ),
+		 );
 	}
+
 
 	/**
 	 * Get auth uri

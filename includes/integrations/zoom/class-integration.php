@@ -27,6 +27,7 @@ class Integration extends Abstract_Integration {
 
 
 
+
 	/**
 	 * Integration Name
 	 *
@@ -272,7 +273,6 @@ class Integration extends Abstract_Integration {
 			// If no host settings, try to get global settings
 			if ( empty( $zoom_integration ) ) {
 				$global_settings = get_option( 'quillbooking_zoom_settings', array() );
-				error_log( 'Zoom Integration Debug - Global Settings: ' . print_r( $global_settings, true ) );
 
 				if ( ! empty( $global_settings ) && ! empty( $global_settings['app_credentials'] ) ) {
 					$zoom_integration = array(
@@ -281,12 +281,10 @@ class Integration extends Abstract_Integration {
 							'tokens'          => $global_settings['tokens'] ?? array(),
 						),
 					);
-					error_log( 'Zoom Integration Debug - Using global settings for integration' );
 				}
 			}
 
 			if ( empty( $zoom_integration ) ) {
-				error_log( 'Zoom Integration Debug - No settings found for host or globally' );
 				$booking->logs()->create(
 					array(
 						'type'    => 'error',
@@ -298,12 +296,8 @@ class Integration extends Abstract_Integration {
 
 			$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
 			foreach ( $zoom_integration as $account_id => $data ) {
-				error_log( 'Zoom Integration Debug - Processing account: ' . $account_id );
-				error_log( 'Zoom Integration Debug - Account data: ' . print_r( $data, true ) );
-
 				$api = $this->connect( $host, $account_id );
 				if ( ! $api || is_wp_error( $api ) ) {
-					error_log( 'Zoom Integration Debug - Failed to connect to Zoom API' );
 					$booking->logs()->create(
 						array(
 							'type'    => 'error',
@@ -319,7 +313,6 @@ class Integration extends Abstract_Integration {
 				}
 
 				$account = $account_id === 'global' ? $data : $this->accounts->get_account( $account_id );
-				error_log( 'Zoom Integration Debug - Using account data: ' . print_r( $account, true ) );
 
 				$meeting_data = array(
 					'agenda'       => $booking->event->name,
@@ -339,12 +332,10 @@ class Integration extends Abstract_Integration {
 
 				// Remove any empty values recursively.
 				$meeting_data = array_filter( $meeting_data );
-				error_log( 'Zoom Integration Debug - Meeting data to be sent: ' . print_r( $meeting_data, true ) );
 
 				$response = $api->create_meeting( $meeting_data );
 				if ( ! $response['success'] ) {
 					$error_message = Arr::get( $response, 'data.error.message', 'Unknown error' );
-					error_log( 'Zoom Integration Debug - Error creating meeting: ' . $error_message );
 					$booking->logs()->create(
 						array(
 							'type'    => 'error',
@@ -503,32 +494,25 @@ class Integration extends Abstract_Integration {
 				$this->accounts = array(
 					'global' => $account,
 				);
-				error_log( 'Zoom Integration Debug - Using global settings' );
 			}
 		}
 
 		if ( empty( $account ) ) {
-			error_log( 'Zoom Integration Debug - No account found for host or globally' );
 			return false;
 		}
 
 		$access_token  = Arr::get( $account, 'tokens.access_token', '' );
 		$refresh_token = Arr::get( $account, 'tokens.refresh_token', '' );
 
-		error_log( 'Zoom Integration Debug - Access Token: ' . ( empty( $access_token ) ? 'Empty' : 'Present' ) );
-		error_log( 'Zoom Integration Debug - Refresh Token: ' . ( empty( $refresh_token ) ? 'Empty' : 'Present' ) );
-
 		// If we have an access token but no refresh token, we can still proceed
 		if ( ! empty( $access_token ) ) {
 			try {
 				$this->api = new API( $access_token, $this, $refresh_token, $account_id );
-				error_log( 'Zoom Integration Debug - API initialized successfully with access token' );
 				return $this->api;
 			} catch ( \Exception $e ) {
 				error_log( 'Zoom Integration Debug - API initialization failed: ' . $e->getMessage() );
 			}
 		}
-		error_log( 'Zoom Integration Debug - Failed to initialize API after all attempts' );
 		$this->api = new \WP_Error( 'zoom_integration_error', __( 'Zoom Integration Error: Unable to initialize API.', 'quillbooking' ) );
 		return false;
 	}

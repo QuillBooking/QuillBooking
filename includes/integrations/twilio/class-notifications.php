@@ -19,20 +19,11 @@ use Illuminate\Support\Arr;
 use QuillBooking\Models\Event_Model;
 use WP_Error;
 
-// The following WordPress functions are used with global namespace prefix (\):
-// add_action, is_wp_error, wp_json_encode, error_log, __, sprintf
 
 /**
  * Twilio Notifications class
  */
 class Notifications {
-
-
-
-
-
-
-
 
 
 
@@ -132,25 +123,21 @@ class Notifications {
 		try {
 			// Check if integration is properly set up
 			if ( ! isset( $this->integration ) ) {
-				\error_log( 'Twilio integration not initialized' );
 				return false;
 			}
 
 			// Check if host is set
 			if ( ! isset( $this->integration->host ) ) {
-				\error_log( 'Twilio integration host not set' );
 				return false;
 			}
 
 			// Check if accounts manager is available
 			if ( ! isset( $this->accounts ) ) {
-				\error_log( 'Twilio accounts manager not available' );
 				return false;
 			}
 
 			return true;
 		} catch ( \Exception $e ) {
-			\error_log( 'Error checking Twilio configuration: ' . $e->getMessage() );
 			return false;
 		}
 	}
@@ -166,13 +153,11 @@ class Notifications {
 		try {
 			// First check if Twilio is configured
 			if ( ! $this->is_twilio_configured() ) {
-				\error_log( 'Twilio not configured, skipping SMS notification' );
 				return;
 			}
 
 			// Validate booking object
 			if ( ! $booking || ! isset( $booking->event_id ) ) {
-				\error_log( 'Invalid booking object or missing event_id' );
 				return;
 			}
 
@@ -188,20 +173,17 @@ class Notifications {
 						$event = $event->with( 'calendar' )->first();
 					}
 				} catch ( \Exception $e ) {
-					\error_log( 'Error loading event: ' . $e->getMessage() );
 					return;
 				}
 			}
 
 			// Validate event exists
 			if ( ! $event ) {
-				\error_log( 'Event not found for booking_id: ' . $booking->id );
 				return;
 			}
 
 			// Validate calendar exists
 			if ( ! isset( $event->calendar ) || ! $event->calendar ) {
-				\error_log( 'Calendar not found for event_id: ' . $event->id );
 				return;
 			}
 
@@ -217,13 +199,11 @@ class Notifications {
 						)
 					);
 				}
-				\error_log( 'Error setting host: ' . $result->get_error_message() );
 				return;
 			}
 
 			// Validate SMS notifications exist
 			if ( ! isset( $event->sms_notifications ) ) {
-				\error_log( 'SMS notifications not configured for event_id: ' . $event->id );
 				return;
 			}
 			$sms_notifications = $event->sms_notifications;
@@ -236,7 +216,6 @@ class Notifications {
 					$all_phones = $this->get_all_phones( $booking );
 					$this->send_message( $booking, $attendee_template, $all_phones );
 				} else {
-					\error_log( 'Invalid attendee template for event_id: ' . $event->id );
 				}
 			}
 
@@ -246,12 +225,18 @@ class Notifications {
 				$organizer_template = Arr::get( $sms_notifications, 'organizer_confirmation.template' );
 				if ( $organizer_template && isset( $organizer_template['message'] ) ) {
 					$this->send_message( $booking, $organizer_template );
-				} else {
-					\error_log( 'Invalid organizer template for event_id: ' . $event->id );
 				}
 			}
 		} catch ( \Exception $e ) {
-			\error_log( 'Exception in send_booking_created_sms: ' . $e->getMessage() );
+			if ( method_exists( $booking, 'logs' ) && method_exists( $booking->logs(), 'create' ) ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => \__( 'Error Sending SMS', 'quillbooking' ),
+						'details' => $e->getMessage(),
+					)
+				);
+			}
 		}
 	}
 
@@ -660,7 +645,6 @@ class Notifications {
 		try {
 			// Validate booking and template
 			if ( ! $template || ! $booking ) {
-				\error_log( 'Invalid booking or template in send_message' );
 				return;
 			}
 
@@ -669,12 +653,10 @@ class Notifications {
 			$message = Arr::get( $template, 'message' );
 
 			if ( empty( $message ) ) {
-				\error_log( 'Empty message template' );
 				return;
 			}
 
 			// Log the phones we're sending to
-			\error_log( 'Attempting to send ' . $type . ' to numbers: ' . json_encode( $all_phones ) );
 
 			// Process merge tags if manager exists
 			if ( isset( $this->merge_tags_manager ) && method_exists( $this->merge_tags_manager, 'process_merge_tags' ) ) {
@@ -702,12 +684,9 @@ class Notifications {
 			}
 
 			if ( $success_count > 0 ) {
-				\error_log( 'Successfully sent ' . $type . ' to ' . $success_count . ' recipient(s)' );
 			} elseif ( ! empty( $all_phones ) ) {
-				\error_log( 'Failed to send ' . $type . ' to any recipients' );
 			}
 		} catch ( \Exception $e ) {
-			\error_log( 'Exception in send_message: ' . $e->getMessage() );
 		}
 	}
 
@@ -725,13 +704,11 @@ class Notifications {
 		try {
 			// First check if Twilio is properly configured
 			if ( ! $this->is_twilio_configured() ) {
-				\error_log( 'Twilio not configured, skipping SMS to ' . $to );
 				return false;
 			}
 
 			// Validate input parameters
 			if ( empty( $to ) || empty( $message ) || ! $booking ) {
-				\error_log( 'Missing parameters in send_sms' );
 				return false;
 			}
 
@@ -747,7 +724,6 @@ class Notifications {
 			// If no accounts, use global settings
 			if ( empty( $accounts ) ) {
 				if ( empty( $settings ) || empty( $settings['credentials'] ) ) {
-					\error_log( 'No Twilio accounts or global settings configured' );
 					return false;
 				}
 
@@ -761,34 +737,28 @@ class Notifications {
 
 				try {
 					$result = $api->send_sms( $to, $message );
-					\error_log( 'SMS sent successfully to ' . $to . ' using global settings' );
 					return true;
 				} catch ( \Exception $e ) {
-					\error_log( 'Exception sending SMS using global settings to ' . $to . ': ' . $e->getMessage() );
 					return false;
 				}
 			}
 
 			// Validate booking calendar
 			if ( ! isset( $booking->calendar ) || ! $booking->calendar || ! isset( $booking->calendar->id ) ) {
-				\error_log( 'Missing calendar in booking object' );
 				return false;
 			}
 
-			\error_log( 'Starting to send SMS to ' . $to );
 			// Process each account
 			foreach ( $accounts as $account_id => $account ) {
 				try {
 					// Connect to Twilio
 					if ( ! isset( $this->integration ) || ! method_exists( $this->integration, 'connect' ) ) {
-						\error_log( 'Integration not available' );
 						continue;
 					}
 
 					$api = $this->integration->connect( $this->host_id, $account_id );
 
 					if ( \is_wp_error( $api ) ) {
-						\error_log( 'Twilio API connection error for account ' . $account_id );
 						if ( method_exists( $booking, 'logs' ) && method_exists( $booking->logs(), 'create' ) ) {
 							$booking->logs()->create(
 								array(
@@ -803,19 +773,14 @@ class Notifications {
 
 					// Send SMS
 					if ( ! method_exists( $api, 'send_sms' ) ) {
-						\error_log( 'API send_sms method not available' );
 						continue;
 					}
 
 					$result = $api->send_sms( $to, $message );
-					\error_log( 'SMS sent successfully to ' . $to );
 					return true; // Successfully sent with one account
 				} catch ( \Exception $e ) {
-					\error_log( 'Exception sending SMS to ' . $to . ': ' . $e->getMessage() );
 				}
 			}
-
-			\error_log( 'Failed to send SMS to ' . $to . ' with any account' );
 			return false;
 		} catch ( \Exception $e ) {
 			\error_log( 'Exception in send_sms: ' . $e->getMessage() );
@@ -837,13 +802,11 @@ class Notifications {
 		try {
 			// First check if Twilio is properly configured
 			if ( ! $this->is_twilio_configured() ) {
-				\error_log( 'Twilio not configured, skipping WhatsApp message to ' . $to );
 				return false;
 			}
 
 			// Validate input parameters
 			if ( empty( $to ) || empty( $message ) || ! $booking ) {
-				\error_log( 'Missing parameters in send_whatsapp_message' );
 				return false;
 			}
 
@@ -859,7 +822,6 @@ class Notifications {
 			// If no accounts, use global settings
 			if ( empty( $accounts ) ) {
 				if ( empty( $settings ) || empty( $settings['credentials'] ) ) {
-					\error_log( 'No Twilio accounts or global settings configured' );
 					return false;
 				}
 
@@ -873,34 +835,28 @@ class Notifications {
 
 				try {
 					$result = $api->send_whatsapp_message( $to, $message );
-					\error_log( 'WhatsApp message sent successfully to ' . $to . ' using global settings' );
 					return true;
 				} catch ( \Exception $e ) {
-					\error_log( 'Exception sending WhatsApp using global settings to ' . $to . ': ' . $e->getMessage() );
 					return false;
 				}
 			}
 
 			// Validate booking calendar
 			if ( ! isset( $booking->calendar ) || ! $booking->calendar || ! isset( $booking->calendar->id ) ) {
-				\error_log( 'Missing calendar in booking object' );
 				return false;
 			}
 
-			\error_log( 'Starting to send WhatsApp message to ' . $to );
 			// Process each account
 			foreach ( $accounts as $account_id => $account ) {
 				try {
 					// Connect to Twilio
 					if ( ! isset( $this->integration ) || ! method_exists( $this->integration, 'connect' ) ) {
-						\error_log( 'Integration not available' );
 						continue;
 					}
 
 					$api = $this->integration->connect( $this->host_id, $account_id );
 
 					if ( \is_wp_error( $api ) ) {
-						\error_log( 'Twilio API connection error for account ' . $account_id );
 						if ( method_exists( $booking, 'logs' ) && method_exists( $booking->logs(), 'create' ) ) {
 							$booking->logs()->create(
 								array(
@@ -915,19 +871,15 @@ class Notifications {
 
 					// Send WhatsApp message
 					if ( ! method_exists( $api, 'send_whatsapp_message' ) ) {
-						\error_log( 'API send_whatsapp_message method not available' );
 						continue;
 					}
 
 					$result = $api->send_whatsapp_message( $to, $message );
-					\error_log( 'WhatsApp message sent successfully to ' . $to );
 					return true; // Successfully sent with one account
 				} catch ( \Exception $e ) {
 					\error_log( 'Exception sending WhatsApp to ' . $to . ': ' . $e->getMessage() );
 				}
 			}
-
-			\error_log( 'Failed to send WhatsApp message to ' . $to . ' with any account' );
 			return false;
 		} catch ( \Exception $e ) {
 			\error_log( 'Exception in send_whatsapp_message: ' . $e->getMessage() );

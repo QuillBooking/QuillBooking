@@ -30,10 +30,18 @@ import Help from '../pages/help';
 import Logout from '../pages/logout';
 import Integrations from '../pages/integrations';
 import GeneralSettings from '../pages/global-settings';
-import { AvailabilityIcon, BookingIcon, HelpIcon, HomeIcon, SettingsIcon, LogoutIcon, UpcomingCalendarIcon, IntegrationsTabIcon } from '@quillbooking/components';
+import {
+	AvailabilityIcon,
+	BookingIcon,
+	HelpIcon,
+	HomeIcon,
+	SettingsIcon,
+	LogoutIcon,
+	UpcomingCalendarIcon,
+	IntegrationsTabIcon,
+} from '@quillbooking/components';
 import Navmenu from './navmenu';
 import ProtectedRoute from './protected-route';
-
 
 export const Controller = ({ page }) => {
 	useEffect(() => {
@@ -55,7 +63,10 @@ registerAdminPage('dashboard', {
 	path: '/',
 	component: () => <Dashboard />,
 	label: (
-		<Navmenu icon={<HomeIcon width={24} height={24}/>} title={__('Dashboard', 'quillbooking')} />
+		<Navmenu
+			icon={<HomeIcon width={24} height={24} />}
+			title={__('Dashboard', 'quillbooking')}
+		/>
 	),
 });
 
@@ -63,7 +74,10 @@ registerAdminPage('calendars', {
 	path: 'calendars',
 	component: () => <Calendars />,
 	label: (
-		<Navmenu icon={<UpcomingCalendarIcon width={24} height={24} />} title={__('Calendars', 'quillbooking')} />
+		<Navmenu
+			icon={<UpcomingCalendarIcon width={24} height={24} />}
+			title={__('Calendars', 'quillbooking')}
+		/>
 	),
 	capabilities: [
 		'quillbooking_manage_own_calendars',
@@ -78,7 +92,7 @@ registerAdminPage('calendar', {
 	hidden: true,
 	capabilities: [
 		'quillbooking_manage_own_calendars',
-		'quillbooking_manage_all_calendars'
+		'quillbooking_manage_all_calendars',
 	],
 });
 
@@ -86,13 +100,16 @@ registerAdminPage('bookings', {
 	path: 'bookings',
 	component: () => <Bookings />,
 	label: (
-		<Navmenu icon={<BookingIcon width={24} height={24}/>} title={__('Bookings', 'quillbooking')} />
+		<Navmenu
+			icon={<BookingIcon width={24} height={24} />}
+			title={__('Bookings', 'quillbooking')}
+		/>
 	),
 	capabilities: [
 		'quillbooking_read_own_bookings',
 		'quillbooking_read_all_bookings',
 	],
-})
+});
 
 registerAdminPage('event', {
 	path: 'calendars/:id/events/:eventId/:tab?',
@@ -101,7 +118,7 @@ registerAdminPage('event', {
 	hidden: true,
 	capabilities: [
 		'quillbooking_manage_own_calendars',
-		'quillbooking_manage_all_calendars'
+		'quillbooking_manage_all_calendars',
 	],
 });
 
@@ -109,11 +126,14 @@ registerAdminPage('availability', {
 	path: 'availability',
 	component: () => <Availability />,
 	label: (
-		<Navmenu icon={<AvailabilityIcon width={24} height={24}/>} title={__('Availability', 'quillbooking')} />
+		<Navmenu
+			icon={<AvailabilityIcon width={24} height={24} />}
+			title={__('Availability', 'quillbooking')}
+		/>
 	),
 	capabilities: [
 		'quillbooking_read_own_availability',
-		'quillbooking_read_all_availability'
+		'quillbooking_read_all_availability',
 	],
 });
 
@@ -121,15 +141,21 @@ registerAdminPage('integrations', {
 	path: 'integrations',
 	component: () => <Integrations />,
 	label: (
-		<Navmenu icon={<IntegrationsTabIcon width={24} height={24}/>} title={__('Integrations', 'quillbooking')} />
+		<Navmenu
+			icon={<IntegrationsTabIcon width={24} height={24} />}
+			title={__('Integrations', 'quillbooking')}
+		/>
 	),
-})
+});
 
 registerAdminPage('settings', {
 	path: 'settings/',
 	component: () => <GeneralSettings />,
 	label: (
-		<Navmenu icon={<SettingsIcon width={24} height={24}/>} title={__('Settings', 'quillbooking')} />
+		<Navmenu
+			icon={<SettingsIcon width={24} height={24} />}
+			title={__('Settings', 'quillbooking')}
+		/>
 	),
 });
 
@@ -159,7 +185,7 @@ registerAdminPage('availability/:id', {
 	path: 'availability/:id',
 	component: () => <AvailabilityDetails />,
 	label: __('Availability Details', 'quillbooking'),
-	hidden: true
+	hidden: true,
 });
 
 registerAdminPage('booking-details', {
@@ -173,5 +199,5 @@ registerAdminPage('getting-started', {
 	path: 'getting-started',
 	component: () => <GettingStarted />,
 	label: __('Getting Started', 'quillbooking'),
-	hidden: true,
-})
+	hidden: false,
+});

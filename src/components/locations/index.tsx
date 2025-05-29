@@ -623,9 +623,17 @@ const Locations: React.FC<{
 													)}
 												</span>
 											</NavLink>
+										) : connected_integrations.zoom
+												.has_accounts ? (
+											<div className="text-[#9197A4] text-[12px] italic">
+												{__(
+													'Connected By Your Host Settings',
+													'quillbooking'
+												)}
+											</div>
 										) : (
 											__(
-												'Connected By Your Host Settings',
+												'An account needs to be added first – visit the Zoom Video tab in Calendar Settings.',
 												'quillbooking'
 											)
 										)}

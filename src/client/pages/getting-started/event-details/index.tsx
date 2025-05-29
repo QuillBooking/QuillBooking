@@ -13,6 +13,16 @@ import { Card, Flex, Input, Select } from 'antd';
 import { ColorSelector } from '@quillbooking/components';
 import { GettingStartedComponentProps } from '@quillbooking/client';
 
+interface FormErrors {
+	name?: string;
+	timezone?: string;
+	location?: string;
+}
+
+interface ExtendedGettingStartedProps extends GettingStartedComponentProps {
+	errors?: FormErrors;
+}
+
 const durations = [
 	{
 		value: 15,
@@ -31,9 +41,10 @@ const durations = [
 	},
 ];
 
-const EventDetails: React.FC<GettingStartedComponentProps> = ({
+const EventDetails: React.FC<ExtendedGettingStartedProps> = ({
 	event,
 	onEventChange = () => {},
+	errors = {},
 }) => {
 	return (
 		<Flex vertical gap={20} className="">
@@ -63,10 +74,6 @@ const EventDetails: React.FC<GettingStartedComponentProps> = ({
 										value: 'one-to-one',
 									},
 									{ label: 'Group', value: 'group' },
-									{
-										label: 'Round Robin',
-										value: 'round-robin',
-									},
 								]}
 								className="h-[48px] rounded-lg"
 							/>
@@ -85,8 +92,14 @@ const EventDetails: React.FC<GettingStartedComponentProps> = ({
 								onChange={(e) =>
 									onEventChange('name', e.target.value)
 								}
-								className="h-[48px] rounded-lg"
+								className={`h-[48px] rounded-lg ${errors.name ? 'border-red-500' : ''}`}
+								status={errors.name ? 'error' : undefined}
 							/>
+							{errors.name && (
+								<div className="text-red-500 text-sm mt-1">
+									{errors.name}
+								</div>
+							)}
 						</Flex>
 					</Flex>
 					<Flex vertical gap={4}>

@@ -64,7 +64,9 @@ const EventShimmer: React.FC = () => {
 	);
 };
 
-const LatestEvents: React.FC = () => {
+const LatestEvents: React.FC<{ canManageAllCalendars: boolean }> = ({
+	canManageAllCalendars,
+}) => {
 	const { callApi } = useApi();
 	const currentUser = useCurrentUser();
 	const navigate = useNavigate();
@@ -304,24 +306,29 @@ const LatestEvents: React.FC = () => {
 					</div>
 
 					<p className="text-xl font-medium my-1 text-color-primary-text">
-						{__('No Events Yet?', 'quillbooking')}
+						{canManageAllCalendars
+							? __('No Events Yet?', 'quillbooking')
+							: __('No Events Yet', 'quillbooking')}
 					</p>
 
-					<p className="text-[#8B8D97]">
-						{__('Add New Events Manually.', 'quillbooking')}
-					</p>
-
-					<Button
-						type="primary"
-						className="bg-color-primary text-white"
-						size="large"
-						onClick={() => {
-							navigate('calendars');
-						}}
-					>
-						<PlusOutlined />
-						{__('Add Event', 'quillbooking')}
-					</Button>
+					{canManageAllCalendars && (
+						<>
+							<p className="text-[#8B8D97]">
+								{__('Add New Events Manually.', 'quillbooking')}
+							</p>
+							<Button
+								type="primary"
+								className="bg-color-primary text-white"
+								size="large"
+								onClick={() => {
+									navigate('calendars');
+								}}
+							>
+								<PlusOutlined />
+								{__('Add Event', 'quillbooking')}
+							</Button>
+						</>
+					)}
 				</div>
 			)}
 		</Card>

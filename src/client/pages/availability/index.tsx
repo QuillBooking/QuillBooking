@@ -25,8 +25,9 @@ import { useCurrentUser } from '@quillbooking/hooks';
 const Availability: React.FC = () => {
 	const [open, setOpen] = useState<boolean>(false);
 	const [showAllSchedules, setShowAllSchedules] = useState<boolean>(false);
-	const currentUser = useCurrentUser();
-	const isAdmin = currentUser?.isAdmin() ?? false;
+	const canManageAllAvailability = useCurrentUser().hasCapability(
+		'quillbooking_manage_all_availability'
+	);
 
 	return (
 		<>
@@ -53,7 +54,7 @@ const Availability: React.FC = () => {
 			</Flex>
 
 			<SchedulesType
-				isAdmin={isAdmin}
+				canManageAllAvailability={canManageAllAvailability}
 				showAllSchedules={showAllSchedules}
 				setShowAllSchedules={setShowAllSchedules}
 			/>

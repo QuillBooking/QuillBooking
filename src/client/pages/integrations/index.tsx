@@ -12,8 +12,15 @@ import { Button, Card, Flex } from 'antd';
 /**
  * Internal dependencies
  */
-import { Header, SettingsPaymentIcon, SmsNotiIcon, TabButtons, UpcomingCalendarIcon } from '@quillbooking/components';
+import {
+	Header,
+	SettingsPaymentIcon,
+	SmsNotiIcon,
+	TabButtons,
+	UpcomingCalendarIcon,
+} from '@quillbooking/components';
 import { ConferencingCalendars, Payments, SMSIntegration } from './tabs';
+import { useCurrentUser } from '@quillbooking/hooks';
 
 /**
  * Integration component
@@ -21,74 +28,85 @@ import { ConferencingCalendars, Payments, SMSIntegration } from './tabs';
  */
 
 const Integrations: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<string>('conferencing-calendars');
+	const canManageAllCalendars = useCurrentUser().hasCapability(
+		'quillbooking_manage_all_calendars'
+	);
+	const [activeTab, setActiveTab] = useState<string>(
+		'conferencing-calendars'
+	);
 
-    const handleTabChange = (key: string) => {
-        setActiveTab(key);
-    };
+	const handleTabChange = (key: string) => {
+		setActiveTab(key);
+	};
 
-    const renderTabContent = () => {
-        switch (activeTab) {
-            case 'conferencing-calendars':
-                return <ConferencingCalendars />;
-            case 'sms-integration':
-                return <SMSIntegration />;
-            case 'payments':
-                return <Payments />;
-            default:
-                return <ConferencingCalendars />;
-        }
-    };
+	const renderTabContent = () => {
+		switch (activeTab) {
+			case 'conferencing-calendars':
+				return <ConferencingCalendars />;
+			case 'sms-integration':
+				return <SMSIntegration />;
+			case 'payments':
+				return <Payments />;
+			default:
+				return <ConferencingCalendars />;
+		}
+	};
 
-    const items = [
-        {
-            key: 'conferencing-calendars',
-            label: __('Conferencing and Calendars', 'quillbooking'),
-            icon: <UpcomingCalendarIcon width={20} height={20} />
-        },
-        {
-            key: 'sms-integration',
-            label: __('SMS Integration', 'quillbooking'),
-            icon: <SmsNotiIcon width={20} height={20} />
-        },
-        {
-            key: 'payments',
-            label: __('Payments', 'quillbooking'),
-            icon: <SettingsPaymentIcon width={20} height={20} />
-        }
-    ];
+	const items = [
+		{
+			key: 'conferencing-calendars',
+			label: __('Conferencing and Calendars', 'quillbooking'),
+			icon: <UpcomingCalendarIcon width={20} height={20} />,
+		},
+	];
 
-    return (
-        <div className="quillbooking-integrations-page">
-            <Header
-                header={__('Integrations', 'quillbooking')}
-                subHeader={__('Connect Quill Booking to your tools and apps to enhance your scheduling automations.', 'quillbooking')}
-            />
-            <Flex vertical gap={20} className="integrations-container">
-                <Card className='mt-5'>
-                    <Flex gap={15} align='center' justify='flex-start'>
-                        {items.map(({ key, label, icon }) => (
-                            <Button
-                                key={key}
-                                type="text"
-                                onClick={() => handleTabChange(key)}
-                                className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
-                            >
-                                <TabButtons
-                                    label={label}
-                                    icon={icon}
-                                    isActive={activeTab === key}
-                                />
-                            </Button>
-                        ))}
-                    </Flex>
-                </Card>
-                <Flex>
-                    {renderTabContent()}
-                </Flex>
-            </Flex>
-        </div>
-    );
+	if (canManageAllCalendars) {
+		items.push(
+			{
+				key: 'sms-integration',
+				label: __('SMS Integration', 'quillbooking'),
+				icon: <SmsNotiIcon width={20} height={20} />,
+			},
+			{
+				key: 'payments',
+				label: __('Payments', 'quillbooking'),
+				icon: <SettingsPaymentIcon width={20} height={20} />,
+			}
+		);
+	}
+
+	return (
+		<div className="quillbooking-integrations-page">
+			<Header
+				header={__('Integrations', 'quillbooking')}
+				subHeader={__(
+					'Connect Quill Booking to your tools and apps to enhance your scheduling automations.',
+					'quillbooking'
+				)}
+			/>
+			<Flex vertical gap={20} className="integrations-container">
+				<Card className="mt-5">
+					<Flex gap={15} align="center" justify="flex-start">
+						{items.map(({ key, label, icon }) => (
+							<Button
+								key={key}
+								type="text"
+								onClick={() => handleTabChange(key)}
+								className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
+							>
+								<TabButtons
+									label={label}
+									icon={icon}
+									isActive={activeTab === key}
+								/>
+							</Button>
+						))}
+					</Flex>
+				</Card>
+				<Flex>{renderTabContent()}</Flex>
+			</Flex>
+		</div>
+	);
 };
 
 export default Integrations;

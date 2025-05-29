@@ -79,7 +79,9 @@ const ChartShimmer = () => (
 	</div>
 );
 
-const BookingAnalyticsChart: React.FC = () => {
+const BookingAnalyticsChart: React.FC<{ canManageAllCalendars: boolean }> = ({
+	canManageAllCalendars,
+}) => {
 	const [revenueFilter, setRevenueFilter] = useState<string>('monthly');
 	const [guestsFilter, setguestsFilter] = useState<string>('monthly');
 	const [selectedMonth, setSelectedMonth] = useState<string>(
@@ -146,7 +148,7 @@ const BookingAnalyticsChart: React.FC = () => {
 
 		callApi({
 			path: addQueryArgs('bookings/analytics', {
-				user: currentUser.getId(),
+				user: canManageAllCalendars ? 'all' : 'own',
 				date: dateString,
 			}),
 			method: 'GET',
@@ -207,7 +209,7 @@ const BookingAnalyticsChart: React.FC = () => {
 		setRevenueLoading(true);
 		callApi({
 			path: addQueryArgs('bookings/revenue', {
-				user: currentUser.getId(),
+				user: canManageAllCalendars ? 'all' : 'own',
 				period: revenueFilter,
 				year: currentYear,
 				month:

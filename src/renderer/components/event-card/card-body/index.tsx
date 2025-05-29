@@ -275,6 +275,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 						selectedTime={selectedTime}
 						timezone={timeZone}
 						url={url}
+						baseColor={event.color}
+						darkColor={tinycolor(event.color).darken(20).toString()}
 					/>
 				) : (
 					<QuestionsComponents

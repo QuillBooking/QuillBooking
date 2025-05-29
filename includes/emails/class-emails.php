@@ -28,6 +28,7 @@ use function wp_check_invalid_utf8;
 use function wp_pre_kses_less_than;
 use function wp_strip_all_tags;
 use function wp_kses_decode_entities;
+use function wp_kses_post;
 
 /**
  * Emails.
@@ -40,6 +41,21 @@ use function wp_kses_decode_entities;
  * @since 1.0.0
  */
 class Emails {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -69,6 +85,24 @@ class Emails {
 	 * @var string
 	 */
 	public $reply_to = false;
+
+	/**
+	 * Store the reply-to name.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
+	public $reply_to_name;
+
+	/**
+	 * Store the reply-to email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
+	public $reply_to_email;
 
 	/**
 	 * Store the carbon copy addresses.
@@ -125,6 +159,42 @@ class Emails {
 	private $to;
 
 	/**
+	 * Store the booking object.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var object
+	 */
+	public $booking;
+
+	/**
+	 * Store the custom footer.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
+	 */
+	public $footer;
+
+	/**
+	 * Whether to use host from name.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var bool
+	 */
+	public $use_host_from_name;
+
+	/**
+	 * Whether to use host reply to email.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var bool
+	 */
+	public $use_host_reply_to_email;
+
+	/**
 	 * Get things going.
 	 *
 	 * @since 1.0.0
@@ -146,8 +216,13 @@ class Emails {
 	 * @return string The email from name
 	 */
 	public function get_from_name() {
-		if ( ! empty( $this->from_name ) ) {
-			$this->from_name = $this->from_name;
+		$settings = self::getGlobalSettings( 'email' );
+
+		// Check if we should use host name
+		if ( ! empty( $settings['use_host_from_name'] ) && isset( $this->booking ) && isset( $this->booking->calendar ) && isset( $this->booking->calendar->user ) ) {
+			$this->from_name = $this->booking->calendar->user->display_name;
+		} elseif ( ! empty( $settings['from_name'] ) ) {
+			$this->from_name = $settings['from_name'];
 		} else {
 			$this->from_name = get_bloginfo( 'name' );
 		}
@@ -163,11 +238,13 @@ class Emails {
 	 * @return string The email from address.
 	 */
 	public function get_from_address() {
+		$settings = self::getGlobalSettings( 'email' );
+
 		// Always use WordPress admin email as the default sender
 		$admin_email = get_option( 'admin_email' );
 
-		if ( ! empty( $this->from_address ) && $this->from_address !== $this->to ) {
-			$this->from_address = $this->from_address;
+		if ( ! empty( $settings['from_email'] ) && $settings['from_email'] !== $this->to ) {
+			$this->from_address = $settings['from_email'];
 		} else {
 			$this->from_address = $admin_email;
 		}
@@ -183,16 +260,31 @@ class Emails {
 	 * @return string The email reply-to address.
 	 */
 	public function get_reply_to() {
-		if ( ! empty( $this->reply_to ) ) {
+		$settings       = self::getGlobalSettings( 'email' );
+		$this->reply_to = false;
 
-			$this->reply_to = $this->reply_to;
+		// Check if we should use host email
+		if ( ! empty( $settings['use_host_reply_to_email'] ) && isset( $this->booking ) && isset( $this->booking->calendar ) && isset( $this->booking->calendar->user ) ) {
+			$host_email = $this->booking->calendar->user->user_email;
 
-			if ( ! is_email( $this->reply_to ) ) {
-				$this->reply_to = false;
+			if ( is_email( $host_email ) ) {
+				$this->reply_to = $host_email;
+			}
+		} elseif ( ! empty( $settings['reply_to_email'] ) ) {
+			$reply_to_email = $settings['reply_to_email'];
+
+			if ( is_email( $reply_to_email ) ) {
+				// Combine reply-to name and email if both are set
+				if ( ! empty( $settings['reply_to_name'] ) ) {
+					$this->reply_to = sprintf( '%s <%s>', $settings['reply_to_name'], $reply_to_email );
+				} else {
+					$this->reply_to = $reply_to_email;
+				}
 			}
 		}
 
-		return apply_filters( 'quillbooking_email_reply_to', $this->decode_string( $this->reply_to ), $this );
+		// Apply filters but preserve the email format
+		return apply_filters( 'quillbooking_email_reply_to', $this->reply_to, $this );
 	}
 
 	/**
@@ -272,6 +364,8 @@ class Emails {
 	 * @return string
 	 */
 	public function build_email( $message ) {
+		$settings = self::getGlobalSettings( 'email' );
+
 		// Plain text email shortcut.
 		if ( false === $this->html ) {
 			return apply_filters( 'quillbooking_email_message', $this->decode_string( $message ), $this );
@@ -280,7 +374,6 @@ class Emails {
 		/*
 		 * Generate an HTML email.
 		 */
-
 		ob_start();
 
 		$this->get_template_part( 'header', $this->get_template(), true );
@@ -294,6 +387,11 @@ class Emails {
 		do_action( 'quillbooking_email_body', $this );
 
 		$this->get_template_part( 'footer', $this->get_template(), true );
+
+		// Add custom footer if set
+		if ( ! empty( $settings['footer'] ) ) {
+			echo wp_kses_post( $settings['footer'] );
+		}
 
 		// Hooks into the email footer.
 		do_action( 'quillbooking_email_footer', $this );
@@ -310,6 +408,17 @@ class Emails {
 	}
 
 	/**
+	 * Set the booking object.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param object $booking The booking object.
+	 */
+	public function set_booking( $booking ) {
+		$this->booking = $booking;
+	}
+
+	/**
 	 * Send the email.
 	 *
 	 * @since 1.0.0
@@ -318,10 +427,18 @@ class Emails {
 	 * @param string $subject     The subject line of the email.
 	 * @param string $message     The body of the email.
 	 * @param array  $attachments Attachments to the email.
+	 * @param object $booking     Optional. The booking object.
 	 *
 	 * @return bool
 	 */
-	public function send( $to, $subject, $message, $attachments = array() ) {
+	public function send( $to, $subject, $message, $attachments = array(), $booking = null ) {
+		$settings = self::getGlobalSettings( 'email' );
+
+		// Set the booking object if provided
+		if ( $booking ) {
+			$this->set_booking( $booking );
+		}
+
 		// Don't send if email address is invalid.
 		if ( ! is_email( $to ) ) {
 			error_log( sprintf( '[QuillBooking] Error: Invalid recipient email address: %s', $to ) );
@@ -532,6 +649,7 @@ class Emails {
 	 * @return string
 	 */
 	private function get_prepared_subject( $subject ) {
+
 		$subject = trim( str_replace( array( "\r\n", "\r", "\n" ), ' ', $subject ) );
 
 		return $this->decode_string( $subject );
@@ -649,5 +767,67 @@ class Emails {
 
 		// And now we need to sanitize AGAIN, to avoid unwanted tags that appeared after decoding.
 		return $this->sanitize_text_deeply( $string, true );
+	}
+
+	/**
+	 * Get global settings for the plugin
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string|null $settingsKey Optional. Specific settings key to retrieve.
+	 * @return array|mixed The settings array or specific setting value.
+	 */
+	public static function getGlobalSettings( $settingsKey = null ) {
+
+		$defaults = array(
+			'general'  => array(
+				'admin_email'             => get_option( 'admin_email' ),
+				'start_from'              => 'Monday',
+				'time_format'             => '12',
+				'auto_cancel_after'       => 30,
+				'auto_complete_after'     => 30,
+				'default_country_code'    => 'US',
+				'enable_summary_email'    => false,
+				'summary_email_frequency' => 'daily',
+			),
+			'payments' => array(
+				'currency' => 'USD',
+			),
+			'email'    => array(
+				'from_name'               => '',
+				'from_email'              => '',
+				'reply_to_name'           => '',
+				'reply_to_email'          => '',
+				'use_host_from_name'      => false,
+				'use_host_reply_to_email' => false,
+				'include_ics'             => false,
+				'footer'                  => '',
+			),
+			'theme'    => array(
+				'color_scheme' => 'light',
+			),
+		);
+
+		$settings = get_option( 'quillbooking_settings', array() );
+
+		if ( empty( $settings ) ) {
+			$settings = array();
+		}
+
+		$settings = wp_parse_args( $settings, $defaults );
+
+		// If email settings are empty, try to get them from WordPress
+		if ( empty( $settings['email']['from_name'] ) ) {
+			$settings['email']['from_name'] = get_bloginfo( 'name' );
+		}
+		if ( empty( $settings['email']['from_email'] ) ) {
+			$settings['email']['from_email'] = get_option( 'admin_email' );
+		}
+
+		if ( $settingsKey ) {
+			return isset( $settings[ $settingsKey ] ) ? $settings[ $settingsKey ] : array();
+		}
+
+		return $settings;
 	}
 }

@@ -4,6 +4,7 @@ import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import paypalIcon from '../../../../../../assets/icons/paypal/paypal.png';
 import stripeIcon from '../../../../../../assets/icons/stripe/stripe.png';
 import { Booking, Event } from 'renderer/types';
+import { css } from '@emotion/css';
 
 interface PaymentSummaryProps {
 	ajax_url: string;
@@ -11,6 +12,8 @@ interface PaymentSummaryProps {
 	bookingData: Booking;
 	event: Event;
 	totalPrice: number;
+	darkColor: string;
+	baseColor: string;
 }
 
 // Payment Summary component that allows selection between payment methods
@@ -20,6 +23,8 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 	bookingData,
 	event,
 	totalPrice,
+	darkColor,
+	baseColor,
 }) => {
 	const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
 		string | null
@@ -195,7 +200,12 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 			<div className="payment-actions">
 				<button
 					type="button"
-					className="continue-to-payment-button"
+					className={`continue-to-payment-button  ${css`
+						background-color: ${baseColor};
+						&:hover {
+							background-color: ${darkColor};
+						}
+					`}`}
 					onClick={handleContinueToPayment}
 					disabled={isLoading || !selectedPaymentMethod}
 				>

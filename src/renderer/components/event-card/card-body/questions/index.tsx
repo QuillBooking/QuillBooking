@@ -6,17 +6,22 @@ import { Form, Spin } from 'antd';
 import FormField from '../../../inputs';
 import { useEffect, useState } from 'react';
 import { useApi } from '@quillbooking/hooks';
+import { css } from '@emotion/css';
 
 interface QuestionsComponentsProps {
 	fields: Fields;
 	setStep: (step: number) => void;
 	onSubmit: (values: any) => void;
+	baseColor: string;
+	darkColor: string;
 }
 
 const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 	fields,
 	setStep,
 	onSubmit,
+	baseColor,
+	darkColor,
 }) => {
 	const [form] = Form.useForm();
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,7 +102,12 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 					)}
 					<Form.Item className="schedule-btn-container">
 						<button
-							className="schedule-btn"
+							className={`schedule-btn ${css`
+								background-color: ${baseColor};
+								&:hover {
+									background-color: ${darkColor};
+								}
+							`}`}
 							type="submit"
 							disabled={isSubmitting}
 						>

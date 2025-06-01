@@ -249,7 +249,6 @@ class REST_Team_Controller extends REST_Controller {
 			}
 
 			// 3. Add capabilities and meta (using the $user object we already fetched)
-			$user->add_cap( 'manage_quillbooking' );
 			foreach ( $capabilities as $capability ) {
 				$user->add_cap( $capability );
 			}

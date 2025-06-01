@@ -78,6 +78,7 @@ class Capabilities {
 				'quillbooking_manage_all_bookings',
 				'quillbooking_read_all_availability',
 				'quillbooking_manage_all_availability',
+				'manage_quillbooking',
 			),
 			'member' => array(
 				'quillbooking_manage_own_calendars',
@@ -85,6 +86,7 @@ class Capabilities {
 				'quillbooking_manage_own_bookings',
 				'quillbooking_read_own_availability',
 				'quillbooking_manage_own_availability',
+				'manage_quillbooking',
 			),
 		);
 

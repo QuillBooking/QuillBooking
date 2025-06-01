@@ -108,7 +108,6 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 			'payments_settings',
 			{}
 		) as PaymentsSettings;
-		console.log('hello payments:', paymentSettings);
 		if (
 			paymentSettings.enable_payment &&
 			paymentSettings.type === 'woocommerce'

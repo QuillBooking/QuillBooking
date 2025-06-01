@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Integration REST Controller
  * This class is responsible for handling the Integration REST API
@@ -86,18 +87,18 @@ abstract class REST_Integration_Controller extends REST_Controller {
 	 * @return array
 	 */
 	public function get_item_schema() {
-		return array(
-			'$schema'    => 'http://json-schema.org/draft-04/schema#',
-			'title'      => 'integration',
-			'type'       => 'object',
-			'properties' => array(
-				'settings' => array(
-					'description' => __( 'Integration Settings', 'quillbooking' ),
-					'type'        => 'object',
-					'required'    => true,
-				),
-			),
-		);
+		 return array(
+			 '$schema'    => 'http://json-schema.org/draft-04/schema#',
+			 'title'      => 'integration',
+			 'type'       => 'object',
+			 'properties' => array(
+				 'settings' => array(
+					 'description' => __( 'Integration Settings', 'quillbooking' ),
+					 'type'        => 'object',
+					 'required'    => true,
+				 ),
+			 ),
+		 );
 	}
 
 	/**
@@ -164,7 +165,7 @@ abstract class REST_Integration_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function get_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 
 	/**
@@ -177,6 +178,6 @@ abstract class REST_Integration_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function update_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 }

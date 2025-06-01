@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * Class Outlook Rest Controller
  *
@@ -24,6 +25,7 @@ use WP_REST_Server;
  */
 class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 
+
 	/**
 	 * Register the routes for the objects of the controller.
 	 *
@@ -31,6 +33,7 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 */
 	public function register_routes() {
 		 parent::register_routes();
+		parent::register_routes();
 
 		register_rest_route(
 			$this->namespace,
@@ -108,6 +111,6 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function auth_uri_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 }

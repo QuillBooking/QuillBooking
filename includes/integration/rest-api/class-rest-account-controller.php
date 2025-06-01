@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class REST Integration Account Controller
  *
@@ -123,7 +124,7 @@ class REST_Account_Controller extends REST_Controller {
 				"/{$this->rest_base}/(?P<id>[\w]+)" . "/{$entity}",
 				array(
 					'methods'             => 'GET',
-					'callback'            => function( $request ) use ( $entity ) {
+					'callback'            => function ( $request ) use ( $entity ) {
 						return $this->get_remote_data( $request, $entity );
 					},
 					'permission_callback' => array( $this, 'get_entity_permissions_check' ),
@@ -138,51 +139,51 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return array
 	 */
 	public function get_item_schema() {
-		return array(
-			'type'       => 'object',
-			'properties' => array(
-				'id'     => array(
-					'type'        => array( 'integer', 'string' ),
-					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
-					'context'     => array( 'view', 'edit', 'embed' ),
-					'readonly'    => true,
-				),
-				'name'   => array(
-					'type'        => 'string',
-					'description' => __( 'Name of the account.', 'quillbooking' ),
-					'context'     => array( 'view', 'edit', 'embed' ),
-					'required'    => true,
-				),
-				'tokens' => array(
-					'type'                 => 'object',
-					'description'          => __( 'Credentials for the account.', 'quillbooking' ),
-					'context'              => array( 'view', 'edit', 'embed' ),
-					'required'             => true,
-					'properties'           => array(
-						'access_token'  => array(
-							'type'        => 'string',
-							'description' => __( 'Access token for the account.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-						'refresh_token' => array(
-							'type'        => 'string',
-							'description' => __( 'Refresh token for the account.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-					),
-					'additionalProperties' => true,
-				),
-				'config' => array(
-					'type'                 => 'object',
-					'description'          => __( 'Configuration for the account.', 'quillbooking' ),
-					'context'              => array( 'view', 'edit', 'embed' ),
-					'required'             => true,
-					'additionalProperties' => true,
-				),
-			),
-		);
+		 return array(
+			 'type'       => 'object',
+			 'properties' => array(
+				 'id'     => array(
+					 'type'        => array( 'integer', 'string' ),
+					 'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
+					 'context'     => array( 'view', 'edit', 'embed' ),
+					 'readonly'    => true,
+				 ),
+				 'name'   => array(
+					 'type'        => 'string',
+					 'description' => __( 'Name of the account.', 'quillbooking' ),
+					 'context'     => array( 'view', 'edit', 'embed' ),
+					 'required'    => true,
+				 ),
+				 'tokens' => array(
+					 'type'                 => 'object',
+					 'description'          => __( 'Credentials for the account.', 'quillbooking' ),
+					 'context'              => array( 'view', 'edit', 'embed' ),
+					 'required'             => true,
+					 'properties'           => array(
+						 'access_token'  => array(
+							 'type'        => 'string',
+							 'description' => __( 'Access token for the account.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+						 'refresh_token' => array(
+							 'type'        => 'string',
+							 'description' => __( 'Refresh token for the account.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+					 ),
+					 'additionalProperties' => true,
+				 ),
+				 'config' => array(
+					 'type'                 => 'object',
+					 'description'          => __( 'Configuration for the account.', 'quillbooking' ),
+					 'context'              => array( 'view', 'edit', 'embed' ),
+					 'required'             => true,
+					 'additionalProperties' => true,
+				 ),
+			 ),
+		 );
 	}
 
 	/**
@@ -325,7 +326,7 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function get_items_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 
 	/**
@@ -338,7 +339,7 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function get_item_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 
 	/**
@@ -351,7 +352,7 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function update_item_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 
 	/**
@@ -364,7 +365,7 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function delete_item_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 
 	/**
@@ -376,6 +377,6 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function get_entity_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 }

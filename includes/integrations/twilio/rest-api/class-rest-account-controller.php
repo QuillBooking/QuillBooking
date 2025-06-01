@@ -22,7 +22,6 @@ use Illuminate\Support\Arr;
  */
 class REST_Account_Controller extends Abstract_REST_Account_Controller {
 
-
 	/**
 	 * Register the routes for the objects of the controller.
 	 *
@@ -175,6 +174,6 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 * @return bool|\WP_Error
 	 */
 	public function create_item_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 }

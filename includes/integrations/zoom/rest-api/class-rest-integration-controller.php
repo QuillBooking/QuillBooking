@@ -25,24 +25,13 @@ use WP_Error;
  */
 class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 
-
-
-
-
-
-
-
-
-
-
-
 	/**
 	 * Register the routes for the objects of the controller.
 	 *
 	 * @since 1.0.0
 	 */
 	public function register_routes() {
-		parent::register_routes();
+		 parent::register_routes();
 		register_rest_route(
 			$this->namespace,
 			"/{$this->rest_base}",
@@ -66,7 +55,7 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function delete_items_permissions_check( $request ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'quillbooking_manage_own_calendars' ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
 				__( 'Sorry, you are not allowed to manage Zoom integration settings.', 'quillbooking' ),
@@ -83,78 +72,78 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 * @return array
 	 */
 	public function get_settings_schema() {
-		return array(
-			'type'       => 'object',
-			'properties' => array(
-				'id'              => array(
-					'type'        => array( 'integer', 'string' ),
-					'description' => \__( 'Unique identifier for the object.', 'quillbooking' ),
-					'context'     => array( 'view', 'edit', 'embed' ),
-					'readonly'    => false,
-				),
-				'name'            => array(
-					'type'        => 'string',
-					'description' => \__( 'Name of the account.', 'quillbooking' ),
-					'context'     => array( 'view', 'edit', 'embed' ),
-					'required'    => false,
-				),
-				'app_credentials' => array(
-					'type'                 => 'object',
-					'description'          => \__( 'Credentials for the account.', 'quillbooking' ),
-					'context'              => array( 'view', 'edit', 'embed' ),
-					'required'             => true,
-					'properties'           => array(
-						'account_id'    => array(
-							'type'        => 'string',
-							'description' => \__( 'Account ID.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-						'client_id'     => array(
-							'type'        => 'string',
-							'description' => \__( 'Client ID.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => false,
-						),
-						'client_secret' => array(
-							'type'        => 'string',
-							'description' => \__( 'Secret Key.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-					),
-					'additionalProperties' => true,
-				),
-				'tokens'          => array(
-					'type'                 => 'object',
-					'description'          => \__( 'Credentials for the account.', 'quillbooking' ),
-					'context'              => array( 'view', 'edit', 'embed' ),
-					'required'             => false,
-					'properties'           => array(
-						'access_token'  => array(
-							'type'        => 'string',
-							'description' => \__( 'Access token for the account.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-						'refresh_token' => array(
-							'type'        => 'string',
-							'description' => \__( 'Refresh token for the account.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-					),
-					'additionalProperties' => true,
-				),
-				'config'          => array(
-					'type'                 => 'object',
-					'description'          => \__( 'Configuration for the account.', 'quillbooking' ),
-					'context'              => array( 'view', 'edit', 'embed' ),
-					'required'             => false,
-					'additionalProperties' => true,
-				),
-			),
-		);
+		 return array(
+			 'type'       => 'object',
+			 'properties' => array(
+				 'id'              => array(
+					 'type'        => array( 'integer', 'string' ),
+					 'description' => \__( 'Unique identifier for the object.', 'quillbooking' ),
+					 'context'     => array( 'view', 'edit', 'embed' ),
+					 'readonly'    => false,
+				 ),
+				 'name'            => array(
+					 'type'        => 'string',
+					 'description' => \__( 'Name of the account.', 'quillbooking' ),
+					 'context'     => array( 'view', 'edit', 'embed' ),
+					 'required'    => false,
+				 ),
+				 'app_credentials' => array(
+					 'type'                 => 'object',
+					 'description'          => \__( 'Credentials for the account.', 'quillbooking' ),
+					 'context'              => array( 'view', 'edit', 'embed' ),
+					 'required'             => true,
+					 'properties'           => array(
+						 'account_id'    => array(
+							 'type'        => 'string',
+							 'description' => \__( 'Account ID.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+						 'client_id'     => array(
+							 'type'        => 'string',
+							 'description' => \__( 'Client ID.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => false,
+						 ),
+						 'client_secret' => array(
+							 'type'        => 'string',
+							 'description' => \__( 'Secret Key.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+					 ),
+					 'additionalProperties' => true,
+				 ),
+				 'tokens'          => array(
+					 'type'                 => 'object',
+					 'description'          => \__( 'Credentials for the account.', 'quillbooking' ),
+					 'context'              => array( 'view', 'edit', 'embed' ),
+					 'required'             => false,
+					 'properties'           => array(
+						 'access_token'  => array(
+							 'type'        => 'string',
+							 'description' => \__( 'Access token for the account.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+						 'refresh_token' => array(
+							 'type'        => 'string',
+							 'description' => \__( 'Refresh token for the account.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+					 ),
+					 'additionalProperties' => true,
+				 ),
+				 'config'          => array(
+					 'type'                 => 'object',
+					 'description'          => \__( 'Configuration for the account.', 'quillbooking' ),
+					 'context'              => array( 'view', 'edit', 'embed' ),
+					 'required'             => false,
+					 'additionalProperties' => true,
+				 ),
+			 ),
+		 );
 	}
 
 	/**

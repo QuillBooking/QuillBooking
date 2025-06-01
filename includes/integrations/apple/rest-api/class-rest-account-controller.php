@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class REST Integration Account Controller
  *
@@ -40,7 +41,7 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 * @since 1.0.0
 	 */
 	public function register_routes() {
-		parent::register_routes();
+		 parent::register_routes();
 
 		register_rest_route(
 			$this->namespace,
@@ -60,51 +61,51 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 * @return array
 	 */
 	public function get_item_schema() {
-		return array(
-			'type'       => 'object',
-			'properties' => array(
-				'id'              => array(
-					'type'        => 'integer',
-					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
-					'context'     => array( 'view', 'edit', 'embed' ),
-					'readonly'    => false,
-				),
-				'name'            => array(
-					'type'        => 'string',
-					'description' => __( 'Name of the account.', 'quillbooking' ),
-					'context'     => array( 'view', 'edit', 'embed' ),
-					'required'    => false,
-				),
-				'app_credentials' => array(
-					'type'                 => 'object',
-					'description'          => __( 'Credentials for the account.', 'quillbooking' ),
-					'context'              => array( 'view', 'edit', 'embed' ),
-					'required'             => true,
-					'properties'           => array(
-						'apple_id'     => array(
-							'type'        => 'string',
-							'description' => __( 'Apple ID for the account.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-						'app_password' => array(
-							'type'        => 'string',
-							'description' => __( 'App password for the account.', 'quillbooking' ),
-							'context'     => array( 'view', 'edit', 'embed' ),
-							'required'    => true,
-						),
-					),
-					'additionalProperties' => true,
-				),
-				'config'          => array(
-					'type'                 => 'object',
-					'description'          => __( 'Configuration for the account.', 'quillbooking' ),
-					'context'              => array( 'view', 'edit', 'embed' ),
-					'required'             => true,
-					'additionalProperties' => true,
-				),
-			),
-		);
+		 return array(
+			 'type'       => 'object',
+			 'properties' => array(
+				 'id'              => array(
+					 'type'        => 'integer',
+					 'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
+					 'context'     => array( 'view', 'edit', 'embed' ),
+					 'readonly'    => false,
+				 ),
+				 'name'            => array(
+					 'type'        => 'string',
+					 'description' => __( 'Name of the account.', 'quillbooking' ),
+					 'context'     => array( 'view', 'edit', 'embed' ),
+					 'required'    => false,
+				 ),
+				 'app_credentials' => array(
+					 'type'                 => 'object',
+					 'description'          => __( 'Credentials for the account.', 'quillbooking' ),
+					 'context'              => array( 'view', 'edit', 'embed' ),
+					 'required'             => true,
+					 'properties'           => array(
+						 'apple_id'     => array(
+							 'type'        => 'string',
+							 'description' => __( 'Apple ID for the account.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+						 'app_password' => array(
+							 'type'        => 'string',
+							 'description' => __( 'App password for the account.', 'quillbooking' ),
+							 'context'     => array( 'view', 'edit', 'embed' ),
+							 'required'    => true,
+						 ),
+					 ),
+					 'additionalProperties' => true,
+				 ),
+				 'config'          => array(
+					 'type'                 => 'object',
+					 'description'          => __( 'Configuration for the account.', 'quillbooking' ),
+					 'context'              => array( 'view', 'edit', 'embed' ),
+					 'required'             => true,
+					 'additionalProperties' => true,
+				 ),
+			 ),
+		 );
 	}
 
 	/**
@@ -181,6 +182,6 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 * @return bool|\WP_Error
 	 */
 	public function create_item_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 }

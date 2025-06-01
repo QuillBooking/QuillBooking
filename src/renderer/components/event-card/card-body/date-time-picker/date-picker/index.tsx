@@ -55,7 +55,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 		formData.append('action', 'quillbooking_booking_slots');
 		formData.append('id', event.id.toString());
 		formData.append('timezone', timeZone || '');
-		formData.append('start_date', date.unix().toString());
+		formData.append('start_date', date.format('YYYY-MM-DD HH:mm:ss'));
 		formData.append('duration', selectedDuration.toString());
 
 		if (calendar_id) {

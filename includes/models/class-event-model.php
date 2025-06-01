@@ -40,6 +40,7 @@ class Event_Model extends Model {
 
 
 
+
 	/**
 	 * Table name
 	 *
@@ -1058,7 +1059,7 @@ class Event_Model extends Model {
 			throw new \Exception( __( 'Event is not available', 'quillbooking' ) );
 		}
 
-		return min( strtotime( 'last day of this month', $start_date ), $event_end_date );
+		return $event_end_date;
 	}
 
 	/**

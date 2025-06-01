@@ -930,8 +930,6 @@ class Event_Model extends Model {
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
 		$end_date   = $this->calculate_end_date( $start_date, $timezone );
 
-		// For 'infinity' type, adjust the end date to a reasonable window to show slots
-		// The requested start_date might be for a future month, so we'll always return ~2 months of slots
 		$event_date_type = Arr::get( $this->event_range, 'type', 'days' );
 		if ( 'infinity' === $event_date_type ) {
 			// If user is browsing future months, start from the requested month
@@ -939,7 +937,7 @@ class Event_Model extends Model {
 
 			// Get first day of next month from the requested date
 			$month_end = clone $requested_date;
-			$month_end->modify( 'last day of +2 month' );
+			$month_end->modify( 'last day of +6 month' );
 			$month_end->setTime( 23, 59, 59 );
 
 			// Use the smaller of the calculated end date or two months ahead

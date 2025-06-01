@@ -24,15 +24,6 @@ use QuillBooking\Renderer;
 
 class Booking_Actions {
 
-
-
-
-
-
-
-
-
-
 	// --- Dependency Properties ---
 	private string $calendarModelClass;
 	private string $eventModelClass;
@@ -271,8 +262,8 @@ class Booking_Actions {
 		</head>
 
 		<body class="quillbooking-body">
-			<?php
-			return ob_get_clean();
+		<?php
+		return ob_get_clean();
 	}
 
 	public function get_footer() {
@@ -295,8 +286,13 @@ class Booking_Actions {
 	}
 
 	public function route_frontend() {
-		$hash = sanitize_text_field( Arr::get( $_GET, 'id', '' ) );
-		$type = sanitize_text_field( Arr::get( $_GET, 'type', '' ) );
+		$hash          = sanitize_text_field( Arr::get( $_GET, 'id', '' ) );
+		$type          = sanitize_text_field( Arr::get( $_GET, 'type', '' ) );
+		$calendar_slug = sanitize_text_field( Arr::get( $_GET, 'calendar', '' ) );
+
+		if ( $calendar_slug ) {
+			return $this->render_calendar_page( $calendar_slug );
+		}
 
 		// Default: new booking flow
 		if ( ! $hash || ! $this->isValidPageType( $type ) ) {
@@ -510,5 +506,39 @@ class Booking_Actions {
 			return QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderer-template.php';
 		}
 		return $template;
+	}
+
+
+	protected function render_calendar_page( $slug ) {
+		$template_path = QUILLBOOKING_PLUGIN_DIR . 'src/templates/calendar.php';
+		if ( ! file_exists( $template_path ) ) {
+			return false;
+		}
+
+		if ( ! $slug ) {
+			return;
+		}
+
+		$calendar = $this->calendarModelClass::where( 'slug', $slug )->with( 'user', 'events' )->first();
+		if ( ! $calendar ) {
+			return;
+		}
+
+		extract(
+			array(
+				'calendar' => $calendar,
+			)
+		);
+
+		wp_enqueue_script( 'quillbooking-page' );
+		wp_enqueue_style( 'quillbooking-page' );
+
+		wp_head();
+		// Provide variables to the template
+		include $template_path;
+
+		echo $this->get_footer();
+
+		return true;
 	}
 }

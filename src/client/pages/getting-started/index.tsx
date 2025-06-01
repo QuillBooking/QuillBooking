@@ -5,7 +5,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Card, Flex, Button, message } from 'antd';
 import { Dialog, DialogTitle, useMediaQuery, useTheme } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +32,7 @@ const GettingStarted: React.FC = () => {
 	const navigate = useNavigate();
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+	const location = useRef<Location[]>([]);
 	const [currentStep, setCurrentStep] = useState(1);
 	const [loading, setLoading] = useState(false);
 	const [errors, setErrors] = useState<FormErrors>({});
@@ -97,18 +98,21 @@ const GettingStarted: React.FC = () => {
 		connected_integrations: {
 			apple: {
 				name: 'apple',
+				has_get_started: true,
 				connected: false,
 				has_settings: true,
 				has_accounts: false,
 			},
 			google: {
 				name: 'google',
+				has_get_started: true,
 				connected: false,
 				has_settings: true,
 				has_accounts: false,
 			},
 			outlook: {
 				name: 'outlook',
+				has_get_started: true,
 				connected: false,
 				has_settings: true,
 				has_accounts: false,
@@ -116,14 +120,16 @@ const GettingStarted: React.FC = () => {
 			},
 			twilio: {
 				name: 'twilio',
+				has_get_started: true,
 				connected: false,
-				has_settings: true,
+				has_settings: false,
 				has_accounts: false,
 			},
 			zoom: {
 				name: 'zoom',
+				has_get_started: true,
 				connected: false,
-				has_settings: true,
+				has_settings: false,
 				has_accounts: false,
 			},
 		},
@@ -210,6 +216,10 @@ const GettingStarted: React.FC = () => {
 			return newEvent;
 		});
 
+		if (field === 'location') {
+			location.current = value;
+		}
+
 		// Clear error for the field being changed
 		if (errors[field as keyof FormErrors]) {
 			setErrors((prev) => {
@@ -219,10 +229,6 @@ const GettingStarted: React.FC = () => {
 			});
 		}
 	};
-
-	useEffect(() => {
-		console.log(event.availability_data);
-	}, [event.availability_data]);
 
 	const handleAvailabilityChange = (
 		dayKey: string,
@@ -286,11 +292,7 @@ const GettingStarted: React.FC = () => {
 		}
 	};
 
-	const handleSubmit = async () => {
-		if (!validateStep(currentStep)) {
-			return;
-		}
-
+	const handleSubmit = async (redirect = false) => {
 		setLoading(true);
 		try {
 			// First create a calendar
@@ -304,122 +306,139 @@ const GettingStarted: React.FC = () => {
 			};
 
 			// Create calendar
-			const calendarResponse = await callApi({
-				path: 'calendars',
-				method: 'POST',
-				data: calendarData,
-				onSuccess: (response) => {
-					// After calendar is created, create the event
-					const eventData = {
-						name: event.name,
-						description: event.description || '',
-						type: event.type,
-						duration: event.duration,
-						color: event.color,
-						location: event.location,
-						calendar_id: response.id,
-						user_id: getCurrentUserId(),
-						status: 'active',
-						visibility: 'public',
-						event_range: {
-							type: 'days',
-							days: 60,
-						},
-						// Use the availability data from the form
-						availability_data: event.availability_data,
-						// Set default values for required fields
-						limits: {
-							max_bookings: 0,
-							max_bookings_per_day: 0,
-							max_bookings_per_week: 0,
-							max_bookings_per_month: 0,
-							max_bookings_per_year: 0,
-							max_bookings_per_user: 0,
-							max_bookings_per_user_per_day: 0,
-							max_bookings_per_user_per_week: 0,
-							max_bookings_per_user_per_month: 0,
-							max_bookings_per_user_per_year: 0,
-						},
-						email_notifications: {
-							enabled: true,
-							notify_host: true,
-							notify_attendee: true,
-							notify_admin: false,
-							notify_custom: false,
-							custom_emails: [],
-						},
-						sms_notifications: {
-							enabled: true,
-							notify_host: false,
-							notify_attendee: false,
-							notify_admin: false,
-							notify_custom: false,
-							custom_numbers: [],
-						},
-						advanced_settings: {
-							allow_cancellation: true,
-							cancellation_window: 24,
-							allow_rescheduling: true,
-							rescheduling_window: 24,
-							allow_waitlist: false,
-							waitlist_limit: 0,
-						},
-						// Use the connected integrations from the form
-						connected_integrations: event.connected_integrations,
-						// Use the additional settings from the form
-						additional_settings: event.additional_settings,
-						// Use the payments settings from the form
-						payments_settings: event.payments_settings,
-					};
+			const calendarResponse = await new Promise((resolve, reject) => {
+				callApi({
+					path: 'calendars',
+					method: 'POST',
+					data: calendarData,
+					onSuccess: async (response) => {
+						try {
+							// After calendar is created, create the event
+							const eventData = {
+								name: event.name,
+								description: event.description || '',
+								type: event.type,
+								duration: event.duration,
+								color: event.color,
+								location: location.current,
+								calendar_id: response.id,
+								user_id: getCurrentUserId(),
+								status: 'active',
+								visibility: 'public',
+								event_range: {
+									type: 'days',
+									days: 60,
+								},
+								availability_data: event.availability_data,
+								limits: {
+									max_bookings: 0,
+									max_bookings_per_day: 0,
+									max_bookings_per_week: 0,
+									max_bookings_per_month: 0,
+									max_bookings_per_year: 0,
+									max_bookings_per_user: 0,
+									max_bookings_per_user_per_day: 0,
+									max_bookings_per_user_per_week: 0,
+									max_bookings_per_user_per_month: 0,
+									max_bookings_per_user_per_year: 0,
+								},
+								email_notifications: {
+									enabled: true,
+									notify_host: true,
+									notify_attendee: true,
+									notify_admin: false,
+									notify_custom: false,
+									custom_emails: [],
+								},
+								sms_notifications: {
+									enabled: true,
+									notify_host: false,
+									notify_attendee: false,
+									notify_admin: false,
+									notify_custom: false,
+									custom_numbers: [],
+								},
+								advanced_settings: {
+									allow_cancellation: true,
+									cancellation_window: 24,
+									allow_rescheduling: true,
+									rescheduling_window: 24,
+									allow_waitlist: false,
+									waitlist_limit: 0,
+								},
+								connected_integrations:
+									event.connected_integrations,
+								additional_settings: event.additional_settings,
+								payments_settings: event.payments_settings,
+							};
 
-					// Create event
-					return callApi({
-						path: 'events',
-						method: 'POST',
-						data: eventData,
-						onSuccess: (eventResponse) => {
-							message.success(
-								__(
-									'Event created successfully!',
-									'quillbooking'
-								)
-							);
-							navigate(`calendars`, {
-								state: {
-									notice: {
-										title: __(
-											'Complete Your Setup',
+							// Create event
+							await callApi({
+								path: 'events',
+								method: 'POST',
+								data: eventData,
+								onSuccess: (eventResponse) => {
+									message.success(
+										__(
+											'Event created successfully!',
 											'quillbooking'
-										),
-										message: __(
-											'The event has been created successfully. Please complete your event setup and settings to finish.',
-											'quillbooking'
-										),
-									},
+										)
+									);
+									if (redirect) {
+										navigate(`calendars`, {
+											state: {
+												notice: {
+													title: __(
+														'Complete Your Setup',
+														'quillbooking'
+													),
+													message: __(
+														'The event has been created successfully. Please complete your event setup and settings to finish.',
+														'quillbooking'
+													),
+												},
+											},
+										});
+									}
+									resolve(response); // Resolve with calendar response
+								},
+								onError: (error) => {
+									message.error(
+										error ||
+											__(
+												'Failed to create event',
+												'quillbooking'
+											)
+									);
+									console.error(
+										'Error creating event:',
+										error
+									);
+									reject(error);
 								},
 							});
-						},
-						onError: (error) => {
-							message.error(
-								error ||
-									__('Failed to create event', 'quillbooking')
-							);
-							console.error('Error creating event:', error);
-						},
-					});
-				},
-				onError: (error) => {
-					message.error(
-						error || __('Failed to create calendar', 'quillbooking')
-					);
-					console.error('Error creating calendar:', error);
-				},
+						} catch (error) {
+							reject(error);
+						}
+					},
+					onError: (error) => {
+						message.error(
+							error ||
+								__('Failed to create calendar', 'quillbooking')
+						);
+						console.error('Error creating calendar:', error);
+						reject(error);
+					},
+				});
 			});
+
+			return calendarResponse;
 		} catch (error) {
 			message.error(
 				__('Failed to create calendar and event', 'quillbooking')
 			);
 			console.error('Error submitting form:', error);
+			throw error;
 		} finally {
 			setLoading(false);
 		}
@@ -444,6 +463,7 @@ const GettingStarted: React.FC = () => {
 				case 2:
 					return (
 						<LocationTimezone
+							handleSubmit={() => handleSubmit(false)}
 							event={event}
 							onEventChange={handleEventChange}
 							errors={errors}
@@ -563,7 +583,7 @@ const GettingStarted: React.FC = () => {
 							) : (
 								<Button
 									type="primary"
-									onClick={handleSubmit}
+									onClick={() => handleSubmit(true)}
 									loading={loading}
 									size="large"
 									className="px-8 md:px-14"

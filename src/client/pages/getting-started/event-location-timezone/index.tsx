@@ -21,12 +21,14 @@ interface FormErrors {
 
 interface ExtendedGettingStartedProps extends GettingStartedComponentProps {
 	errors?: FormErrors;
+	handleSubmit?: (redirect: boolean) => Promise<any>;
 }
 
 const LocationTimezone: React.FC<ExtendedGettingStartedProps> = ({
 	event,
 	onEventChange = () => {},
 	errors = {},
+	handleSubmit = async (redirect: boolean) => {},
 }) => {
 	return (
 		<Flex vertical gap={20} className="">
@@ -43,6 +45,7 @@ const LocationTimezone: React.FC<ExtendedGettingStartedProps> = ({
 					</Flex>
 					<Flex vertical gap={15}>
 						<Locations
+							handleSubmit={() => handleSubmit(false)}
 							locations={event.location || []}
 							onChange={(locations) => {
 								onEventChange('location', locations);
@@ -50,6 +53,7 @@ const LocationTimezone: React.FC<ExtendedGettingStartedProps> = ({
 							connected_integrations={
 								event.connected_integrations
 							}
+							calendar={event.calendar}
 						/>
 						{errors.location && (
 							<div className="text-red-500 text-sm mt-1">

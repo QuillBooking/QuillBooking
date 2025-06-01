@@ -6,13 +6,14 @@ import { registerAdminPage } from '@quillbooking/navigation';
 /**
  * WordPress dependencies
  */
-import { useEffect } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
  * External Dependencies
  */
 import { motion } from 'framer-motion';
+import React from 'react';
 
 /**
  * Internal Dependencies
@@ -30,6 +31,7 @@ import Help from '../pages/help';
 import Logout from '../pages/logout';
 import Integrations from '../pages/integrations';
 import GeneralSettings from '../pages/global-settings';
+import { useApi } from '@quillbooking/hooks';
 import {
 	AvailabilityIcon,
 	BookingIcon,
@@ -43,13 +45,103 @@ import {
 import Navmenu from './navmenu';
 import ProtectedRoute from './protected-route';
 
+// Declare global window interface
+declare global {
+	interface Window {
+		quillbooking?: {
+			adminUrl?: string;
+		};
+	}
+}
+
+// Create a context for calendar state
+const CalendarContext = React.createContext({
+	hasCalendars: false,
+	isLoading: true,
+	checkCalendars: async () => {},
+});
+
+// Create a provider component
+const CalendarProvider = ({ children }) => {
+	const { callApi } = useApi();
+	const [hasCalendars, setHasCalendars] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
+
+	const checkCalendars = async () => {
+		setIsLoading(true);
+		try {
+			await callApi({
+				path: 'calendars',
+				method: 'GET',
+				onSuccess: (response) => {
+					setHasCalendars(response.data.length > 0);
+				},
+				onError: () => {
+					setHasCalendars(false);
+				},
+			});
+		} catch {
+			setHasCalendars(false);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		checkCalendars();
+	}, []);
+
+	return (
+		<CalendarContext.Provider
+			value={{ hasCalendars, isLoading, checkCalendars }}
+		>
+			{children}
+		</CalendarContext.Provider>
+	);
+};
+
+// Create a wrapper component for Dashboard to handle the visibility check
+const DashboardWrapper = () => {
+	const { hasCalendars, isLoading } = React.useContext(CalendarContext);
+	console.log('hasCalendars', hasCalendars);
+
+	// Show nothing while loading
+	if (isLoading) {
+		return null;
+	}
+
+	// If no calendars, show getting started page
+	if (!hasCalendars) {
+		return <GettingStarted />;
+	}
+
+	// If there are calendars, show dashboard
+	return <Dashboard />;
+};
+
+// Create a custom component for the dashboard label
+const DashboardLabel = () => {
+	const { hasCalendars } = React.useContext(CalendarContext);
+	console.log('hasCalendars', hasCalendars);
+
+	return (
+		<Navmenu
+			icon={<HomeIcon width={24} height={24} />}
+			title={
+				hasCalendars
+					? __('Dashboard', 'quillbooking')
+					: __('Getting Started', 'quillbooking')
+			}
+		/>
+	);
+};
+
 export const Controller = ({ page }) => {
 	useEffect(() => {
 		window.document.documentElement.scrollTop = 0;
 	}, []);
 
 	return (
-		// Using motion div with layoutScroll to reevaluate positions when the user scrolls.
 		<motion.div
 			layoutScroll
 			className="quillbooking-page-component-wrapper"
@@ -61,12 +153,15 @@ export const Controller = ({ page }) => {
 
 registerAdminPage('dashboard', {
 	path: '/',
-	component: () => <Dashboard />,
+	component: () => (
+		<CalendarProvider>
+			<DashboardWrapper />
+		</CalendarProvider>
+	),
 	label: (
-		<Navmenu
-			icon={<HomeIcon width={24} height={24} />}
-			title={__('Dashboard', 'quillbooking')}
-		/>
+		<CalendarProvider>
+			<DashboardLabel />
+		</CalendarProvider>
 	),
 });
 
@@ -193,11 +288,4 @@ registerAdminPage('booking-details', {
 	component: () => <BookingDetails />,
 	label: __('Booking Details', 'quillbooking'),
 	hidden: true,
-});
-
-registerAdminPage('getting-started', {
-	path: 'getting-started',
-	component: () => <GettingStarted />,
-	label: __('Getting Started', 'quillbooking'),
-	hidden: false,
 });

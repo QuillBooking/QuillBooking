@@ -26,7 +26,8 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
 /**
  * Calendar Events Model class
  */
-class Event_Model extends Model {
+class Event_Model extends Model
+{
 
 
 
@@ -82,10 +83,10 @@ class Event_Model extends Model {
 	 * @var array
 	 */
 	protected $casts = array(
-		'user_id'     => 'integer',
+		'user_id' => 'integer',
 		'calendar_id' => 'integer',
 		'is_disabled' => 'boolean',
-		'reserve'     => 'boolean',
+		'reserve' => 'boolean',
 	);
 
 	/**
@@ -95,11 +96,11 @@ class Event_Model extends Model {
 	 */
 	protected $rules = array(
 		'calendar_id' => 'required|integer',
-		'user_id'     => 'integer',
-		'name'        => 'required',
-		'type'        => 'required',
-		'duration'    => 'required',
-		'color'       => 'regex:/^#[a-fA-F0-9]{6}$/',
+		'user_id' => 'integer',
+		'name' => 'required',
+		'type' => 'required',
+		'duration' => 'required',
+		'color' => 'regex:/^#[a-fA-F0-9]{6}$/',
 	);
 
 	/**
@@ -108,15 +109,15 @@ class Event_Model extends Model {
 	 * @var array
 	 */
 	protected $messages = array(
-		'calendar_id.required'       => 'Calendar ID is required',
-		'calendar_id.integer'        => 'Calendar ID must be an integer',
-		'calendar_id.exists'         => 'Calendar ID does not exist',
-		'user_id.integer'            => 'User ID must be an integer',
-		'name.required'              => 'Event name is required',
-		'type.required'              => 'Event type is required',
-		'duration.required'          => 'Event duration is required',
+		'calendar_id.required' => 'Calendar ID is required',
+		'calendar_id.integer' => 'Calendar ID must be an integer',
+		'calendar_id.exists' => 'Calendar ID does not exist',
+		'user_id.integer' => 'User ID must be an integer',
+		'name.required' => 'Event name is required',
+		'type.required' => 'Event type is required',
+		'duration.required' => 'Event duration is required',
 		'settings.location.required' => 'Event location is required',
-		'color.regex'                => 'Color must be a valid hex color',
+		'color.regex' => 'Color must be a valid hex color',
 	);
 
 	/**
@@ -142,8 +143,9 @@ class Event_Model extends Model {
 	 *
 	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
-	public function calendar() {
-		return $this->belongsTo( Calendar_Model::class, 'calendar_id', 'id' );
+	public function calendar()
+	{
+		return $this->belongsTo(Calendar_Model::class, 'calendar_id', 'id');
 	}
 
 	/**
@@ -153,8 +155,9 @@ class Event_Model extends Model {
 	 *
 	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
 	 */
-	public function meta() {
-		return $this->hasMany( Event_Meta_Model::class, 'event_id' );
+	public function meta()
+	{
+		return $this->hasMany(Event_Meta_Model::class, 'event_id');
 	}
 
 	/**
@@ -164,8 +167,9 @@ class Event_Model extends Model {
 	 *
 	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
 	 */
-	public function bookings() {
-		return $this->hasMany( Booking_Model::class, 'event_id' );
+	public function bookings()
+	{
+		return $this->hasMany(Booking_Model::class, 'event_id');
 	}
 
 	/**
@@ -175,8 +179,9 @@ class Event_Model extends Model {
 	 *
 	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
-	public function user() {
-		return $this->belongsTo( User_Model::class, 'user_id' );
+	public function user()
+	{
+		return $this->belongsTo(User_Model::class, 'user_id');
 	}
 
 	/**
@@ -184,8 +189,9 @@ class Event_Model extends Model {
 	 *
 	 * @return string|null
 	 */
-	public function getFieldsAttribute() {
-		return $this->get_meta( 'fields' );
+	public function getFieldsAttribute()
+	{
+		return $this->get_meta('fields');
 	}
 
 	/**
@@ -193,14 +199,15 @@ class Event_Model extends Model {
 	 *
 	 * @return string|null
 	 */
-	public function getAvailabilityAttribute() {
-		$value = $this->get_meta( 'availability' );
+	public function getAvailabilityAttribute()
+	{
+		$value = $this->get_meta('availability');
 
-		if ( is_array( $value ) ) {
+		if (is_array($value)) {
 			return $value;
 		}
 
-		$availability = Availabilities::get_availability( $value );
+		$availability = Availabilities::get_availability($value);
 		return $availability;
 	}
 
@@ -210,8 +217,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setAvailabilityAttribute( $value ) {
-		$this->update_meta( 'availability', $value );
+	public function setAvailabilityAttribute($value)
+	{
+		$this->update_meta('availability', $value);
 	}
 
 	/**
@@ -221,31 +229,32 @@ class Event_Model extends Model {
 	 *
 	 * @return void
 	 */
-	public function setLocationAttribute( array $value ) {
+	public function setLocationAttribute(array $value)
+	{
 		$event_location = $value ?? null;
-		if ( ! $event_location ) {
+		if (!$event_location) {
 			return;
 		}
 
-		if ( ! is_array( $event_location ) ) {
-			throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
+		if (!is_array($event_location)) {
+			throw new \Exception(__('Invalid location', 'quillbooking'));
 		}
 
-		foreach ( $event_location as $index => $location ) {
-			$location_type = Locations_Manager::instance()->get_location( $location['type'] );
-			if ( ! $location_type ) {
-				throw new \Exception( __( 'Location does not exist', 'quillbooking' ) );
+		foreach ($event_location as $index => $location) {
+			$location_type = Locations_Manager::instance()->get_location($location['type']);
+			if (!$location_type) {
+				throw new \Exception(__('Location does not exist', 'quillbooking'));
 			}
 
-			$validation = $location_type->validate_fields( $location );
-			if ( is_wp_error( $validation ) ) {
-				throw new \Exception( $validation->get_error_message() );
+			$validation = $location_type->validate_fields($location);
+			if (is_wp_error($validation)) {
+				throw new \Exception($validation->get_error_message());
 			}
 
-			$event_location[ $index ] = $validation;
+			$event_location[$index] = $validation;
 		}
 
-		$this->update_meta( 'location', $event_location );
+		$this->update_meta('location', $event_location);
 	}
 
 	/**
@@ -253,8 +262,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getLocationAttribute() {
-		return $this->get_meta( 'location', array() );
+	public function getLocationAttribute()
+	{
+		return $this->get_meta('location', array());
 	}
 
 	/**
@@ -263,8 +273,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setLimitsAttribute( $value ) {
-		$this->update_meta( 'limits', $value );
+	public function setLimitsAttribute($value)
+	{
+		$this->update_meta('limits', $value);
 	}
 
 	/**
@@ -272,8 +283,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getLimitsAttribute() {
-		return $this->get_meta( 'limits', array() );
+	public function getLimitsAttribute()
+	{
+		return $this->get_meta('limits', array());
 	}
 
 	/**
@@ -282,8 +294,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setReserveTimesAttribute( $value ) {
-		$this->update_meta( 'reserve_times', $value );
+	public function setReserveTimesAttribute($value)
+	{
+		$this->update_meta('reserve_times', $value);
 	}
 
 
@@ -292,8 +305,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getReserveTimesAttribute() {
-		return $this->get_meta( 'reserve_times', array() );
+	public function getReserveTimesAttribute()
+	{
+		return $this->get_meta('reserve_times', array());
 	}
 
 
@@ -302,8 +316,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getTeamMembersAttribute() {
-		 return $this->get_meta( 'team_members', array() );
+	public function getTeamMembersAttribute()
+	{
+		return $this->get_meta('team_members', array());
 	}
 
 	/**
@@ -312,8 +327,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setTeamMembersAttribute( $value ) {
-		$this->update_meta( 'team_members', $value );
+	public function setTeamMembersAttribute($value)
+	{
+		$this->update_meta('team_members', $value);
 	}
 
 
@@ -322,8 +338,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getEmailNotificationsAttribute() {
-		return $this->get_meta( 'email_notifications', array() );
+	public function getEmailNotificationsAttribute()
+	{
+		return $this->get_meta('email_notifications', array());
 	}
 
 	/**
@@ -332,8 +349,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setEmailNotificationsAttribute( $value ) {
-		$this->update_meta( 'email_notifications', $value );
+	public function setEmailNotificationsAttribute($value)
+	{
+		$this->update_meta('email_notifications', $value);
 	}
 
 	/**
@@ -341,8 +359,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getSmsNotificationsAttribute() {
-		return $this->get_meta( 'sms_notifications', array() );
+	public function getSmsNotificationsAttribute()
+	{
+		return $this->get_meta('sms_notifications', array());
 	}
 
 	/**
@@ -351,8 +370,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setSmsNotificationsAttribute( $value ) {
-		$this->update_meta( 'sms_notifications', $value );
+	public function setSmsNotificationsAttribute($value)
+	{
+		$this->update_meta('sms_notifications', $value);
 	}
 
 	/**
@@ -360,8 +380,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getAdditionalSettingsAttribute() {
-		return $this->get_meta( 'additional_settings', array() );
+	public function getAdditionalSettingsAttribute()
+	{
+		return $this->get_meta('additional_settings', array());
 	}
 
 	/**
@@ -370,8 +391,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setAdditionalSettingsAttribute( $value ) {
-		$this->update_meta( 'additional_settings', $value );
+	public function setAdditionalSettingsAttribute($value)
+	{
+		$this->update_meta('additional_settings', $value);
 	}
 
 	/**
@@ -379,8 +401,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getGroupSettingsAttribute() {
-		return $this->get_meta( 'group', array() );
+	public function getGroupSettingsAttribute()
+	{
+		return $this->get_meta('group', array());
 	}
 
 	/**
@@ -389,8 +412,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setGroupSettingsAttribute( $value ) {
-		$this->update_meta( 'group', $value );
+	public function setGroupSettingsAttribute($value)
+	{
+		$this->update_meta('group', $value);
 	}
 
 	/**
@@ -398,8 +422,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getEventRangeAttribute() {
-		return $this->get_meta( 'event_range', array() );
+	public function getEventRangeAttribute()
+	{
+		return $this->get_meta('event_range', array());
 	}
 
 	/**
@@ -408,8 +433,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setEventRangeAttribute( $value ) {
-		$this->update_meta( 'event_range', $value );
+	public function setEventRangeAttribute($value)
+	{
+		$this->update_meta('event_range', $value);
 	}
 
 	/**
@@ -417,8 +443,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getAdvancedSettingsAttribute() {
-		return $this->get_meta( 'advanced_settings', array() );
+	public function getAdvancedSettingsAttribute()
+	{
+		return $this->get_meta('advanced_settings', array());
 	}
 
 	/**
@@ -427,8 +454,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setAdvancedSettingsAttribute( $value ) {
-		$this->update_meta( 'advanced_settings', $value );
+	public function setAdvancedSettingsAttribute($value)
+	{
+		$this->update_meta('advanced_settings', $value);
 	}
 
 	/**
@@ -436,8 +464,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getPaymentsSettingsAttribute() {
-		return $this->get_meta( 'payments_settings', array() );
+	public function getPaymentsSettingsAttribute()
+	{
+		return $this->get_meta('payments_settings', array());
 	}
 
 	/**
@@ -446,8 +475,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setPaymentsSettingsAttribute( $value ) {
-		$this->update_meta( 'payments_settings', $value );
+	public function setPaymentsSettingsAttribute($value)
+	{
+		$this->update_meta('payments_settings', $value);
 	}
 
 	/**
@@ -455,8 +485,9 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getWebhookFeedsAttribute() {
-		return $this->get_meta( 'webhook_feeds', array() );
+	public function getWebhookFeedsAttribute()
+	{
+		return $this->get_meta('webhook_feeds', array());
 	}
 
 	/**
@@ -465,8 +496,9 @@ class Event_Model extends Model {
 	 * @param array $value
 	 * @return void
 	 */
-	public function setWebhookFeedsAttribute( $value ) {
-		$this->update_meta( 'webhook_feeds', $value );
+	public function setWebhookFeedsAttribute($value)
+	{
+		$this->update_meta('webhook_feeds', $value);
 	}
 
 	/**
@@ -474,8 +506,9 @@ class Event_Model extends Model {
 	 *
 	 * @return bool
 	 */
-	public function getDynamicDurationAttribute() {
-		 return $this->get_meta( 'dynamic_duration', false );
+	public function getDynamicDurationAttribute()
+	{
+		return $this->get_meta('dynamic_duration', false);
 	}
 
 	/**
@@ -484,8 +517,9 @@ class Event_Model extends Model {
 	 * @param bool $value
 	 * @return void
 	 */
-	public function setDynamicDurationAttribute( $value ) {
-		$this->update_meta( 'dynamic_duration', $value );
+	public function setDynamicDurationAttribute($value)
+	{
+		$this->update_meta('dynamic_duration', $value);
 	}
 
 	/**
@@ -493,9 +527,10 @@ class Event_Model extends Model {
 	 *
 	 * @return int
 	 */
-	public function getBookingCountAttribute() {
+	public function getBookingCountAttribute()
+	{
 		return $this->bookings()
-			->where( 'status', '!=', 'cancelled' )
+			->where('status', '!=', 'cancelled')
 			->count();
 	}
 
@@ -504,23 +539,24 @@ class Event_Model extends Model {
 	 *
 	 * @return float
 	 */
-	public function getPriceAttribute() {
+	public function getPriceAttribute()
+	{
 		$payments_enabled = $this->requirePayment();
-		if ( ! $payments_enabled ) {
+		if (!$payments_enabled) {
 			return 0;
 		}
 
 		$items = $this->getItems();
-		if ( empty( $items ) ) {
+		if (empty($items)) {
 			return 0;
 		}
 
-		$total_price    = 0;
-		$multi_duration = Arr::get( $this->additional_settings, 'allow_attendees_to_select_duration', false );
-		if ( $multi_duration ) {
-			$total_price = Arr::get( $this->payments, 'multi_duration_items.0.price', 0 );
+		$total_price = 0;
+		$multi_duration = Arr::get($this->additional_settings, 'allow_attendees_to_select_duration', false);
+		if ($multi_duration) {
+			$total_price = Arr::get($this->payments, 'multi_duration_items.0.price', 0);
 		} else {
-			foreach ( $items as $item ) {
+			foreach ($items as $item) {
 				$total_price += $item['price'];
 			}
 		}
@@ -533,56 +569,57 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getConnectedIntegrationsAttribute() {
+	public function getConnectedIntegrationsAttribute()
+	{
 		$connected_integrations = array();
-		$integrations           = Integrations_Manager::instance()->get_integrations();
+		$integrations = Integrations_Manager::instance()->get_integrations();
 
-		$calendar_ids = array( $this->calendar_id );
-		if ( in_array( $this->type, array( 'round-robin', 'collective' ) ) ) {
+		$calendar_ids = array($this->calendar_id);
+		if (in_array($this->type, array('round-robin', 'collective'))) {
 			$team_members = $this->calendar->getTeamMembers();
 			$calendar_ids = $team_members;
 		}
 
-		foreach ( $integrations as $integration_class ) {
-			$integration         = new $integration_class();
-			$all_connected       = true;
-			$has_accounts        = false;
-			$global_settings     = $integration->get_settings();
+		foreach ($integrations as $integration_class) {
+			$integration = new $integration_class();
+			$all_connected = true;
+			$has_accounts = false;
+			$global_settings = $integration->get_settings();
 			$set_global_settings = false;
-			$teams_enabled       = false;
+			$teams_enabled = false;
 
-			if ( $integration->slug == 'zoom' ) {
-				$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
-				if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['client_id'] ) && ! empty( $app_credentials['client_secret'] ) ) {
+			if ($integration->slug == 'zoom') {
+				$app_credentials = Arr::get($global_settings, 'app_credentials', null);
+				if ($app_credentials && is_array($app_credentials) && !empty($app_credentials['client_id']) && !empty($app_credentials['client_secret'])) {
 					$set_global_settings = true;
 				} else {
 					$set_global_settings = false;
 				}
 			} else {
-				$app = Arr::get( $global_settings, 'app', null );
-				if ( $app && is_array( $app ) && ! empty( $app['cache_time'] ) ) {
+				$app = Arr::get($global_settings, 'app', null);
+				if ($app && is_array($app) && !empty($app['cache_time'])) {
 					$set_global_settings = true;
 				} else {
 					$set_global_settings = false;
 				}
 			}
 
-			foreach ( $calendar_ids as $calendar_id ) {
-				$integration->set_host( $calendar_id );
+			foreach ($calendar_ids as $calendar_id) {
+				$integration->set_host($calendar_id);
 				$accounts = $integration->accounts->get_accounts();
 
-				if ( empty( $accounts ) ) {
+				if (empty($accounts)) {
 					$all_connected = false;
 				} else {
 					$has_accounts = true;
 					// Check if this is the default account and has Teams enabled
-					if ( $integration->slug === 'outlook' ) {
-						foreach ( $accounts as $account ) {
+					if ($integration->slug === 'outlook') {
+						foreach ($accounts as $account) {
 							if (
-								isset( $account['config']['default_calendar'] )
+								isset($account['config']['default_calendar'])
 							) {
 								// Check if Teams is explicitly enabled in the account settings
-								$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
+								$teams_enabled = isset($account['config']['settings']['enable_teams']) &&
 									$account['config']['settings']['enable_teams'] === true;
 								break;
 							}
@@ -591,11 +628,11 @@ class Event_Model extends Model {
 				}
 			}
 
-			$connected_integrations[ $integration->slug ] = array(
-				'name'          => $integration->name,
-				'connected'     => $all_connected,
-				'has_accounts'  => $has_accounts,
-				'has_settings'  => $set_global_settings,
+			$connected_integrations[$integration->slug] = array(
+				'name' => $integration->name,
+				'connected' => $all_connected,
+				'has_accounts' => $has_accounts,
+				'has_settings' => $set_global_settings,
 				'teams_enabled' => $teams_enabled,
 			);
 		}
@@ -611,35 +648,36 @@ class Event_Model extends Model {
 	 *
 	 * @return array Processed fields
 	 */
-	private function processLocationFields( $event_location ) {
+	private function processLocationFields($event_location)
+	{
 		$fields = array();
-		if ( 1 <= count( $event_location ) ) {
+		if (1 <= count($event_location)) {
 			$fields['location-select'] = array(
-				'type'     => 'radio',
-				'label'    => __( 'Location', 'quillbooking' ),
+				'type' => 'radio',
+				'label' => __('Location', 'quillbooking'),
 				'required' => true,
-				'group'    => 'system',
-				'options'  => array(),
+				'group' => 'system',
+				'options' => array(),
 			);
 		}
 
-		foreach ( $event_location as $location ) {
+		foreach ($event_location as $location) {
 			$location_manager = Locations_Manager::instance();
-			$location_type    = $location_manager->get_location( $location['type'] );
+			$location_type = $location_manager->get_location($location['type']);
 
-			if ( ! $location_type ) {
-				throw new \Exception( __( 'Location does not exist', 'quillbooking' ) );
+			if (!$location_type) {
+				throw new \Exception(__('Location does not exist', 'quillbooking'));
 			}
 
-			$validation = $location_type->validate_fields( $location );
-			if ( is_wp_error( $validation ) ) {
-				throw new \Exception( $validation->get_error_message() );
+			$validation = $location_type->validate_fields($location);
+			if (is_wp_error($validation)) {
+				throw new \Exception($validation->get_error_message());
 			}
 
 			$fields['location-select']['options'][] = array(
-				'label'  => $location_manager->get_location_label( $location ),
-				'value'  => $location['type'] === 'custom' ? $location['id'] : $location['type'],
-				'fields' => $location_type->get_fields( $location['fields'] ?? array() ),
+				'label' => $location_manager->get_location_label($location),
+				'value' => $location['type'] === 'custom' ? $location['id'] : $location['type'],
+				'fields' => $location_type->get_fields($location['fields'] ?? array()),
 			);
 		}
 
@@ -651,23 +689,24 @@ class Event_Model extends Model {
 	 *
 	 * @return void
 	 */
-	public function setSystemFields() {
-		 $event_location = $this->location ?? null;
+	public function setSystemFields()
+	{
+		$event_location = $this->location ?? null;
 
-		if ( ! $event_location || ! is_array( $event_location ) ) {
-			throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
+		if (!$event_location || !is_array($event_location)) {
+			throw new \Exception(__('Invalid location', 'quillbooking'));
 		}
 
-		$system_fields   = Event_Fields::instance()->get_system_fields();
-		$other_fields    = Event_Fields::instance()->get_other_fields();
-		$location_fields = $this->processLocationFields( $event_location );
-		$fields          = array(
-			'system'   => $system_fields,
+		$system_fields = Event_Fields::instance()->get_system_fields();
+		$other_fields = Event_Fields::instance()->get_other_fields();
+		$location_fields = $this->processLocationFields($event_location);
+		$fields = array(
+			'system' => $system_fields,
 			'location' => $location_fields,
-			'other'    => $other_fields,
+			'other' => $other_fields,
 		);
 
-		$this->update_meta( 'fields', $fields );
+		$this->update_meta('fields', $fields);
 	}
 
 	/**
@@ -675,18 +714,19 @@ class Event_Model extends Model {
 	 *
 	 * @return void
 	 */
-	public function updateSystemFields() {
+	public function updateSystemFields()
+	{
 		$event_location = $this->location ?? null;
 
-		if ( ! $event_location || ! is_array( $event_location ) ) {
-			throw new \Exception( __( 'Invalid location', 'quillbooking' ) );
+		if (!$event_location || !is_array($event_location)) {
+			throw new \Exception(__('Invalid location', 'quillbooking'));
 		}
 
-		$fields             = $this->fields ?? array();
-		$location_fields    = $this->processLocationFields( $event_location );
+		$fields = $this->fields ?? array();
+		$location_fields = $this->processLocationFields($event_location);
 		$fields['location'] = $location_fields;
 
-		$this->update_meta( 'fields', $fields );
+		$this->update_meta('fields', $fields);
 	}
 
 	/**
@@ -696,35 +736,36 @@ class Event_Model extends Model {
 	 *
 	 * @return void
 	 */
-	public function updateFields( $fields ) {
+	public function updateFields($fields)
+	{
 		$current_fields = $fields ?? array();
 
-		foreach ( $fields as $group => $group_fields ) {
-			foreach ( $group_fields as $field_key => $field ) {
-				if ( in_array( $group, array( 'system', 'location' ), true ) ) {
+		foreach ($fields as $group => $group_fields) {
+			foreach ($group_fields as $field_key => $field) {
+				if (in_array($group, array('system', 'location'), true)) {
 					// Keep existing fields and update only label, helpText, and placeholder
-					if ( isset( $current_fields[ $group ][ $field_key ] ) ) {
-						$current_fields[ $group ][ $field_key ] = array_merge(
-							$current_fields[ $group ][ $field_key ],
+					if (isset($current_fields[$group][$field_key])) {
+						$current_fields[$group][$field_key] = array_merge(
+							$current_fields[$group][$field_key],
 							array_intersect_key(
 								$field,
-								array_flip( array( 'label', 'helpText', 'placeholder', 'hidden' ) )
+								array_flip(array('label', 'helpText', 'placeholder', 'hidden'))
 							)
 						);
 					}
 				} else {
-					$field_type = Fields_Manager::instance()->get_item( $field['type'] );
+					$field_type = Fields_Manager::instance()->get_item($field['type']);
 					$field_type = new $field_type();
 
-					if ( $field_type->has_options && ! isset( $field['settings']['options'] ) ) {
-						throw new \Exception( sprintf( __( 'Options are required for %s field', 'quillbooking' ), $field['label'] ) );
+					if ($field_type->has_options && !isset($field['settings']['options'])) {
+						throw new \Exception(sprintf(__('Options are required for %s field', 'quillbooking'), $field['label']));
 					}
 
-					$current_fields[ $group ][ $field_key ] = $field;
+					$current_fields[$group][$field_key] = $field;
 				}
 			}
 		}
-		$this->update_meta( 'fields', $current_fields );
+		$this->update_meta('fields', $current_fields);
 	}
 
 	/**
@@ -735,9 +776,10 @@ class Event_Model extends Model {
 	 *
 	 * @return mixed
 	 */
-	public function get_meta( $key, $default = null ) {
-		$meta = $this->meta()->where( 'meta_key', $key )->first();
-		$meta = $meta ? maybe_unserialize( $meta->meta_value ) : $default;
+	public function get_meta($key, $default = null)
+	{
+		$meta = $this->meta()->where('meta_key', $key)->first();
+		$meta = $meta ? maybe_unserialize($meta->meta_value) : $default;
 
 		return $meta;
 	}
@@ -750,14 +792,15 @@ class Event_Model extends Model {
 	 *
 	 * @return void
 	 */
-	public function update_meta( $key, $value ) {
+	public function update_meta($key, $value)
+	{
 		$meta = $this->meta()->firstOrNew(
 			array(
 				'meta_key' => $key,
 			)
 		);
 
-		$meta->meta_value = maybe_serialize( $value );
+		$meta->meta_value = maybe_serialize($value);
 		$meta->save();
 	}
 
@@ -766,17 +809,18 @@ class Event_Model extends Model {
 	 *
 	 * @return Event_Model
 	 */
-	public function duplicate() {
-		$event          = $this->replicate();
-		$event->name    = $event->name . ' - ' . __( 'Copy', 'quillbooking' );
-		$event->hash_id = Str::random( 32 );
+	public function duplicate()
+	{
+		$event = $this->replicate();
+		$event->name = $event->name . ' - ' . __('Copy', 'quillbooking');
+		$event->hash_id = Str::random(32);
 		$event->save();
 
 		$meta = $this->meta()->get();
-		foreach ( $meta as $meta_item ) {
+		foreach ($meta as $meta_item) {
 			$event->meta()->create(
 				array(
-					'meta_key'   => $meta_item->meta_key,
+					'meta_key' => $meta_item->meta_key,
 					'meta_value' => $meta_item->meta_value,
 				)
 			);
@@ -792,24 +836,25 @@ class Event_Model extends Model {
 	 *
 	 * @return bool
 	 */
-	public function requireConfirmation( $start_date ) {
-		$require_confirmation = Arr::get( $this->advanced_settings, 'require_confirmation', false );
-		if ( ! $require_confirmation ) {
+	public function requireConfirmation($start_date)
+	{
+		$require_confirmation = Arr::get($this->advanced_settings, 'require_confirmation', false);
+		if (!$require_confirmation) {
 			return false;
 		}
 
-		$confirmation_time = Arr::get( $this->advanced_settings, 'confirmation_time', 'always' );
-		if ( 'always' === $confirmation_time ) {
+		$confirmation_time = Arr::get($this->advanced_settings, 'confirmation_time', 'always');
+		if ('always' === $confirmation_time) {
 			return true;
 		}
 
-		$confirmation_time_value = Arr::get( $this->advanced_settings, 'confirmation_time_value', 20 );
-		$confirmation_time_unit  = Arr::get( $this->advanced_settings, 'confirmation_time_unit', 'minutes' );
+		$confirmation_time_value = Arr::get($this->advanced_settings, 'confirmation_time_value', 20);
+		$confirmation_time_unit = Arr::get($this->advanced_settings, 'confirmation_time_unit', 'minutes');
 
-		$start_date = new \DateTime( $start_date, new \DateTimeZone( 'UTC' ) );
-		$now        = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
+		$start_date = new \DateTime($start_date, new \DateTimeZone('UTC'));
+		$now = new \DateTime('now', new \DateTimeZone('UTC'));
 
-		if ( 'hours' === $confirmation_time_unit ) {
+		if ('hours' === $confirmation_time_unit) {
 			$confirmation_time_value *= 60;
 		}
 
@@ -821,54 +866,55 @@ class Event_Model extends Model {
 	 *
 	 * @return boolean
 	 */
-	public function requirePayment() {
+	public function requirePayment()
+	{
 		$payments_settings = $this->payments_settings;
-		if ( ! $payments_settings ) {
+		if (!$payments_settings) {
 			return false;
 		}
 
-		$enabled = Arr::get( $payments_settings, 'enable_payment', false );
-		if ( ! $enabled ) {
+		$enabled = Arr::get($payments_settings, 'enable_payment', false);
+		if (!$enabled) {
 			return false;
 		}
 
-		$items = Arr::get( $payments_settings, 'items', array() );
-		if ( empty( $items ) ) {
+		$items = Arr::get($payments_settings, 'items', array());
+		if (empty($items)) {
 			return false;
 		}
 
 		// Check if WooCommerce integration is enabled
-		$woocommerce_enabled = Arr::get( $payments_settings, 'enable_woocommerce', false );
-		$woo_product_set     = Arr::get( $payments_settings, 'woo_product', false );
+		$woocommerce_enabled = Arr::get($payments_settings, 'enable_woocommerce', false);
+		$woo_product_set = Arr::get($payments_settings, 'woo_product', false);
 
 		// If WooCommerce is enabled and properly configured, payment is required
-		if ( $woocommerce_enabled && $woo_product_set && class_exists( 'WooCommerce' ) ) {
+		if ($woocommerce_enabled && $woo_product_set && class_exists('WooCommerce')) {
 			return true;
 		}
 
 		// Check if payment gateways are registered in the system
 		$payment_gateways_manager = \QuillBooking\Managers\Payment_Gateways_Manager::instance();
-		$payment_gateways         = $payment_gateways_manager->get_items();
+		$payment_gateways = $payment_gateways_manager->get_items();
 
 		// If no payment gateways are registered or available, we can't require payment
-		if ( empty( $payment_gateways ) ) {
+		if (empty($payment_gateways)) {
 			// Log this issue since it's a configuration problem
-			error_log( 'QuillBooking: Payment is enabled but no payment gateways are registered in the system.' );
+			error_log('QuillBooking: Payment is enabled but no payment gateways are registered in the system.');
 			return false;
 		}
 
 		// Check if at least one payment gateway is enabled for this event
 		$gateway_enabled = false;
-		foreach ( $payment_gateways as $gateway ) {
-			if ( Arr::get( $payments_settings, 'enable_' . $gateway->slug, false ) ) {
+		foreach ($payment_gateways as $gateway) {
+			if (Arr::get($payments_settings, 'enable_' . $gateway->slug, false)) {
 				$gateway_enabled = true;
 				break;
 			}
 		}
 
-		if ( ! $gateway_enabled ) {
+		if (!$gateway_enabled) {
 			// Instead of throwing an exception, we'll just log and return false
-			error_log( 'QuillBooking: Payment is enabled but no payment gateway is selected for this event.' );
+			error_log('QuillBooking: Payment is enabled but no payment gateway is selected for this event.');
 			return false;
 		}
 
@@ -880,19 +926,20 @@ class Event_Model extends Model {
 	 *
 	 * @return float
 	 */
-	public function getTotalPrice() {
+	public function getTotalPrice()
+	{
 		$payments_settings = $this->payments_settings;
-		if ( ! $payments_settings ) {
+		if (!$payments_settings) {
 			return 0;
 		}
 
-		$items = Arr::get( $payments_settings, 'items', array() );
-		if ( empty( $items ) ) {
+		$items = Arr::get($payments_settings, 'items', array());
+		if (empty($items)) {
 			return 0;
 		}
 
 		$total_price = 0;
-		foreach ( $items as $item ) {
+		foreach ($items as $item) {
 			$total_price += $item['price'];
 		}
 
@@ -904,14 +951,15 @@ class Event_Model extends Model {
 	 *
 	 * @return array
 	 */
-	public function getItems() {
+	public function getItems()
+	{
 		$payments_settings = $this->payments_settings;
-		if ( ! $payments_settings ) {
+		if (!$payments_settings) {
 			return array();
 		}
 
-		$items = Arr::get( $payments_settings, 'items', array() );
-		if ( empty( $items ) ) {
+		$items = Arr::get($payments_settings, 'items', array());
+		if (empty($items)) {
 			return array();
 		}
 
@@ -926,48 +974,50 @@ class Event_Model extends Model {
 	 * @param int    $duration   Duration of each slot in minutes.
 	 * @return array List of available slots.
 	 */
-	public function get_available_slots( $start_date, $timezone, $duration, $calendar_id ) {
+	public function get_available_slots($start_date, $timezone, $duration, $calendar_id)
+	{
 		$this->validate_availability();
-		$this->apply_frequency_limits( $start_date );
-		$this->apply_duration_limits( $start_date );
+		$this->apply_frequency_limits($start_date);
+		$this->apply_duration_limits($start_date);
 
-		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
-		$end_date   = $this->calculate_end_date( $start_date, $timezone );
+		$start_date = $this->adjust_start_date($start_date, $timezone, $duration);
+		$end_date = $this->calculate_end_date($start_date, $timezone);
 
-		$event_date_type = Arr::get( $this->event_range, 'type', 'days' );
-		if ( 'infinity' === $event_date_type ) {
+		$event_date_type = Arr::get($this->event_range, 'type', 'days');
+		if ('infinity' === $event_date_type) {
 			// If user is browsing future months, start from the requested month
-			$requested_date = new \DateTime( date( 'Y-m-d', $start_date ), new \DateTimeZone( $timezone ) );
+			$requested_date = new \DateTime(date('Y-m-d', $start_date), new \DateTimeZone($timezone));
 
 			// Get first day of next month from the requested date
 			$month_end = clone $requested_date;
-			$month_end->modify( 'last day of +6 month' );
-			$month_end->setTime( 23, 59, 59 );
+			$month_end->modify('last day of +2 month');
+			$month_end->setTime(23, 59, 59);
 
 			// Use the smaller of the calculated end date or two months ahead
 			$month_end_timestamp = $month_end->getTimestamp();
-			if ( $month_end_timestamp < $end_date ) {
+			if ($month_end_timestamp < $end_date) {
 				$end_date = $month_end_timestamp;
 			}
 		}
 
-		$slots = $this->generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id );
+		$slots = $this->generate_daily_slots($start_date, $end_date, $timezone, $duration, $calendar_id);
 
-		return apply_filters( 'quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone );
+		return apply_filters('quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone);
 	}
 
 	/**
 	 * Validate availability data and weekly hours.
 	 */
-	private function validate_availability() {
+	private function validate_availability()
+	{
 		$availability = $this->availability;
-		if ( ! $availability ) {
-			throw new \Exception( __( 'Availability not set', 'quillbooking' ) );
+		if (!$availability) {
+			throw new \Exception(__('Availability not set', 'quillbooking'));
 		}
 
 		$weekly_hours = $availability['weekly_hours'] ?? array();
-		if ( empty( $weekly_hours ) ) {
-			throw new \Exception( __( 'Weekly hours are not set', 'quillbooking' ) );
+		if (empty($weekly_hours)) {
+			throw new \Exception(__('Weekly hours are not set', 'quillbooking'));
 		}
 	}
 
@@ -976,17 +1026,18 @@ class Event_Model extends Model {
 	 *
 	 * @param int $start_date Start date timestamp.
 	 */
-	private function apply_frequency_limits( $start_date ) {
-		if ( ! Arr::get( $this->limits, 'frequency.enable', false ) ) {
+	private function apply_frequency_limits($start_date)
+	{
+		if (!Arr::get($this->limits, 'frequency.enable', false)) {
 			return;
 		}
 
-		$frequency_limit      = Arr::get( $this->limits, 'frequency.limit', 5 );
-		$frequency_unit       = Arr::get( $this->limits, 'frequency.unit', 'days' );
-		$frequency_start_time = strtotime( 'midnight', $start_date );
-		$frequency_end_time   = strtotime( 'tomorrow', $frequency_start_time ) - 1;
+		$frequency_limit = Arr::get($this->limits, 'frequency.limit', 5);
+		$frequency_unit = Arr::get($this->limits, 'frequency.unit', 'days');
+		$frequency_start_time = strtotime('midnight', $start_date);
+		$frequency_end_time = strtotime('tomorrow', $frequency_start_time) - 1;
 
-		$this->validate_limit( $frequency_limit, $frequency_unit, $frequency_start_time, $frequency_end_time, 'Event reached the frequency limit' );
+		$this->validate_limit($frequency_limit, $frequency_unit, $frequency_start_time, $frequency_end_time, 'Event reached the frequency limit');
 	}
 
 	/**
@@ -994,17 +1045,18 @@ class Event_Model extends Model {
 	 *
 	 * @param int $start_date Start date timestamp.
 	 */
-	private function apply_duration_limits( $start_date ) {
-		if ( ! Arr::get( $this->limits, 'duration.enable', false ) ) {
+	private function apply_duration_limits($start_date)
+	{
+		if (!Arr::get($this->limits, 'duration.enable', false)) {
 			return;
 		}
 
-		$duration_limit      = Arr::get( $this->limits, 'duration.limit', 60 );
-		$duration_unit       = Arr::get( $this->limits, 'duration.unit', 'days' );
-		$duration_start_time = strtotime( 'midnight', $start_date );
-		$duration_end_time   = strtotime( 'tomorrow', $duration_start_time ) - 1;
+		$duration_limit = Arr::get($this->limits, 'duration.limit', 60);
+		$duration_unit = Arr::get($this->limits, 'duration.unit', 'days');
+		$duration_start_time = strtotime('midnight', $start_date);
+		$duration_end_time = strtotime('tomorrow', $duration_start_time) - 1;
 
-		$this->validate_limit( $duration_limit, $duration_unit, $duration_start_time, $duration_end_time, 'Event reached the duration limit', true );
+		$this->validate_limit($duration_limit, $duration_unit, $duration_start_time, $duration_end_time, 'Event reached the duration limit', true);
 	}
 
 	/**
@@ -1017,22 +1069,23 @@ class Event_Model extends Model {
 	 * @param string $message    Error message to display if the limit is exceeded.
 	 * @param bool   $sum        Whether to sum bookings (for duration limits).
 	 */
-	private function validate_limit( $limit, $unit, $start_time, $end_time, $message, $sum = false ) {
+	private function validate_limit($limit, $unit, $start_time, $end_time, $message, $sum = false)
+	{
 		$unit_multiplier = array(
-			'weeks'  => 7,
+			'weeks' => 7,
 			'months' => 30,
 		);
-		$limit          *= $unit_multiplier[ $unit ] ?? 1;
+		$limit *= $unit_multiplier[$unit] ?? 1;
 
-		$query = Booking_Model::where( 'event_id', $this->id )
-			->where( 'start_date', '>=', $start_time )
-			->where( 'start_date', '<=', $end_time )
-			->whereNot( 'status', 'cancelled' );
+		$query = Booking_Model::where('event_id', $this->id)
+			->where('start_date', '>=', $start_time)
+			->where('start_date', '<=', $end_time)
+			->whereNot('status', 'cancelled');
 
-		$result = $sum ? $query->sum( 'duration' ) : $query->count();
+		$result = $sum ? $query->sum('duration') : $query->count();
 
-		if ( $result >= $limit ) {
-			throw new \Exception( __( $message, 'quillbooking' ) );
+		if ($result >= $limit) {
+			throw new \Exception(__($message, 'quillbooking'));
 		}
 	}
 
@@ -1044,14 +1097,15 @@ class Event_Model extends Model {
 	 * @param int    $duration   Slot duration in minutes.
 	 * @return int Adjusted start date timestamp.
 	 */
-	private function adjust_start_date( $start_date, $timezone, $duration ) {
-		$start_date       = new \DateTime( $start_date, new \DateTimeZone( $timezone ) );
-		$event_start_date = $this->get_start_date( $timezone );
-		$current_time     = ( new \DateTime( 'now', new \DateTimeZone( $timezone ) ) )->getTimestamp();
+	private function adjust_start_date($start_date, $timezone, $duration)
+	{
+		$start_date = new \DateTime($start_date, new \DateTimeZone($timezone));
+		$event_start_date = $this->get_start_date($timezone);
+		$current_time = (new \DateTime('now', new \DateTimeZone($timezone)))->getTimestamp();
 
-		$start_date = max( $event_start_date, $start_date->getTimestamp(), $current_time );
+		$start_date = max($event_start_date, $start_date->getTimestamp(), $current_time);
 
-		return ceil( $start_date / ( $duration * 60 ) ) * ( $duration * 60 );
+		return ceil($start_date / ($duration * 60)) * ($duration * 60);
 	}
 
 	/**
@@ -1061,11 +1115,12 @@ class Event_Model extends Model {
 	 * @param string $timezone   Timezone.
 	 * @return int End date timestamp.
 	 */
-	private function calculate_end_date( $start_date, $timezone ) {
-		$event_end_date = $this->get_end_date( $timezone );
+	private function calculate_end_date($start_date, $timezone)
+	{
+		$event_end_date = $this->get_end_date($timezone);
 
-		if ( $start_date > $event_end_date ) {
-			throw new \Exception( __( 'Event is not available', 'quillbooking' ) );
+		if ($start_date > $event_end_date) {
+			throw new \Exception(__('Event is not available', 'quillbooking'));
 		}
 
 		return $event_end_date;
@@ -1080,21 +1135,22 @@ class Event_Model extends Model {
 	 * @param int    $duration   Slot duration in minutes.
 	 * @return array Generated slots.
 	 */
-	private function generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id ) {
+	private function generate_daily_slots($start_date, $end_date, $timezone, $duration, $calendar_id)
+	{
 		$slots = array();
 
-		for ( $current_date = $start_date; $current_date <= $end_date; $current_date = strtotime( '+1 day', $current_date ) ) {
-			$day_of_week = strtolower( date( 'l', $current_date ) );
+		for ($current_date = $start_date; $current_date <= $end_date; $current_date = strtotime('+1 day', $current_date)) {
+			$day_of_week = strtolower(date('l', $current_date));
 
-			if ( empty( $this->availability['weekly_hours'][ $day_of_week ]['off'] ) ) {
-				foreach ( $this->availability['weekly_hours'][ $day_of_week ]['times'] as $time_block ) {
-					$day_start = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
-					$day_end   = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+			if (empty($this->availability['weekly_hours'][$day_of_week]['off'])) {
+				foreach ($this->availability['weekly_hours'][$day_of_week]['times'] as $time_block) {
+					$day_start = new \DateTime(date('Y-m-d', $current_date) . ' ' . $time_block['start'], new \DateTimeZone($this->availability['timezone']));
+					$day_end = new \DateTime(date('Y-m-d', $current_date) . ' ' . $time_block['end'], new \DateTimeZone($this->availability['timezone']));
 
-					$day_start->setTimezone( new \DateTimeZone( $timezone ) );
-					$day_end->setTimezone( new \DateTimeZone( $timezone ) );
+					$day_start->setTimezone(new \DateTimeZone($timezone));
+					$day_end->setTimezone(new \DateTimeZone($timezone));
 
-					$slots = $this->generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id );
+					$slots = $this->generate_slots_for_time_block($day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id);
 				}
 			}
 		}
@@ -1113,55 +1169,56 @@ class Event_Model extends Model {
 	 * @param array     $slots Existing slots to append new slots.
 	 * @return array Updated slots with new time block slots.
 	 */
-	private function generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id ) {
+	private function generate_slots_for_time_block($day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id)
+	{
 		// Get current time in user timezone
-		$current_time = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
+		$current_time = new \DateTime('now', new \DateTimeZone($timezone));
 
 		// Calculate minimum notice limit
 		$min_notice_limit = clone $current_time;
-		$min_notice       = Arr::get( $this->limits, 'general.minimum_notices', 4 );
-		$min_notice_unit  = Arr::get( $this->limits, 'general.minimum_notice_unit', 'hours' );
-		$min_notice_limit->modify( "+{$min_notice} {$min_notice_unit}" );
+		$min_notice = Arr::get($this->limits, 'general.minimum_notices', 4);
+		$min_notice_unit = Arr::get($this->limits, 'general.minimum_notice_unit', 'hours');
+		$min_notice_limit->modify("+{$min_notice} {$min_notice_unit}");
 
-		$current_day      = date( 'Y-m-d', $current_date );
-		$current_time_day = $current_time->format( 'Y-m-d' );
+		$current_day = date('Y-m-d', $current_date);
+		$current_time_day = $current_time->format('Y-m-d');
 		// Adjust start time if generating slots for today
-		if ( $current_day === $current_time_day ) {
-			if ( $current_time > $day_start ) {
+		if ($current_day === $current_time_day) {
+			if ($current_time > $day_start) {
 				$day_start = clone $current_time; // Start from the current time
 			}
 
-			if ( $min_notice_limit >= $day_start ) {
+			if ($min_notice_limit >= $day_start) {
 				$day_start = clone $min_notice_limit; // Start from the minimum notice limit
 			}
 
 			// Check if time like 10:48:12 go to the next valid slot 11:00:00 depending on the duration
-			$day_start->setTime( $day_start->format( 'H' ), ceil( $day_start->format( 'i' ) / $duration ) * $duration, 0 );
+			$day_start->setTime($day_start->format('H'), ceil($day_start->format('i') / $duration) * $duration, 0);
 		}
 
 		$current_slot_start = clone $day_start;
 
-		while ( $current_slot_start < $day_end ) {
+		while ($current_slot_start < $day_end) {
 			$slot_start = clone $current_slot_start;
-			$slot_end   = clone $slot_start;
-			$slot_end->modify( "+{$duration} minutes" );
+			$slot_end = clone $slot_start;
+			$slot_end->modify("+{$duration} minutes");
 
-			if ( $slot_end > $day_end ) {
+			if ($slot_end > $day_end) {
 				break; // End of time block
 			}
 
 			// Check availability of the slot
-			$availabile_slots = $this->check_available_slots( $slot_start, $slot_end, $calendar_id );
+			$availabile_slots = $this->check_available_slots($slot_start, $slot_end, $calendar_id);
 
-			if ( 0 === $availabile_slots ) {
-				$current_slot_start->modify( "+{$duration} minutes" );
+			if (0 === $availabile_slots) {
+				$current_slot_start->modify("+{$duration} minutes");
 				continue;
 			}
 
-			$day             = $current_slot_start->format( 'Y-m-d' );
-			$slots[ $day ][] = array(
-				'start'     => $slot_start->format( 'Y-m-d H:i:s' ),
-				'end'       => $slot_end->format( 'Y-m-d H:i:s' ),
+			$day = $current_slot_start->format('Y-m-d');
+			$slots[$day][] = array(
+				'start' => $slot_start->format('Y-m-d H:i:s'),
+				'end' => $slot_end->format('Y-m-d H:i:s'),
 				'remaining' => $availabile_slots,
 			);
 
@@ -1179,83 +1236,84 @@ class Event_Model extends Model {
 	 * @return int
 	 * @throws \Exception
 	 */
-	public function get_end_date( $timezone ) {
+	public function get_end_date($timezone)
+	{
 		// Validate required data
-		if ( empty( $this->created_at ) || empty( $this->availability['timezone'] ) ) {
-			throw new \Exception( __( 'Invalid event data: missing created_at or timezone', 'quillbooking' ) );
+		if (empty($this->created_at) || empty($this->availability['timezone'])) {
+			throw new \Exception(__('Invalid event data: missing created_at or timezone', 'quillbooking'));
 		}
 
 		// Validate timezone strings
 		try {
-			$original_tz = new \DateTimeZone( $this->availability['timezone'] );
-			$target_tz   = new \DateTimeZone( $timezone );
-		} catch ( \Exception $e ) {
-			throw new \Exception( __( 'Invalid timezone provided', 'quillbooking' ) );
+			$original_tz = new \DateTimeZone($this->availability['timezone']);
+			$target_tz = new \DateTimeZone($timezone);
+		} catch (\Exception $e) {
+			throw new \Exception(__('Invalid timezone provided', 'quillbooking'));
 		}
 
 		// Create the base date from creation time
 		try {
-			$created_date = new \DateTime( $this->created_at, $original_tz );
-			$created_date->setTimezone( $target_tz );
-		} catch ( \Exception $e ) {
-			throw new \Exception( __( 'Invalid created_at date format', 'quillbooking' ) );
+			$created_date = new \DateTime($this->created_at, $original_tz);
+			$created_date->setTimezone($target_tz);
+		} catch (\Exception $e) {
+			throw new \Exception(__('Invalid created_at date format', 'quillbooking'));
 		}
 
-		$event_date_type = Arr::get( $this->event_range, 'type', 'days' );
-		$end_date        = null;
+		$event_date_type = Arr::get($this->event_range, 'type', 'days');
+		$end_date = null;
 
-		switch ( $event_date_type ) {
+		switch ($event_date_type) {
 			case 'days':
-				$end_event_value = Arr::get( $this->event_range, 'days', 60 );
+				$end_event_value = Arr::get($this->event_range, 'days', 60);
 
 				// Validate days value
-				if ( ! is_numeric( $end_event_value ) || $end_event_value < 0 || $end_event_value > 3650 ) {
-					throw new \Exception( __( 'Invalid days value. Must be between 0 and 3650', 'quillbooking' ) );
+				if (!is_numeric($end_event_value) || $end_event_value < 0 || $end_event_value > 3650) {
+					throw new \Exception(__('Invalid days value. Must be between 0 and 3650', 'quillbooking'));
 				}
 
 				// Clone to avoid modifying original date
 				$end_date = clone $created_date;
-				$end_date->modify( "+{$end_event_value} days" );
+				$end_date->modify("+{$end_event_value} days");
 				// Set to end of day for consistency
-				$end_date->setTime( 23, 59, 59 );
+				$end_date->setTime(23, 59, 59);
 				break;
 
 			case 'infinity':
 				// Clone to avoid modifying original date
 				$end_date = clone $created_date;
-				$end_date->modify( '+5 years' );
+				$end_date->modify('+5 years');
 				// Set to end of day for consistency
-				$end_date->setTime( 23, 59, 59 );
+				$end_date->setTime(23, 59, 59);
 				break;
 
 			case 'date_range':
-				$end_event_value = Arr::get( $this->event_range, 'end_date', null );
-				if ( empty( $end_event_value ) ) {
-					throw new \Exception( __( 'End date is required for date_range type', 'quillbooking' ) );
+				$end_event_value = Arr::get($this->event_range, 'end_date', null);
+				if (empty($end_event_value)) {
+					throw new \Exception(__('End date is required for date_range type', 'quillbooking'));
 				}
 
 				try {
 					// Create DateTime with UTC timezone to avoid DST issues
-					$end_date = new \DateTime( $end_event_value, new \DateTimeZone( 'UTC' ) );
-					$end_date->setTime( 23, 59, 59 );
+					$end_date = new \DateTime($end_event_value, new \DateTimeZone('UTC'));
+					$end_date->setTime(23, 59, 59);
 					// Convert to the target timezone
-					$end_date->setTimezone( $target_tz );
-				} catch ( \Exception $e ) {
-					throw new \Exception( __( 'Invalid end_date format', 'quillbooking' ) );
+					$end_date->setTimezone($target_tz);
+				} catch (\Exception $e) {
+					throw new \Exception(__('Invalid end_date format', 'quillbooking'));
 				}
 
 				// Validate that end date is after creation date
 				// For fair comparison, set created_date to start of day
 				$created_date_start = clone $created_date;
-				$created_date_start->setTime( 0, 0, 0 );
+				$created_date_start->setTime(0, 0, 0);
 
-				if ( $end_date <= $created_date_start ) {
-					throw new \Exception( __( 'End date must be after the created date', 'quillbooking' ) );
+				if ($end_date <= $created_date_start) {
+					throw new \Exception(__('End date must be after the created date', 'quillbooking'));
 				}
 				break;
 
 			default:
-				throw new \Exception( __( 'Invalid event date type', 'quillbooking' ) );
+				throw new \Exception(__('Invalid event date type', 'quillbooking'));
 		}
 
 		return $end_date->getTimestamp();
@@ -1269,60 +1327,61 @@ class Event_Model extends Model {
 	 * @return int
 	 * @throws \Exception
 	 */
-	public function get_start_date( $timezone ) {
+	public function get_start_date($timezone)
+	{
 		// Validate required data
-		if ( empty( $this->created_at ) || empty( $this->availability['timezone'] ) ) {
-			throw new \Exception( __( 'Invalid event data: missing created_at or timezone', 'quillbooking' ) );
+		if (empty($this->created_at) || empty($this->availability['timezone'])) {
+			throw new \Exception(__('Invalid event data: missing created_at or timezone', 'quillbooking'));
 		}
 
 		// Validate timezone strings
 		try {
-			$original_tz = new \DateTimeZone( $this->availability['timezone'] );
-			$target_tz   = new \DateTimeZone( $timezone );
-		} catch ( \Exception $e ) {
-			throw new \Exception( __( 'Invalid timezone provided', 'quillbooking' ) );
+			$original_tz = new \DateTimeZone($this->availability['timezone']);
+			$target_tz = new \DateTimeZone($timezone);
+		} catch (\Exception $e) {
+			throw new \Exception(__('Invalid timezone provided', 'quillbooking'));
 		}
 
-		$event_date_type = Arr::get( $this->event_range, 'type', 'days' );
-		$start_date      = null;
+		$event_date_type = Arr::get($this->event_range, 'type', 'days');
+		$start_date = null;
 
 		try {
 			// Create the base date from creation time
-			$start_date = new \DateTime( $this->created_at, $original_tz );
-			$start_date->setTimezone( $target_tz );
+			$start_date = new \DateTime($this->created_at, $original_tz);
+			$start_date->setTimezone($target_tz);
 
 			// For non-date_range types, set to start of day for consistency
-			if ( 'date_range' !== $event_date_type ) {
-				$start_date->setTime( 0, 0, 0 );
+			if ('date_range' !== $event_date_type) {
+				$start_date->setTime(0, 0, 0);
 			}
-		} catch ( \Exception $e ) {
-			throw new \Exception( __( 'Invalid created_at date format', 'quillbooking' ) );
+		} catch (\Exception $e) {
+			throw new \Exception(__('Invalid created_at date format', 'quillbooking'));
 		}
 
 		// Handle date_range type with custom start date
-		if ( 'date_range' === $event_date_type ) {
-			$start_date_value = Arr::get( $this->event_range, 'start_date', null );
-			if ( empty( $start_date_value ) ) {
-				throw new \Exception( __( 'Start date is required for date_range type', 'quillbooking' ) );
+		if ('date_range' === $event_date_type) {
+			$start_date_value = Arr::get($this->event_range, 'start_date', null);
+			if (empty($start_date_value)) {
+				throw new \Exception(__('Start date is required for date_range type', 'quillbooking'));
 			}
 
 			try {
 				// Create DateTime with UTC timezone to avoid DST issues
-				$start_date = new \DateTime( $start_date_value, new \DateTimeZone( 'UTC' ) );
-				$start_date->setTime( 0, 0, 0 );
+				$start_date = new \DateTime($start_date_value, new \DateTimeZone('UTC'));
+				$start_date->setTime(0, 0, 0);
 				// Convert to the target timezone
-				$start_date->setTimezone( $target_tz );
-			} catch ( \Exception $e ) {
-				throw new \Exception( __( 'Invalid start_date format', 'quillbooking' ) );
+				$start_date->setTimezone($target_tz);
+			} catch (\Exception $e) {
+				throw new \Exception(__('Invalid start_date format', 'quillbooking'));
 			}
 
 			// Validate that start date is not in the past relative to creation date
-			$created_date_check = new \DateTime( $this->created_at, $original_tz );
-			$created_date_check->setTimezone( $target_tz );
-			$created_date_check->setTime( 0, 0, 0 );
+			$created_date_check = new \DateTime($this->created_at, $original_tz);
+			$created_date_check->setTimezone($target_tz);
+			$created_date_check->setTime(0, 0, 0);
 
-			if ( $start_date < $created_date_check ) {
-				throw new \Exception( __( 'Start date cannot be before the created date', 'quillbooking' ) );
+			if ($start_date < $created_date_check) {
+				throw new \Exception(__('Start date cannot be before the created date', 'quillbooking'));
 			}
 		}
 
@@ -1337,41 +1396,42 @@ class Event_Model extends Model {
 	 *
 	 * @return int
 	 */
-	public function check_available_slots( $day_start, $day_end, $calendar_id ) {
+	public function check_available_slots($day_start, $day_end, $calendar_id)
+	{
 		$day_start = clone $day_start;
-		$day_end   = clone $day_end;
+		$day_end = clone $day_end;
 
-		$buffer_before = Arr::get( $this->limits, 'general.buffer_before', 0 );
-		$buffer_after  = Arr::get( $this->limits, 'general.buffer_after', 0 );
+		$buffer_before = Arr::get($this->limits, 'general.buffer_before', 0);
+		$buffer_after = Arr::get($this->limits, 'general.buffer_after', 0);
 
-		$day_start->modify( "-{$buffer_before} minutes" );
-		$day_end->modify( "+{$buffer_after} minutes" );
+		$day_start->modify("-{$buffer_before} minutes");
+		$day_end->modify("+{$buffer_after} minutes");
 
-		$day_start->setTimezone( new \DateTimeZone( 'UTC' ) );
-		$day_end->setTimezone( new \DateTimeZone( 'UTC' ) );
+		$day_start->setTimezone(new \DateTimeZone('UTC'));
+		$day_end->setTimezone(new \DateTimeZone('UTC'));
 
 		$slots_query = Booking_Model::query();
 
 		$event_spots = 1;
-		switch ( $this->type ) {
+		switch ($this->type) {
 			case 'one-to-one':
 			case 'group':
-				$slots_query->where( 'calendar_id', $this->calendar_id )
-					->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
-					->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
-				$event_spots = 'one-to-one' === $this->type ? 1 : Arr::get( $this->group_settings, 'max_invites', 2 );
+				$slots_query->where('calendar_id', $this->calendar_id)
+					->where('start_time', '>=', $day_start->format('Y-m-d H:i:s'))
+					->where('end_time', '<=', $day_end->format('Y-m-d H:i:s'));
+				$event_spots = 'one-to-one' === $this->type ? 1 : Arr::get($this->group_settings, 'max_invites', 2);
 				break;
 			case 'round-robin':
 			case 'collective':
-				$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
+				$team_members = $calendar_id ? array($calendar_id) : $this->calendar->getTeamMembers();
 
-				$slots_query->whereIn( 'calendar_id', $team_members )
-					->where( 'start_time', '>=', $day_start->format( 'Y-m-d H:i:s' ) )
-					->where( 'end_time', '<=', $day_end->format( 'Y-m-d H:i:s' ) );
+				$slots_query->whereIn('calendar_id', $team_members)
+					->where('start_time', '>=', $day_start->format('Y-m-d H:i:s'))
+					->where('end_time', '<=', $day_end->format('Y-m-d H:i:s'));
 
 				// For round-robin, set the number of event spots.
-				if ( 'round-robin' === $this->type ) {
-					$event_spots = count( $team_members );
+				if ('round-robin' === $this->type) {
+					$event_spots = count($team_members);
 				}
 				break;
 		}
@@ -1389,11 +1449,12 @@ class Event_Model extends Model {
 	 *
 	 * @return int
 	 */
-	public function get_booking_available_slots( $start_time, $duration, $calendar_id ) {
+	public function get_booking_available_slots($start_time, $duration, $calendar_id)
+	{
 		$end_time = clone $start_time;
-		$end_time->modify( "+{$duration} minutes" );
+		$end_time->modify("+{$duration} minutes");
 
-		return $this->get_slot_availability_count( $start_time, $end_time, $calendar_id );
+		return $this->get_slot_availability_count($start_time, $end_time, $calendar_id);
 	}
 
 	/**
@@ -1404,18 +1465,19 @@ class Event_Model extends Model {
 	 *
 	 * @return bool
 	 */
-	public function get_slot_availability_count( $start_time, $end_time, $calendar_id ) {
+	public function get_slot_availability_count($start_time, $end_time, $calendar_id)
+	{
 		$availability = $this->availability;
 		$weekly_hours = $availability['weekly_hours'] ?? array();
-		$day_of_week  = strtolower( date( 'l', $start_time->getTimestamp() ) ); // Get the day of the week (e.g., Monday, Tuesday)
+		$day_of_week = strtolower(date('l', $start_time->getTimestamp())); // Get the day of the week (e.g., Monday, Tuesday)
 
-		if ( ! $weekly_hours[ $day_of_week ]['off'] ) {
-			foreach ( $weekly_hours[ $day_of_week ]['times'] as $time_block ) {
-				$day_start = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
-				$day_end   = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+		if (!$weekly_hours[$day_of_week]['off']) {
+			foreach ($weekly_hours[$day_of_week]['times'] as $time_block) {
+				$day_start = new \DateTime(date('Y-m-d', $start_time->getTimestamp()) . ' ' . $time_block['start'], new \DateTimeZone($this->availability['timezone']));
+				$day_end = new \DateTime(date('Y-m-d', $start_time->getTimestamp()) . ' ' . $time_block['end'], new \DateTimeZone($this->availability['timezone']));
 
-				if ( $start_time >= $day_start && $end_time <= $day_end ) {
-					$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
+				if ($start_time >= $day_start && $end_time <= $day_end) {
+					$slots = $this->check_available_slots($start_time, $end_time, $calendar_id);
 					return $slots;
 				}
 			}
@@ -1431,20 +1493,21 @@ class Event_Model extends Model {
 	 * @return bool
 	 * @throws \Exception
 	 */
-	public function save( array $options = array() ) {
+	public function save(array $options = array())
+	{
 		// Check if calendar exists
-		$calendar = Calendar_Model::find( $this->calendar_id );
-		if ( ! $calendar ) {
-			throw new \Exception( __( 'Calendar does not exist', 'quillbooking' ) );
+		$calendar = Calendar_Model::find($this->calendar_id);
+		if (!$calendar) {
+			throw new \Exception(__('Calendar does not exist', 'quillbooking'));
 		}
 
 		// Check if user is team member
-		$user = Team_Model::find( $this->calendar->user_id );
-		if ( ! $user->is_team_member() ) {
-			throw new \Exception( __( 'User is not a team member', 'quillbooking' ) );
+		$user = Team_Model::find($this->calendar->user_id);
+		if (!$user->is_team_member()) {
+			throw new \Exception(__('User is not a team member', 'quillbooking'));
 		}
 
-		return parent::save( $options );
+		return parent::save($options);
 	}
 
 	/**
@@ -1454,45 +1517,46 @@ class Event_Model extends Model {
 	 *
 	 * @return void
 	 */
-	public static function boot() {
-		 parent::boot();
+	public static function boot()
+	{
+		parent::boot();
 
 		static::creating(
-			function ( $event ) {
+			function ($event) {
 				$event->hash_id = Utils::generate_hash_key();
-				$originalSlug   = $slug = Str::slug( $event->name );
-				$count          = 1;
+				$originalSlug = $slug = Str::slug($event->name);
+				$count = 1;
 
-				while ( static::where( 'slug', $slug )->exists() ) {
+				while (static::where('slug', $slug)->exists()) {
 					$slug = $originalSlug . '-' . $count++;
 				}
 
-				$event->slug    = $slug;
+				$event->slug = $slug;
 				$event->user_id = $event->calendar->user_id;
 
-				if ( ! $event->status ) {
+				if (!$event->status) {
 					$event->status = 'active';
 				}
 
-				if ( ! $event->color ) {
+				if (!$event->color) {
 					$event->color = '#ffffff';
 				}
 
-				if ( ! $event->visibility ) {
+				if (!$event->visibility) {
 					$event->visibility = 'public';
 				}
 			}
 		);
 
 		static::deleted(
-			function ( $event ) {
+			function ($event) {
 				$event->meta()->delete();
 				$event->bookings()->delete();
 			}
 		);
 
 		static::updating(
-			function ( $event ) {
+			function ($event) {
 				$event->updateSystemFields();
 			}
 		);

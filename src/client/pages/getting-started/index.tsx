@@ -28,6 +28,12 @@ interface FormErrors {
 	location?: string;
 }
 
+interface TouchedFields {
+	name?: boolean;
+	timezone?: boolean;
+	location?: boolean;
+}
+
 const GettingStarted: React.FC = () => {
 	const navigate = useNavigate();
 	const theme = useTheme();
@@ -36,6 +42,7 @@ const GettingStarted: React.FC = () => {
 	const [currentStep, setCurrentStep] = useState(1);
 	const [loading, setLoading] = useState(false);
 	const [errors, setErrors] = useState<FormErrors>({});
+	const [touched, setTouched] = useState<TouchedFields>({});
 	const totalSteps = 3;
 	const { callApi } = useApi();
 	const { getId: getCurrentUserId } = useCurrentUser();
@@ -173,12 +180,12 @@ const GettingStarted: React.FC = () => {
 	});
 
 	const validateStep = useCallback(
-		(step: number): boolean => {
+		(step: number, isSubmitting = false): boolean => {
 			const newErrors: FormErrors = {};
 
 			switch (step) {
 				case 1:
-					if (!event.name.trim()) {
+					if ((isSubmitting || touched.name) && !event.name.trim()) {
 						newErrors.name = __(
 							'Event name is required',
 							'quillbooking'
@@ -186,13 +193,19 @@ const GettingStarted: React.FC = () => {
 					}
 					break;
 				case 2:
-					if (!event.calendar.timezone) {
+					if (
+						(isSubmitting || touched.timezone) &&
+						!event.calendar.timezone
+					) {
 						newErrors.timezone = __(
 							'Timezone is required',
 							'quillbooking'
 						);
 					}
-					if (event.location.length === 0) {
+					if (
+						(isSubmitting || touched.location) &&
+						event.location.length === 0
+					) {
 						newErrors.location = __(
 							'At least one location is required',
 							'quillbooking'
@@ -204,7 +217,7 @@ const GettingStarted: React.FC = () => {
 			setErrors(newErrors);
 			return Object.keys(newErrors).length === 0;
 		},
-		[event]
+		[event, touched]
 	);
 
 	const handleEventChange = (field: keyof Event, value: any) => {
@@ -219,6 +232,12 @@ const GettingStarted: React.FC = () => {
 		if (field === 'location') {
 			location.current = value;
 		}
+
+		// Mark field as touched
+		setTouched((prev) => ({
+			...prev,
+			[field]: true,
+		}));
 
 		// Clear error for the field being changed
 		if (errors[field as keyof FormErrors]) {
@@ -254,6 +273,14 @@ const GettingStarted: React.FC = () => {
 			return newEvent;
 		});
 
+		// Mark timezone as touched if we're changing it
+		if (field === 'timezone') {
+			setTouched((prev) => ({
+				...prev,
+				timezone: true,
+			}));
+		}
+
 		// Clear timezone error if it exists and we're changing timezone
 		if (field === 'timezone' && errors.timezone) {
 			setErrors((prev) => {
@@ -265,7 +292,7 @@ const GettingStarted: React.FC = () => {
 	};
 
 	const handleNext = async () => {
-		const isValid = validateStep(currentStep);
+		const isValid = validateStep(currentStep, true);
 		if (!isValid) {
 			return;
 		}

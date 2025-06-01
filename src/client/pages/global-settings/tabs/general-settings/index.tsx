@@ -150,28 +150,39 @@ const GeneralSettings = () => {
 		fetchSettings();
 	}, [showNotice]);
 
-	const handleSave = () => {
-		saveApi({
-			path: 'settings',
-			method: 'POST',
-			data: settings,
-			onSuccess() {
-				showNotice({
-					type: 'success',
-					title: __('Success', 'quillbooking'),
-					message: __('Settings saved successfully', 'quillbooking'),
-				});
-			},
-			onError(error) {
-				showNotice({
-					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message:
-						error.message ||
-						__('Failed to save settings', 'quillbooking'),
-				});
-			},
-		});
+	const handleSave = async () => {
+		try {
+			await saveApi({
+				path: 'settings',
+				method: 'POST',
+				data: settings,
+				onSuccess() {
+					showNotice({
+						type: 'success',
+						title: __('Success', 'quillbooking'),
+						message: __('Settings saved successfully', 'quillbooking'),
+					});
+				},
+				onError(error) {
+					showNotice({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message:
+							error.message ||
+							__('Failed to save settings', 'quillbooking'),
+					});
+				},
+			});
+		} catch (error: any) {
+			showNotice({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message:
+					error.message ||
+					__('An unexpected error occurred while saving settings', 'quillbooking'),
+			});
+			console.error('Error in handleSave:', error);
+		}
 	};
 
 	// Function to update settings state
@@ -232,11 +243,10 @@ const GeneralSettings = () => {
 					type="primary"
 					onClick={handleSave}
 					disabled={saveLoading}
-					className={`rounded-lg font-medium px-10 text-white ${
-						saveLoading
-							? 'bg-gray-400 cursor-not-allowed'
-							: 'bg-color-primary '
-					}`}
+					className={`rounded-lg font-medium px-10 text-white ${saveLoading
+						? 'bg-gray-400 cursor-not-allowed'
+						: 'bg-color-primary '
+						}`}
 				>
 					{__('Save', 'quillbooking')}
 				</Button>

@@ -275,12 +275,12 @@ const BookingDetails: React.FC = () => {
 				<>
 					<Flex
 						justify="space-between"
-						className="border-b border-[#E5E5E5] p-4 pb-7 w-full"
+						className="border-b border-[#E5E5E5] px-5 py-7 w-full"
 					>
 						<div>
 							<Flex gap={10} align="center">
-								<div
-									className="text-color-primary-text cursor-pointer"
+								<div 
+									className="text-color-primary-text cursor-pointer pr-2"
 									onClick={handleClose}
 								>
 									<CancelIcon width={30} height={30} />

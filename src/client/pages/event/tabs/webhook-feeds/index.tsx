@@ -168,85 +168,120 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 		};
 
 		const saveWebhookFeeds = async (feeds: WebhookFeedType[]) => {
-			if (!event) return;
-
-			return saveApi({
-				path: `events/${event.id}`,
-				method: 'POST',
-				data: {
-					webhook_feeds: feeds,
-				},
-				onSuccess() {
-					successNotice(
-						__('Webhook Feeds saved successfully', 'quillbooking')
-					);
-					props.setDisabled(true);
-				},
-				onError(error) {
-					throw new Error(error.message);
-				},
-			});
+			try {
+				if (!event) {
+					console.warn('Cannot save webhook feeds - no event available');
+					return;
+				}
+		
+				await saveApi({
+					path: `events/${event.id}`,
+					method: 'POST',
+					data: {
+						webhook_feeds: feeds,
+					},
+					onSuccess() {
+						successNotice(
+							__('Webhook Feeds saved successfully', 'quillbooking')
+						);
+						props.setDisabled(true);
+					},
+					onError(error) {
+						// Re-throw to be caught by the outer try-catch
+						throw new Error(error.message);
+					},
+				});
+			} catch (error:any) {
+				console.error('Error saving webhook feeds:', error);
+				// Re-throw the error to maintain existing behavior
+				throw new Error(error.message);
+			}
 		};
 
 		const toggleWebhookStatus = async (feed: WebhookFeedType) => {
-			if (!event || !webhookFeeds) return;
-
-			const updatedFeed = { ...feed, enabled: !feed.enabled };
-			const updatedWebhookFeeds = webhookFeeds.map((f) =>
-				f.name === feed.name ? updatedFeed : f
-			);
-
-			setWebhookFeeds(updatedWebhookFeeds);
-
-			await saveApi({
-				path: `events/${event.id}`,
-				method: 'POST',
-				data: {
-					webhook_feeds: updatedWebhookFeeds,
-				},
-				onSuccess() {
-					successNotice(
-						updatedFeed.enabled
-							? __('Webhook enabled successfully', 'quillbooking')
-							: __(
-									'Webhook disabled successfully',
-									'quillbooking'
-								)
-					);
-				},
-				onError(error) {
-					setWebhookFeeds(webhookFeeds);
-					throw new Error(error.message);
-					
-				},
-			});
-			props.setDisabled(false);
+			try {
+				if (!event || !webhookFeeds) {
+					console.warn('Cannot toggle webhook status - missing event or feeds');
+					return;
+				}
+		
+				const updatedFeed = { ...feed, enabled: !feed.enabled };
+				const updatedWebhookFeeds = webhookFeeds.map((f) =>
+					f.name === feed.name ? updatedFeed : f
+				);
+		
+				// Optimistic UI update
+				setWebhookFeeds(updatedWebhookFeeds);
+		
+				await saveApi({
+					path: `events/${event.id}`,
+					method: 'POST',
+					data: {
+						webhook_feeds: updatedWebhookFeeds,
+					},
+					onSuccess() {
+						successNotice(
+							updatedFeed.enabled
+								? __('Webhook enabled successfully', 'quillbooking')
+								: __('Webhook disabled successfully', 'quillbooking')
+						);
+					},
+					onError(error) {
+						// Revert optimistic update on error
+						setWebhookFeeds(webhookFeeds);
+						throw new Error(error.message);
+					},
+				});
+			} catch (error:any) {
+				console.error('Error toggling webhook status:', error);
+				// Re-throw the error to maintain existing behavior
+				throw new Error(error.message);
+			} finally {
+				// Always enable the form regardless of success/error
+				props.setDisabled(false);
+			}
 		};
 
 		const removeWebhookFeed = async (name: string) => {
-			if (!event || !webhookFeeds) return;
-
-			const updatedWebhookFeeds = webhookFeeds.filter(
-				(feed) => feed.name !== name
-			);
-
-			await deleteApi({
-				path: `events/${event.id}`,
-				method: 'POST',
-				data: {
-					webhook_feeds: updatedWebhookFeeds,
-				},
-				onSuccess() {
-					setWebhookFeeds(updatedWebhookFeeds);
-					successNotice(
-						__('Webhook Feed deleted successfully', 'quillbooking')
-					);
-				},
-				onError(error) {
-					throw new Error(error.message);
-				},
-			});
-			props.setDisabled(false);
+			try {
+				// Validate required data
+				if (!event || !webhookFeeds) {
+					console.warn('Cannot remove webhook feed - missing event or feeds data');
+					return;
+				}
+		
+				// Prepare updated feeds list
+				const updatedWebhookFeeds = webhookFeeds.filter(
+					(feed) => feed.name !== name
+				);
+		
+				// Make API request
+				await deleteApi({
+					path: `events/${event.id}`,
+					method: 'POST',
+					data: {
+						webhook_feeds: updatedWebhookFeeds,
+					},
+					onSuccess() {
+						// Update state and show success message
+						setWebhookFeeds(updatedWebhookFeeds);
+						successNotice(
+							__('Webhook Feed deleted successfully', 'quillbooking')
+						);
+					},
+					onError(error) {
+						// Re-throw error to be caught by outer try-catch
+						throw new Error(error.message);
+					},
+				});
+			} catch (error:any) {
+				console.error('Failed to remove webhook feed:', error);
+				// Re-throw error if you want calling code to handle it
+				throw new Error(error.message);
+			} finally {
+				// Ensure form is always re-enabled
+				props.setDisabled(false);
+			}
 		};
 
 		const handleAddNew = () => {

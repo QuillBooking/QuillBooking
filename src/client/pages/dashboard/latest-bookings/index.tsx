@@ -174,8 +174,8 @@ const LatestBookings: React.FC = () => {
 																<p className="text-lg font-semibold text-color-primary-text py-1">
 																	{
 																		booking
-																			.event
-																			.name
+																			?.event
+																			?.name
 																	}
 																</p>
 																<Flex
@@ -189,9 +189,9 @@ const LatestBookings: React.FC = () => {
 																		}
 																	</p>
 																	{booking
-																		.event
-																		.location
-																		.length >
+																		?.event
+																		?.location
+																		?.length >
 																		0 && (
 																		<>
 																			<span>

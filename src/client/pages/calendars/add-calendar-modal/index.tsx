@@ -64,23 +64,40 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 	};
 
 	const saveCalendar = async () => {
-		if (!validate()) return;
+		try {
+			// Validate form data
+			if (!validate()) return;
 
-		callApi({
-			path: `calendars`,
-			method: 'POST',
-			data: formData,
-			onSuccess: () => {
-				closeHandler();
-				onSaved();
-				setCreateCalendarMessage(true);
-			},
-			onError: (error) => {
+			try {
+				// Make API call to save calendar
+				await callApi({
+					path: `calendars`,
+					method: 'POST',
+					data: formData,
+					onSuccess: () => {
+						closeHandler();
+						onSaved();
+						setCreateCalendarMessage(true);
+					},
+					onError: (error) => {
+						if (setErrorMessage) {
+							setErrorMessage(error.message || 'Failed to save calendar');
+						}
+						console.error('API Error:', error);
+					},
+				});
+			} catch (apiError) {
+				console.error('API Call Failed:', apiError);
 				if (setErrorMessage) {
-					setErrorMessage(error.message);
+					setErrorMessage('An unexpected error occurred while saving the calendar');
 				}
-			},
-		});
+			}
+		} catch (error) {
+			console.error('Unexpected Error in saveCalendar:', error);
+			if (setErrorMessage) {
+				setErrorMessage('An error occurred while processing your request');
+			}
+		}
 	};
 
 	const validate = (): boolean => {

@@ -8,6 +8,7 @@ import { Dayjs } from 'dayjs';
 import QuestionsComponents from './questions';
 import Reschedule from '../../reschedule';
 import Payment from './payment';
+import { Col, Row, Skeleton, Space } from 'antd';
 import { get } from 'lodash';
 import { get_location } from '@quillbooking/utils';
 import tinycolor from 'tinycolor2';
@@ -19,6 +20,47 @@ interface CardBodyProps {
 	booking?: Booking;
 	url: string;
 }
+
+// Shimmer Loader Component with Tailwind CSS
+const ShimmerLoader = () => {
+	return (
+	  <div
+		style={{
+		  margin: 'auto',
+		  padding: 24,
+		  background: '#fff',
+		}}
+	  >
+		{/* Header */}
+		<Row align="middle" gutter={16}>
+		  <Col>
+			<Skeleton.Avatar active size="large" shape="circle" />
+		  </Col>
+		</Row>
+  
+		<div style={{ marginTop: 24 }}>
+		  {/* Title + Description */}
+		  <Space direction="vertical" size={16} style={{ width: '100%' }}>
+			<Skeleton.Input active size="default" style={{ width: '70%' }} />
+			<Skeleton.Input active size="small" style={{ width: '90%' }} />
+			<Skeleton.Input active size="small" style={{ width: '80%' }} />
+		  </Space>
+		</div>
+  
+		{/* Large block (e.g. calendar area) */}
+		<div style={{ marginTop: 32 }}>
+		  <Skeleton.Input active block style={{ height: 200, borderRadius: 8 }} />
+		</div>
+  
+		{/* Bottom buttons/selects */}
+		<Row gutter={16} style={{ marginTop: 24 }}>
+			<Col span={6}>
+			  <Skeleton.Input active style={{ width: '50%' }} />
+			</Col>
+		</Row>
+	  </div>
+	);
+  };
 
 const CardBody: React.FC<CardBodyProps> = ({
 	event,
@@ -40,7 +82,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 	const [selectedDuration, setSelectedDuration] = useState<number>(
 		event.duration
 	);
-	const [bookingData, setBookingData] = useState<Booking | null>(null);
+	const [bookingData, setBookingData] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [totalPrice, setTotalPrice] = useState<number>(0);
 
 	// Calculate price based on whether it's multi-duration or not
@@ -250,7 +293,18 @@ const CardBody: React.FC<CardBodyProps> = ({
 		if (event.additional_settings?.allow_attendees_to_select_duration) {
 			setSelectedDuration(event.additional_settings.default_duration);
 		}
+		
+		// Simulate loading time for the shimmer effect
+		const timer = setTimeout(() => {
+			setIsLoading(false);
+		}, 1000); // Show shimmer for 10 seconds
+		
+		return () => clearTimeout(timer);
 	}, [event]);
+
+	if (isLoading) {
+		return <ShimmerLoader />;
+	}
 
 	return (
 		<div className="event-card-details">

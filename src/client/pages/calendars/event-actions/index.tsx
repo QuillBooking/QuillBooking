@@ -58,35 +58,35 @@ const EventActions: React.FC<EventActionsProps> = ({
 	};
 
 	const handleDisable = (status: boolean) => {
-		callApi({
-			path: `events/${event.id}/disable-status`,
-			method: 'PUT',
-			data: {
-				status,
-			},
-			onSuccess: () => {
-				// Update the disabled state for this event
-				setDisabledEvents(event.id, !isDisabled);
-
-				if (!isDisabled) {
-					setStatusMessage(true);
-				} else {
-					setStatusMessage(false);
-				}
-				// Close the popover after action is completed
-				onActionComplete();
-			},
-			onError: (error) => {
-				if (setErrorMessage) {
-					setErrorMessage(error.message);
-				}
-				// Close the popover even on error
-				onActionComplete();
-			},
-		});
-
-		setIsModalDisableOpen(false);
+		try {
+			callApi({
+				path: `events/${event.id}/disable-status`,
+				method: 'PUT',
+				data: {
+					status,
+				},
+				onSuccess: () => {
+					setDisabledEvents(event.id, !isDisabled);
+					setStatusMessage(!isDisabled);
+					onActionComplete();
+				},
+				onError: (error) => {
+					if (setErrorMessage) {
+						setErrorMessage(error.message);
+					}
+					onActionComplete();
+				},
+			});
+		} catch (error: any) {
+			if (setErrorMessage) {
+				setErrorMessage(error.message || 'Unexpected error');
+			}
+			onActionComplete();
+		} finally {
+			setIsModalDisableOpen(false);
+		}
 	};
+
 
 	const handleDisableCancel = () => {
 		setIsModalDisableOpen(false);
@@ -97,46 +97,60 @@ const EventActions: React.FC<EventActionsProps> = ({
 	};
 
 	const handleDelete = () => {
-		callApi({
-			path: `events/${event.id}`,
-			method: 'DELETE',
-			onSuccess: () => {
-				updateCalendarEvents();
-				setDeleteMessage(true);
-			},
-			onError: (error) => {
-				if (setErrorMessage) {
-					setErrorMessage(error.message);
-				}
-			},
-		});
-		setIsModalDeleteOpen(false);
+		try {
+			callApi({
+				path: `events/${event.id}`,
+				method: 'DELETE',
+				onSuccess: () => {
+					updateCalendarEvents();
+					setDeleteMessage(true);
+				},
+				onError: (error) => {
+					if (setErrorMessage) {
+						setErrorMessage(error.message);
+					}
+				},
+			});
+		} catch (error: any) {
+			if (setErrorMessage) {
+				setErrorMessage(error.message || 'Unexpected error occurred');
+			}
+		} finally {
+			setIsModalDeleteOpen(false);
+		}
 	};
+
 
 	const handleDeleteCancel = () => {
 		setIsModalDeleteOpen(false);
 	};
 
 	const handleClone = () => {
-		callApi({
-			path: `events/duplicate`,
-			method: 'POST',
-			data: { id: event.id },
-			onSuccess: () => {
-				updateCalendarEvents();
-				setCloneMessage(true);
-				// Close the popover after action is completed
-				onActionComplete();
-			},
-			onError: (error) => {
-				if (setErrorMessage) {
-					setErrorMessage(error.message);
-				}
-				// Close the popover even on error
-				onActionComplete();
-			},
-		});
+		try {
+			callApi({
+				path: `events/duplicate`,
+				method: 'POST',
+				data: { id: event.id },
+				onSuccess: () => {
+					updateCalendarEvents();
+					setCloneMessage(true);
+					onActionComplete();
+				},
+				onError: (error) => {
+					if (setErrorMessage) {
+						setErrorMessage(error.message);
+					}
+					onActionComplete();
+				},
+			});
+		} catch (error: any) {
+			if (setErrorMessage) {
+				setErrorMessage(error.message || 'Unexpected error occurred');
+			}
+			onActionComplete();
+		}
 	};
+
 
 	const handleEdit = () => {
 		// Close popover before navigation
@@ -279,24 +293,24 @@ const EventActions: React.FC<EventActionsProps> = ({
 					<p className="text-[#09090B] text-[20px] font-[700] mt-5">
 						{isDisabled
 							? __(
-									'Do you really you want to enable this event?',
-									'quillbooking'
-								)
+								'Do you really you want to enable this event?',
+								'quillbooking'
+							)
 							: __(
-									'Do you really you want to disable this event?',
-									'quillbooking'
-								)}
+								'Do you really you want to disable this event?',
+								'quillbooking'
+							)}
 					</p>
 					<span className="text-[#71717A] text-center">
 						{isDisabled
 							? __(
-									'Enabling this event will make it available for booking',
-									'quillbooking'
-								)
+								'Enabling this event will make it available for booking',
+								'quillbooking'
+							)
 							: __(
-									'by Disable this event you will not be able to Share or edit event untiled you Enable it again!',
-									'quillbooking'
-								)}
+								'by Disable this event you will not be able to Share or edit event untiled you Enable it again!',
+								'quillbooking'
+							)}
 					</span>
 				</Flex>
 			</Modal>

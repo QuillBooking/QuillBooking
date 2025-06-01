@@ -153,38 +153,47 @@ const TeamTab: React.FC = () => {
 		setIsModalVisible(true);
 	};
 
-	const handleRemoveMember = (memberId: number) => {
-		deleteApi({
-			path: `team-members/${memberId}`,
-			method: 'DELETE',
-			onSuccess(response: {
-				success: boolean;
-				message: string;
-				id: number;
-			}) {
-				if (response.success) {
-					setTeamMembers((prevMembers) =>
-						prevMembers.filter(
-							(member) => member.ID !== response.id
-						)
-					);
+	const handleRemoveMember = async (memberId: number) => {
+		try {
+			await deleteApi({
+				path: `team-members/${memberId}`,
+				method: 'DELETE',
+				onSuccess(response: {
+					success: boolean;
+					message: string;
+					id: number;
+				}) {
+					if (response.success) {
+						setTeamMembers((prevMembers) =>
+							prevMembers.filter(
+								(member) => member.ID !== response.id
+							)
+						);
+						setNotice({
+							type: 'success',
+							title: __('Success', 'quillbooking'),
+							message: response.message,
+						});
+					}
+				},
+				onError(error) {
 					setNotice({
-						type: 'success',
-						title: __('Success', 'quillbooking'),
-						message: response.message,
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message:
+							error.message ||
+							__('Failed to remove team member', 'quillbooking'),
 					});
-				}
-			},
-			onError(error) {
-				setNotice({
-					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message:
-						error.message ||
-						__('Failed to remove team member', 'quillbooking'),
-				});
-			},
-		});
+				},
+			});
+		} catch (error) {
+			setNotice({
+				type: 'error',
+				title: __('Error', 'quillbooking'),
+				message: __('An unexpected error occurred while removing the team member', 'quillbooking'),
+			});
+			console.error('Error in handleRemoveMember:', error);
+		}
 	};
 
 	const handleEditSubmit = (values: { role: string }) => {

@@ -252,27 +252,33 @@ const EventAdvancedSettings = forwardRef<
 	};
 
 	const saveSettings = async () => {
-		if (!event) return;
-		return saveApi({
-			path: `events/${event.id}`,
-			method: 'POST',
-			data: {
-				advanced_settings: settings,
-				slug: slug,
-			},
-			onSuccess() {
-				successNotice(
-					__('Settings saved successfully', 'quillbooking')
-				);
-				// Update initial state to reflect saved state
-				setInitialSettings(JSON.parse(JSON.stringify(settings)));
-				setInitialSlug(slug);
-				props.setDisabled(true);
-			},
-			onError(error) {
-				throw new Error(error.message);
-			},
-		});
+		try {
+			if (!event) {
+				console.warn('No event available to save settings');
+				return;
+			}
+	
+			await saveApi({
+				path: `events/${event.id}`,
+				method: 'POST',
+				data: {
+					advanced_settings: settings,
+					slug: slug,
+				},
+				onSuccess() {
+					successNotice(__('Settings saved successfully', 'quillbooking'));
+					// Update initial state to reflect saved state
+					setInitialSettings(JSON.parse(JSON.stringify(settings)));
+					setInitialSlug(slug);
+					props.setDisabled(true);
+				},
+				onError(error) {
+					throw new Error(error.message); // Re-throw to be caught by the outer try-catch
+				},
+			});
+		} catch (error:any) {
+			throw new Error(error.message);
+		}
 	};
 
 	if (!settings) {

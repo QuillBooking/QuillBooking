@@ -24,9 +24,9 @@ import {
  * Internal dependencies
  */
 // @ts-ignore
-import paypal from '../../../../../../../assets/icons/paypal/paypal_vertical.png';
+import paypal from '@quillbooking/assets/icons/paypal/paypal_vertical.png';
 // @ts-ignore
-import stripe from '../../../../../../../assets/icons/stripe/stripe.png';
+import stripe from '@quillbooking/assets/icons/stripe/stripe.png';
 import type { PaymentGateway } from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 

@@ -47,25 +47,32 @@ const CloneEventModal: React.FC<CloneEventModalProps> = ({
 
 	const saveCalendar = async () => {
 		if (!validate() || loading) return;
-
-		callApi({
-			path: `calendars/${calendar.id}/clone`,
-			method: 'POST',
-			data: {
-				event_id: event,
-			},
-			onSuccess: () => {
-				closeHandler();
-				onSaved();
-				setCloneMessage(true);
-			},
-			onError: (error) => {
-				if (setErrorMessage) {
-					setErrorMessage(error.message);
-				}
-			},
-		});
+	
+		try {
+			callApi({
+				path: `calendars/${calendar.id}/clone`,
+				method: 'POST',
+				data: {
+					event_id: event,
+				},
+				onSuccess: () => {
+					closeHandler();
+					onSaved();
+					setCloneMessage(true);
+				},
+				onError: (error) => {
+					if (setErrorMessage) {
+						setErrorMessage(error.message || 'API error');
+					}
+				},
+			});
+		} catch (error) {
+			if (setErrorMessage) {
+				setErrorMessage(error.message || 'Unexpected error occurred');
+			}
+		}
 	};
+	
 
 	const validate = () => {
 		if (!event) {

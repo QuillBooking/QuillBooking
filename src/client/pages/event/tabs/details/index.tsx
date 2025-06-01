@@ -178,23 +178,32 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 		}
 
 		const saveSettings = async () => {
-			if (!validate()) return;
-			return callApi({
-				path: `events/${event.id}`,
-				method: 'PUT',
-				data: event,
-				onSuccess: (response) => {
-					// Update the event state with the response data
-					actions.setEvent(response);
-					successNotice(
-						__('Event settings saved successfully', 'quillbooking')
-					);
-					setDisabled(true);
-				},
-				onError: (error) => {
-					throw new Error(error.message);
-				},
-			});
+			try {
+				if (!validate()) return;
+		
+				await callApi({
+					path: `events/${event.id}`,
+					method: 'PUT',
+					data: event,
+					onSuccess: (response) => {
+						// Update the event state with the response data
+						actions.setEvent(response);
+						successNotice(
+							__('Event settings saved successfully', 'quillbooking')
+						);
+						setDisabled(true);
+					},
+					onError: (error) => {
+						// Re-throw to be caught by the outer try-catch
+						throw new Error(error.message);
+					},
+				});
+			} catch (error:any) {
+				console.error('Error saving event settings:', error);
+				// No error notice shown as per original implementation
+				// Re-throw if you want calling code to handle it
+				throw new Error(error.message);
+			}
 		};
 
 		const handleChange = (key: string, value: any) => {

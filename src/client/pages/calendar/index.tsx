@@ -145,49 +145,68 @@ const Calendar: React.FC = () => {
 		navigate('calendars');
 	};
 
-	const saveSettings = () => {
-		if (!calendar) return;
+	const saveSettings = async () => {
+		try {
+			if (!calendar) return;
 
-		// Validate
-		if (!calendar.name) {
-			setErrorMessage(
-				__('Please enter a name for the calendar.', 'quillbooking')
-			);
-			setShowErrorBanner(true);
-			setTimeout(() => setShowErrorBanner(false), 5000);
-			return;
-		}
-
-		if (!calendar.timezone) {
-			setErrorMessage(__('Please select a timezone.', 'quillbooking'));
-			setShowErrorBanner(true);
-			setTimeout(() => setShowErrorBanner(false), 5000);
-			return;
-		}
-
-		// Save settings
-		callApi({
-			path: `calendars/${id}`,
-			method: 'PUT',
-			data: calendar,
-			onSuccess: () => {
-				setShowSavedBanner(true);
-				setTimeout(() => setShowSavedBanner(false), 5000);
-				setSaveDisabled(true);
-				setOriginalCalendar(calendar);
-			},
-			onError: (error) => {
+			// Validate
+			if (!calendar.name) {
 				setErrorMessage(
-					error.message ||
-						__('Failed to save settings.', 'quillbooking')
+					__('Please enter a name for the calendar.', 'quillbooking')
+				);
+				setShowErrorBanner(true);
+				setTimeout(() => setShowErrorBanner(false), 5000);
+				return;
+			}
+
+			if (!calendar.timezone) {
+				setErrorMessage(__('Please select a timezone.', 'quillbooking'));
+				setShowErrorBanner(true);
+				setTimeout(() => setShowErrorBanner(false), 5000);
+				return;
+			}
+
+			try {
+				// Save settings
+				await callApi({
+					path: `calendars/${id}`,
+					method: 'PUT',
+					data: calendar,
+					onSuccess: () => {
+						setShowSavedBanner(true);
+						setTimeout(() => setShowSavedBanner(false), 5000);
+						setSaveDisabled(true);
+						setOriginalCalendar(calendar);
+					},
+					onError: (error) => {
+						setErrorMessage(
+							error.message ||
+							__('Failed to save settings.', 'quillbooking')
+						);
+						setShowErrorBanner(true);
+						setTimeout(() => setShowErrorBanner(false), 5000);
+						setSaveDisabled(false);
+					},
+				});
+			} catch (apiError) {
+				console.error('API call failed:', apiError);
+				setErrorMessage(
+					__('An unexpected error occurred during the API call.', 'quillbooking')
 				);
 				setShowErrorBanner(true);
 				setTimeout(() => setShowErrorBanner(false), 5000);
 				setSaveDisabled(false);
-			},
-		});
+			}
+		} catch (error) {
+			console.error('Unexpected error in saveSettings:', error);
+			setErrorMessage(
+				__('An unexpected error occurred while saving settings.', 'quillbooking')
+			);
+			setShowErrorBanner(true);
+			setTimeout(() => setShowErrorBanner(false), 5000);
+			setSaveDisabled(false);
+		}
 	};
-
 	const renderTabContent = () => {
 		switch (activeTab) {
 			case 'general':

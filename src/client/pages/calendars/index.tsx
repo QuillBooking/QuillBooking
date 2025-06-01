@@ -195,34 +195,30 @@ const Calendars: React.FC = () => {
 	};
 
 	const deleteCalendar = async (calendar: Calendar) => {
-		await callApi({
-			path: `calendars/${calendar.id}`,
-			method: 'DELETE',
-			onSuccess: () => {
-				const updatedCalendars = filter(
-					calendars,
-					(c) => c.id !== calendar.id
-				);
-				setCalendars(updatedCalendars);
-
-				// Also update allCalendars for exclusion list
-				if (allCalendars) {
-					const updatedAllCalendars = filter(
-						allCalendars,
-						(c) => c.id !== calendar.id
-					);
-					setAllCalendars(updatedAllCalendars);
-
-					// Update excluded user IDs
-					const userIds = uniq(map(updatedAllCalendars, 'user_id'));
-					setExcludedUserIds(userIds);
-				}
-			},
-			onError: (error) => {
-				setErrorMessage(error.message);
-			},
-		});
-	};
+		try {
+			await callApi({
+				path: `calendars/${calendar.id}`,
+				method: 'DELETE',
+				onSuccess: () => {
+					const updatedCalendars = filter(calendars, (c) => c.id !== calendar.id);
+					setCalendars(updatedCalendars);
+	
+					if (allCalendars) {
+						const updatedAllCalendars = filter(allCalendars, (c) => c.id !== calendar.id);
+						setAllCalendars(updatedAllCalendars);
+	
+						const userIds = uniq(map(updatedAllCalendars, 'user_id'));
+						setExcludedUserIds(userIds);
+					}
+				},
+				onError: (error) => {
+					setErrorMessage(error.message);
+				},
+			});
+		} catch (error: any) {
+			setErrorMessage(error.message || 'Unexpected error occurred');
+		}
+	};	
 
 	// Initial load and whenever dependencies change
 	useEffect(() => {
@@ -512,6 +508,19 @@ const Calendars: React.FC = () => {
 									>
 										{__(
 											'Create Team Calendar',
+											'quillbooking'
+										)}
+									</Button>
+								)}
+								{filters.type === 'host' && (
+									<Button
+										type="primary"
+										className="mt-4"
+										onClick={() => setType('host')}
+										icon={<PlusOutlined />}
+									>
+										{__(
+											'Create host Calendar',
 											'quillbooking'
 										)}
 									</Button>

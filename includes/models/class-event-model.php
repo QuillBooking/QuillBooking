@@ -1404,9 +1404,6 @@ class Event_Model extends Model
 		$buffer_before = Arr::get($this->limits, 'general.buffer_before', 0);
 		$buffer_after = Arr::get($this->limits, 'general.buffer_after', 0);
 
-		$day_start->modify("-{$buffer_before} minutes");
-		$day_end->modify("+{$buffer_after} minutes");
-
 		$day_start->setTimezone(new \DateTimeZone('UTC'));
 		$day_end->setTimezone(new \DateTimeZone('UTC'));
 
@@ -1417,8 +1414,16 @@ class Event_Model extends Model
 			case 'one-to-one':
 			case 'group':
 				$slots_query->where('calendar_id', $this->calendar_id)
-					->where('start_time', '>=', $day_start->format('Y-m-d H:i:s'))
-					->where('end_time', '<=', $day_end->format('Y-m-d H:i:s'));
+					->where(function ($query) use ($day_start, $day_end, $buffer_before, $buffer_after) {
+						$query->where(function ($q) use ($day_start, $day_end, $buffer_before, $buffer_after) {
+							$q->where(function ($subq) use ($day_start, $buffer_after) {
+								$subq->whereRaw("DATE_ADD(end_time, INTERVAL ? MINUTE) > ?", [$buffer_after, $day_start->format('Y-m-d H:i:s')]);
+							})
+								->where(function ($subq) use ($day_end, $buffer_before) {
+									$subq->whereRaw("DATE_SUB(start_time, INTERVAL ? MINUTE) < ?", [$buffer_before, $day_end->format('Y-m-d H:i:s')]);
+								});
+						});
+					});
 				$event_spots = 'one-to-one' === $this->type ? 1 : Arr::get($this->group_settings, 'max_invites', 2);
 				break;
 			case 'round-robin':
@@ -1426,8 +1431,16 @@ class Event_Model extends Model
 				$team_members = $calendar_id ? array($calendar_id) : $this->calendar->getTeamMembers();
 
 				$slots_query->whereIn('calendar_id', $team_members)
-					->where('start_time', '>=', $day_start->format('Y-m-d H:i:s'))
-					->where('end_time', '<=', $day_end->format('Y-m-d H:i:s'));
+					->where(function ($query) use ($day_start, $day_end, $buffer_before, $buffer_after) {
+						$query->where(function ($q) use ($day_start, $day_end, $buffer_before, $buffer_after) {
+							$q->where(function ($subq) use ($day_start, $buffer_after) {
+								$subq->whereRaw("DATE_ADD(end_time, INTERVAL ? MINUTE) > ?", [$buffer_after, $day_start->format('Y-m-d H:i:s')]);
+							})
+								->where(function ($subq) use ($day_end, $buffer_before) {
+									$subq->whereRaw("DATE_SUB(start_time, INTERVAL ? MINUTE) < ?", [$buffer_before, $day_end->format('Y-m-d H:i:s')]);
+								});
+						});
+					});
 
 				// For round-robin, set the number of event spots.
 				if ('round-robin' === $this->type) {

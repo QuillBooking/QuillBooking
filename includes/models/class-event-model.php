@@ -1195,6 +1195,7 @@ class Event_Model extends Model {
 				}
 
 				$end_event_value = new \DateTime( $end_event_value, new \DateTimeZone( $this->availability['timezone'] ) );
+				$end_event_value->setTime( 23, 59, 59 );
 				$end_event_value->setTimezone( new \DateTimeZone( $timezone ) );
 				if ( $end_event_value < $created_date ) {
 					throw new \Exception( __( 'End date should be after the created date', 'quillbooking' ) );
@@ -1231,6 +1232,7 @@ class Event_Model extends Model {
 			}
 
 			$start_date = new \DateTime( $start_date_value, new \DateTimeZone( $this->availability['timezone'] ) );
+			$start_date->setTime( 0, 0, 0 );
 			$start_date->setTimezone( new \DateTimeZone( $timezone ) ); // Adjust to user timezone
 			$start_date = $start_date->getTimestamp();
 		}

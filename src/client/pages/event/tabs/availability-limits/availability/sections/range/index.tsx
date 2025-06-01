@@ -103,6 +103,7 @@ const RangeSection: React.FC<RangeSectionProps> = ({
 								);
 							}
 						}}
+						format="MM/DD/YYYY"
 						placeholder="Start Date"
 						className="w-full h-[48px] rounded-lg"
 						getPopupContainer={(trigger) =>
@@ -125,6 +126,7 @@ const RangeSection: React.FC<RangeSectionProps> = ({
 								);
 							}
 						}}
+						format="MM/DD/YYYY"
 						placeholder="End Date"
 						className="w-full h-[48px] rounded-lg"
 						getPopupContainer={(trigger) =>

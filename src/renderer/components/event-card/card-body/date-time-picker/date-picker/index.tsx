@@ -43,6 +43,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 }) => {
 	const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
 	const [loadedMonths, setLoadedMonths] = useState<string[]>([]);
+	const [reachedEndDate, setReachedEndDate] = useState<boolean>(false);
 
 	useEffect(() => {
 		if (selectedDate) {
@@ -69,8 +70,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 			});
 			if (response.ok) {
 				const data = await response.json();
-				// Verify that data.data.slots exists and is valid
-				if (data && data.data && data.data.slots) {
+				if (data && data.success && data.data && data.data.slots) {
 					setSelectedAvailability((prevAvailability) => ({
 						...prevAvailability,
 						...data.data.slots,
@@ -79,8 +79,22 @@ const DatePicker: React.FC<DatePickerProps> = ({
 						...prev,
 						date.format('YYYY-MM'),
 					]);
+					setReachedEndDate(false);
 				} else {
-					console.error('Invalid slots data received:', data);
+					if (
+						data &&
+						!data.success &&
+						data.data &&
+						data.data.message === 'Event is not available'
+					) {
+						setReachedEndDate(true);
+					} else {
+						console.error('Invalid slots data received:', data);
+						console.error(
+							'start_date:',
+							date.format('YYYY-MM-DD HH:mm:ss')
+						);
+					}
 				}
 			} else {
 				console.error(
@@ -96,6 +110,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 	useEffect(() => {
 		setLoadedMonths([]);
 		setSelectedAvailability({});
+		setReachedEndDate(false);
 
 		fetchAvailability(dayjs(), event.calendar_id);
 		setSelectedDate(null);
@@ -104,7 +119,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
 	useEffect(() => {
 		const monthKey = currentMonth.format('YYYY-MM');
-		if (!loadedMonths.includes(monthKey)) {
+		if (!loadedMonths.includes(monthKey) && !reachedEndDate) {
 			fetchAvailability(currentMonth, event.calendar_id);
 		}
 	}, [currentMonth]);
@@ -148,11 +163,14 @@ const DatePicker: React.FC<DatePickerProps> = ({
 		const handlePrevMonth = () => {
 			const newValue = value.clone().subtract(1, 'month');
 			setCurrentMonth(newValue);
+			setReachedEndDate(false);
 		};
 
 		const handleNextMonth = () => {
-			const newValue = value.clone().add(1, 'month');
-			setCurrentMonth(newValue);
+			if (!reachedEndDate) {
+				const newValue = value.clone().add(1, 'month');
+				setCurrentMonth(newValue);
+			}
 		};
 
 		return (
@@ -173,6 +191,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
 						background-color: ${lightColor};
 						color: ${baseColor};
 					`}`}
+					disabled={reachedEndDate}
+					style={
+						reachedEndDate
+							? { opacity: 0.5, cursor: 'not-allowed' }
+							: {}
+					}
 				>
 					<NextIcon />
 				</button>

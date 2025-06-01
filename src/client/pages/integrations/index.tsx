@@ -20,6 +20,7 @@ import {
 	UpcomingCalendarIcon,
 } from '@quillbooking/components';
 import { ConferencingCalendars, Payments, SMSIntegration } from './tabs';
+import { useCurrentUser } from '@quillbooking/hooks';
 
 /**
  * Integration component
@@ -27,6 +28,9 @@ import { ConferencingCalendars, Payments, SMSIntegration } from './tabs';
  */
 
 const Integrations: React.FC = () => {
+	const canManageAllCalendars = useCurrentUser().hasCapability(
+		'quillbooking_manage_all_calendars'
+	);
 	const [activeTab, setActiveTab] = useState<string>(
 		'conferencing-calendars'
 	);
@@ -78,17 +82,22 @@ const Integrations: React.FC = () => {
 			label: __('Conferencing and Calendars', 'quillbooking'),
 			icon: <UpcomingCalendarIcon width={20} height={20} />,
 		},
-		{
-			key: 'sms-integration',
-			label: __('SMS Integration', 'quillbooking'),
-			icon: <SmsNotiIcon width={20} height={20} />,
-		},
-		{
-			key: 'payments',
-			label: __('Payments', 'quillbooking'),
-			icon: <SettingsPaymentIcon width={20} height={20} />,
-		},
 	];
+
+	if (canManageAllCalendars) {
+		items.push(
+			{
+				key: 'sms-integration',
+				label: __('SMS Integration', 'quillbooking'),
+				icon: <SmsNotiIcon width={20} height={20} />,
+			},
+			{
+				key: 'payments',
+				label: __('Payments', 'quillbooking'),
+				icon: <SettingsPaymentIcon width={20} height={20} />,
+			}
+		);
+	}
 
 	return (
 		<div className="quillbooking-integrations-page">

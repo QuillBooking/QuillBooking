@@ -13,7 +13,7 @@ const colors = [
 	'#953AE4',
 	'#0099FF',
 	'#FF4F00',
-	'#E55CFF',
+	'#29339B',
 	'#337357',
 	'#2F243A',
 	'#942911',
@@ -33,12 +33,16 @@ export default function ColorSelector({
 					size="large"
 					className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 
                     ${selectedColor === colorOption ? 'ring ring-offset-2' : ''}`}
-					style={{
-						backgroundColor: colorOption,
-						minWidth: '25px',
-						'--tw-ring-color': colorOption ? colorOption : '',
-						border: colorOption ? '' : '2px solid #F2EBF9',
-					}}
+					style={
+						{
+							backgroundColor: colorOption,
+							minWidth: '25px',
+							border: colorOption ? '' : '2px solid #F2EBF9',
+							...(colorOption
+								? { ['--tw-ring-color' as any]: colorOption }
+								: {}),
+						} as React.CSSProperties & Record<string, any>
+					}
 					onClick={() => onColorSelect(colorOption)}
 				>
 					{selectedColor === colorOption && (

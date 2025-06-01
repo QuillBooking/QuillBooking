@@ -50,6 +50,7 @@ type SearchFilterProps = {
 	setEventType: (val: string) => void;
 	setEvent: (val: string | number) => void;
 	setAuthor: (val: string) => void;
+	canManageAllBookings: boolean;
 };
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
@@ -61,6 +62,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 	setEvent,
 	setEventType,
 	handleSearch,
+	canManageAllBookings,
 }) => {
 	return (
 		<Flex gap={10} justify="center" align="center" className="px-2">
@@ -93,23 +95,25 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 					/>
 				</>
 			)}
-			<MultiSelect
-				title={__('Author', 'quillbooking')}
-				defaultValue={author}
-				style={{ width: 150 }}
-				onChange={(e) => setAuthor(e.target.value)}
-				options={[
-					{
-						value: 'own',
-						label: __('Meetings: Admin', 'quillbooking'),
-					},
-					{
-						value: 'all',
-						label: __('Meetings: All', 'quillbooking'),
-					},
-				]}
-				containerClassName="w-[144px]"
-			/>
+			{canManageAllBookings && (
+				<MultiSelect
+					title={__('Author', 'quillbooking')}
+					defaultValue={author}
+					style={{ width: 150 }}
+					onChange={(e) => setAuthor(e.target.value)}
+					options={[
+						{
+							value: 'own',
+							label: __('Meetings: My Meetings', 'quillbooking'),
+						},
+						{
+							value: 'all',
+							label: __('Meetings: All', 'quillbooking'),
+						},
+					]}
+					containerClassName="w-[144px]"
+				/>
+			)}
 		</Flex>
 	);
 };

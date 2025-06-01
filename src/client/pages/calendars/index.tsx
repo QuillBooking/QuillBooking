@@ -78,7 +78,9 @@ const Calendars: React.FC = () => {
 		group: __('Group', 'quillbooking'),
 		'round-robin': __('Round Robin', 'quillbooking'),
 	};
-
+	const canManageAllCalendars = useCurrentUser().hasCapability(
+		'quillbooking_manage_all_calendars'
+	);
 	// Add useEffect for handling notice timeouts
 	useEffect(() => {
 		const messages = [
@@ -280,28 +282,30 @@ const Calendars: React.FC = () => {
 						'quillbooking'
 					)}
 				/>
-				<Flex gap={12}>
-					<Button
-						type="text"
-						onClick={() => setType('host')}
-						className="bg-color-tertiary pt-2 pb-7 px-4 flex items-start text-color-primary"
-					>
-						<AddIcon />
-						<span className="text-[14px] font-[500]">
-							{__('Add Host', 'quillbooking')}
-						</span>
-					</Button>
-					<Button
-						type="text"
-						onClick={() => setType('team')}
-						className="bg-color-primary pt-2 pb-7 px-4 flex items-start hover:text-color-primary"
-					>
-						<PeopleWhiteIcon />
-						<span className="text-white text-[14px] font-[500]">
-							{__('Create Team', 'quillbooking')}
-						</span>
-					</Button>
-				</Flex>
+				{canManageAllCalendars && (
+					<Flex gap={12}>
+						<Button
+							type="text"
+							onClick={() => setType('host')}
+							className="bg-color-tertiary pt-2 pb-7 px-4 flex items-start text-color-primary"
+						>
+							<AddIcon />
+							<span className="text-[14px] font-[500]">
+								{__('Add Host', 'quillbooking')}
+							</span>
+						</Button>
+						<Button
+							type="text"
+							onClick={() => setType('team')}
+							className="bg-color-primary pt-2 pb-7 px-4 flex items-start hover:text-color-primary"
+						>
+							<PeopleWhiteIcon />
+							<span className="text-white text-[14px] font-[500]">
+								{__('Create Team', 'quillbooking')}
+							</span>
+						</Button>
+					</Flex>
+				)}
 			</div>
 			<Card className="quillbooking-calendars-action">
 				<Flex justify="space-between">
@@ -341,7 +345,7 @@ const Calendars: React.FC = () => {
 							allowClear
 							className="w-[280px]"
 						/>
-						{filters.type === 'host' && (
+						{filters.type === 'host' && canManageAllCalendars && (
 							<HostSelect
 								key={hostSelectKey} // Add key to force re-render when changed
 								value={selectedUser}

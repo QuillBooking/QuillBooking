@@ -158,7 +158,7 @@ class Booking_Ajax {
 			$duration = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : $event->duration;
 			$duration = $this->bookingValidatorClass::validate_duration( $duration, $event->duration );
 
-			$available_slots = $event->get_available_slots( $start_date, $timezone, $duration, $calendar_id );
+			$available_slots = $event->get_available_slots( strtotime( $start_date ), $timezone, $duration, $calendar_id );
 
 			wp_send_json_success( array( 'slots' => $available_slots ) );
 		} catch ( \Exception $e ) {

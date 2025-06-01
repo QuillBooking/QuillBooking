@@ -42,6 +42,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 	lightColor,
 }) => {
 	const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
+	const [loadedMonths, setLoadedMonths] = useState<string[]>([]);
 
 	useEffect(() => {
 		if (selectedDate) {
@@ -49,18 +50,18 @@ const DatePicker: React.FC<DatePickerProps> = ({
 		}
 	}, [selectedDate]);
 
-	const fetchAvailability = async (value: number, calendar_id?: number) => {
+	const fetchAvailability = async (date: Dayjs, calendar_id?: number) => {
 		const formData = new FormData();
 		formData.append('action', 'quillbooking_booking_slots');
-		formData.append('id', value.toString());
+		formData.append('id', event.id.toString());
 		formData.append('timezone', timeZone || '');
-		formData.append('start_date', new Date().toISOString());
+		formData.append('start_date', date.unix().toString());
 		formData.append('duration', selectedDuration.toString());
 
 		if (calendar_id) {
 			formData.append('calendar_id', calendar_id.toString());
 		}
-		console.log(ajax_url);
+
 		try {
 			const response = await fetch(ajax_url, {
 				method: 'POST',
@@ -70,29 +71,43 @@ const DatePicker: React.FC<DatePickerProps> = ({
 				const data = await response.json();
 				// Verify that data.data.slots exists and is valid
 				if (data && data.data && data.data.slots) {
-					setSelectedAvailability(data.data.slots);
+					setSelectedAvailability((prevAvailability) => ({
+						...prevAvailability,
+						...data.data.slots,
+					}));
+					setLoadedMonths((prev) => [
+						...prev,
+						date.format('YYYY-MM'),
+					]);
 				} else {
 					console.error('Invalid slots data received:', data);
-					setSelectedAvailability({}); // Set empty object to prevent null errors
 				}
 			} else {
 				console.error(
 					'Error fetching availability: Server returned',
 					response.status
 				);
-				setSelectedAvailability({});
 			}
 		} catch (error) {
 			console.error('Error fetching availability:', error);
-			setSelectedAvailability({});
 		}
 	};
 
 	useEffect(() => {
-		fetchAvailability(event.id, event.calendar_id);
+		setLoadedMonths([]);
+		setSelectedAvailability({});
+
+		fetchAvailability(dayjs(), event.calendar_id);
 		setSelectedDate(null);
 		setSelectedTime(null);
 	}, [timeZone, selectedDuration]);
+
+	useEffect(() => {
+		const monthKey = currentMonth.format('YYYY-MM');
+		if (!loadedMonths.includes(monthKey)) {
+			fetchAvailability(currentMonth, event.calendar_id);
+		}
+	}, [currentMonth]);
 
 	const renderDateCell = (value) => {
 		const isSameDay =

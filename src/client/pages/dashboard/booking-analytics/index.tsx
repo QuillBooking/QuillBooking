@@ -23,11 +23,12 @@ import {
 	UpcomingCalendarIcon,
 } from '@quillbooking/components';
 import './style.scss';
-import { useApi, useCurrentUser } from '@quillbooking/hooks';
+import { useApi } from '@quillbooking/hooks';
 import StateCard from './state-card';
 
-const BookingAnalytics: React.FC = () => {
-	const currentUser = useCurrentUser();
+const BookingAnalytics: React.FC<{ canManageAllCalendars: boolean }> = ({
+	canManageAllCalendars,
+}) => {
 	const [counts, setCounts] = useState({
 		total: 0,
 		upcoming: 0,
@@ -48,7 +49,7 @@ const BookingAnalytics: React.FC = () => {
 		setLoading(true);
 		callApi({
 			path: addQueryArgs('bookings/counts', {
-				user: currentUser.getId(),
+				user: canManageAllCalendars ? 'all' : 'own',
 			}),
 			method: 'GET',
 			onSuccess: (res) => {

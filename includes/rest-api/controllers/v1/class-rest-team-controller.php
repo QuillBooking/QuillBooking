@@ -1,4 +1,5 @@
 <?php
+
 /**
  * REST API: Class REST_Team_Controller
  *
@@ -169,6 +170,7 @@ class REST_Team_Controller extends REST_Controller {
 			'capabilities' => $wp_user->caps, // <-- Use caps from WP_User
 			'is_admin'     => user_can( $wp_user->ID, 'manage_options' ),
 			'is_host'      => $is_host_check,
+			'role'         => get_user_meta( $user_id, 'quillbooking_team_member_role', true ), // Use the role from Team_Model
 		);
 	}
 
@@ -187,7 +189,7 @@ class REST_Team_Controller extends REST_Controller {
 			$team_members = Team_Model::get_members()->paginate( $per_page, '*', 'page', $page );
 
 			$team_members = $team_members->map(
-				function( $user ) {
+				function ( $user ) {
 					return $this->format_item_for_response( $user );
 				}
 			);
@@ -222,15 +224,17 @@ class REST_Team_Controller extends REST_Controller {
 	// Inside REST_Team_Controller::create_item
 	public function create_item( $request ) {
 		try {
-			$user_id      = $request->get_param( 'user_id' );
-			$capabilities = $request->get_param( 'capabilities' );
+			$user_id = $request->get_param( 'user_id' );
+			$role    = $request->get_param( 'role' );
 
 			if ( ! $user_id ) {
 				return new WP_Error( 'rest_team_error', __( 'User ID is required', 'quillbooking' ), array( 'status' => 400 ) );
 			}
-			if ( ! $capabilities ) {
-				return new WP_Error( 'rest_team_error', __( 'Capabilities are required', 'quillbooking' ), array( 'status' => 400 ) );
+			if ( ! $role ) {
+				return new WP_Error( 'rest_team_error', __( 'Role is required', 'quillbooking' ), array( 'status' => 400 ) );
 			}
+
+			$capabilities = Capabilities::get_role_capabilities( $role );
 
 			// 1. Check if the WP User actually exists first
 			$user = get_userdata( $user_id );
@@ -250,6 +254,7 @@ class REST_Team_Controller extends REST_Controller {
 				$user->add_cap( $capability );
 			}
 			update_user_meta( $user_id, 'quillbooking_team_member', 'yes' );
+			update_user_meta( $user_id, 'quillbooking_team_member_role', $role );
 
 			// 4. Return formatted response (fetch fresh data via Team_Model for formatting)
 			$team_member_data = Team_Model::find( $user_id );
@@ -319,16 +324,17 @@ class REST_Team_Controller extends REST_Controller {
 	 */
 	public function update_item( $request ) {
 		try {
-			$id           = $request->get_param( 'id' );
-			$capabilities = $request->get_param( 'capabilities' );
+			$id   = $request->get_param( 'id' );
+			$role = $request->get_param( 'role' );
 
 			if ( ! $id ) {
 				return new WP_Error( 'rest_team_error', __( 'User ID is required', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
-			if ( ! $capabilities ) {
-				return new WP_Error( 'rest_team_error', __( 'Capabilities are required', 'quillbooking' ), array( 'status' => 400 ) );
+			if ( ! $role ) {
+				return new WP_Error( 'rest_team_error', __( 'Role is required', 'quillbooking' ), array( 'status' => 400 ) );
 			}
+			$capabilities = Capabilities::get_role_capabilities( $role );
 
 			$team_member = Team_Model::find( $id );
 			if ( ! $team_member->is_team_member() ) {
@@ -352,6 +358,7 @@ class REST_Team_Controller extends REST_Controller {
 			}
 
 			$user = Team_Model::find( $id );
+			update_user_meta( $id, 'quillbooking_team_member_role', $role );
 			return new WP_REST_Response( $this->format_item_for_response( $user ), 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_team_error', $e->getMessage(), array( 'status' => 500 ) );
@@ -395,13 +402,15 @@ class REST_Team_Controller extends REST_Controller {
 			}
 
 			delete_user_meta( $id, 'quillbooking_team_member' );
-			return new WP_REST_Response( 
+
+			delete_user_meta( $id, 'quillbooking_team_member_role' );
+			return new WP_REST_Response(
 				array(
 					'success' => true,
 					'message' => __( 'Team member removed successfully', 'quillbooking' ),
-					'id' => $id
-				), 
-				200 
+					'id'      => $id,
+				),
+				200
 			);
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_team_error', $e->getMessage(), array( 'status' => 500 ) );

@@ -71,12 +71,12 @@ const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 					content={booking.event.name}
 					icon={<AllCalendarIcon width={24} height={24} />}
 				/> */}
-				<InfoItem
+				{/* <InfoItem
 					title={__('Event Link', 'quillbooking')}
 					content={booking.event_url}
 					icon={<LinkIcon width={24} height={24} />}
 					link={true}
-				/>
+				/> */}
 			</div>
 		</div>
 	);

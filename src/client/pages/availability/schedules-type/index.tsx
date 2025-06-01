@@ -14,19 +14,19 @@ import { Flex } from 'antd';
 import ScheduleItem from './schedule-item';
 
 interface SchedulesTypeProps {
-	isAdmin: boolean;
+	canManageAllAvailability: boolean;
 	showAllSchedules: boolean;
 	setShowAllSchedules: (isFiltered: boolean) => void;
 }
 const SchedulesType: React.FC<SchedulesTypeProps> = ({
-	isAdmin,
+	canManageAllAvailability,
 	showAllSchedules,
 	setShowAllSchedules,
 }) => {
 	return (
 		<div className="my-4 p-4 rounded-md border border-gray-200">
 			<Flex align="center" gap={10}>
-				{isAdmin && (
+				{canManageAllAvailability && (
 					<ScheduleItem
 						title={__('All Schedule', 'quillbooking')}
 						active={showAllSchedules}

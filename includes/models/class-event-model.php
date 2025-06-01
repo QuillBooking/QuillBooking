@@ -1189,6 +1189,7 @@ class Event_Model extends Model {
 		switch ( $event_date_type ) {
 			case 'days':
 				$end_event_value = Arr::get( $this->event_range, 'days', 60 );
+				// Add one extra day to account for the inclusive counting
 				$created_date->modify( "+{$end_event_value} days" );
 				break;
 			case 'infinity':
@@ -1200,8 +1201,12 @@ class Event_Model extends Model {
 					throw new \Exception( __( 'End date is required', 'quillbooking' ) );
 				}
 
-				$end_event_value = new \DateTime( $end_event_value, new \DateTimeZone( $this->availability['timezone'] ) );
+				// Create DateTime with UTC timezone to avoid DST issues
+				$end_event_value = new \DateTime( $end_event_value, new \DateTimeZone( 'UTC' ) );
+				$end_event_value->setTime( 23, 59, 59 );
+				// Then convert to the target timezone
 				$end_event_value->setTimezone( new \DateTimeZone( $timezone ) );
+
 				if ( $end_event_value < $created_date ) {
 					throw new \Exception( __( 'End date should be after the created date', 'quillbooking' ) );
 				}
@@ -1209,8 +1214,6 @@ class Event_Model extends Model {
 				$created_date = $end_event_value;
 				break;
 		}
-
-		$created_date->format( 'Y-m-d' );
 
 		return $created_date->getTimestamp();
 	}
@@ -1236,8 +1239,11 @@ class Event_Model extends Model {
 				throw new \Exception( __( 'Start date is required', 'quillbooking' ) );
 			}
 
-			$start_date = new \DateTime( $start_date_value, new \DateTimeZone( $this->availability['timezone'] ) );
-			$start_date->setTimezone( new \DateTimeZone( $timezone ) ); // Adjust to user timezone
+			// Create DateTime with UTC timezone to avoid DST issues
+			$start_date = new \DateTime( $start_date_value, new \DateTimeZone( 'UTC' ) );
+			$start_date->setTime( 0, 0, 0 );
+			// Then convert to the target timezone
+			$start_date->setTimezone( new \DateTimeZone( $timezone ) );
 			$start_date = $start_date->getTimestamp();
 		}
 

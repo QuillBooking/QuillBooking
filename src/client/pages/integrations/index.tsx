@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 
 /**
  * External dependencies
@@ -20,7 +20,7 @@ import {
 	UpcomingCalendarIcon,
 } from '@quillbooking/components';
 import { ConferencingCalendars, Payments, SMSIntegration } from './tabs';
-import { useCurrentUser } from '@quillbooking/hooks';
+import { useCurrentUser, useNavigate, useNotice } from '@quillbooking/hooks';
 
 /**
  * Integration component
@@ -28,12 +28,28 @@ import { useCurrentUser } from '@quillbooking/hooks';
  */
 
 const Integrations: React.FC = () => {
+	const { isAdmin } = useCurrentUser();
 	const canManageAllCalendars = useCurrentUser().hasCapability(
 		'quillbooking_manage_all_calendars'
 	);
 	const [activeTab, setActiveTab] = useState<string>(
 		'conferencing-calendars'
 	);
+	const navigate = useNavigate();
+	const { errorNotice } = useNotice();
+
+	useEffect(() => {
+		if (!isAdmin()) {
+			errorNotice(
+				__(
+					'You do not have permission to access this page',
+					'quillbooking'
+				)
+			);
+			navigate('calendars');
+			return;
+		}
+	}, []);
 
 	const handleTabChange = (key: string) => {
 		setActiveTab(key);

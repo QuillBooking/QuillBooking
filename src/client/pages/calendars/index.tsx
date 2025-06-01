@@ -523,19 +523,20 @@ const Calendars: React.FC = () => {
 										)}
 									</Button>
 								)}
-								{filters.type === 'host' && (
-									<Button
-										type="primary"
-										className="mt-4"
-										onClick={() => setType('host')}
-										icon={<PlusOutlined />}
-									>
-										{__(
-											'Create host Calendar',
-											'quillbooking'
-										)}
-									</Button>
-								)}
+								{filters.type === 'host' &&
+									canManageAllCalendars && (
+										<Button
+											type="primary"
+											className="mt-4"
+											onClick={() => setType('host')}
+											icon={<PlusOutlined />}
+										>
+											{__(
+												'Create host Calendar',
+												'quillbooking'
+											)}
+										</Button>
+									)}
 							</Flex>
 						</Flex>
 					) : (

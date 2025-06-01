@@ -17,21 +17,20 @@ export type ConfigData = Record<string, unknown> & {
 	fieldsTypes: FieldsTypes;
 	capabilities: Capabilities;
 	currentUser: CurrentUser;
-	mergeTags: MergeTagGroups; 
-
+	mergeTags: MergeTagGroups;
 };
 
 export type MergeTagGroups = {
 	[group: string]: {
-	  mergeTags: {
-		[slug: string]: {
-		  name: string;
-		  value: string;
+		mergeTags: {
+			[slug: string]: {
+				name: string;
+				value: string;
+			};
 		};
-	  };
 	};
-  };
-  
+};
+
 export type CurrentUser = {
 	id: number;
 	email: string;
@@ -56,6 +55,7 @@ export type PaymentGateway = {
 		[key: string]: unknown;
 	};
 	fields: Fields;
+	enabled?: boolean;
 };
 
 export type Capabilities = Record<string, CapabilityGroup>;
@@ -70,7 +70,21 @@ export type FieldsTypes = {
 };
 
 export type FieldType = {
-	type: 'text' | 'textarea' | 'checkbox' | 'select' | 'radio' | 'date' | 'time' | 'datetime' | 'number' | 'multiple_select' | 'file' | 'hidden' | 'checkbox_group' | 'terms';
+	type:
+		| 'text'
+		| 'textarea'
+		| 'checkbox'
+		| 'select'
+		| 'radio'
+		| 'date'
+		| 'time'
+		| 'datetime'
+		| 'number'
+		| 'multiple_select'
+		| 'file'
+		| 'hidden'
+		| 'checkbox_group'
+		| 'terms';
 	has_options: boolean;
 	multiple: boolean;
 };

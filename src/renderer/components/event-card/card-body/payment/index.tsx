@@ -12,6 +12,8 @@ interface PaymentProps {
 	bookingData: Booking;
 	event: Event;
 	totalPrice: number;
+	darkColor: string;
+	baseColor: string;
 }
 
 // Main Payment component
@@ -21,6 +23,8 @@ const Payment: React.FC<PaymentProps> = ({
 	bookingData,
 	event,
 	totalPrice,
+	darkColor,
+	baseColor,
 }) => {
 	const [stripePromise, setStripePromise] = useState<any>(null);
 	const [paymentIntent, setPaymentIntent] = useState<any>(null);
@@ -29,7 +33,6 @@ const Payment: React.FC<PaymentProps> = ({
 	const [currentPaymentStep, setCurrentPaymentStep] = useState<number>(3); // 3 = Payment Summary, 4 = Stripe Form
 
 	useEffect(() => {
-
 		// Only initialize Stripe when moving to the Stripe form step
 		if (currentPaymentStep === 4) {
 			initStripe();
@@ -110,6 +113,8 @@ const Payment: React.FC<PaymentProps> = ({
 				bookingData={bookingData}
 				event={event}
 				totalPrice={totalPrice}
+				darkColor={darkColor}
+				baseColor={baseColor}
 			/>
 		);
 	}
@@ -142,6 +147,8 @@ const Payment: React.FC<PaymentProps> = ({
 					ajax_url={ajax_url}
 					setStep={handleStepChange}
 					bookingData={bookingData}
+					darkColor={darkColor}
+					baseColor={baseColor}
 				/>
 			</Elements>
 		);

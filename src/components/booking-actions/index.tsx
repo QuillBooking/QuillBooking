@@ -28,11 +28,11 @@ import {
 import ConfigAPI from '@quillbooking/config';
 
 const Actions = {
-	email: {
-		label: 'Send Confirmation Email',
-		action: 'send_confirmation_email',
-		icon: <EmailConfirmIcon />,
-	},
+	// email: {
+	// 	label: 'Send Confirmation Email',
+	// 	action: 'send_confirmation_email',
+	// 	icon: <EmailConfirmIcon />,
+	// },
 	rebook: {
 		label: 'Rebook',
 		action: 'rebook',
@@ -72,7 +72,7 @@ const statues = {
 		'rebook',
 		'reschedule',
 		'completed',
-		'email',
+		//'email',
 	],
 };
 
@@ -163,7 +163,7 @@ const BookingActions: React.FC<BookingActionsProps> = ({
 
 	// Action Handlers
 	const actionHandlers: Record<string, () => void> = {
-		send_confirmation_email: sendConfirmationEmail,
+		// send_confirmation_email: sendConfirmationEmail,
 		rebook: rebook,
 		reschedule: () => {
 			const redirectUrl = `${siteUrl}/?quillbooking=booking&id=${booking.hash_id}&type=reschedule`;

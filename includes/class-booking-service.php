@@ -86,6 +86,10 @@ class Booking_Service {
 				)
 			);
 
+			if ( $event->requirePayment() && 'pending' === $status ) {
+				do_action( 'quillbooking_payment_status', $booking );
+			}
+
 			if ( 'pending' === $status && 'confirmation' === $pending_type ) {
 				do_action( 'quillbooking_booking_pending', $booking );
 			} else {
@@ -96,20 +100,20 @@ class Booking_Service {
 		return $booking;
 	}
 
-		/**
-		 * Validate invitee
-		 *
-		 * @param Event_Model $event
-		 * @param array       $invitee
-		 *
-		 * @throws \Exception
-		 * @return array
-		 */
+	/**
+	 * Validate invitee
+	 *
+	 * @param Event_Model $event
+	 * @param array       $invitee
+	 *
+	 * @throws \Exception
+	 * @return array
+	 */
 	public function validate_invitee( $event, $invitee ) {
 		// invitee should be an array of {name, email}
 		// First, we need to sanitize the invitee
 		$invitee = array_map(
-			function( $item ) {
+			function ( $item ) {
 				$name  = sanitize_text_field( Arr::get( $item, 'name', null ) );
 				$email = sanitize_email( Arr::get( $item, 'email', null ) );
 

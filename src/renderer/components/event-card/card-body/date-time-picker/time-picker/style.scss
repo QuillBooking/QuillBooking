@@ -8,7 +8,6 @@
 	overflow-y: scroll;
 	height: 442px;
 	scrollbar-width: thin;
-	scrollbar-color: #953ae4 #f5f5f5;
 }
 
 .time-slots-container {
@@ -43,9 +42,6 @@
 
 	&:hover,
 	&.active {
-		background-color: #f1e0ff;
-		color: #9333ea;
-		border-color: #d8b4fe;
 		box-shadow: 0 2px 4px rgba(147, 51, 234, 0.1);
 	}
 }
@@ -75,12 +71,12 @@
 	line-height: 1.2;
 	min-width: 70px;
 	text-align: center;
-	
+
 	span:first-child {
 		font-size: 14px;
 		font-weight: 700;
 	}
-	
+
 	span:last-child {
 		font-size: 11px;
 	}
@@ -142,7 +138,6 @@
 	background-color: #f5f5f5;
 }
 .time-picker-container::-webkit-scrollbar-thumb {
-	background-color: #953ae4;
 	border: 1px solid #555555;
 	border-radius: 20px;
 }

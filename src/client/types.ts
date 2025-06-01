@@ -60,6 +60,11 @@ export type ConnectedIntegrationsFields = {
 	has_accounts: boolean;
 };
 
+export type ConnectedIntegrationsFieldsMicrosoft =
+	ConnectedIntegrationsFields & {
+		teams_enabled: boolean;
+	};
+
 export type Event = {
 	id: number;
 	hash_id: string;
@@ -86,11 +91,11 @@ export type Event = {
 	fields?: EventMetaData[];
 	availability_data?: Availability;
 	reserve: boolean;
-	payments_settings?: PaymentsSettings;
+	payments_settings: PaymentsSettings;
 	connected_integrations: {
 		apple: ConnectedIntegrationsFields;
 		google: ConnectedIntegrationsFields;
-		outlook: ConnectedIntegrationsFields;
+		outlook: ConnectedIntegrationsFieldsMicrosoft;
 		twilio: ConnectedIntegrationsFields;
 		zoom: ConnectedIntegrationsFields;
 	};
@@ -288,7 +293,7 @@ export type BookingLocation = {
 	id?: string;
 	label: string;
 	value: string;
-}
+};
 
 export interface Booking extends BookingResponse {
 	time_span: string;
@@ -396,7 +401,7 @@ export interface PaymentsSettings {
 	enable_items_based_on_duration: boolean;
 	items: PaymentItem[];
 	multi_duration_items: {
-		[key: string]: PaymentItem & { duration: string };
+		[key: string]: PaymentItem;
 	};
 	payment_methods?: string[];
 	enable_paypal: boolean;

@@ -29,10 +29,6 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
 class Event_Model extends Model {
 
 
-
-
-
-
 	/**
 	 * Table name
 	 *
@@ -549,12 +545,12 @@ class Event_Model extends Model {
 			$has_accounts        = false;
 			$global_settings     = $integration->get_settings();
 			$set_global_settings = false;
+			$teams_enabled       = false;
 
 			if ( $integration->slug == 'zoom' ) {
 				$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
 				if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['client_id'] ) && ! empty( $app_credentials['client_secret'] ) ) {
 					$set_global_settings = true;
-					$has_accounts        = true;
 				} else {
 					$set_global_settings = false;
 				}
@@ -575,14 +571,28 @@ class Event_Model extends Model {
 					$all_connected = false;
 				} else {
 					$has_accounts = true;
+					// Check if this is the default account and has Teams enabled
+					if ( $integration->slug === 'outlook' ) {
+						foreach ( $accounts as $account ) {
+							if (
+								isset( $account['config']['default_calendar'] )
+							) {
+								// Check if Teams is explicitly enabled in the account settings
+								$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
+									$account['config']['settings']['enable_teams'] === true;
+								break;
+							}
+						}
+					}
 				}
 			}
 
 			$connected_integrations[ $integration->slug ] = array(
-				'name'         => $integration->name,
-				'connected'    => $all_connected,
-				'has_accounts' => $has_accounts,
-				'has_settings' => $set_global_settings,
+				'name'          => $integration->name,
+				'connected'     => $all_connected,
+				'has_accounts'  => $has_accounts,
+				'has_settings'  => $set_global_settings,
+				'teams_enabled' => $teams_enabled,
 			);
 		}
 
@@ -920,6 +930,23 @@ class Event_Model extends Model {
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
 		$end_date   = $this->calculate_end_date( $start_date, $timezone );
 
+		$event_date_type = Arr::get( $this->event_range, 'type', 'days' );
+		if ( 'infinity' === $event_date_type ) {
+			// If user is browsing future months, start from the requested month
+			$requested_date = new \DateTime( date( 'Y-m-d', $start_date ), new \DateTimeZone( $timezone ) );
+
+			// Get first day of next month from the requested date
+			$month_end = clone $requested_date;
+			$month_end->modify( 'last day of +6 month' );
+			$month_end->setTime( 23, 59, 59 );
+
+			// Use the smaller of the calculated end date or two months ahead
+			$month_end_timestamp = $month_end->getTimestamp();
+			if ( $month_end_timestamp < $end_date ) {
+				$end_date = $month_end_timestamp;
+			}
+		}
+
 		$slots = $this->generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id );
 
 		return apply_filters( 'quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone );
@@ -1037,7 +1064,7 @@ class Event_Model extends Model {
 			throw new \Exception( __( 'Event is not available', 'quillbooking' ) );
 		}
 
-		return min( strtotime( 'last day of this month', $start_date ), $event_end_date );
+		return $event_end_date;
 	}
 
 	/**
@@ -1157,6 +1184,9 @@ class Event_Model extends Model {
 			case 'days':
 				$end_event_value = Arr::get( $this->event_range, 'days', 60 );
 				$created_date->modify( "+{$end_event_value} days" );
+				break;
+			case 'infinity':
+				$created_date->modify( '+5 years' );
 				break;
 			case 'date_range':
 				$end_event_value = Arr::get( $this->event_range, 'end_date', null );

@@ -15,17 +15,17 @@ import {
 	Modal,
 	Form,
 	Popconfirm,
-	Checkbox,
 	Avatar,
 	Empty,
 	Col,
 	Row,
+	Radio,
 } from 'antd';
 
 /**
  * Internal dependencies
  */
-import { useApi } from '@quillbooking/hooks';
+import { useApi, useNotice } from '@quillbooking/hooks';
 import {
 	AddIcon,
 	CardHeader,
@@ -47,6 +47,7 @@ type TeamMember = {
 	capabilities: Record<string, boolean>;
 	is_admin: boolean;
 	is_host: boolean;
+	role: 'admin' | 'member';
 };
 
 type CapabilityGroup = {
@@ -114,6 +115,7 @@ const TeamTab: React.FC = () => {
 		title: string;
 	} | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const { errorNotice } = useNotice();
 
 	useEffect(() => {
 		fetchTeamMembers();
@@ -142,20 +144,11 @@ const TeamTab: React.FC = () => {
 	};
 
 	const handleEditMember = (member: TeamMember) => {
+		console.log('Editing member:', member);
 		setCurrentMember(member);
 
-		const groupedCapabilities = Object.entries(capabilities).reduce(
-			(acc, [groupKey, group]) => {
-				acc[groupKey] = Object.keys(group.capabilities).filter(
-					(cap) => member.capabilities[cap]
-				);
-				return acc;
-			},
-			{} as Record<string, string[]>
-		);
-
 		form.setFieldsValue({
-			capabilities: groupedCapabilities,
+			role: member.role,
 		});
 		setIsModalVisible(true);
 	};
@@ -203,148 +196,108 @@ const TeamTab: React.FC = () => {
 		}
 	};
 
-	const handleEditSubmit = async (values: {
-		capabilities: Record<string, string[]>;
-	}) => {
-		try {
-			if (!currentMember) return;
-			const allCapabilities = Object.values(values.capabilities || {}).flat();
+	const handleEditSubmit = (values: { role: string }) => {
+		if (!currentMember) return;
 
-			await saveApi({
-				path: `team-members/${currentMember.ID}`,
-				method: 'PUT',
-				data: {
-					capabilities: allCapabilities,
-				},
-				onSuccess() {
-					setNotice({
-						type: 'success',
-						title: __('Success', 'quillbooking'),
-						message: __('Team member updated successfully', 'quillbooking'),
-					});
-					setIsModalVisible(false);
-					fetchTeamMembers();
-				},
-				onError(error) {
-					setNotice({
-						type: 'error',
-						title: __('Error', 'quillbooking'),
-						message:
-							error.message ||
-							__('Failed to update team member', 'quillbooking'),
-					});
-				},
-			});
-		} catch (error) {
-			setNotice({
-				type: 'error',
-				title: __('Error', 'quillbooking'),
-				message: __('An unexpected error occurred while updating the team member', 'quillbooking'),
-			});
-			console.error('Error in handleEditSubmit:', error);
-		}
+		saveApi({
+			path: `team-members/${currentMember.ID}`,
+			method: 'PUT',
+			data: {
+				role: values.role,
+			},
+			onSuccess() {
+				setNotice({
+					type: 'success',
+					title: __('Success', 'quillbooking'),
+					message: __(
+						'Team member updated successfully',
+						'quillbooking'
+					),
+				});
+				setIsModalVisible(false);
+				fetchTeamMembers();
+			},
+			onError(error) {
+				setNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message:
+						error.message ||
+						__('Failed to update team member', 'quillbooking'),
+				});
+			},
+		});
 	};
 
-	const handleAddMember = async () => {
-		try {
-			// Validate selected user
-			if (!selectedUser) {
-				setNotice({
-					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message: __('Please select a user', 'quillbooking'),
-				});
-				return;
-			}
-
-			// Validate capabilities
-			const groupedCapabilities = form.getFieldValue('capabilities') || {};
-			const allCapabilities = Object.values(groupedCapabilities).flat();
-
-			if (!allCapabilities.length) {
-				setNotice({
-					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message: __('Please select at least one capability', 'quillbooking'),
-				});
-				return;
-			}
-
-			// API call
-			await saveApi({
-				path: 'team-members',
-				method: 'POST',
-				data: {
-					user_id: selectedUser,
-					capabilities: allCapabilities,
-				},
-				onSuccess() {
-					setNotice({
-						type: 'success',
-						title: __('Success', 'quillbooking'),
-						message: __('Team member added successfully', 'quillbooking'),
-					});
-					setIsAddModalVisible(false);
-					setSelectedUser(null);
-					form.resetFields();
-					fetchTeamMembers();
-				},
-				onError(error) {
-					setNotice({
-						type: 'error',
-						title: __('Error', 'quillbooking'),
-						message: error.message || __('Failed to add team member', 'quillbooking'),
-					});
-				},
-			});
-		} catch (error) {
-			// Handle unexpected errors
-			setNotice({
-				type: 'error',
-				title: __('Error', 'quillbooking'),
-				message: __('An unexpected error occurred while adding the team member', 'quillbooking'),
-			});
-			console.error('Error in handleAddMember:', error);
-
-			// Reset form state on critical errors if needed
-			setIsAddModalVisible(false);
-			setSelectedUser(null);
-			form.resetFields();
+	const handleAddMember = () => {
+		if (!selectedUser) {
+			errorNotice(__('Please select a user', 'quillbooking'));
+			return;
 		}
+
+		if (form.getFieldValue('role') === undefined) {
+			errorNotice(__('Please select a role', 'quillbooking'));
+			return;
+		}
+
+		saveApi({
+			path: 'team-members',
+			method: 'POST',
+			data: {
+				user_id: selectedUser,
+				role: form.getFieldValue('role'),
+			},
+			onSuccess() {
+				setNotice({
+					type: 'success',
+					title: __('Success', 'quillbooking'),
+					message: __(
+						'Team member added successfully',
+						'quillbooking'
+					),
+				});
+				setIsAddModalVisible(false);
+				setSelectedUser(null);
+				form.resetFields();
+				fetchTeamMembers();
+			},
+			onError(error) {
+				setNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message:
+						error.message ||
+						__('Failed to add team member', 'quillbooking'),
+				});
+			},
+		});
 	};
 
 	const renderCapabilityGroups = () => {
 		return (
 			<>
 				<div className="text-[#09090B] text-[16px] mb-2">
-					{__('Access Permissions for this user', 'quillbooking')}
+					{__('User Role', 'quillbooking')}
 					<span className="text-red-500">*</span>
 				</div>
-				{Object.entries(capabilities).map(([key, group]) => (
-					<div key={key} className="capability-group mb-4">
-						<div className="text-[#3F4254] font-medium mb-2 capitalize">
-							{group.label || key}
-						</div>
-						<Form.Item
-							name={['capabilities', key]}
-							valuePropName="value"
+				<Form.Item name="role" rules={[{ required: true }]}>
+					<Radio.Group>
+						<Radio
+							key="admin"
+							value="admin"
+							className="custom-check text-[#3F4254] font-semibold"
 						>
-							<Checkbox.Group className="flex flex-col gap-2">
-								{Object.entries(group.capabilities).map(
-									([capKey, capLabel]) => (
-										<Checkbox
-											key={capKey}
-											value={capKey}
-											className="custom-check text-[#3F4254] font-semibold"
-										>
-											{capLabel}
-										</Checkbox>
-									)
-								)}
-							</Checkbox.Group>
-						</Form.Item>
-					</div>
-				))}
+							{__('Administrator', 'quillbooking')}
+						</Radio>
+						<Radio
+							key="member"
+							value="member"
+							className="custom-check text-[#3F4254] font-semibold"
+						>
+							{__('Member', 'quillbooking')}
+						</Radio>
+					</Radio.Group>
+				</Form.Item>
 			</>
 		);
 	};

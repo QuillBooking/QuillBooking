@@ -37,13 +37,7 @@
 			z-index: 2;
 		}
 
-		&.highlight-date {
-			background-color: rgba(168, 85, 247, 0.15); // Light purple
-			color: #9333ea;
-		}
-
 		&.selected-date {
-			background-color: #a855f7; // Primary purple
 			color: white;
 		}
 
@@ -51,7 +45,6 @@
 			width: 4px;
 			height: 4px;
 			border-radius: 50%;
-			background-color: #a855f7;
 			position: absolute;
 			bottom: 4px;
 			left: 50%;
@@ -119,9 +112,7 @@
 		border: none;
 		padding: 10px 13px;
 		border-radius: 50%;
-		background-color: #f1e0ff;
 		font-size: 18px;
-		color: #9333ea;
 		cursor: pointer;
 	}
 }

@@ -19,7 +19,6 @@ use QuillBooking\Integration\API as Abstract_API;
  */
 class API extends Abstract_API {
 
-
 	/**
 	 * App
 	 *
@@ -54,6 +53,7 @@ class API extends Abstract_API {
 	 * @param string $access_token Access token.
 	 * @param string $refresh_token Refresh token.
 	 * @param App    $app App.
+	 * @param string $account_id Account ID.
 	 * @since 1.0.0
 	 */
 	public function __construct( $access_token, $refresh_token = null, $app = null, $account_id = null ) {
@@ -225,5 +225,156 @@ class API extends Abstract_API {
 		$this->access_token  = $tokens['access_token'];
 		$this->refresh_token = $tokens['refresh_token'];
 		return true;
+	}
+
+	/**
+	 * Check if user has Teams meeting creation capabilities
+	 *
+	 * @return array Response with Teams capabilities status
+	 */
+	public function check_teams_capabilities() {
+		$response = $this->get( 'me/licenseDetails' );
+
+		if ( ! $response['success'] ) {
+			return $this->prepare_response(
+				false,
+				$response['code'],
+				array(
+					'message' => __( 'Failed to fetch license details', 'quillbooking' ),
+				)
+			);
+		}
+
+		$license_data = $response['data'];
+
+		// Check if user has any valid licenses
+		if ( empty( $license_data['value'] ) ) {
+			return $this->prepare_response(
+				false,
+				400,
+				array(
+					'message' => __( 'No valid Microsoft 365 license found. Teams meeting creation requires a valid Microsoft 365 license.', 'quillbooking' ),
+				)
+			);
+		}
+
+		// Check for Teams meeting creation capabilities
+		$has_teams_capability = false;
+		$teams_service_plans  = array(
+			'57ff2da0-773e-42df-b2af-ffb7a2317929', // TEAMS1
+			'6fd2c87f-b296-42f0-b197-1e91e994b900', // TEAMS_EXPLORATORY
+			'4a51bca5-1eff-43f5-878c-177680e19134', // TEAMS_COMMERCIAL_TRIAL
+			'0c266dff-15dd-4b49-8397-2bb16070ed52', // TEAMS_ESSENTIALS
+			'3b555118-da6a-4418-894f-7df1e2096870', // TEAMS_ESSENTIALS_EXP
+			'4de31727-a228-4ec3-a5bf-8e45b5ca48cc', // TEAMS_ESSENTIALS_TRIAL
+			'6a3f8d8b-2b1a-43b2-b555-2a1d1fdabcb9', // TEAMS_ESSENTIALS_TRIAL_EXP
+		);
+
+		foreach ( $license_data['value'] as $license ) {
+			if ( isset( $license['servicePlans'] ) ) {
+				foreach ( $license['servicePlans'] as $plan ) {
+					if (
+						in_array( $plan['servicePlanId'], $teams_service_plans ) &&
+						isset( $plan['provisioningStatus'] ) &&
+						$plan['provisioningStatus'] === 'Success'
+					) {
+						$has_teams_capability = true;
+						break 2;
+					}
+				}
+			}
+		}
+
+		if ( ! $has_teams_capability ) {
+			return $this->prepare_response(
+				false,
+				400,
+				array(
+					'message' => __( 'Your Microsoft 365 license does not include Teams meeting creation capabilities. Please upgrade your license to use Teams features.', 'quillbooking' ),
+				)
+			);
+		}
+
+		return $this->prepare_response(
+			true,
+			200,
+			array(
+				'has_teams_capability' => true,
+				'message'              => __( 'Teams meeting creation is available with your current license.', 'quillbooking' ),
+			)
+		);
+	}
+
+	/**
+	 * Create Teams meeting
+	 *
+	 * @param string $calendar_id Calendar ID.
+	 * @param array  $body Body.
+	 *
+	 * @return array
+	 */
+	public function create_teams_meeting( $calendar_id, $body ) {
+		// First check if user has Teams capabilities
+		$teams_check = $this->check_teams_capabilities();
+		if ( ! $teams_check['success'] ) {
+			return $teams_check;
+		}
+
+		// Add Teams meeting settings to the event
+		$body['onlineMeeting'] = array(
+			'provider' => 'teamsForBusiness',
+		);
+
+		return $this->create_event( $calendar_id, $body );
+	}
+
+	/**
+	 * Check Teams capabilities
+	 *
+	 * @param string $account_id Account ID.
+	 * @return array
+	 */
+	public function check_teams_capabilities_endpoint( $account_id ) {
+		$api = new API(
+			$this->get_access_token( $account_id ),
+			$this->get_refresh_token( $account_id ),
+			$this,
+			$account_id
+		);
+
+		return $api->check_teams_capabilities();
+	}
+
+	/**
+	 * Get access token
+	 *
+	 * @param string $account_id Account ID.
+	 * @return string
+	 */
+	private function get_access_token( $account_id ) {
+		$account = $this->get_account( $account_id );
+		return $account['tokens']['access_token'];
+	}
+
+	/**
+	 * Get refresh token
+	 *
+	 * @param string $account_id Account ID.
+	 * @return string
+	 */
+	private function get_refresh_token( $account_id ) {
+		$account = $this->get_account( $account_id );
+		return $account['tokens']['refresh_token'];
+	}
+
+	/**
+	 * Get account
+	 *
+	 * @param string $account_id Account ID.
+	 * @return array
+	 */
+	private function get_account( $account_id ) {
+		$accounts = get_option( 'quillbooking_outlook_accounts', array() );
+		return isset( $accounts[ $account_id ] ) ? $accounts[ $account_id ] : array();
 	}
 }

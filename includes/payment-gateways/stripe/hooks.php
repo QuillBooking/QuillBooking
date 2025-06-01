@@ -29,11 +29,8 @@ function quillbooking_init_stripe_payment_service() {
 		// Make sure we have settings configured
 		$mode_settings = $payment_gateway->get_mode_settings();
 		if ( ! $mode_settings ) {
-			error_log( 'Stripe Payment Service - Configuration missing' );
 			return;
 		}
-
-		error_log( 'Stripe Payment Service - Gateway configured: ' . json_encode( $mode_settings ) );
 
 		// Initialize Webhook handler
 		if ( class_exists( '\\QuillBooking\\Payment_Gateways\\Stripe\\Webhook' ) ) {
@@ -110,8 +107,6 @@ function quillbooking_process_stripe_payment( $booking, $args ) {
 				),
 			)
 		);
-
-		error_log( 'Stripe - Payment intent created: ' . $payment_intent->id );
 
 		// Store payment intent ID in booking meta
 		$booking->update_meta( 'stripe_payment_intent_id', $payment_intent->id );

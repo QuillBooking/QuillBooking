@@ -21,7 +21,7 @@ import {
 	GeneralOptions,
 	NoticeMessage,
 } from 'client/types';
-import { useApi } from '@quillbooking/hooks';
+import { useApi, useCurrentUser } from '@quillbooking/hooks';
 import BookingsHeader from './header';
 import BookingsTabs from './tabs';
 import SearchFilter from './search-filter';
@@ -93,7 +93,9 @@ const Bookings: React.FC = () => {
 	const currentMonth = new Date().getMonth() + 1;
 	const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
 	const [updateStatus, setUpdateStatus] = useState<boolean>(false);
-
+	const canManageAllBookings = useCurrentUser().hasCapability(
+		'quillbooking_manage_all_bookings'
+	);
 	const { callApi } = useApi();
 
 	const fetchEvents = () => {
@@ -196,6 +198,7 @@ const Bookings: React.FC = () => {
 				<div className="border-l-2 border-solid borderColor-[#DEDEDE]"></div>
 
 				<SearchFilter
+					canManageAllBookings={canManageAllBookings}
 					event={event}
 					eventType={eventType}
 					author={author}

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Capabilities: class Capabilities
  *
@@ -66,6 +67,32 @@ class Capabilities {
 	}
 
 	/**
+	 * Get role capabilities.
+	 */
+	public static function get_role_capabilities( $role ) {
+		$role_capabilities = array(
+			'admin'  => array(
+				'quillbooking_read_all_calendars',
+				'quillbooking_manage_all_calendars',
+				'quillbooking_read_all_bookings',
+				'quillbooking_manage_all_bookings',
+				'quillbooking_read_all_availability',
+				'quillbooking_manage_all_availability',
+			),
+			'member' => array(
+				'quillbooking_manage_own_calendars',
+				'quillbooking_read_own_bookings',
+				'quillbooking_manage_own_bookings',
+				'quillbooking_read_own_availability',
+				'quillbooking_manage_own_availability',
+			),
+		);
+
+		return isset( $role_capabilities[ $role ] ) ? $role_capabilities[ $role ] : array();
+	}
+
+
+	/**
 	 * Get current user capabilities.
 	 *
 	 * @since 1.0.0
@@ -93,7 +120,7 @@ class Capabilities {
 	 * @return array
 	 */
 	public static function get_all_capabilities() {
-		$capabilities = self::get_core_capabilities();
+		 $capabilities = self::get_core_capabilities();
 
 		$all_capabilities = array();
 

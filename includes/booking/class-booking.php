@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Booking
  *
@@ -18,13 +19,14 @@ use QuillBooking\Traits\Singleton;
  */
 class Booking {
 
+
 	use Singleton;
 
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
-		$this->load_classes();
+		 $this->load_classes();
 	}
 
 	/**
@@ -42,5 +44,7 @@ class Booking {
 
 		// Load booking ajax
 		new Booking_Ajax();
+
+		new Booking_Jobs();
 	}
 }

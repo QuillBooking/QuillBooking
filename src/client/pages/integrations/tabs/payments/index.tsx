@@ -14,6 +14,7 @@ import { useApi } from '@quillbooking/hooks';
 import { NoticeBanner } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/client';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const PaymentsTab: React.FC = () => {
 	const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -31,7 +32,7 @@ const PaymentsTab: React.FC = () => {
 	}, [paymentGateways, activeTab]);
 
 	const fetchGatewaySettings = useCallback(
-		async (gatewayId: string) => {
+		async (gatewayId: string, forceRefresh = false) => {
 			setIsLoading(true);
 			return new Promise((resolve) => {
 				callApi({
@@ -54,7 +55,12 @@ const PaymentsTab: React.FC = () => {
 						setNotice({
 							type: 'error',
 							title: __('Error', 'quillbooking'),
-							message: error.message || __('Failed to load payment gateway settings', 'quillbooking')
+							message:
+								error.message ||
+								__(
+									'Failed to load payment gateway settings',
+									'quillbooking'
+								),
 						});
 						resolve(false);
 					},
@@ -64,25 +70,21 @@ const PaymentsTab: React.FC = () => {
 		[callApi]
 	);
 
-	// Fetch gateway settings on initial load and when activeTab changes
-	useEffect(() => {
-		// Only fetch if we have gateways and a valid activeTab
-		if (Object.keys(paymentGateways).length > 0 && activeTab) {
-			// Check if we already have settings for this gateway
-			const gateway = paymentGateways[activeTab];
-			if (!gateway.settings) {
-				fetchGatewaySettings(activeTab);
-			}
-		}
-	}, [activeTab, paymentGateways, fetchGatewaySettings]);
+	const handleTabChange = useCallback(
+		(newTab: string) => {
+			// Don't set loading state immediately to prevent abrupt UI changes
+			// Instead, we'll handle loading states with animations
+			setActiveTab(newTab);
+			fetchGatewaySettings(newTab);
+		},
+		[fetchGatewaySettings]
+	);
 
 	// Initial fetch on component mount for the first gateway
 	useEffect(() => {
 		if (Object.keys(paymentGateways).length > 0) {
 			const firstGateway = Object.keys(paymentGateways)[0];
-			if (!paymentGateways[firstGateway].settings) {
-				fetchGatewaySettings(firstGateway);
-			}
+			fetchGatewaySettings(firstGateway);
 		}
 	}, []);
 
@@ -108,20 +110,16 @@ const PaymentsTab: React.FC = () => {
 				path: `payment-gateways/${gatewayId}/enabled`,
 				method: 'POST',
 				data: { enabled: value },
-				onSuccess(response) {
-					setNotice({
-						type: 'success',
-						title: __('Success', 'quillbooking'),
-						message: value
-							? __('Payment gateway enabled successfully', 'quillbooking')
-							: __('Payment gateway disabled successfully', 'quillbooking')
-					});
-				},
 				onError(error) {
 					setNotice({
 						type: 'error',
 						title: __('Error', 'quillbooking'),
-						message: error.message || __('Failed to update payment gateway status', 'quillbooking')
+						message:
+							error.message ||
+							__(
+								'Failed to update payment gateway status',
+								'quillbooking'
+							),
 					});
 					// Rollback the UI state change if the server update fails
 					setPaymentGateways((prevGateways) => ({
@@ -167,20 +165,34 @@ const PaymentsTab: React.FC = () => {
 			<IntegrateCard
 				paymentGateways={paymentGateways}
 				activeTab={activeTab}
-				setActiveTab={setActiveTab}
+				setActiveTab={handleTabChange}
 				isLoading={isLoading}
 			/>
-			{activeTab && activeGateway && (
-				<PaymentGatewayCard
-					slug={activeTab}
-					gateway={activeGateway}
-					updateGatewayProperty={(property, value) =>
-						updateGatewayProperty(activeTab, property, value)
-					}
-					updateGatewaySettings={updateGatewaySettings}
-					isLoading={isLoading}
-				/>
-			)}
+			<AnimatePresence mode="wait">
+				{activeTab && activeGateway && (
+					<motion.div
+						key={activeTab}
+						initial={{ opacity: 0, x: 20 }}
+						animate={{ opacity: 1, x: 0 }}
+						exit={{ opacity: 0, x: -20 }}
+						transition={{ duration: 0.3 }}
+					>
+						<PaymentGatewayCard
+							slug={activeTab}
+							gateway={activeGateway}
+							updateGatewayProperty={(property, value) =>
+								updateGatewayProperty(
+									activeTab,
+									property,
+									value
+								)
+							}
+							updateGatewaySettings={updateGatewaySettings}
+							isLoading={isLoading}
+						/>
+					</motion.div>
+				)}
+			</AnimatePresence>
 		</div>
 	);
 };

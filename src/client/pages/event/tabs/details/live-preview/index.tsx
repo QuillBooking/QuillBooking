@@ -68,13 +68,13 @@ const LivePreview: React.FC<LivePreviewProps> = ({
 								{name}
 							</div>
 						</Flex>
-						<Flex
+						{/* <Flex
 							gap={4}
 							className="text-color-primary text-[16px] font-semibold items-center"
 						>
 							<CiShare1 className="text-[20px]" />
 							<span>{__('Event Link', 'quillbooking')}</span>
-						</Flex>
+						</Flex> */}
 					</Flex>
 					<Flex
 						gap={4}

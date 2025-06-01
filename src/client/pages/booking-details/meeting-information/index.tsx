@@ -7,7 +7,11 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies
  */
 import type { Booking } from '@quillbooking/client';
-import { CardHeader, LocationDisplay } from '@quillbooking/components';
+import {
+	CardHeader,
+	LocationDisplay,
+	PriceIcon,
+} from '@quillbooking/components';
 import {
 	AllCalendarIcon,
 	CalendarInformationIcon,
@@ -66,17 +70,27 @@ const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 					content={booking.status}
 					icon={<StatusIcon width={24} height={24} />}
 				/>
-				{/* <InfoItem
+				<InfoItem
 					title={__('Price', 'quillbooking')}
-					content={booking.event.name}
-					icon={<AllCalendarIcon width={24} height={24} />}
-				/> */}
-				{/* <InfoItem
+					content={
+						<span className="text-[#007AFF] text-sm font-[500] capitalize">
+							{booking.order == null &&
+								booking.event.payments_settings
+									.enable_payment &&
+								__('Not Paied Yet', 'quillbooking')}
+							{booking.order != null && booking.order.total}
+							{!booking.event.payments_settings.enable_payment &&
+								__('Free', 'quillbooking')}
+						</span>
+					}
+					icon={<PriceIcon rectFill={false} width={24} height={24} />}
+				/>
+				<InfoItem
 					title={__('Event Link', 'quillbooking')}
 					content={booking.event_url}
 					icon={<LinkIcon width={24} height={24} />}
 					link={true}
-				/> */}
+				/>
 			</div>
 		</div>
 	);

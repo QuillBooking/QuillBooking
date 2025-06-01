@@ -29,18 +29,6 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
 class Event_Model extends Model {
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 	/**
 	 * Table name
 	 *
@@ -942,6 +930,25 @@ class Event_Model extends Model {
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
 		$end_date   = $this->calculate_end_date( $start_date, $timezone );
 
+		// For 'infinity' type, adjust the end date to a reasonable window to show slots
+		// The requested start_date might be for a future month, so we'll always return ~2 months of slots
+		$event_date_type = Arr::get( $this->event_range, 'type', 'days' );
+		if ( 'infinity' === $event_date_type ) {
+			// If user is browsing future months, start from the requested month
+			$requested_date = new \DateTime( date( 'Y-m-d', $start_date ), new \DateTimeZone( $timezone ) );
+
+			// Get first day of next month from the requested date
+			$month_end = clone $requested_date;
+			$month_end->modify( 'last day of +2 month' );
+			$month_end->setTime( 23, 59, 59 );
+
+			// Use the smaller of the calculated end date or two months ahead
+			$month_end_timestamp = $month_end->getTimestamp();
+			if ( $month_end_timestamp < $end_date ) {
+				$end_date = $month_end_timestamp;
+			}
+		}
+
 		$slots = $this->generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id );
 
 		return apply_filters( 'quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone );
@@ -1179,6 +1186,9 @@ class Event_Model extends Model {
 			case 'days':
 				$end_event_value = Arr::get( $this->event_range, 'days', 60 );
 				$created_date->modify( "+{$end_event_value} days" );
+				break;
+			case 'infinity':
+				$created_date->modify( '+5 years' );
 				break;
 			case 'date_range':
 				$end_event_value = Arr::get( $this->event_range, 'end_date', null );

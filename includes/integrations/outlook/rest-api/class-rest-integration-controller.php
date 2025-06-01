@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Outlook Rest Controller
  *
@@ -29,7 +30,7 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 * @since 1.0.0
 	 */
 	public function register_routes() {
-		parent::register_routes();
+		 parent::register_routes();
 
 		register_rest_route(
 			$this->namespace,
@@ -50,40 +51,40 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 * @return array
 	 */
 	public function get_settings_schema() {
-		return array(
-			'type'       => 'object',
-			'properties' => array(
-				'app'   => array(
-					'type'       => 'object',
-					'context'    => array( 'view' ),
-					'properties' => array(
-						'client_id'     => array(
-							'label'    => __( 'Client ID', 'quillbooking' ),
-							'type'     => 'string',
-							'required' => true,
-							'context'  => array( 'view' ),
-						),
-						'client_secret' => array(
-							'label'    => __( 'Client Secret', 'quillbooking' ),
-							'type'     => 'string',
-							'required' => true,
-							'context'  => array(),
-						),
-						'cache_time' => array(
-							'label'    => __( 'Cache Time', 'quillbooking' ),
-							'type'     => 'number',
-							'required' => true,
-							'context'  => array( 'view' ),
-						),
-					),
-				),
-				'hosts' => array(
-					'type'                 => 'object',
-					'context'              => array( 'view' ),
-					'additionalProperties' => true,
-				),
-			),
-		);
+		 return array(
+			 'type'       => 'object',
+			 'properties' => array(
+				 'app'   => array(
+					 'type'       => 'object',
+					 'context'    => array( 'view' ),
+					 'properties' => array(
+						 'client_id'     => array(
+							 'label'    => __( 'Client ID', 'quillbooking' ),
+							 'type'     => 'string',
+							 'required' => true,
+							 'context'  => array( 'view' ),
+						 ),
+						 'client_secret' => array(
+							 'label'    => __( 'Client Secret', 'quillbooking' ),
+							 'type'     => 'string',
+							 'required' => true,
+							 'context'  => array(),
+						 ),
+						 'cache_time'    => array(
+							 'label'    => __( 'Cache Time', 'quillbooking' ),
+							 'type'     => 'number',
+							 'required' => true,
+							 'context'  => array( 'view' ),
+						 ),
+					 ),
+				 ),
+				 'hosts' => array(
+					 'type'                 => 'object',
+					 'context'              => array( 'view' ),
+					 'additionalProperties' => true,
+				 ),
+			 ),
+		 );
 	}
 
 	/**
@@ -119,6 +120,6 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function auth_uri_permissions_check( $request ) {
-		return current_user_can( 'manage_options' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
 	}
 }

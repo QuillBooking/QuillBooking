@@ -27,14 +27,6 @@ use WP_REST_Server;
  */
 class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 
-
-
-
-
-
-
-
-
 	/**
 	 * Register the routes for the objects of the controller.
 	 *
@@ -65,7 +57,7 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function delete_items_permissions_check( $request ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'quillbooking_manage_own_calendars' ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
 				__( 'Sorry, you are not allowed to manage Twilio integration settings.', 'quillbooking' ),

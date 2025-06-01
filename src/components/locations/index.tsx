@@ -118,6 +118,19 @@ const Locations: React.FC<{
 		}
 	};
 
+	const convertToSlug = (type: string) => {
+		switch (type) {
+			case 'google-meet':
+				return 'google';
+			case 'zoom':
+				return 'zoom';
+			case 'ms-teams':
+				return 'outlook';
+			default:
+				return type;
+		}
+	};
+
 	// Handle regular location type changes
 	const handleLocationTypeChange = (index: number, newType: string) => {
 		const locationType = get(locationTypes, newType);
@@ -182,11 +195,11 @@ const Locations: React.FC<{
 				const path = `calendars/${response.id}`;
 
 				if (!hasSettings) {
-					window.location.href = `${adminUrl}?page=quillbooking&path=integrations&tab=conferencing-calendars&subtab=${integrationType}`;
+					window.location.href = `${adminUrl}?page=quillbooking&path=integrations&tab=conferencing-calendars&subtab=${convertToSlug(integrationType)}`;
 				} else if (!hasAccounts) {
-					window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`;
+					window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`;
 				} else {
-					window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`;
+					window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`;
 				}
 			} catch (error) {
 				console.error('Error saving calendar:', error);
@@ -205,11 +218,11 @@ const Locations: React.FC<{
 		const path = `calendars/${calendar.id}`;
 
 		if (!hasSettings) {
-			window.location.href = `${adminUrl}?page=quillbooking&path=integrations&tab=conferencing-calendars&subtab=${integrationType}`;
+			window.location.href = `${adminUrl}?page=quillbooking&path=integrations&tab=conferencing-calendars&subtab=${convertToSlug(integrationType)}`;
 		} else if (!hasAccounts) {
-			window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`;
+			window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`;
 		} else {
-			window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${integrationType}`;
+			window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`;
 		}
 	};
 

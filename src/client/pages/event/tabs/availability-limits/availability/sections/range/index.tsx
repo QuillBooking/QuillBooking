@@ -8,11 +8,17 @@ import { __ } from '@wordpress/i18n';
  */
 import { Flex, Radio, DatePicker, Typography, InputNumber } from 'antd';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
 /**
  * Internal dependencies
  */
 import type { AvailabilityRange } from '@quillbooking/client';
+
+// Extend dayjs with plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const { Text } = Typography;
 
@@ -29,6 +35,25 @@ const RangeSection: React.FC<RangeSectionProps> = ({
 	onDaysChange,
 	onDateRangeChange,
 }) => {
+	// Function to ensure consistent date formatting
+	const formatDateString = (date: dayjs.Dayjs | null): string => {
+		if (!date) return '';
+		// Use UTC to avoid timezone issues
+		return date.format('YYYY-MM-DD');
+	};
+
+	// Function to parse dates consistently
+	const parseDate = (dateString: string | undefined): dayjs.Dayjs | null => {
+		if (!dateString) return null;
+		// Parse the date in UTC to avoid timezone issues
+		return dayjs.utc(dateString);
+	};
+
+	// Disable dates before today
+	const disabledDate = (current: dayjs.Dayjs): boolean => {
+		return current && current < dayjs().startOf('day');
+	};
+
 	return (
 		<Flex vertical gap={10} className="mt-5">
 			<Text className="text-[#3F4254] text-base font-semibold">
@@ -94,11 +119,11 @@ const RangeSection: React.FC<RangeSectionProps> = ({
 			{range.type === 'date_range' && (
 				<Flex gap={20} className="mt-4">
 					<DatePicker
-						value={dayjs(range.start_date)}
+						value={parseDate(range.start_date)}
 						onChange={(date) => {
 							if (date) {
 								onDateRangeChange(
-									date.format('YYYY-MM-DD'),
+									formatDateString(date),
 									range.end_date ?? ''
 								);
 							}
@@ -109,6 +134,7 @@ const RangeSection: React.FC<RangeSectionProps> = ({
 						getPopupContainer={(trigger) =>
 							trigger.parentElement || document.body
 						}
+						disabledDate={disabledDate}
 						prefix={
 							<span className="text-[#9BA7B7] pr-[10px]">
 								{__('From', 'quillbooking')}
@@ -117,12 +143,12 @@ const RangeSection: React.FC<RangeSectionProps> = ({
 					/>
 
 					<DatePicker
-						value={dayjs(range.end_date)}
+						value={parseDate(range.end_date)}
 						onChange={(date) => {
 							if (date) {
 								onDateRangeChange(
 									range.start_date ?? '',
-									date.format('YYYY-MM-DD')
+									formatDateString(date)
 								);
 							}
 						}}
@@ -132,6 +158,16 @@ const RangeSection: React.FC<RangeSectionProps> = ({
 						getPopupContainer={(trigger) =>
 							trigger.parentElement || document.body
 						}
+						disabledDate={(current) => {
+							// Disable dates before the start date or before today
+							const startDate = range.start_date
+								? dayjs.utc(range.start_date)
+								: dayjs().startOf('day');
+							return (
+								current < startDate ||
+								current < dayjs().startOf('day')
+							);
+						}}
 						prefix={
 							<span className="text-[#9BA7B7] pr-[10px]">
 								{__('To', 'quillbooking')}

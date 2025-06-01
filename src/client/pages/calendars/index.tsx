@@ -38,11 +38,14 @@ import {
 } from '@quillbooking/components';
 import CalendarActions from './calendar-actions';
 import CreateEvent from '../create-event';
+import ConfigAPI from '@quillbooking/config';
+import { Link } from 'react-router';
 
 /**
  * Main Calendars Component.
  */
 const Calendars: React.FC = () => {
+	const siteUrl = ConfigAPI.getSiteUrl();
 	const { callApi, loading } = useApi();
 	const currentUser = useCurrentUser();
 	const [calendars, setCalendars] = useState<Calendar[] | null>(null);
@@ -200,14 +203,22 @@ const Calendars: React.FC = () => {
 				path: `calendars/${calendar.id}`,
 				method: 'DELETE',
 				onSuccess: () => {
-					const updatedCalendars = filter(calendars, (c) => c.id !== calendar.id);
+					const updatedCalendars = filter(
+						calendars,
+						(c) => c.id !== calendar.id
+					);
 					setCalendars(updatedCalendars);
-	
+
 					if (allCalendars) {
-						const updatedAllCalendars = filter(allCalendars, (c) => c.id !== calendar.id);
+						const updatedAllCalendars = filter(
+							allCalendars,
+							(c) => c.id !== calendar.id
+						);
 						setAllCalendars(updatedAllCalendars);
-	
-						const userIds = uniq(map(updatedAllCalendars, 'user_id'));
+
+						const userIds = uniq(
+							map(updatedAllCalendars, 'user_id')
+						);
 						setExcludedUserIds(userIds);
 					}
 				},
@@ -218,7 +229,7 @@ const Calendars: React.FC = () => {
 		} catch (error: any) {
 			setErrorMessage(error.message || 'Unexpected error occurred');
 		}
-	};	
+	};
 
 	// Initial load and whenever dependencies change
 	useEffect(() => {
@@ -546,16 +557,29 @@ const Calendars: React.FC = () => {
 															<div className="text-[#313131] text-base font-semibold">
 																{calendar.name}
 															</div>
-															<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium cursor-pointer">
-																{__(
-																	'View My Landing Page',
-																	'quillbooking'
-																)}
-																<ShareIcon
-																	width={16}
-																	height={16}
-																/>
-															</div>
+															<a
+																href={
+																	siteUrl +
+																	'?calendar=' +
+																	calendar.slug
+																}
+																target="_blank"
+															>
+																<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium cursor-pointer">
+																	{__(
+																		'View My Landing Page',
+																		'quillbooking'
+																	)}
+																	<ShareIcon
+																		width={
+																			16
+																		}
+																		height={
+																			16
+																		}
+																	/>
+																</div>
+															</a>
 														</Flex>
 														<div>
 															<Popover
@@ -647,16 +671,29 @@ const Calendars: React.FC = () => {
 																	teamCalendar.name
 																}
 															</div>
-															<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium">
-																{__(
-																	'View My Landing Page',
-																	'quillbooking'
-																)}
-																<ShareIcon
-																	width={16}
-																	height={16}
-																/>
-															</div>
+															<a
+																href={
+																	siteUrl +
+																	'?calendar=' +
+																	teamCalendar.slug
+																}
+																target="_blank"
+															>
+																<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium">
+																	{__(
+																		'View My Landing Page',
+																		'quillbooking'
+																	)}
+																	<ShareIcon
+																		width={
+																			16
+																		}
+																		height={
+																			16
+																		}
+																	/>
+																</div>
+															</a>
 														</Flex>
 													}
 													className="bg-[#FDFDFD] w-[377px]"

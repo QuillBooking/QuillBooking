@@ -29,6 +29,8 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
 class Event_Model extends Model {
 
 
+
+
 	/**
 	 * Table name
 	 *
@@ -1173,43 +1175,88 @@ class Event_Model extends Model {
 	 * @param string $timezone Timezone
 	 *
 	 * @return int
+	 * @throws \Exception
 	 */
 	public function get_end_date( $timezone ) {
-		// Event should end after 60 days from the created date
-		$created_date = new \DateTime( $this->created_at, new \DateTimeZone( $this->availability['timezone'] ) );
-		$created_date->setTimezone( new \DateTimeZone( $timezone ) );
+		// Validate required data
+		if ( empty( $this->created_at ) || empty( $this->availability['timezone'] ) ) {
+			throw new \Exception( __( 'Invalid event data: missing created_at or timezone', 'quillbooking' ) );
+		}
+
+		// Validate timezone strings
+		try {
+			$original_tz = new \DateTimeZone( $this->availability['timezone'] );
+			$target_tz   = new \DateTimeZone( $timezone );
+		} catch ( \Exception $e ) {
+			throw new \Exception( __( 'Invalid timezone provided', 'quillbooking' ) );
+		}
+
+		// Create the base date from creation time
+		try {
+			$created_date = new \DateTime( $this->created_at, $original_tz );
+			$created_date->setTimezone( $target_tz );
+		} catch ( \Exception $e ) {
+			throw new \Exception( __( 'Invalid created_at date format', 'quillbooking' ) );
+		}
+
 		$event_date_type = Arr::get( $this->event_range, 'type', 'days' );
+		$end_date        = null;
 
 		switch ( $event_date_type ) {
 			case 'days':
 				$end_event_value = Arr::get( $this->event_range, 'days', 60 );
-				// Add one extra day to account for the inclusive counting
-				$created_date->modify( "+{$end_event_value} days" );
+
+				// Validate days value
+				if ( ! is_numeric( $end_event_value ) || $end_event_value < 0 || $end_event_value > 3650 ) {
+					throw new \Exception( __( 'Invalid days value. Must be between 0 and 3650', 'quillbooking' ) );
+				}
+
+				// Clone to avoid modifying original date
+				$end_date = clone $created_date;
+				$end_date->modify( "+{$end_event_value} days" );
+				// Set to end of day for consistency
+				$end_date->setTime( 23, 59, 59 );
 				break;
+
 			case 'infinity':
-				$created_date->modify( '+5 years' );
+				// Clone to avoid modifying original date
+				$end_date = clone $created_date;
+				$end_date->modify( '+5 years' );
+				// Set to end of day for consistency
+				$end_date->setTime( 23, 59, 59 );
 				break;
+
 			case 'date_range':
 				$end_event_value = Arr::get( $this->event_range, 'end_date', null );
-				if ( ! $end_event_value ) {
-					throw new \Exception( __( 'End date is required', 'quillbooking' ) );
+				if ( empty( $end_event_value ) ) {
+					throw new \Exception( __( 'End date is required for date_range type', 'quillbooking' ) );
 				}
 
-				// Create DateTime with UTC timezone to avoid DST issues
-				$end_event_value = new \DateTime( $end_event_value, new \DateTimeZone( 'UTC' ) );
-				$end_event_value->setTime( 23, 59, 59 );
-				// Then convert to the target timezone
-				$end_event_value->setTimezone( new \DateTimeZone( $timezone ) );
-
-				if ( $end_event_value < $created_date ) {
-					throw new \Exception( __( 'End date should be after the created date', 'quillbooking' ) );
+				try {
+					// Create DateTime with UTC timezone to avoid DST issues
+					$end_date = new \DateTime( $end_event_value, new \DateTimeZone( 'UTC' ) );
+					$end_date->setTime( 23, 59, 59 );
+					// Convert to the target timezone
+					$end_date->setTimezone( $target_tz );
+				} catch ( \Exception $e ) {
+					throw new \Exception( __( 'Invalid end_date format', 'quillbooking' ) );
 				}
 
-				$created_date = $end_event_value;
+				// Validate that end date is after creation date
+				// For fair comparison, set created_date to start of day
+				$created_date_start = clone $created_date;
+				$created_date_start->setTime( 0, 0, 0 );
+
+				if ( $end_date <= $created_date_start ) {
+					throw new \Exception( __( 'End date must be after the created date', 'quillbooking' ) );
+				}
 				break;
+
+			default:
+				throw new \Exception( __( 'Invalid event date type', 'quillbooking' ) );
 		}
 
-		return $created_date->getTimestamp();
+		return $end_date->getTimestamp();
 	}
 
 	/**

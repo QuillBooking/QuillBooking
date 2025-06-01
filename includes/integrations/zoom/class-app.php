@@ -20,6 +20,7 @@ use QuillBooking\Models\Calendar_Model;
 class App {
 
 
+
 	/**
 	 * Provider
 	 *
@@ -124,7 +125,6 @@ class App {
 			),
 			$account_id
 		);
-		error_log( 'tokens: ' . wp_json_encode( $tokens ) );
 		if ( empty( $tokens ) ) {
 			echo esc_html__( 'Error, Cannot get tokens!', 'quillbooking' );
 			exit;
@@ -132,7 +132,7 @@ class App {
 
 		$account_data = new API( $tokens['access_token'], $tokens['refresh_token'], $this );
 		$account_data = $account_data->get_account_info();
-		error_log( 'account_data: ' . wp_json_encode( $account_data ) );
+
 		if ( ! $account_data['success'] ) {
 			echo esc_html__( 'Error, Cannot get account data!', 'quillbooking' );
 			exit;

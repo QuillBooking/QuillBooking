@@ -159,10 +159,12 @@ const SmsNotificationTab = forwardRef<
 		try {
 			// Validate required data
 			if (!event || !notificationSettings) {
-				console.warn('Cannot save notification settings - missing event or settings data');
+				console.warn(
+					'Cannot save notification settings - missing event or settings data'
+				);
 				return;
 			}
-	
+
 			await callApi({
 				path: `events/${event.id}`,
 				method: 'POST',
@@ -172,18 +174,23 @@ const SmsNotificationTab = forwardRef<
 				onSuccess() {
 					// Show success message and update state
 					successNotice(
-						__('Notification settings saved successfully', 'quillbooking')
+						__(
+							'Notification settings saved successfully',
+							'quillbooking'
+						)
 					);
 					setDisabled(true);
 					// Update the base notification settings with a deep copy
-					setNotificationSettings(JSON.parse(JSON.stringify(notificationSettings)));
+					setNotificationSettings(
+						JSON.parse(JSON.stringify(notificationSettings))
+					);
 				},
 				onError(error) {
 					// Re-throw error to be caught by outer try-catch
 					throw new Error(error.message);
 				},
 			});
-		} catch (error:any) {
+		} catch (error: any) {
 			console.error('Failed to save notification settings:', error);
 			// Re-throw error if you want calling code to handle it
 			throw new Error(error.message);
@@ -196,7 +203,9 @@ const SmsNotificationTab = forwardRef<
 
 	return (
 		<div className="w-full px-9">
-			{!event?.connected_integrations.twilio.connected ? (
+			{!event?.connected_integrations.twilio.has_settings &&
+			!event?.connected_integrations.twilio.connected &&
+			!event?.connected_integrations.twilio.has_accounts ? (
 				<Card>
 					<CardHeader
 						title={__('Sms Notification', 'quillbooking')}
@@ -218,7 +227,9 @@ const SmsNotificationTab = forwardRef<
 								type="primary"
 								size="middle"
 								onClick={() => {
-									navigate('integrations');
+									navigate(
+										'integrations&tab=sms-integration'
+									);
 								}}
 								loading={loading}
 								className="rounded-lg font-[500] text-white bg-color-primary"

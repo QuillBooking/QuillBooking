@@ -51,8 +51,32 @@ const Integrations: React.FC = () => {
 		}
 	}, []);
 
+	useEffect(() => {
+		// Get the tab from URL search params on component mount
+		const searchParams = new URLSearchParams(window.location.search);
+
+		const tab = searchParams.get('tab');
+		if (
+			tab &&
+			['conferencing-calendars', 'sms-integration', 'payments'].includes(
+				tab
+			)
+		) {
+			setActiveTab(tab);
+		}
+	}, []);
+
 	const handleTabChange = (key: string) => {
 		setActiveTab(key);
+		// Update URL search params when tab changes
+		const searchParams = new URLSearchParams(window.location.search);
+		// remove if have subtab
+		if (searchParams.has('subtab')) {
+			searchParams.delete('subtab');
+		}
+		searchParams.set('tab', key);
+		const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
+		window.history.pushState({}, '', newUrl);
 	};
 
 	const renderTabContent = () => {

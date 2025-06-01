@@ -25,13 +25,10 @@ use WP_Error;
  */
 class Integration extends Abstract_Integration {
 
-
-
-
-
-
-
-
+	/**
+	 * Default cache time in minutes
+	 */
+	const DEFAULT_CACHE_TIME = 5;
 
 	/**
 	 * Integration Name
@@ -82,6 +79,7 @@ class Integration extends Abstract_Integration {
 		\add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
 		\add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		\add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
+		\add_action( 'plugins_loaded', array( $this, 'initialize_default_settings' ) );
 	}
 
 	/**
@@ -458,7 +456,6 @@ class Integration extends Abstract_Integration {
 
 			return $booking;
 		} catch ( \Exception $e ) {
-			error_log( 'Google Integration Error in add_event_to_calendars: ' . $e->getMessage() );
 			if ( isset( $booking ) ) {
 				$booking->logs()->create(
 					array(
@@ -597,7 +594,6 @@ class Integration extends Abstract_Integration {
 
 			return $slots;
 		} catch ( \Exception $e ) {
-			error_log( 'Google Integration Error in get_available_slots: ' . $e->getMessage() );
 			return $slots;
 		}
 	}
@@ -767,5 +763,18 @@ class Integration extends Abstract_Integration {
 				 'required'    => true,
 			 ),
 		 );
+	}
+
+	/**
+	 * Initialize default settings
+	 *
+	 * @since 1.0.0
+	 */
+	public function initialize_default_settings() {
+		 $settings = $this->get_settings();
+		if ( empty( $settings['app']['cache_time'] ) ) {
+			$settings['app']['cache_time'] = self::DEFAULT_CACHE_TIME;
+			$this->update_settings( $settings );
+		}
 	}
 }

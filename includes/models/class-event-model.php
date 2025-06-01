@@ -30,10 +30,6 @@ class Event_Model extends Model
 {
 
 
-
-
-
-
 	/**
 	 * Table name
 	 *
@@ -591,6 +587,13 @@ class Event_Model extends Model
 			if ($integration->slug == 'zoom') {
 				$app_credentials = Arr::get($global_settings, 'app_credentials', null);
 				if ($app_credentials && is_array($app_credentials) && !empty($app_credentials['client_id']) && !empty($app_credentials['client_secret'])) {
+					$set_global_settings = true;
+				} else {
+					$set_global_settings = false;
+				}
+			} elseif ( $integration->slug == 'twilio' ) {
+				$app_credentials = Arr::get( $global_settings, 'credentials', null );
+				if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['auth_token'] ) && ! empty( $app_credentials['account_sid'] ) ) {
 					$set_global_settings = true;
 				} else {
 					$set_global_settings = false;

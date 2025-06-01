@@ -190,7 +190,10 @@ const TeamTab: React.FC = () => {
 			setNotice({
 				type: 'error',
 				title: __('Error', 'quillbooking'),
-				message: __('An unexpected error occurred while removing the team member', 'quillbooking'),
+				message: __(
+					'An unexpected error occurred while removing the team member',
+					'quillbooking'
+				),
 			});
 			console.error('Error in handleRemoveMember:', error);
 		}

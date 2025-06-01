@@ -27,28 +27,10 @@ class Integration extends Abstract_Integration {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	/**
+	 * Default cache time in minutes
+	 */
+	const DEFAULT_CACHE_TIME = 5;
 
 	/**
 	 * Integration Name
@@ -106,6 +88,7 @@ class Integration extends Abstract_Integration {
 		\add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
 		\add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		\add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
+		\add_action( 'plugins_loaded', array( $this, 'initialize_default_settings' ) );
 	}
 
 	/**
@@ -277,14 +260,19 @@ class Integration extends Abstract_Integration {
 	 */
 	public function add_event_to_calendars( $booking ) {
 		try {
-			// Early validation
-			if ( ! $booking || ! $booking->event || ! $booking->event->calendar ) {
-				error_log( 'Outlook Integration Error: Invalid booking or event data' );
+			// Check if location is MS Teams
+			if ( $booking->location['type'] !== MS_Teams::instance()->slug ) {
 				return $booking;
 			}
 
-			// Check if location is MS Teams
-			if ( $booking->location['type'] !== MS_Teams::instance()->slug ) {
+			// Validate event and calendar
+			if ( ! $booking->event || ! $booking->event->calendar ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Invalid event or calendar configuration.', 'quillbooking' ),
+					)
+				);
 				return $booking;
 			}
 
@@ -466,7 +454,6 @@ class Integration extends Abstract_Integration {
 
 			return $booking;
 		} catch ( \Exception $e ) {
-			error_log( 'Outlook Integration Error in add_event_to_calendars: ' . $e->getMessage() );
 			if ( isset( $booking ) ) {
 				$booking->logs()->create(
 					array(
@@ -721,5 +708,18 @@ class Integration extends Abstract_Integration {
 				 'required'    => true,
 			 ),
 		 );
+	}
+
+	/**
+	 * Initialize default settings
+	 *
+	 * @since 1.0.0
+	 */
+	public function initialize_default_settings() {
+		 $settings = $this->get_settings();
+		if ( empty( $settings['app']['cache_time'] ) ) {
+			$settings['app']['cache_time'] = self::DEFAULT_CACHE_TIME;
+			$this->update_settings( $settings );
+		}
 	}
 }

@@ -31,6 +31,8 @@ class Event_Model extends Model {
 
 
 
+
+
 	/**
 	 * Table name
 	 *
@@ -1265,30 +1267,66 @@ class Event_Model extends Model {
 	 * @param string $timezone Timezone
 	 *
 	 * @return int
+	 * @throws \Exception
 	 */
 	public function get_start_date( $timezone ) {
-		$event_date_type = Arr::get( $this->event_range, 'type', 'days' );
-
-		// Convert the created_at timestamp to the user's timezone
-		$start_date = new \DateTime( $this->created_at, new \DateTimeZone( $this->availability['timezone'] ) );
-		$start_date->setTimezone( new \DateTimeZone( $timezone ) ); // Adjust to user timezone
-		$start_date = $start_date->getTimestamp(); // Convert to timestamp
-
-		if ( 'date_range' === $event_date_type ) {
-			$start_date_value = Arr::get( $this->event_range, 'start_date', null );
-			if ( ! $start_date_value ) {
-				throw new \Exception( __( 'Start date is required', 'quillbooking' ) );
-			}
-
-			// Create DateTime with UTC timezone to avoid DST issues
-			$start_date = new \DateTime( $start_date_value, new \DateTimeZone( 'UTC' ) );
-			$start_date->setTime( 0, 0, 0 );
-			// Then convert to the target timezone
-			$start_date->setTimezone( new \DateTimeZone( $timezone ) );
-			$start_date = $start_date->getTimestamp();
+		// Validate required data
+		if ( empty( $this->created_at ) || empty( $this->availability['timezone'] ) ) {
+			throw new \Exception( __( 'Invalid event data: missing created_at or timezone', 'quillbooking' ) );
 		}
 
-		return $start_date;
+		// Validate timezone strings
+		try {
+			$original_tz = new \DateTimeZone( $this->availability['timezone'] );
+			$target_tz   = new \DateTimeZone( $timezone );
+		} catch ( \Exception $e ) {
+			throw new \Exception( __( 'Invalid timezone provided', 'quillbooking' ) );
+		}
+
+		$event_date_type = Arr::get( $this->event_range, 'type', 'days' );
+		$start_date      = null;
+
+		try {
+			// Create the base date from creation time
+			$start_date = new \DateTime( $this->created_at, $original_tz );
+			$start_date->setTimezone( $target_tz );
+
+			// For non-date_range types, set to start of day for consistency
+			if ( 'date_range' !== $event_date_type ) {
+				$start_date->setTime( 0, 0, 0 );
+			}
+		} catch ( \Exception $e ) {
+			throw new \Exception( __( 'Invalid created_at date format', 'quillbooking' ) );
+		}
+
+		// Handle date_range type with custom start date
+		if ( 'date_range' === $event_date_type ) {
+			$start_date_value = Arr::get( $this->event_range, 'start_date', null );
+			if ( empty( $start_date_value ) ) {
+				throw new \Exception( __( 'Start date is required for date_range type', 'quillbooking' ) );
+			}
+
+			try {
+				// Create DateTime with UTC timezone to avoid DST issues
+				$start_date = new \DateTime( $start_date_value, new \DateTimeZone( 'UTC' ) );
+				$start_date->setTime( 0, 0, 0 );
+				// Convert to the target timezone
+				$start_date->setTimezone( $target_tz );
+			} catch ( \Exception $e ) {
+				throw new \Exception( __( 'Invalid start_date format', 'quillbooking' ) );
+			}
+
+			// Validate that start date is not in the past relative to creation date
+			$created_date_check = new \DateTime( $this->created_at, $original_tz );
+			$created_date_check->setTimezone( $target_tz );
+			$created_date_check->setTime( 0, 0, 0 );
+
+			if ( $start_date < $created_date_check ) {
+				throw new \Exception( __( 'Start date cannot be before the created date', 'quillbooking' ) );
+			}
+		}
+
+		return $start_date->getTimestamp();
 	}
 
 	/**

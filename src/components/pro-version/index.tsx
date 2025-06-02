@@ -23,7 +23,7 @@ const ProVersion: React.FC = ({}) => {
 				</p>
 				<div className="mt-5">
 					<Link
-						className="bg-color-primary text-white rounded-lg p-3 text-xl font-[600]"
+						className="bg-color-primary text-white rounded-lg p-3 text-lg font-[600]"
 						to="/"
 					>
 						{__('Upgrade Pro Now', 'quillbooking')}

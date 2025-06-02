@@ -49,9 +49,6 @@ const Integrations: React.FC = () => {
 			navigate('calendars');
 			return;
 		}
-	}, []);
-
-	useEffect(() => {
 		// Get the tab from URL search params on component mount
 		const searchParams = new URLSearchParams(window.location.search);
 

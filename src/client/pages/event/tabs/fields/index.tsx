@@ -12,7 +12,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Skeleton } from 'antd';
+import { Card, Modal, Skeleton } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import slugify from 'slugify';
 
@@ -22,9 +22,14 @@ import slugify from 'slugify';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import './style.scss';
-import { CardHeader, QuestionOutlineIcon } from '@quillbooking/components';
+import {
+	CardHeader,
+	ProVersion,
+	QuestionOutlineIcon,
+} from '@quillbooking/components';
 import { EventTabHandle, EventTabProps, Fields, FieldType } from 'client/types';
 import Question from './question';
+import { doAction } from '@wordpress/hooks';
 
 const LoadingSkeleton = () => (
 	<Card>
@@ -55,6 +60,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		const { callApi: saveApi } = useApi();
 		const { successNotice, errorNotice } = useNotice();
 		const [fields, setFields] = useState<Fields | null>(null);
+		const [showModal, setShowModal] = useState(false);
 
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {
@@ -109,19 +115,19 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		const saveFields = async (fields: Fields) => {
 			try {
 				console.log('Saving fields', fields);
-				
+
 				// Validate required data
 				if (!event) {
 					console.warn('Cannot save fields - event is undefined');
 					return;
 				}
-		
+
 				// Validate fields structure if needed
 				if (!fields || typeof fields !== 'object') {
 					console.error('Invalid fields data structure:', fields);
 					throw new Error('Invalid fields data');
 				}
-		
+
 				await saveApi({
 					path: `events/${event.id}`,
 					method: 'POST',
@@ -137,8 +143,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 						throw new Error(error.message); // Re-throw to be caught by outer try-catch
 					},
 				});
-		
-			} catch (error:any) {
+			} catch (error: any) {
 				console.error('Failed to save fields:', error);
 				// Consider adding error recovery or state reset here if needed
 				throw new Error(error.message); // Re-throw to allow calling code to handle
@@ -146,32 +151,35 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		};
 
 		const addField = () => {
-			if (!fields) return;
-			const order =
-				Object.keys(fields?.system || {}).length +
-				Object.keys(fields?.location || {}).length +
-				Object.keys(fields?.custom || {}).length +
-				1;
-			const defaultLabel =
-				__('New Question', 'quillbooking') + ' ' + order;
-			const newFieldKey = slugify(defaultLabel, { lower: true });
-			const newField: FieldType = {
-				label: defaultLabel,
-				type: 'text', // default type
-				required: false,
-				group: 'custom',
-				event_location: 'all',
-				placeholder: '',
-				order: order,
-				settings: {},
-				enabled: true,
-			};
-			const updatedFields = {
-				...fields,
-				custom: { ...fields.custom, [newFieldKey]: newField },
-			};
-			setFields(updatedFields);
-			props.setDisabled(false);
+			doAction('quillbooking.event.fields.add_field', event, fields);
+			setShowModal(true);
+
+			// if (!fields) return;
+			// const order =
+			// 	Object.keys(fields?.system || {}).length +
+			// 	Object.keys(fields?.location || {}).length +
+			// 	Object.keys(fields?.custom || {}).length +
+			// 	1;
+			// const defaultLabel =
+			// 	__('New Question', 'quillbooking') + ' ' + order;
+			// const newFieldKey = slugify(defaultLabel, { lower: true });
+			// const newField: FieldType = {
+			// 	label: defaultLabel,
+			// 	type: 'text', // default type
+			// 	required: false,
+			// 	group: 'custom',
+			// 	event_location: 'all',
+			// 	placeholder: '',
+			// 	order: order,
+			// 	settings: {},
+			// 	enabled: true,
+			// };
+			// const updatedFields = {
+			// 	...fields,
+			// 	custom: { ...fields.custom, [newFieldKey]: newField },
+			// };
+			// setFields(updatedFields);
+			// props.setDisabled(false);
 		};
 
 		const removeField = async (
@@ -239,7 +247,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		const allFields = fields
 			? { ...fields.system, ...fields.location, ...fields.custom }
 			: {};
-		
+
 		const sortedFields = Object.keys(allFields).sort(
 			(a, b) => allFields[a].order - allFields[b].order
 		);
@@ -247,85 +255,95 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		const otherFields = { ...fields.other };
 
 		return (
-			<Card>
-				<CardHeader
-					title={__('Question Settings', 'quillbooking')}
-					description={__(
-						'Customize the queston asked on the booking page.',
-						'quillbooking'
-					)}
-					icon={<QuestionOutlineIcon width={24} height={24} />}
-					border={false}
-				/>
-
+			<>
 				<Card>
-					<div>
-						<h3 className="text-xl font-semibold text-color-primary-text">
-							{__('Booking Questions', 'quillbooking')}
-						</h3>
-						<p className="text-base font-normal text-[#71717A]">
-							{__(
-								'To lock the timezone on booking page, useful for in-person events',
-								'quillbooking'
-							)}
-						</p>
-					</div>
+					<CardHeader
+						title={__('Question Settings', 'quillbooking')}
+						description={__(
+							'Customize the queston asked on the booking page.',
+							'quillbooking'
+						)}
+						icon={<QuestionOutlineIcon width={24} height={24} />}
+						border={false}
+					/>
 
-					{sortedFields.length > 0 && (
+					<Card>
+						<div>
+							<h3 className="text-xl font-semibold text-color-primary-text">
+								{__('Booking Questions', 'quillbooking')}
+							</h3>
+							<p className="text-base font-normal text-[#71717A]">
+								{__(
+									'To lock the timezone on booking page, useful for in-person events',
+									'quillbooking'
+								)}
+							</p>
+						</div>
+
+						{sortedFields.length > 0 && (
+							<>
+								{sortedFields.map((fieldKey, index) => (
+									<Question
+										allFields={allFields}
+										fieldKey={fieldKey}
+										onUpdate={handleUpdate}
+										index={index}
+										moveField={moveField}
+										removeField={removeField}
+										sortedFields={sortedFields}
+									/>
+								))}
+							</>
+						)}
+
+						<div
+							className="w-full text-center border border-color-primary text-color-primary rounded-lg py-4 border-dashed bg-color-secondary font-bold cursor-pointer hover:bg-color-primary hover:text-white transition-all duration-200 ease-in-out mt-2"
+							onClick={addField}
+						>
+							<div className="flex items-center justify-center gap-2">
+								<PlusOutlined />
+								{__('Add New Question', 'quillbooking')}
+							</div>
+						</div>
+					</Card>
+
+					<Card className="mt-4">
+						<div>
+							<h3 className="text-xl font-semibold text-color-primary-text">
+								{__('Other Questions', 'quillbooking')}
+							</h3>
+							<p className="text-base font-normal text-[#71717A]">
+								{__(
+									'Customize Booking Cancel and Reschedule Fields',
+									'quillbooking'
+								)}
+							</p>
+						</div>
+
 						<>
-							{sortedFields.map((fieldKey, index) => (
+							{Object.keys(otherFields).map((fieldKey, index) => (
 								<Question
-									allFields={allFields}
+									allFields={otherFields}
 									fieldKey={fieldKey}
 									onUpdate={handleUpdate}
 									index={index}
 									moveField={moveField}
 									removeField={removeField}
-									sortedFields={sortedFields}
+									sortedFields={Object.keys(otherFields)}
 								/>
 							))}
 						</>
-					)}
-
-					<div
-						className="w-full text-center border border-color-primary text-color-primary rounded-lg py-4 border-dashed bg-color-secondary font-bold cursor-pointer hover:bg-color-primary hover:text-white transition-all duration-200 ease-in-out mt-2"
-						onClick={addField}
-					>
-						<div className="flex items-center justify-center gap-2">
-							<PlusOutlined />
-							{__('Add New Question', 'quillbooking')}
-						</div>
-					</div>
+					</Card>
 				</Card>
-
-				<Card className="mt-4">
-					<div>
-						<h3 className="text-xl font-semibold text-color-primary-text">
-							{__('Other Questions', 'quillbooking')}
-						</h3>
-						<p className="text-base font-normal text-[#71717A]">
-							{__(
-								'Customize Booking Cancel and Reschedule Fields',
-								'quillbooking'
-							)}
-						</p>
-					</div>
-
-					<>
-						{Object.keys(otherFields).map((fieldKey, index) => (
-							<Question
-								allFields={otherFields}
-								fieldKey={fieldKey}
-								onUpdate={handleUpdate}
-								index={index}
-								moveField={moveField}
-								removeField={removeField}
-								sortedFields={Object.keys(otherFields)}
-							/>
-						))}
-					</>
-				</Card>
-			</Card>
+				<Modal
+					open={showModal}
+					onCancel={() => setShowModal(false)}
+					footer={null}
+					getContainer={false}
+				>
+					<ProVersion />
+				</Modal>
+			</>
 		);
 	}
 );

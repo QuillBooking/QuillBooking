@@ -95,12 +95,14 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				connected: false,
 				has_settings: false,
 				has_accounts: false,
+				has_get_started: false,
 			},
 			google: {
 				name: 'google',
 				connected: false,
 				has_settings: false,
 				has_accounts: false,
+				has_get_started: false,
 			},
 			outlook: {
 				name: 'outlook',
@@ -108,18 +110,21 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				has_settings: false,
 				has_accounts: false,
 				teams_enabled: false,
+				has_get_started: false,
 			},
 			twilio: {
 				name: 'twilio',
 				connected: false,
 				has_settings: false,
 				has_accounts: false,
+				has_get_started: false,
 			},
 			zoom: {
 				name: 'zoom',
 				connected: false,
 				has_settings: false,
 				has_accounts: false,
+				has_get_started: false,
 			},
 		},
 	});
@@ -236,36 +241,36 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 					location: !event.location || event.location.length === 0,
 					members: !event.hosts,
 				});
-	
+
 				setErrorBanner({
 					type: 'error',
 					title: __('Validation Error', 'quillbooking'),
-					message: __('Please fill in all required fields', 'quillbooking'),
+					message: __(
+						'Please fill in all required fields',
+						'quillbooking'
+					),
 				});
 				return;
 			}
-	
+
 			// Transform event.hosts to an array of ids
 			const transformedEvent = {
 				...event,
 				hosts: event.hosts?.map((host) => host.id) || [],
 			};
-	
+
 			try {
 				await callApi({
 					path: 'events',
 					method: 'POST',
 					data: transformedEvent,
 					onSuccess: (response: Event) => {
-						successNotice(__('Event created successfully', 'quillbooking'));
-						navigate(`calendars/${calendarId}/events/${response.id}`, {
-							state: {
-								notice: {
-									title: 'Complete Your Setup',
-									message: 'The event has been created successfully. Please complete your event setup and settings to finish.',
-								},
-							},
-						});
+						successNotice(
+							__('Event created successfully', 'quillbooking')
+						);
+						navigate(
+							`calendars/${calendarId}/events/${response.id}`
+						);
 					},
 					onError: (error: string) => {
 						setErrorBanner({
@@ -279,7 +284,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				setErrorBanner({
 					type: 'error',
 					title: __('API Error', 'quillbooking'),
-					message: __('Failed to communicate with the server. Please try again.', 'quillbooking'),
+					message: __(
+						'Failed to communicate with the server. Please try again.',
+						'quillbooking'
+					),
 				});
 				console.error('API call failed:', apiError);
 			}
@@ -287,7 +295,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 			setErrorBanner({
 				type: 'error',
 				title: __('Unexpected Error', 'quillbooking'),
-				message: __('An unexpected error occurred. Please try again.', 'quillbooking'),
+				message: __(
+					'An unexpected error occurred. Please try again.',
+					'quillbooking'
+				),
 			});
 			console.error('Unexpected error in handleSubmit:', error);
 		}

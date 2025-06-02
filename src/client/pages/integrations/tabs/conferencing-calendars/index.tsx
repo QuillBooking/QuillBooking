@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useState, useEffect } from '@wordpress/element';
+import { useState, useEffect, useRef } from '@wordpress/element';
 
 /**
  * External dependencies
@@ -32,32 +32,59 @@ const ConferencingCalendars: React.FC = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 
+	// Use a ref to track if we're currently updating the URL to prevent loops
+	const isUpdatingUrl = useRef(false);
+	// Use a ref to store the last active tab to prevent redundant updates
+	const lastActiveTabRef = useRef<string | null>(null);
+
 	// Handle URL parameters for tab and subtab
 	useEffect(() => {
 		const handleURLChange = () => {
+			// If we're currently updating the URL, don't respond to the URL change
+			if (isUpdatingUrl.current) {
+				return;
+			}
+
 			const urlParams = new URLSearchParams(window.location.search);
 			const tabParam = urlParams.get('tab');
 			const subtabParam = urlParams.get('subtab');
 
 			// If we're in the conferencing-calendars tab and have a subtab, set it as active
-			if (tabParam === 'conferencing-calendars' && subtabParam) {
+			// Only update activeTab if it's different from the current subtab to prevent infinite loops
+			if (
+				tabParam === 'conferencing-calendars' &&
+				subtabParam &&
+				activeTab !== subtabParam &&
+				lastActiveTabRef.current !== subtabParam
+			) {
+				lastActiveTabRef.current = subtabParam;
 				setActiveTab(subtabParam);
 			} else if (integrations.length > 0 && !activeTab) {
 				// Otherwise set first integration as default
-				setActiveTab(integrations[0].id);
+				const defaultTab = integrations[0].id;
+				lastActiveTabRef.current = defaultTab;
+				setActiveTab(defaultTab);
 
 				// Initialize URL parameters if they don't exist
 				if (
 					tabParam === 'conferencing-calendars' &&
 					!subtabParam &&
-					integrations[0]?.id
+					defaultTab
 				) {
-					const newUrlParams = new URLSearchParams(
-						window.location.search
-					);
-					newUrlParams.set('subtab', integrations[0].id);
-					const newUrl = `${window.location.pathname}?${newUrlParams.toString()}`;
-					window.history.pushState({}, '', newUrl);
+					try {
+						isUpdatingUrl.current = true;
+						const newUrlParams = new URLSearchParams(
+							window.location.search
+						);
+						newUrlParams.set('subtab', defaultTab);
+						const newUrl = `${window.location.pathname}?${newUrlParams.toString()}`;
+						window.history.pushState({}, '', newUrl);
+					} finally {
+						// Always reset the flag when done
+						setTimeout(() => {
+							isUpdatingUrl.current = false;
+						}, 0);
+					}
 				}
 			}
 		};
@@ -76,38 +103,60 @@ const ConferencingCalendars: React.FC = () => {
 
 	// Handle tab change
 	const handleTabChange = (newTab: string) => {
+		// Don't update if the tab is already active
+		if (activeTab === newTab || lastActiveTabRef.current === newTab) {
+			return;
+		}
+
+		// Update our refs and state
+		lastActiveTabRef.current = newTab;
 		setActiveTab(newTab);
 
-		// Update only the subtab parameter while preserving other URL parameters
-		const urlParams = new URLSearchParams(window.location.search);
+		// Mark that we're updating the URL to prevent loops
+		try {
+			isUpdatingUrl.current = true;
 
-		// Make sure we have the tab parameter set properly first
-		if (
-			!urlParams.has('tab') ||
-			urlParams.get('tab') !== 'conferencing-calendars'
-		) {
-			urlParams.set('tab', 'conferencing-calendars');
+			// Update only the subtab parameter while preserving other URL parameters
+			const urlParams = new URLSearchParams(window.location.search);
+
+			// Make sure we have the tab parameter set properly first
+			if (
+				!urlParams.has('tab') ||
+				urlParams.get('tab') !== 'conferencing-calendars'
+			) {
+				urlParams.set('tab', 'conferencing-calendars');
+			}
+
+			// Now set the subtab parameter
+			urlParams.set('subtab', newTab);
+
+			// Keep the current URL path and only update the search params
+			const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+
+			// Use navigate to update URL or fallback to history API
+			if (navigate) {
+				navigate(newUrl, { replace: true });
+			} else {
+				window.history.pushState({}, '', newUrl);
+			}
+
+			// Dispatch a custom event to notify other components about the tab change
+			// Include a flag to indicate this event was triggered by this component
+			window.dispatchEvent(
+				new CustomEvent('quillbooking-tab-changed', {
+					detail: {
+						tab: 'conferencing-calendars',
+						subtab: newTab,
+						source: 'conferencing-calendars-component',
+					},
+				})
+			);
+		} finally {
+			// Always reset the flag when done, using setTimeout to ensure it happens after event processing
+			setTimeout(() => {
+				isUpdatingUrl.current = false;
+			}, 0);
 		}
-
-		// Now set the subtab parameter
-		urlParams.set('subtab', newTab);
-
-		// Keep the current URL path and only update the search params
-		const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-
-		// Use navigate to update URL or fallback to history API
-		if (navigate) {
-			navigate(newUrl, { replace: true });
-		} else {
-			window.history.pushState({}, '', newUrl);
-		}
-
-		// Dispatch a custom event to notify other components about the tab change
-		window.dispatchEvent(
-			new CustomEvent('quillbooking-tab-changed', {
-				detail: { tab: 'conferencing-calendars', subtab: newTab },
-			})
-		);
 	};
 
 	if (isLoading) {

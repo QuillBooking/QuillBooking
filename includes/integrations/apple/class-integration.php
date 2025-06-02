@@ -27,6 +27,10 @@ class Integration extends Abstract_Integration {
 
 
 
+	/**
+	 * Default cache time in minutes
+	 */
+	const DEFAULT_CACHE_TIME = 5;
 
 	/**
 	 * Integration Name
@@ -83,6 +87,7 @@ class Integration extends Abstract_Integration {
 		add_action( 'quillbooking_booking_confirmed', array( $this, 'add_event_to_calendars' ) );
 		add_action( 'quillbooking_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'quillbooking_booking_rescheduled', array( $this, 'reschedule_event' ) );
+		add_action( 'plugins_loaded', array( $this, 'initialize_default_settings' ) );
 	}
 
 	/**
@@ -272,8 +277,7 @@ class Integration extends Abstract_Integration {
 	 * @return Booking_Model
 	 */
 	public function add_event_to_calendars( $booking ) {
-		error_log( 'Event Location: ' . $booking->location );
-		if ( ! in_array( $booking->location, array( 'apple', 'apple_meet' ) ) ) {
+		if ( $booking->location['type'] !== 'apple' ) {
 			return $booking;
 		}
 		$event = $booking->event;
@@ -625,5 +629,18 @@ class Integration extends Abstract_Integration {
 				'description' => __( 'An app-specific password is a single-use password for your Apple ID that lets you sign in to your account securely when you use third-party apps.', 'quillbooking' ),
 			),
 		);
+	}
+
+	/**
+	 * Initialize default settings
+	 *
+	 * @since 1.0.0
+	 */
+	public function initialize_default_settings() {
+		 $settings = $this->get_settings();
+		if ( empty( $settings['app']['cache_time'] ) ) {
+			$settings['app']['cache_time'] = self::DEFAULT_CACHE_TIME;
+			$this->update_settings( $settings );
+		}
 	}
 }

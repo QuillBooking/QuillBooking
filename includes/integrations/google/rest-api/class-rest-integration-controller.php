@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * Class Google Rest Controller
  *
@@ -18,20 +19,23 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
-use QuillBooking\Integrations\Google\Integration;
 
 /**
  * Google Rest Controller
  */
-class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
+class REST_Integration_Controller extends Abstract_REST_Integration_Controller
+{
+
 
 	/**
 	 * Register the routes for the objects of the controller.
 	 *
 	 * @since 1.0.0
 	 */
-	public function register_routes() {
-		 parent::register_routes();
+	public function register_routes()
+	{
+		parent::register_routes();
+		parent::register_routes();
 
 		register_rest_route(
 			$this->namespace,
@@ -39,8 +43,8 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'auth_uri' ),
-					'permission_callback' => array( $this, 'auth_uri_permissions_check' ),
+					'callback'            => array($this, 'auth_uri'),
+					'permission_callback' => array($this, 'auth_uri_permissions_check'),
 				),
 			)
 		);
@@ -51,42 +55,32 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 *
 	 * @return array
 	 */
-	public function get_settings_schema() {
-		 return array(
-			 'type'       => 'object',
-			 'properties' => array(
-				 'app'   => array(
-					 'type'       => 'object',
-					 'context'    => array( 'view' ),
-					 'properties' => array(
-						 'client_id'     => array(
-							 'label'    => __( 'Client ID', 'quillbooking' ),
-							 'type'     => 'string',
-							 'required' => true,
-							 'context'  => array( 'view' ),
-						 ),
-						 'client_secret' => array(
-							 'label'    => __( 'Client Secret', 'quillbooking' ),
-							 'type'     => 'string',
-							 'required' => true,
-							 'context'  => array(),
-						 ),
-						 'cache_time'    => array(
-							 'label'    => __( 'Cache Time', 'quillbooking' ),
-							 'type'     => 'number',
-							 'required' => true,
-							 'context'  => array( 'view' ),
-						 ),
-					 ),
-				 ),
-				 'hosts' => array(
-					 'type'                 => 'object',
-					 'context'              => array( 'view' ),
-					 'additionalProperties' => true,
-				 ),
-			 ),
-		 );
+	public function get_settings_schema()
+	{
+		return array(
+			'type'       => 'object',
+			'properties' => array(
+				'app'   => array(
+					'type'       => 'object',
+					'context'    => array('view'),
+					'properties' => array(
+						'cache_time' => array(
+							'label'    => __('Cache Time (minutes)', 'quillbooking'),
+							'type'     => 'number',
+							'required' => true,
+							'context'  => array('view'),
+						),
+					),
+				),
+				'hosts' => array(
+					'type'                 => 'object',
+					'context'              => array('view'),
+					'additionalProperties' => true,
+				),
+			),
+		);
 	}
+
 
 	/**
 	 * Get auth uri
@@ -95,22 +89,23 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 *
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function auth_uri( $request ) {
+	public function auth_uri($request)
+	{
 		/** @var App $app */
-		$host_id = $request->get_param( 'host_id' );
-		if ( empty( $host_id ) ) {
-			return new WP_Error( 'no_host_id', esc_html__( 'No host ID provided!', 'quillbooking' ) );
+		$host_id = $request->get_param('host_id');
+		if (empty($host_id)) {
+			return new WP_Error('no_host_id', esc_html__('No host ID provided!', 'quillbooking'));
 		}
 
-		$calendar = Calendar_Model::find( $host_id );
-		if ( empty( $calendar ) || 'host' !== $calendar->type ) {
-			return new WP_Error( 'no_host', esc_html__( 'No host found!', 'quillbooking' ) );
+		$calendar = Calendar_Model::find($host_id);
+		if (empty($calendar) || 'host' !== $calendar->type) {
+			return new WP_Error('no_host', esc_html__('No host found!', 'quillbooking'));
 		}
 
 		$app      = $this->integration->app;
-		$auth_uri = $app->get_auth_uri( $host_id );
+		$auth_uri = $app->get_auth_uri($host_id);
 
-		return new WP_REST_Response( array( 'auth_uri' => $auth_uri ) );
+		return new WP_REST_Response(array('auth_uri' => $auth_uri));
 	}
 
 	/**
@@ -120,7 +115,8 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 *
 	 * @return bool|WP_Error
 	 */
-	public function auth_uri_permissions_check( $request ) {
-		return current_user_can( 'manage_options' ) || current_user_can( 'quillbooking_manage_own_calendars' );
+	public function auth_uri_permissions_check($request)
+	{
+		return current_user_can('manage_options') || current_user_can('quillbooking_manage_own_calendars');
 	}
 }

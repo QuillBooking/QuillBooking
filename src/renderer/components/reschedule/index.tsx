@@ -161,8 +161,11 @@ const Reschedule: React.FC<RescheduleProps> = ({
 								}
 							`}`}
 							type="submit"
-						 disabled={isSubmitting}>
-							{isSubmitting ? __('Rescheduling...', 'quillbooking') : __('Reschedule Event', 'quillbooking')}
+							disabled={isSubmitting}
+						>
+							{isSubmitting
+								? __('Rescheduling...', 'quillbooking')
+								: __('Reschedule Event', 'quillbooking')}
 						</button>
 					</Form.Item>
 				</Form>

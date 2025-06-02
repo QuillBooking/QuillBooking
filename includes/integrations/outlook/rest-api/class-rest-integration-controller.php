@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * Class Outlook Rest Controller
  *
@@ -24,6 +25,7 @@ use WP_REST_Server;
  */
 class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 
+
 	/**
 	 * Register the routes for the objects of the controller.
 	 *
@@ -31,6 +33,7 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	 */
 	public function register_routes() {
 		 parent::register_routes();
+		parent::register_routes();
 
 		register_rest_route(
 			$this->namespace,
@@ -58,19 +61,7 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 					 'type'       => 'object',
 					 'context'    => array( 'view' ),
 					 'properties' => array(
-						 'client_id'     => array(
-							 'label'    => __( 'Client ID', 'quillbooking' ),
-							 'type'     => 'string',
-							 'required' => true,
-							 'context'  => array( 'view' ),
-						 ),
-						 'client_secret' => array(
-							 'label'    => __( 'Client Secret', 'quillbooking' ),
-							 'type'     => 'string',
-							 'required' => true,
-							 'context'  => array(),
-						 ),
-						 'cache_time'    => array(
+						 'cache_time' => array(
 							 'label'    => __( 'Cache Time', 'quillbooking' ),
 							 'type'     => 'number',
 							 'required' => true,

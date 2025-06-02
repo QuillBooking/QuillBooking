@@ -110,9 +110,9 @@ const ConferencingCalendars: React.FC = () => {
 		);
 	};
 
-    if (isLoading) {
-        return <IntegrationsShimmerLoader />;
-    }
+	if (isLoading) {
+		return <IntegrationsShimmerLoader />;
+	}
 
 	return (
 		<div className="quillbooking-conferencing-calendars grid grid-cols-2 gap-5 w-full">

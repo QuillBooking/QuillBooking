@@ -58,6 +58,7 @@ export type ConnectedIntegrationsFields = {
 	connected: boolean;
 	has_settings: boolean;
 	has_accounts: boolean;
+	has_get_started: boolean;
 };
 
 export type ConnectedIntegrationsFieldsMicrosoft =
@@ -407,4 +408,14 @@ export interface PaymentsSettings {
 	enable_paypal: boolean;
 	enable_stripe: boolean;
 	currency?: string;
+}
+
+export interface GettingStartedComponentProps {
+	event: Omit<Event, "id"> & { id?: number };
+	onEventChange?: (field: keyof Event, value: any) => void;
+	onAvailabilityChange?: (
+		dayKey: string,
+		field: string,
+		value: boolean | { start: string; end: string }[]
+	) => void;
 }

@@ -22,6 +22,7 @@ use Exception;
 class API extends Abstract_API {
 
 
+
 	/**
 	 * Access token
 	 *
@@ -146,9 +147,6 @@ class API extends Abstract_API {
 	public function request( $method, $path, $body = null, $maybe_refresh_token = true ) {
 		$response = $this->request_remote( $method, $path, $body );
 
-		// Log the request and response for debugging
-		$this->log_request_debug( $method, $path, $body, $response );
-
 		if ( is_wp_error( $response ) ) {
 			return $this->prepare_response(
 				false,
@@ -201,17 +199,14 @@ class API extends Abstract_API {
 	 * @return boolean
 	 */
 	private function refresh_tokens() {
-		 error_log( 'Zoom Integration Debug - Attempting to refresh tokens for account: ' . $this->account_id );
 		try {
 			// Check if integration and app are available
 			if ( ! $this->integration ) {
-				error_log( 'Zoom Integration Debug - Cannot refresh tokens: integration or app not available' );
 				return false;
 			}
 
 			// Check if accounts is available in integration
 			if ( ! isset( $this->integration->accounts ) || ! $this->integration->accounts ) {
-				error_log( 'Zoom Integration Debug - Cannot refresh tokens: accounts not available in integration' );
 				return false;
 			}
 
@@ -226,42 +221,34 @@ class API extends Abstract_API {
 			}
 
 			if ( empty( $account ) ) {
-				error_log( 'Zoom Integration Debug - Cannot refresh tokens: account not found: ' . $this->account_id );
 				return false;
 			}
 
 			$app_credentials = Arr::get( $account, 'app_credentials', array() );
 			if ( empty( $app_credentials ) ) {
-				error_log( 'Zoom Integration Debug - Cannot refresh tokens: app credentials not found for account: ' . $this->account_id );
 				return false;
 			}
 
 			// Log the credentials we're using (only first few characters for security)
 			$client_id     = Arr::get( $app_credentials, 'client_id', '' );
 			$client_secret = Arr::get( $app_credentials, 'client_secret', '' );
-			error_log( 'Zoom Integration Debug - Using client_id: ' . substr( $client_id, 0, 5 ) . '...' );
 
 			// Get new tokens
-			error_log( 'Zoom Integration Debug - Getting new tokens...' );
 			$tokens = $this->get_tokens( $app_credentials );
 
 			// Check if we got tokens
 			if ( empty( $tokens ) || ! isset( $tokens['access_token'] ) ) {
-				error_log( 'Zoom Integration Debug - Failed to get tokens: ' . json_encode( $tokens ) );
 				return false;
 			}
 
 			// Log only the first part of the token for security
-			error_log( 'Zoom Integration Debug - Received new access_token: ' . substr( $tokens['access_token'], 0, 10 ) . '...' );
 
 			// Update the account with new tokens
-			error_log( 'Zoom Integration Debug - Updating account with new tokens' );
 			if ( $this->account_id === 'global' ) {
 				$this->integration->update_setting( 'tokens', $tokens );
 				// Check if update was successful
 				$updated_account = $this->integration->get_settings();
 				if ( empty( $updated_account ) || empty( $updated_account['tokens']['access_token'] ) ) {
-					error_log( 'Zoom Integration Debug - Failed to update global account tokens - no tokens in updated account' );
 					return false;
 				}
 			} else {
@@ -277,13 +264,11 @@ class API extends Abstract_API {
 
 				// Check the access token inside the updated account
 				if ( empty( $updated_account ) || empty( $updated_account['tokens']['access_token'] ) ) {
-					error_log( 'Zoom Integration Debug - Failed to update account tokens - no tokens in updated account' );
 					return false;
 				}
 			}
 			// Set the new access token for immediate use
 			$this->access_token = $tokens['access_token'];
-			error_log( 'Zoom Integration Debug - Successfully refreshed and updated access token' );
 			return true;
 		} catch ( \Exception $e ) {
 			error_log( 'Zoom Integration Debug - Exception during token refresh: ' . $e->getMessage() );
@@ -300,13 +285,11 @@ class API extends Abstract_API {
 	 */
 	private function get_tokens( $app_credentials ) {
 		// Direct API request as fallback
-		error_log( 'Zoom Integration Debug - Getting tokens via direct API request' );
 
 		$client_id     = Arr::get( $app_credentials, 'client_id' );
 		$client_secret = Arr::get( $app_credentials, 'client_secret' );
 
 		if ( empty( $client_id ) || empty( $client_secret ) ) {
-			error_log( 'Zoom Integration Debug - Missing client_id or client_secret for direct API request' );
 			throw new \Exception( 'Missing client_id or client_secret' );
 		}
 
@@ -325,52 +308,18 @@ class API extends Abstract_API {
 
 		if ( is_wp_error( $response ) ) {
 			$error_message = $response->get_error_message();
-			error_log( 'Zoom Integration Debug - WP Error getting tokens: ' . $error_message );
 			throw new \Exception( $error_message );
 		}
 
 		$response_code = wp_remote_retrieve_response_code( $response );
 		$body          = wp_remote_retrieve_body( $response );
-		error_log( 'Zoom Integration Debug - Token API response code: ' . $response_code );
-		error_log( 'Zoom Integration Debug - Token API response body: ' . $body );
 
 		$data = json_decode( $body, true );
 
 		if ( empty( $data ) || ! isset( $data['access_token'] ) ) {
-			error_log( 'Zoom Integration Debug - Invalid response from Zoom token API: ' . $body );
 			throw new \Exception( __( 'Invalid response from Zoom.', 'quillbooking' ) );
 		}
 
-		error_log( 'Zoom Integration Debug - Successfully got tokens via direct API request' );
 		return $data;
-	}
-
-	/**
-	 * Logs debug information about the request
-	 *
-	 * @param string $method Method.
-	 * @param string $path Path.
-	 * @param mixed  $body Body.
-	 * @param mixed  $response Response.
-	 * @return void
-	 */
-	private function log_request_debug( $method, $path, $body, $response ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'Zoom API Debug - Request: ' . $method . ' ' . $path );
-
-			if ( $body ) {
-				$body_string = is_array( $body ) || is_object( $body ) ? json_encode( $body ) : $body;
-				error_log( 'Zoom API Debug - Request Body: ' . $body_string );
-			}
-
-			if ( is_wp_error( $response ) ) {
-				error_log( 'Zoom API Debug - Response Error: ' . $response->get_error_message() );
-			} else {
-				$response_code = wp_remote_retrieve_response_code( $response );
-				$response_body = wp_remote_retrieve_body( $response );
-				error_log( 'Zoom API Debug - Response Code: ' . $response_code );
-				error_log( 'Zoom API Debug - Response Body: ' . $response_body );
-			}
-		}
 	}
 }

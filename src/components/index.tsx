@@ -35,3 +35,5 @@ export { default as EventPrice } from './event-price';
 export { default as SelectionCard } from './selection-card';
 export { default as LocationDisplay } from './location-display';
 export { default as ProVersion } from './pro-version';
+export { default as ProTab } from './pro-tab';
+export { default as ProIntegration } from './pro-integration';

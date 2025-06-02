@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useState, useRef } from '@wordpress/element';
 
 /**
  * External dependencies
@@ -50,21 +50,46 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	const [previousSlug, setPreviousSlug] = useState<string | null>(slug);
 	const [loadingAccount, setLoadingAccount] = useState(true);
 
+	// Use a ref to track the last processed slug to prevent redundant updates
+	const lastProcessedSlugRef = useRef<string | null>(slug);
+
 	// Reset form when integration changes
 	useEffect(() => {
 		if (slug !== previousSlug) {
 			form.resetFields();
 			setPreviousSlug(slug);
+			lastProcessedSlugRef.current = slug;
 		}
 	}, [slug, previousSlug, form]);
 
 	// Listen for tab changes from URL
 	useEffect(() => {
-		const handleTabChange = () => {
+		const handleTabChange = (event?: Event | CustomEvent<any>) => {
+			// Check if this is a custom event with detail
+			const customEvent = event as CustomEvent<any>;
+			if (customEvent.detail) {
+				// If this event was triggered by the parent component, ignore it to prevent loops
+				if (
+					customEvent.detail.source ===
+					'conferencing-calendars-component'
+				) {
+					return;
+				}
+			}
+
+			// Get the subtab from the URL
 			const urlParams = new URLSearchParams(window.location.search);
 			const subtabParam = urlParams.get('subtab');
 
-			if (subtabParam && subtabParam !== slug) {
+			// Only update if the subtab is different from both current slug and previous slug
+			// and hasn't been processed yet
+			if (
+				subtabParam &&
+				subtabParam !== slug &&
+				subtabParam !== previousSlug &&
+				subtabParam !== lastProcessedSlugRef.current
+			) {
+				lastProcessedSlugRef.current = subtabParam;
 				setPreviousSlug(subtabParam);
 			}
 		};
@@ -81,7 +106,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 				handleTabChange
 			);
 		};
-	}, [slug]);
+	}, [slug, previousSlug]);
 
 	useEffect(() => {
 		fetchCalendars();

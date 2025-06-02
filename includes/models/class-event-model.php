@@ -571,25 +571,32 @@ class Event_Model extends Model {
 
 			foreach ( $calendar_ids as $calendar_id ) {
 				$integration->set_host( $calendar_id );
-				$accounts = $integration->accounts->get_accounts();
 
-				if ( empty( $accounts ) ) {
-					$all_connected = false;
-				} else {
-					$has_accounts = true;
-					// Check if this is the default account and has Teams enabled
-					if ( $integration->slug === 'outlook' ) {
-						foreach ( $accounts as $account ) {
-							if (
-								isset( $account['config']['default_calendar'] )
-							) {
-								// Check if Teams is explicitly enabled in the account settings
-								$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
-									$account['config']['settings']['enable_teams'] === true;
-								break;
+				// Check if host was successfully set before trying to access accounts
+				if ( $integration->host ) {
+					$accounts = $integration->accounts->get_accounts();
+
+					if ( empty( $accounts ) ) {
+						$all_connected = false;
+					} else {
+						$has_accounts = true;
+						// Check if this is the default account and has Teams enabled
+						if ( $integration->slug === 'outlook' ) {
+							foreach ( $accounts as $account ) {
+								if (
+									isset( $account['config']['default_calendar'] )
+								) {
+									// Check if Teams is explicitly enabled in the account settings
+									$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
+										$account['config']['settings']['enable_teams'] === true;
+									break;
+								}
 							}
 						}
 					}
+				} else {
+					// If host is null, mark as not connected
+					$all_connected = false;
 				}
 			}
 
@@ -1120,13 +1127,12 @@ class Event_Model extends Model {
 	 */
 	private function generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id ) {
 		// Get current time in user timezone
-		$current_time = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
+		$current_time = new \DateTime( 'now', new \DateTimeZone( $this->availability['timezone'] ) );
+		$current_time->setTimezone( new \DateTimeZone( $timezone ) );
 
-		// Calculate minimum notice limit
-		$min_notice_limit = clone $current_time;
-		$min_notice       = Arr::get( $this->limits, 'general.minimum_notices', 4 );
-		$min_notice_unit  = Arr::get( $this->limits, 'general.minimum_notice_unit', 'hours' );
-		$min_notice_limit->modify( "+{$min_notice} {$min_notice_unit}" );
+		// Get minimum notice settings
+		$min_notice      = Arr::get( $this->limits, 'general.minimum_notices', 4 );
+		$min_notice_unit = Arr::get( $this->limits, 'general.minimum_notice_unit', 'hours' );
 
 		// Get time slot interval from event limits data
 		$time_slot_interval = Arr::get( $this->limits, 'general.time_slot', 0 );
@@ -1134,21 +1140,56 @@ class Event_Model extends Model {
 		// If time slot interval is set and valid, use it instead of duration for slot generation
 		$slot_step = ( $time_slot_interval > 0 ) ? $time_slot_interval : $duration;
 
-		$current_day      = date( 'Y-m-d', $current_date );
-		$current_time_day = $current_time->format( 'Y-m-d' );
+		// Convert all dates to timestamps for easier comparison
+		$current_timestamp   = $current_time->getTimestamp();
+		$day_start_timestamp = $day_start->getTimestamp();
 
-		// Adjust start time if generating slots for today
-		if ( $current_day === $current_time_day ) {
-			if ( $current_time > $day_start ) {
-				$day_start = clone $current_time; // Start from the current time
+		// Calculate the minimum notice period in seconds
+		$min_notice_seconds = 0;
+		if ( $min_notice > 0 ) {
+			switch ( $min_notice_unit ) {
+				case 'days':
+					$min_notice_seconds = $min_notice * 24 * 60 * 60;
+					break;
+				case 'hours':
+					$min_notice_seconds = $min_notice * 60 * 60;
+					break;
+				case 'minutes':
+					$min_notice_seconds = $min_notice * 60;
+					break;
 			}
+		}
 
-			if ( $min_notice_limit >= $day_start ) {
-				$day_start = clone $min_notice_limit; // Start from the minimum notice limit
-			}
+		// Calculate the earliest allowed booking time
+		$min_allowed_timestamp = $current_timestamp + $min_notice_seconds;
 
-			// Round up to the next valid slot based on the slot_step
-			$day_start->setTime( $day_start->format( 'H' ), ceil( $day_start->format( 'i' ) / $slot_step ) * $slot_step, 0 );
+		// If day_start is before the minimum allowed time, adjust it
+		if ( $day_start_timestamp < $min_allowed_timestamp ) {
+			// Create a new DateTime object from the minimum allowed timestamp
+			$day_start = new \DateTime( '@' . $min_allowed_timestamp );
+			$day_start->setTimezone( new \DateTimeZone( $timezone ) );
+		}
+
+		// Round up to the next valid slot based on the slot_step
+		// Get the current hour and minute from the (potentially adjusted) day_start
+		$current_hour   = (int) $day_start->format( 'H' );
+		$current_minute = (int) $day_start->format( 'i' );
+
+		// Calculate the total minutes from midnight for the current day_start
+		$total_minutes_from_midnight = ( $current_hour * 60 ) + $current_minute;
+
+		// Calculate the next rounded total minutes
+		$rounded_total_minutes = ceil( $total_minutes_from_midnight / $slot_step ) * $slot_step;
+
+		// Apply the rounded time, handling day rollovers automatically.
+		// First, reset the time to 00:00:00 for the current day to ensure consistent modification.
+		$day_start->setTime( 0, 0, 0 );
+		// Then add the rounded total minutes. This will advance the day if necessary.
+		$day_start->modify( "+{$rounded_total_minutes} minutes" );
+
+		// If after adjustments, day_start is now after day_end, there are no available slots
+		if ( $day_start >= $day_end ) {
+			return $slots;
 		}
 
 		$current_slot_start = clone $day_start;

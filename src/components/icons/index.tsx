@@ -117,3 +117,4 @@ export { default as VideoConferencingIcon } from './video-conferencing-icon';
 export { default as ImgIcon } from './img-icon';
 export { default as RevenueIcon } from './revenue-icon';
 export { default as PaymentHistoryIcon } from './payment-history-icon';
+export { default as ProIcon } from './pro-icon';

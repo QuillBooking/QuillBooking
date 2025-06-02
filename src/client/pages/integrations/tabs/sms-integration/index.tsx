@@ -23,6 +23,8 @@ import {
 import ConfigAPI from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
+import { applyFilters } from '@wordpress/hooks';
+import { ProGlobalIntegrations } from '@quillbooking/components';
 
 const { Text } = Typography;
 
@@ -36,9 +38,13 @@ const SMSIntegration: React.FC = () => {
 	const [saving, setSaving] = useState(false);
 	const [accountData, setAccountData] = useState<any>(null);
 	const [loadingAccount, setLoadingAccount] = useState(true);
+	const [isProVersion, setIsProVersion] = useState<boolean>(false);
 
 	useEffect(() => {
 		fetchTwilioAccount();
+		setIsProVersion(
+			Boolean(applyFilters('quillbooking.integration', false))
+		);
 	}, []);
 
 	useEffect(() => {
@@ -214,7 +220,7 @@ const SMSIntegration: React.FC = () => {
 					</div>
 					{loadingAccount ? (
 						<Skeleton active paragraph={{ rows: 4 }} />
-					) : (
+					) : isProVersion ? (
 						<Form
 							form={form}
 							layout="vertical"
@@ -377,6 +383,22 @@ const SMSIntegration: React.FC = () => {
 								</Button>
 							</Form.Item>
 						</Form>
+					) : (
+						<ProGlobalIntegrations
+							list={{
+								[__('Requirements', 'quillbooking')]: [
+									__(
+										'Quill Booking Pro Account.',
+										'quillbooking'
+									),
+									__('A Twilio account.', 'quillbooking'),
+									__(
+										'Give Quill Booking Full Access to manage SMS and WhatsApp notifications.',
+										'quillbooking'
+									),
+								],
+							}}
+						/>
 					)}
 				</div>
 			</Card>

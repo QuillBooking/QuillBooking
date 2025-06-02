@@ -29,6 +29,8 @@ import paypal from '@quillbooking/assets/icons/paypal/paypal_vertical.png';
 import stripe from '@quillbooking/assets/icons/stripe/stripe.png';
 import type { PaymentGateway } from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
+import { ProGlobalIntegrations } from '../../../../../../components';
+import { applyFilters } from '@wordpress/hooks';
 
 export interface PaymentGatewayCardProps {
 	slug: string | null;
@@ -46,6 +48,7 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 	isLoading = false,
 }) => {
 	if (!slug) return null;
+	const [isProVersion, setIsProVersion] = useState<boolean>(false);
 	const [form] = Form.useForm();
 	const { callApi, loading: isSaving } = useApi();
 	const { successNotice, errorNotice } = useNotice();
@@ -53,6 +56,11 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 		gateway.settings?.mode || 'sandbox'
 	);
 
+	useEffect(() => {
+		setIsProVersion(
+			Boolean(applyFilters('quillbooking.integration', false))
+		);
+	}, []);
 	useEffect(() => {
 		// Only set form values if gateway settings exist, form exists, and gateway is enabled
 		if (gateway.settings && form && gateway.enabled) {
@@ -142,6 +150,37 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 		}
 	};
 
+	const paymentList = {
+		stripe: {
+			[__('Save time and reduce no-shows:', 'quillbooking')]: [
+				__(
+					'Automatically collect full or partial payments at the time an event is scheduled.',
+					'quillbooking'
+				),
+				__(
+					'Allow your clients to pay with Stripe, debit, or credit card.',
+					'quillbooking'
+				),
+			],
+			[__('Requirements', 'quillbooking')]: [
+				__(
+					'A PayPal Business account — create an account with Stripe',
+					'quillbooking'
+				),
+				__('A Standard Quill Booking subscription', 'quillbooking'),
+			],
+		},
+		paypal: {
+			[__('Requirements', 'quillbooking')]: [
+				__('Quill Booking Pro Account.', 'quillbooking'),
+				__(
+					'A PayPal Business account — create an account with PayPal.',
+					'quillbooking'
+				),
+			],
+		},
+	};
+
 	// Get gateway info
 	const gatewayFields = gateway.fields || {};
 	const title = slug === 'paypal' ? 'PayPal' : 'Stripe';
@@ -155,7 +194,7 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 					<Skeleton.Avatar size={64} active />
 					<Skeleton active paragraph={{ rows: 4 }} />
 				</Flex>
-			) : (
+			) : isProVersion ? (
 				<>
 					<Flex
 						align="center"
@@ -361,6 +400,29 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 							)}
 						</div>
 					</Flex>
+				</>
+			) : (
+				<>
+					<Flex
+						align="center"
+						gap={16}
+						className="p-0 text-color-primary-text border-b pb-5 mb-4"
+					>
+						<img
+							src={logo}
+							alt={`${slug}.png`}
+							className={logoClass}
+						/>
+						<div>
+							<p className="text-[#09090B] font-bold text-2xl">
+								{__(title, 'quillbooking')}
+							</p>
+							<p className="text-[#71717A] font-medium text-sm">
+								{__(`${title} Information`, 'quillbooking')}
+							</p>
+						</div>
+					</Flex>
+					<ProGlobalIntegrations list={paymentList[slug]} />
 				</>
 			)}
 		</Card>

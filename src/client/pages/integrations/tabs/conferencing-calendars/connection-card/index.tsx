@@ -19,6 +19,7 @@ import GoogleFields from './fields/GoogleFields';
 import OutlookFields from './fields/OutlookFields';
 import AppleFields from './fields/AppleFields';
 import { addQueryArgs } from '@wordpress/url';
+import { applyFilters } from '@wordpress/hooks';
 
 const { Text } = Typography;
 
@@ -49,6 +50,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	const [calendar, setCalendar] = useState<any>(null);
 	const [previousSlug, setPreviousSlug] = useState<string | null>(slug);
 	const [loadingAccount, setLoadingAccount] = useState(true);
+	const [isProVersion, setIsProVersion] = useState<boolean>(false);
 
 	// Use a ref to track the last processed slug to prevent redundant updates
 	const lastProcessedSlugRef = useRef<string | null>(slug);
@@ -110,6 +112,9 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 
 	useEffect(() => {
 		fetchCalendars();
+		setIsProVersion(
+			Boolean(applyFilters('quillbooking.integration', false))
+		);
 	}, []);
 
 	// Set form values for non-Zoom integrations (Zoom handles its own form values)
@@ -282,37 +287,41 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						</div>
 					</Flex>
 					<div className="mt-5">
-						<Form
-							form={form}
-							layout="vertical"
-							onFinish={handleSaveSettings}
-							className={`${slug}-form`}
-							name={`${slug}-connection-form`}
-							preserve={false}
-						>
-							{renderFields()}
-							<Form.Item className="mt-6 flex justify-end">
-								<Button
-									type="primary"
-									htmlType="submit"
-									loading={saving || loading}
-									className={`${slug}-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
-									icon={
-										saving || loading ? (
-											<Spin
-												size="small"
-												className="mr-2"
-												style={{ color: 'white' }}
-											/>
-										) : null
-									}
-								>
-									{saving || loading
-										? 'Processing...'
-										: getSubmitButtonText()}
-								</Button>
-							</Form.Item>
-						</Form>
+						{isProVersion && (
+							<Form
+								form={form}
+								layout="vertical"
+								onFinish={handleSaveSettings}
+								className={`${slug}-form`}
+								name={`${slug}-connection-form`}
+								preserve={false}
+							>
+								{renderFields()}
+								<Form.Item className="mt-6 flex justify-end">
+									<Button
+										type="primary"
+										htmlType="submit"
+										loading={saving || loading}
+										className={`${slug}-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
+										icon={
+											saving || loading ? (
+												<Spin
+													size="small"
+													className="mr-2"
+													style={{ color: 'white' }}
+												/>
+											) : null
+										}
+									>
+										{saving || loading
+											? 'Processing...'
+											: getSubmitButtonText()}
+									</Button>
+								</Form.Item>
+							</Form>
+						)}
+
+						{!isProVersion && renderFields()}
 					</div>
 				</>
 			)}

@@ -563,7 +563,7 @@ const Event: React.FC = () => {
 										//px: 3,
 										minHeight: '48px', // Force tab height
 										height: '48px', // Force height to override default
-										mx: 1,
+										//mx: 1,
 										fontWeight: '700',
 										transition: '0.3s',
 										'&.Mui-selected': { color: 'white' },

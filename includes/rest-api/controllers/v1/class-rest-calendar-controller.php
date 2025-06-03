@@ -31,14 +31,6 @@ use QuillBooking\Models\User_Model;
  */
 class REST_Calendar_Controller extends REST_Controller {
 
-
-
-
-
-
-
-
-
 	/**
 	 * REST Base
 	 *
@@ -575,7 +567,14 @@ class REST_Calendar_Controller extends REST_Controller {
 			foreach ( $calendar_team as $teamId ) {
 				$user = User_Model::where( 'ID', $teamId )->first();
 				if ( $user ) {
-					$users[] = $user;
+					$user_avatar_url = get_avatar_url( $user->ID );
+					$users[]         = array(
+						'ID'           => $user->ID,
+						'display_name' => $user->display_name,
+						'user_email'   => $user->user_email,
+						'user_login'   => $user->user_login,
+						'image'        => $user_avatar_url,
+					);
 				}
 			}
 

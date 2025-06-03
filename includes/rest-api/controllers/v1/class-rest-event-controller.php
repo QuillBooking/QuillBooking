@@ -806,6 +806,7 @@ class REST_Event_Controller extends REST_Controller {
 			$fields              = $request->get_param( 'fields' );
 			$slug                = $request->get_param( 'slug' );
 			$reserve_times       = $request->get_param( 'reserve_times' );
+			$hosts               = $request->get_param( 'hosts' );
 
 			$event = Event_Model::find( $id );
 
@@ -859,6 +860,10 @@ class REST_Event_Controller extends REST_Controller {
 				}
 
 				$updated['slug'] = $slug;
+			}
+
+			if ( $hosts ) {
+				$event->setTeamMembersAttribute( $hosts );
 			}
 
 			if ( $user_id ) {

@@ -31,6 +31,7 @@ import {
 	Locations,
 } from '@quillbooking/components';
 import { EventTabHandle } from 'client/types';
+import TeamAssignment from './team-assignment';
 
 const EventDetailsShimmer = () => {
 	return (
@@ -180,7 +181,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 		const saveSettings = async () => {
 			try {
 				if (!validate()) return;
-		
+
 				await callApi({
 					path: `events/${event.id}`,
 					method: 'PUT',
@@ -189,7 +190,10 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 						// Update the event state with the response data
 						actions.setEvent(response);
 						successNotice(
-							__('Event settings saved successfully', 'quillbooking')
+							__(
+								'Event settings saved successfully',
+								'quillbooking'
+							)
 						);
 						setDisabled(true);
 					},
@@ -198,7 +202,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 						throw new Error(error.message);
 					},
 				});
-			} catch (error:any) {
+			} catch (error: any) {
 				console.error('Error saving event settings:', error);
 				// No error notice shown as per original implementation
 				// Re-throw if you want calling code to handle it
@@ -310,6 +314,20 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 							color={event.color}
 							onChange={handleChange}
 						/>
+
+						{event.calendar.type === 'team' && (
+							<TeamAssignment
+								team={
+									Array.isArray(event.hosts) &&
+									event.hosts.length > 0
+										? event.hosts
+										: []
+								}
+								calendarId={event.calendar.id}
+								onChange={handleChange}
+							/>
+						)}
+
 						<Flex vertical gap={20}>
 							<Duration
 								duration={event.duration}

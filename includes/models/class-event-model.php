@@ -236,7 +236,7 @@ class Event_Model extends Model {
 			}
 
 			$validation = $location_type->validate_fields( $location );
-			if ( is_wp_error( $validation ) ) {
+			if ( \is_wp_error( $validation ) ) {
 				throw new \Exception( $validation->get_error_message() );
 			}
 
@@ -284,7 +284,6 @@ class Event_Model extends Model {
 		$this->update_meta( 'reserve_times', $value );
 	}
 
-
 	/**
 	 * Get the event reserve times
 	 *
@@ -293,7 +292,6 @@ class Event_Model extends Model {
 	public function getReserveTimesAttribute() {
 		return $this->get_meta( 'reserve_times', array() );
 	}
-
 
 	/**
 	 * Get the event team members
@@ -313,7 +311,6 @@ class Event_Model extends Model {
 	public function setTeamMembersAttribute( $value ) {
 		$this->update_meta( 'team_members', $value );
 	}
-
 
 	/**
 	 * Get the event email notifications
@@ -644,7 +641,7 @@ class Event_Model extends Model {
 			}
 
 			$validation = $location_type->validate_fields( $location );
-			if ( is_wp_error( $validation ) ) {
+			if ( \is_wp_error( $validation ) ) {
 				throw new \Exception( $validation->get_error_message() );
 			}
 
@@ -936,6 +933,8 @@ class Event_Model extends Model {
 	 * @param int    $start_date Start date (Unix timestamp).
 	 * @param string $timezone   Timezone.
 	 * @param int    $duration   Duration of each slot in minutes.
+	 * @param int    $calendar_id Calendar ID to check availability for.
+	 * @param int    $time_slot  Optional. Time slot interval in minutes. Default 0.
 	 * @return array List of available slots.
 	 */
 	public function get_available_slots( $start_date, $timezone, $duration, $calendar_id ) {
@@ -965,7 +964,7 @@ class Event_Model extends Model {
 
 		$slots = $this->generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id );
 
-		return apply_filters( 'quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone );
+		return \apply_filters( 'quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone );
 	}
 
 	/**
@@ -1123,61 +1122,206 @@ class Event_Model extends Model {
 	 * @param string    $timezone User timezone.
 	 * @param int       $current_date Unix timestamp of the current day.
 	 * @param array     $slots Existing slots to append new slots.
+	 * @param int       $calendar_id The calendar ID.
 	 * @return array Updated slots with new time block slots.
 	 */
 	private function generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id ) {
 		// Get current time in user timezone
-		$current_time = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
+		$current_time = new \DateTime( 'now', new \DateTimeZone( $this->availability['timezone'] ) );
+		$current_time->setTimezone( new \DateTimeZone( $timezone ) );
 
-		// Calculate minimum notice limit
-		$min_notice_limit = clone $current_time;
-		$min_notice       = Arr::get( $this->limits, 'general.minimum_notices', 4 );
-		$min_notice_unit  = Arr::get( $this->limits, 'general.minimum_notice_unit', 'hours' );
-		$min_notice_limit->modify( "+{$min_notice} {$min_notice_unit}" );
+		// Get minimum notice settings
+		$min_notice      = Arr::get( $this->limits, 'general.minimum_notices', 4 );
+		$min_notice_unit = Arr::get( $this->limits, 'general.minimum_notice_unit', 'hours' );
 
-		$current_day      = date( 'Y-m-d', $current_date );
-		$current_time_day = $current_time->format( 'Y-m-d' );
-		// Adjust start time if generating slots for today
-		if ( $current_day === $current_time_day ) {
-			if ( $current_time > $day_start ) {
-				$day_start = clone $current_time; // Start from the current time
+		// Get time slot interval from event limits data
+		$time_slot_interval = Arr::get( $this->limits, 'general.time_slot', 0 );
+
+		// If time slot interval is set and valid, use it instead of duration for slot generation
+		$slot_step = ( $time_slot_interval > 0 ) ? $time_slot_interval : $duration;
+
+		// Convert all dates to timestamps for easier comparison
+		$current_timestamp   = $current_time->getTimestamp();
+		$day_start_timestamp = $day_start->getTimestamp();
+
+		// Calculate the minimum notice period in seconds
+		$min_notice_seconds = 0;
+		if ( $min_notice > 0 ) {
+			switch ( $min_notice_unit ) {
+				case 'days':
+					$min_notice_seconds = $min_notice * 24 * 60 * 60;
+					break;
+				case 'hours':
+					$min_notice_seconds = $min_notice * 60 * 60;
+					break;
+				case 'minutes':
+					$min_notice_seconds = $min_notice * 60;
+					break;
 			}
+		}
 
-			if ( $min_notice_limit >= $day_start ) {
-				$day_start = clone $min_notice_limit; // Start from the minimum notice limit
-			}
+		// Calculate the earliest allowed booking time
+		$min_allowed_timestamp = $current_timestamp + $min_notice_seconds;
 
-			// Check if time like 10:48:12 go to the next valid slot 11:00:00 depending on the duration
-			$day_start->setTime( $day_start->format( 'H' ), ceil( $day_start->format( 'i' ) / $duration ) * $duration, 0 );
+		// If day_start is before the minimum allowed time, adjust it
+		if ( $day_start_timestamp < $min_allowed_timestamp ) {
+			// Create a new DateTime object from the minimum allowed timestamp
+			$day_start = new \DateTime( '@' . $min_allowed_timestamp );
+			$day_start->setTimezone( new \DateTimeZone( $timezone ) );
+		}
+
+		// Round up to the next valid slot based on the slot_step
+		// Get the current hour and minute from the (potentially adjusted) day_start
+		$current_hour   = (int) $day_start->format( 'H' );
+		$current_minute = (int) $day_start->format( 'i' );
+
+		// Calculate the total minutes from midnight for the current day_start
+		$total_minutes_from_midnight = ( $current_hour * 60 ) + $current_minute;
+
+		// Calculate the next rounded total minutes
+		$rounded_total_minutes = ceil( $total_minutes_from_midnight / $slot_step ) * $slot_step;
+
+		// Apply the rounded time, handling day rollovers automatically.
+		// First, reset the time to 00:00:00 for the current day to ensure consistent modification.
+		$day_start->setTime( 0, 0, 0 );
+		// Then add the rounded total minutes. This will advance the day if necessary.
+		$day_start->modify( "+{$rounded_total_minutes} minutes" );
+
+		// If after adjustments, day_start is now after day_end, there are no available slots
+		if ( $day_start >= $day_end ) {
+			return $slots;
 		}
 
 		$current_slot_start = clone $day_start;
 
+		// Track original slots to help with synthetic slot generation
+		$original_slots = array();
+
+		// First pass: generate slots based on the slot_step interval
 		while ( $current_slot_start < $day_end ) {
 			$slot_start = clone $current_slot_start;
 			$slot_end   = clone $slot_start;
-			$slot_end->modify( "+{$duration} minutes" );
+			$slot_end->modify( "+{$duration} minutes" ); // End time is always based on the actual duration
 
 			if ( $slot_end > $day_end ) {
 				break; // End of time block
 			}
 
 			// Check availability of the slot
-			$availabile_slots = $this->check_available_slots( $slot_start, $slot_end, $calendar_id );
+			$available_slots = $this->check_available_slots( $slot_start, $slot_end, $calendar_id );
 
-			if ( 0 === $availabile_slots ) {
-				$current_slot_start->modify( "+{$duration} minutes" );
+			if ( 0 === $available_slots ) {
+				// Move to the next interval
+				$current_slot_start->modify( "+{$slot_step} minutes" );
 				continue;
 			}
 
-			$day             = $current_slot_start->format( 'Y-m-d' );
-			$slots[ $day ][] = array(
+			$day       = $current_slot_start->format( 'Y-m-d' );
+			$slot_data = array(
 				'start'     => $slot_start->format( 'Y-m-d H:i:s' ),
 				'end'       => $slot_end->format( 'Y-m-d H:i:s' ),
-				'remaining' => $availabile_slots,
+				'remaining' => $available_slots,
 			);
 
-			$current_slot_start = clone $slot_end;
+			// Store in original slots array for reference
+			$original_slots[] = $slot_data;
+
+			// Add to the slots array
+			if ( ! isset( $slots[ $day ] ) ) {
+				$slots[ $day ] = array();
+			}
+			$slots[ $day ][] = $slot_data;
+
+			// Move to the next interval
+			$current_slot_start->modify( "+{$slot_step} minutes" );
+		}
+
+		// If time_slot_interval is set and smaller than duration, we need to generate synthetic slots
+		if ( $time_slot_interval > 0 && $time_slot_interval < $duration && ! empty( $original_slots ) ) {
+			// Second pass: generate synthetic slots at the specified interval
+			$day = $day_start->format( 'Y-m-d' );
+
+			// Start from the earliest time aligned to the interval
+			$synthetic_start = clone $day_start;
+			$synthetic_end   = clone $day_end;
+
+			// Create a map of existing slots by start time for quick lookup
+			$existing_slots = array();
+			if ( isset( $slots[ $day ] ) ) {
+				foreach ( $slots[ $day ] as $slot ) {
+					$start_time                    = ( new \DateTime( $slot['start'] ) )->format( 'H:i:s' );
+					$existing_slots[ $start_time ] = true;
+				}
+			}
+
+			$current_time = clone $synthetic_start;
+
+			while ( $current_time < $synthetic_end ) {
+				$current_time_str = $current_time->format( 'H:i:s' );
+
+				// Skip if this exact time already exists as a slot
+				if ( isset( $existing_slots[ $current_time_str ] ) ) {
+					$current_time->modify( "+{$time_slot_interval} minutes" );
+					continue;
+				}
+
+				// Check if this time falls within any existing slot's duration
+				$is_within_existing_slot = false;
+				$reference_slot          = null;
+
+				foreach ( $original_slots as $original_slot ) {
+					$original_start = new \DateTime( $original_slot['start'] );
+					$original_end   = new \DateTime( $original_slot['end'] );
+
+					// If current time is within this slot's range, use it as reference
+					if ( $current_time >= $original_start && $current_time < $original_end ) {
+						$is_within_existing_slot = true;
+						$reference_slot          = $original_slot;
+						break;
+					}
+				}
+
+				// If we found a reference slot, create a synthetic slot
+				if ( $is_within_existing_slot && $reference_slot ) {
+					$synthetic_slot_start = clone $current_time;
+					$synthetic_slot_end   = clone $synthetic_slot_start;
+					$synthetic_slot_end->modify( "+{$duration} minutes" );
+
+					// Only create the synthetic slot if it ends before the day_end
+					if ( $synthetic_slot_end <= $day_end ) {
+						// Check if this synthetic slot is available
+						$available_slots = $this->check_available_slots( $synthetic_slot_start, $synthetic_slot_end, $calendar_id );
+
+						if ( $available_slots > 0 ) {
+							// Mark this as a synthetic slot
+							$synthetic_slot = array(
+								'start'     => $synthetic_slot_start->format( 'Y-m-d H:i:s' ),
+								'end'       => $synthetic_slot_end->format( 'Y-m-d H:i:s' ),
+								'remaining' => $reference_slot['remaining'],
+								'synthetic' => true, // Flag to identify synthetic slots in frontend
+							);
+
+							if ( ! isset( $slots[ $day ] ) ) {
+								$slots[ $day ] = array();
+							}
+							$slots[ $day ][] = $synthetic_slot;
+						}
+					}
+				}
+
+				// Move to the next interval
+				$current_time->modify( "+{$time_slot_interval} minutes" );
+			}
+
+			// Sort slots by start time
+			if ( isset( $slots[ $day ] ) && count( $slots[ $day ] ) > 1 ) {
+				usort(
+					$slots[ $day ],
+					function ( $a, $b ) {
+						return strcmp( $a['start'], $b['start'] );
+					}
+				);
+			}
 		}
 
 		return $slots;

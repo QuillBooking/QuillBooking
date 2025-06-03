@@ -25,8 +25,6 @@ use QuillBooking\Utils;
 class Integration extends Abstract_Integration {
 
 
-
-
 	/**
 	 * Default cache time in minutes
 	 */
@@ -277,23 +275,77 @@ class Integration extends Abstract_Integration {
 	 * @return Booking_Model
 	 */
 	public function add_event_to_calendars( $booking ) {
-		if ( $booking->location['type'] !== 'apple' ) {
-			return $booking;
-		}
-		$event = $booking->event;
-		$host  = $event->calendar->id;
-		$this->set_host( $host );
+		try {
+			// Ensure the booking has a valid event and calendar.
+			if ( ! $booking->event || ! $booking->event->calendar ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Booking does not have a valid event or calendar.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Booking %1$s does not have a valid event or calendar.', 'quillbooking' ),
+							$booking->hash_id
+						),
+					)
+				);
+				return $booking;
+			}
 
-		$apple_integration = $this->host->get_meta( $this->meta_key, array() );
-		if ( empty( $apple_integration ) ) {
-			return $booking;
-		}
+			$event = $booking->event;
+			$host  = $event->calendar->id;
 
-		$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
-		$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
+			// Set the host for the integration.
+			$this->set_host( $host );
+			$apple_integration = $this->host->get_meta( $this->meta_key, array() );
 
-		foreach ( $apple_integration as $account_id => $data ) {
-			$api = $this->connect( $host, $account_id );
+			if ( empty( $apple_integration ) ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'Apple Calendar integration is not configured.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'Apple Calendar integration is not configured for host %1$s.', 'quillbooking' ),
+							$host->name
+						),
+					)
+				);
+				return $booking;
+			}
+
+			// Find the account with the default calendar.
+			$default_account = null;
+			foreach ( $apple_integration as $account_id => $data ) {
+				if ( empty( $data ) || empty( $data['config'] ) ) {
+					continue;
+				}
+
+				$default_calendar = Arr::get( $data, 'config.default_calendar' );
+				if ( ! empty( $default_calendar ) && isset( $default_calendar['calendar_id'] ) && isset( $default_calendar['account_id'] ) ) {
+					$default_account = array(
+						'id'               => $account_id,
+						'data'             => $data,
+						'default_calendar' => $default_calendar,
+					);
+					break;
+				}
+			}
+
+			if ( ! $default_account ) {
+				$booking->logs()->create(
+					array(
+						'type'    => 'error',
+						'message' => __( 'No default calendar found for Apple Calendar integration.', 'quillbooking' ),
+						'details' => sprintf(
+							__( 'No default calendar found for host %1$s.', 'quillbooking' ),
+							$host->name
+						),
+					)
+				);
+				return $booking;
+			}
+
+			$api = $this->connect( $host, $default_account['id'] );
+
 			if ( ! $api ) {
 				$booking->logs()->create(
 					array(
@@ -302,25 +354,24 @@ class Integration extends Abstract_Integration {
 						'details' => sprintf(
 							__( 'Error connecting host %1$s with account %2$s.', 'quillbooking' ),
 							$host->name,
-							$account_id
+							$default_account['id']
 						),
 					)
 				);
-				continue;
+				return $booking;
 			}
 
-			$calendars = Arr::get( $data, 'config.calendars', '' );
-			if ( empty( $calendars ) ) {
-				continue;
-			}
-			$account = $this->accounts->get_account( $account_id );
+			$start_date = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
+			$end_date   = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
+
+			$account = $this->accounts->get_account( $default_account['id'] );
 			$email   = Arr::get( $account, 'credentials.apple_id', '' );
 
-			$event_data = array(
+			$event_data        = array(
 				'DESCRIPTION'    => $this->get_event_description( $booking ),
 				'DTSTART'        => $start_date,
 				'DTEND'          => $end_date,
-				'LOCATION'       => $booking->location,
+				'LOCATION'       => $booking->location['label'],
 				'SUMMARY'        => sprintf( __( '%1$s: %2$s', 'quillbooking' ), $booking->guest->name, $event->name ),
 				'ORGANIZER'      => "mailto:{$email}",
 				'ORGANIZER_NAME' => $event->calendar->name,
@@ -331,49 +382,55 @@ class Integration extends Abstract_Integration {
 					),
 				),
 			);
-
-			foreach ( $calendars as $calendar_id ) {
-				$event_data['UID'] = md5( $booking->hash_id . '-' . $calendar_id ) . '-' . wp_generate_uuid4();
-				$response          = $api->create_event( $account_id, $calendar_id, $event_data );
-				if ( ! $response['success'] ) {
-					$booking->logs()->create(
-						array(
-							'type'    => 'error',
-							'message' => __( 'Failed to add event to Apple Calendar.', 'quillbooking' ),
-							'details' => sprintf(
-								__( 'Failed to add event %1$s to Apple Calendar %2$s.', 'quillbooking' ),
-								$event_data['UID'],
-								$calendar_id
-							),
-						)
-					);
-					continue;
-				}
-
-				$event                 = Arr::get( $response, 'data' );
-				$meta                  = $booking->get_meta( 'apple_events_details', array() );
-				$meta[ $event['UID'] ] = array(
-					'event'       => $event,
-					'calendar_id' => $calendar_id,
-					'account_id'  => $account_id,
-				);
-				$booking->update_meta(
-					'apple_events_details',
-					$meta
-				);
-
+			$calendar_id       = Arr::get( $default_account['default_calendar'], 'calendar_id', '' );
+			$event_data['UID'] = md5( $booking->hash_id . '-' . $calendar_id ) . '-' . wp_generate_uuid4();
+			$response          = $api->create_event( $account_id, $calendar_id, $event_data );
+			if ( ! $response['success'] ) {
 				$booking->logs()->create(
 					array(
-						'type'    => 'info',
-						'message' => __( 'Event added to Apple Calendar.', 'quillbooking' ),
+						'type'    => 'error',
+						'message' => __( 'Failed to add event to Apple Calendar.', 'quillbooking' ),
 						'details' => sprintf(
-							__( 'Event %1$s added to Apple Calendar %2$s.', 'quillbooking' ),
-							$event['UID'],
+							__( 'Failed to add event %1$s to Apple Calendar %2$s.', 'quillbooking' ),
+							$event_data['UID'],
 							$calendar_id
 						),
 					)
 				);
+				return $booking;
 			}
+			$event                 = Arr::get( $response, 'data' );
+			$meta                  = $booking->get_meta( 'apple_events_details', array() );
+			$meta[ $event['UID'] ] = array(
+				'event'       => $event,
+				'calendar_id' => $calendar_id,
+				'account_id'  => $account_id,
+			);
+			$booking->update_meta(
+				'apple_events_details',
+				$meta
+			);
+
+			$booking->logs()->create(
+				array(
+					'type'    => 'info',
+					'message' => __( 'Event added to Apple Calendar.', 'quillbooking' ),
+					'details' => sprintf(
+						__( 'Event %1$s added to Apple Calendar %2$s.', 'quillbooking' ),
+						$event['UID'],
+						$calendar_id
+					),
+				)
+			);
+		} catch ( \Exception $e ) {
+			$booking->logs()->create(
+				array(
+					'type'    => 'error',
+					'message' => __( 'An error occurred while adding event to Apple Calendar.', 'quillbooking' ),
+					'details' => $e->getMessage(),
+				)
+			);
+			return $booking;
 		}
 	}
 
@@ -455,6 +512,7 @@ class Integration extends Abstract_Integration {
 	 * @return array
 	 */
 	public function get_available_slots( $slots, $event, $start_date, $end_date, $timezone ) {
+		xdebug_break();
 		$this->set_host( $event->calendar );
 		$apple_integration = $this->host->get_meta( $this->meta_key, array() );
 		if ( empty( $apple_integration ) ) {
@@ -477,7 +535,7 @@ class Integration extends Abstract_Integration {
 				foreach ( $events as $event ) {
 					$start          = Arr::get( $event, 'DTSTART' );
 					$end            = Arr::get( $event, 'DTEND' );
-					$event_timezone = Arr::get( $event, 'TZID' );
+					$event_timezone = Arr::get( $event, 'TZID', 'UTC' );
 					$slots          = $this->remove_booked_slot( $slots, $start, $end, $timezone, $event_timezone );
 				}
 			}

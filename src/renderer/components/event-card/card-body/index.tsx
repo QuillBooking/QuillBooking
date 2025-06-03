@@ -24,43 +24,59 @@ interface CardBodyProps {
 // Shimmer Loader Component with Tailwind CSS
 const ShimmerLoader = () => {
 	return (
-	  <div
-		style={{
-		  margin: 'auto',
-		  padding: 24,
-		  background: '#fff',
-		}}
-	  >
-		{/* Header */}
-		<Row align="middle" gutter={16}>
-		  <Col>
-			<Skeleton.Avatar active size="large" shape="circle" />
-		  </Col>
-		</Row>
-  
-		<div style={{ marginTop: 24 }}>
-		  {/* Title + Description */}
-		  <Space direction="vertical" size={16} style={{ width: '100%' }}>
-			<Skeleton.Input active size="default" style={{ width: '70%' }} />
-			<Skeleton.Input active size="small" style={{ width: '90%' }} />
-			<Skeleton.Input active size="small" style={{ width: '80%' }} />
-		  </Space>
+		<div
+			style={{
+				margin: 'auto',
+				padding: 24,
+				background: '#fff',
+			}}
+		>
+			{/* Header */}
+			<Row align="middle" gutter={16}>
+				<Col>
+					<Skeleton.Avatar active size="large" shape="circle" />
+				</Col>
+			</Row>
+
+			<div style={{ marginTop: 24 }}>
+				{/* Title + Description */}
+				<Space direction="vertical" size={16} style={{ width: '100%' }}>
+					<Skeleton.Input
+						active
+						size="default"
+						style={{ width: '70%' }}
+					/>
+					<Skeleton.Input
+						active
+						size="small"
+						style={{ width: '90%' }}
+					/>
+					<Skeleton.Input
+						active
+						size="small"
+						style={{ width: '80%' }}
+					/>
+				</Space>
+			</div>
+
+			{/* Large block (e.g. calendar area) */}
+			<div style={{ marginTop: 32 }}>
+				<Skeleton.Input
+					active
+					block
+					style={{ height: 200, borderRadius: 8 }}
+				/>
+			</div>
+
+			{/* Bottom buttons/selects */}
+			<Row gutter={16} style={{ marginTop: 24 }}>
+				<Col span={6}>
+					<Skeleton.Input active style={{ width: '50%' }} />
+				</Col>
+			</Row>
 		</div>
-  
-		{/* Large block (e.g. calendar area) */}
-		<div style={{ marginTop: 32 }}>
-		  <Skeleton.Input active block style={{ height: 200, borderRadius: 8 }} />
-		</div>
-  
-		{/* Bottom buttons/selects */}
-		<Row gutter={16} style={{ marginTop: 24 }}>
-			<Col span={6}>
-			  <Skeleton.Input active style={{ width: '50%' }} />
-			</Col>
-		</Row>
-	  </div>
 	);
-  };
+};
 
 const CardBody: React.FC<CardBodyProps> = ({
 	event,
@@ -293,83 +309,84 @@ const CardBody: React.FC<CardBodyProps> = ({
 		if (event.additional_settings?.allow_attendees_to_select_duration) {
 			setSelectedDuration(event.additional_settings.default_duration);
 		}
-		
-		// Simulate loading time for the shimmer effect
-		const timer = setTimeout(() => {
-			setIsLoading(false);
-		}, 1000); // Show shimmer for 10 seconds
-		
-		return () => clearTimeout(timer);
 	}, [event]);
 
-	if (isLoading) {
-		return <ShimmerLoader />;
-	}
-
 	return (
-		<div className="event-card-details">
-			<Hosts hosts={event.hosts} />
-			<EventDetails
-				event={event}
-				selectedDuration={selectedDuration}
-				setSelectedDuration={setSelectedDuration}
-				step={step}
-				selectedDate={selectedDate}
-				selectedTime={selectedTime}
-				booking={booking ?? null}
-			/>
-			{selectedTime && step === 2 ? (
-				type === 'reschedule' ? (
-					<Reschedule
+		<>
+			{isLoading && <ShimmerLoader />}
+
+			<div
+				className="event-card-details"
+				style={{ display: isLoading ? 'none' : 'block' }}
+			>
+				<Hosts hosts={event.hosts} />
+				<EventDetails
+					event={event}
+					selectedDuration={selectedDuration}
+					setSelectedDuration={setSelectedDuration}
+					step={step}
+					selectedDate={selectedDate}
+					selectedTime={selectedTime}
+					booking={booking ?? null}
+				/>
+				{selectedTime && step === 2 ? (
+					type === 'reschedule' ? (
+						<Reschedule
+							ajax_url={ajax_url}
+							setStep={setStep}
+							fields={event.fields}
+							booking={booking ?? null}
+							selectedDate={selectedDate}
+							selectedTime={selectedTime}
+							timezone={timeZone}
+							url={url}
+							baseColor={event.color}
+							darkColor={tinycolor(event.color)
+								.darken(20)
+								.toString()}
+						/>
+					) : (
+						<QuestionsComponents
+							fields={event.fields}
+							setStep={setStep}
+							onSubmit={handleSave}
+							baseColor={event.color}
+							darkColor={tinycolor(event.color)
+								.darken(20)
+								.toString()}
+						/>
+					)
+				) : step === 3 &&
+				  requiresPayment &&
+				  hasPaymentGateways &&
+				  bookingData ? (
+					<Payment
 						ajax_url={ajax_url}
 						setStep={setStep}
-						fields={event.fields}
-						booking={booking ?? null}
-						selectedDate={selectedDate}
-						selectedTime={selectedTime}
-						timezone={timeZone}
-						url={url}
+						bookingData={bookingData}
+						event={event}
+						totalPrice={totalPrice}
 						baseColor={event.color}
 						darkColor={tinycolor(event.color).darken(20).toString()}
 					/>
 				) : (
-					<QuestionsComponents
-						fields={event.fields}
-						setStep={setStep}
-						onSubmit={handleSave}
+					<DateTimePicker
+						setIsLoading={setIsLoading}
+						selectedTime={selectedTime}
+						event={event}
+						selectedDate={selectedDate}
+						setSelectedDate={setSelectedDate}
+						timeZone={timeZone}
+						setTimeZone={setTimeZone}
+						setSelectedTime={handleSelectedTime}
+						ajax_url={ajax_url}
+						selectedDuration={selectedDuration}
 						baseColor={event.color}
-						darkColor={tinycolor(event.color).darken(20).toString()}
+						lightColor={lightColor}
 					/>
-				)
-			) : step === 3 &&
-			  requiresPayment &&
-			  hasPaymentGateways &&
-			  bookingData ? (
-				<Payment
-					ajax_url={ajax_url}
-					setStep={setStep}
-					bookingData={bookingData}
-					event={event}
-					totalPrice={totalPrice}
-					baseColor={event.color}
-					darkColor={tinycolor(event.color).darken(20).toString()}
-				/>
-			) : (
-				<DateTimePicker
-					selectedTime={selectedTime}
-					event={event}
-					selectedDate={selectedDate}
-					setSelectedDate={setSelectedDate}
-					timeZone={timeZone}
-					setTimeZone={setTimeZone}
-					setSelectedTime={handleSelectedTime}
-					ajax_url={ajax_url}
-					selectedDuration={selectedDuration}
-					baseColor={event.color}
-					lightColor={lightColor}
-				/>
-			)}
-		</div>
+				)}
+			</div>
+		</>
 	);
 };
 

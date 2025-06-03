@@ -21,6 +21,7 @@ interface DateTimePickerProps {
 	selectedDuration: number;
 	baseColor: string;
 	lightColor: string;
+	setIsLoading: (isLoading: boolean) => void;
 }
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
@@ -35,6 +36,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 	selectedDuration,
 	baseColor,
 	lightColor,
+	setIsLoading,
 }) => {
 	const [selectedAvailability, setSelectedAvailability] = useState<
 		string | null
@@ -66,6 +68,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 					ajax_url={ajax_url}
 					baseColor={baseColor}
 					lightColor={lightColor}
+					setIsLoading={setIsLoading}
 				/>
 				{selectedDate && (
 					<TimePicker

@@ -26,6 +26,7 @@ interface DatePickerProps {
 	setSelectedTime: (time: string | null) => void;
 	baseColor: string;
 	lightColor: string;
+	setIsLoading: (isLoading: boolean) => void;
 }
 
 const DatePicker: React.FC<DatePickerProps> = ({
@@ -40,6 +41,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 	setSelectedTime,
 	baseColor,
 	lightColor,
+	setIsLoading,
 }) => {
 	const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
 	const [loadedMonths, setLoadedMonths] = useState<string[]>([]);
@@ -79,6 +81,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
 						...prev,
 						date.format('YYYY-MM'),
 					]);
+					setIsLoading(false);
+					console.log('hey');
 					setReachedEndDate(false);
 				} else {
 					if (

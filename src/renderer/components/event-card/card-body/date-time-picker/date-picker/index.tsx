@@ -53,6 +53,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
 		}
 	}, [selectedDate]);
 
+	useEffect(() => {
+		setIsLoading(true);
+	}, []);
 	const fetchAvailability = async (date: Dayjs, calendar_id?: number) => {
 		const formData = new FormData();
 		formData.append('action', 'quillbooking_booking_slots');

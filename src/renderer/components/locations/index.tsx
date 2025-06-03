@@ -2,6 +2,7 @@ import { Form, Input, Radio } from 'antd';
 import DynamicLocationFields from '../dynamic-location-field';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { __ } from '@wordpress/i18n';
 
 /**
  * Renders dynamic fields for a selected location type
@@ -79,6 +80,15 @@ const Locations = ({ locationFields, countryCode }: LocationsProps) => {
 										<Form.Item
 											key={fieldKey}
 											name="location-data"
+											rules={[
+												{
+													required: true,
+													message: __(
+														`${typedField.label} is required`,
+														'@quillbooking'
+													),
+												},
+											]}
 											label={
 												<div className="form-label">
 													<p>

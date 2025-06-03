@@ -22,6 +22,7 @@ use Illuminate\Support\Arr;
  */
 class REST_Account_Controller extends Abstract_REST_Account_Controller {
 
+
 	/**
 	 * Entities.
 	 *

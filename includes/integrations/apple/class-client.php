@@ -111,17 +111,28 @@ class Client {
 		);
 
 		foreach ( $calendars as $url => $properties ) {
-			// Extract the calendar ID after "calendars/".
+			// Extract the calendar ID after "calendars/"
 			preg_match( '/calendars\/([^\/]+)\//', $url, $calendar_matches );
 			$calendar_id = isset( $calendar_matches[1] ) ? $calendar_matches[1] : null;
 
 			if ( ! $calendar_id || $calendar_id === '' ) {
-				continue; // Skip base calendar path.
+				continue; // Skip base calendar path
+			}
+
+			// Skip unwanted system calendars
+			$unwanted_ids = array( 'inbox', 'outbox', 'notification', 'tasks' );
+			if ( in_array( strtolower( $calendar_id ), $unwanted_ids, true ) ) {
+				continue;
+			}
+
+			$display_name = trim( $properties['{DAV:}displayname'] ?? '' );
+			if ( $display_name === '' ) {
+				continue; // Skip unnamed calendars
 			}
 
 			$processed_calendars['calendars'][ $calendar_id ] = array(
-				'name'  => isset( $properties['{DAV:}displayname'] ) ? $properties['{DAV:}displayname'] : 'Unnamed Calendar',
-				'color' => isset( $properties['{http://apple.com/ns/ical/}calendar-color'] ) ? $properties['{http://apple.com/ns/ical/}calendar-color'] : null,
+				'name'  => $display_name,
+				'color' => $properties['{http://apple.com/ns/ical/}calendar-color'] ?? null,
 			);
 		}
 

@@ -28,9 +28,6 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  */
 class Event_Model extends Model {
 
-
-
-
 	/**
 	 * Table name
 	 *
@@ -939,7 +936,6 @@ class Event_Model extends Model {
 	 */
 	public function get_available_slots( $start_date, $timezone, $duration, $calendar_id ) {
 		$this->validate_availability();
-		$this->apply_frequency_limits( $start_date );
 		$this->apply_duration_limits( $start_date );
 
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
@@ -985,19 +981,78 @@ class Event_Model extends Model {
 	/**
 	 * Apply frequency limits to ensure booking constraints are respected.
 	 *
-	 * @param int $start_date Start date timestamp.
+	 * @param \DateTime|string|int $start_date Start date (DateTime object, timestamp or string).
 	 */
 	private function apply_frequency_limits( $start_date ) {
 		if ( ! Arr::get( $this->limits, 'frequency.enable', false ) ) {
 			return;
 		}
 
-		$frequency_limit      = Arr::get( $this->limits, 'frequency.limit', 5 );
-		$frequency_unit       = Arr::get( $this->limits, 'frequency.unit', 'days' );
-		$frequency_start_time = strtotime( 'midnight', $start_date );
-		$frequency_end_time   = strtotime( 'tomorrow', $frequency_start_time ) - 1;
+		$frequency_limits = Arr::get( $this->limits, 'frequency.limits', array() );
+		foreach ( $frequency_limits as $frequency ) {
+			if ( ! $frequency['limit'] || ! $frequency['unit'] ) {
+				throw new \Exception( __( 'Frequency limit or unit is not set', 'quillbooking' ) );
+			}
+			if ( ! in_array( $frequency['unit'], array( 'days', 'weeks', 'months' ), true ) ) {
+				throw new \Exception( __( 'Invalid frequency unit', 'quillbooking' ) );
+			}
 
-		$this->validate_limit( $frequency_limit, $frequency_unit, $frequency_start_time, $frequency_end_time, 'Event reached the frequency limit' );
+			$this->validate_frequency_limits( $frequency['limit'], $frequency['unit'], $start_date, 'Event reached the frequency limit' );
+		}
+	}
+
+	/**
+	 *  Validate booking frequency limits.
+	 */
+	private function validate_frequency_limits( $limit, $unit, $start_day, $message ) {
+		if ( ! in_array( $unit, array( 'days', 'weeks', 'months' ), true ) ) {
+			throw new \Exception( __( 'Invalid frequency unit', 'quillbooking' ) );
+		}
+
+		switch ( $unit ) {
+			case 'days':
+				$start = clone $start_day;
+				$start->setTime( 0, 0, 0 );  // Start of the day
+				$end = clone $start;
+				$end->setTime( 23, 59, 59 );  // End of the day
+				break;
+			case 'weeks':
+				$start = clone $start_day;
+				// Set to start of week (Monday as first day)
+				$start->modify( 'Monday this week' );
+				$start->setTime( 0, 0, 0 );
+
+				// Set to end of week (Sunday)
+				$end = clone $start;
+				$end->modify( '+6 days' );  // End of Sunday
+				$end->setTime( 23, 59, 59 );
+				break;
+			case 'months':
+				$start = clone $start_day;
+				// Set to first day of the month
+				$start->modify( 'first day of this month' );
+				$start->setTime( 0, 0, 0 );
+
+				// Set to last day of the month
+				$end = clone $start;
+				$end->modify( 'last day of this month' );
+				$end->setTime( 23, 59, 59 );
+				break;
+		}
+
+		$start_time = $start->format( 'Y-m-d H:i:s' );
+		$end_time   = $end->format( 'Y-m-d H:i:s' );
+
+		$query = Booking_Model::where( 'event_id', $this->id )
+			->where( 'start_time', '>=', $start_time )
+			->where( 'end_time', '<=', $end_time )
+			->where( 'status', '!=', 'cancelled' );
+
+		$result = $query->count();
+
+		if ( $result >= $limit ) {
+			throw new \Exception( __( $message, 'quillbooking' ) );
+		}
 	}
 
 	/**
@@ -1093,15 +1148,19 @@ class Event_Model extends Model {
 	 */
 	private function generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id ) {
 		$slots = array();
-
 		for ( $current_date = $start_date; $current_date <= $end_date; $current_date = strtotime( '+1 day', $current_date ) ) {
 			$day_of_week = strtolower( date( 'l', $current_date ) );
 
 			if ( empty( $this->availability['weekly_hours'][ $day_of_week ]['off'] ) ) {
 				foreach ( $this->availability['weekly_hours'][ $day_of_week ]['times'] as $time_block ) {
+
 					$day_start = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
 					$day_end   = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
-
+					try {
+						$this->apply_frequency_limits( $day_start );
+					} catch ( \Exception $e ) {
+						continue; // Skip this time block if frequency limits are exceeded
+					}
 					$day_start->setTimezone( new \DateTimeZone( $timezone ) );
 					$day_end->setTimezone( new \DateTimeZone( $timezone ) );
 

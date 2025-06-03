@@ -7,14 +7,14 @@ $icons_url           = plugins_url( 'src/templates/icons/', QUILLBOOKING_PLUGIN_
     <div class="details-container">
         <!-- Calendar Header -->
         <div class="calendar-header">
-            <?php if (!empty($calendar['featured_image'])): ?>
+		<?php if (!empty($calendar['featured_image'])): ?>
                 <div class="featured-image">
-                    <img src="<?php echo esc_url($calendar['featured_image']); ?>" alt="<?php echo esc_attr($calendar['name']); ?>" />
+                    <img src="<?php echo esc_url($calendar['featured_image']['url']); ?>" alt="<?php echo esc_attr($calendar['name']); ?>" />
                 </div>
             <?php endif; ?>
             <div class="profile-picture">
                 <?php if (!empty($calendar['avatar'])): ?>
-                    <img src="<?php echo esc_url($calendar['avatar']); ?>" alt="<?php echo esc_attr($calendar['name']); ?>" />
+                    <img src="<?php echo esc_url($calendar['avatar']['url']); ?>" alt="<?php echo esc_attr($calendar['name']); ?>" />
                 <?php else: ?>
                     <img src="<?php echo esc_url($icons_url . 'profile.svg'); ?>" alt="Calendar Avatar" />
                 <?php endif; ?>

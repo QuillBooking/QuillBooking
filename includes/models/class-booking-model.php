@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Booking_Model
  *
@@ -19,8 +20,6 @@ use Illuminate\Support\Arr;
  * Booking Model class
  */
 class Booking_Model extends Model {
-
-
 
 	/**
 	 * Table name
@@ -329,8 +328,8 @@ class Booking_Model extends Model {
 	 * @return bool
 	 */
 	public function isCompleted() {
-		 $end_time = new \DateTime( $this->end_time, new \DateTimeZone( $this->timezone ) );
-		$now       = new \DateTime( 'now', new \DateTimeZone( $this->timezone ) );
+		 $end_time = new \DateTime( $this->end_time, new \DateTimeZone( 'UTC' ) );
+		$now       = new \DateTime( 'now', new \DateTimeZone( 'UTC' ) );
 
 		return $end_time < $now;
 	}

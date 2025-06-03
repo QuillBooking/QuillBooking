@@ -7,10 +7,10 @@ import { __ } from '@wordpress/i18n';
  */
 import { IoLinkOutline } from 'react-icons/io5';
 import { LiaImageSolid } from 'react-icons/lia';
-import { useCallback, useState, useMemo } from 'react';
-import { $getSelection, $createTextNode, $isRangeSelection } from 'lexical';
+import { useCallback, useState, useMemo, useEffect } from 'react';
+import { $getSelection, $createTextNode, $isRangeSelection, $isElementNode, $createParagraphNode, $getRoot, $isTextNode } from 'lexical';
 import { $wrapNodes } from '@lexical/selection';
-import { $createLinkNode } from '@lexical/link';
+import { $createLinkNode, $isLinkNode } from '@lexical/link';
 import { Button, Flex, Modal, Input } from 'antd';
 /**
  * Internal dependencies
@@ -34,6 +34,56 @@ export default function Attachments({ activeEditor }: AttachmentsProps) {
 	const [linkUrl, setLinkUrl] = useState('');
 	const [linkText, setLinkText] = useState('');
 	const [selectedText, setSelectedText] = useState('');
+	const [isEditingExistingLink, setIsEditingExistingLink] = useState(false);
+
+	// Add click handler for links in the editor
+	useEffect(() => {
+		const handleLinkClick = (event: Event) => {
+			const target = event.target as HTMLElement;
+			const linkElement = target.closest('a');
+
+			if (linkElement) {
+				event.preventDefault();
+				event.stopPropagation();
+
+				const href = linkElement.getAttribute('href');
+				const text = linkElement.textContent || '';
+
+				if (href) {
+					// Set the selection to the clicked link
+					activeEditor.update(() => {
+						const selection = $getSelection();
+						if ($isRangeSelection(selection)) {
+							// Find the link node and select it
+							const linkNode = selection.anchor.getNode();
+							if (linkNode) {
+								selection.focus.set(linkNode.getKey(), 0, 'text');
+								selection.anchor.set(linkNode.getKey(), linkNode.getTextContentSize(), 'text');
+							}
+						}
+					});
+
+					setLinkUrl(href);
+					setLinkText(text);
+					setSelectedText(text);
+					setIsEditingExistingLink(true);
+					setLinkModalOpen(true);
+				}
+			}
+		};
+
+		// Add click listener to the editor container
+		const editorElement = document.querySelector('.editor-input');
+		if (editorElement) {
+			editorElement.addEventListener('click', handleLinkClick as EventListener);
+		}
+
+		return () => {
+			if (editorElement) {
+				editorElement.removeEventListener('click', handleLinkClick as EventListener);
+			}
+		};
+	}, [activeEditor]);
 
 	// Function to open WordPress media library
 	const openMediaLibrary = useCallback(() => {
@@ -117,6 +167,7 @@ export default function Attachments({ activeEditor }: AttachmentsProps) {
 				const text = selection.getTextContent();
 				setSelectedText(text);
 				setLinkText(text || '');
+				setIsEditingExistingLink(false);
 			}
 		});
 		setLinkModalOpen(true);
@@ -129,31 +180,124 @@ export default function Attachments({ activeEditor }: AttachmentsProps) {
 			activeEditor.update(() => {
 				const selection = $getSelection();
 				if ($isRangeSelection(selection)) {
+					let linkNode;
+
+					if (isEditingExistingLink) {
+						// If editing existing link, remove the old link first
+						const nodes = selection.getNodes();
+						nodes.forEach(node => {
+							if ($isLinkNode(node)) {
+								// Create a new text node with the same content
+								const textNode = $createTextNode(node.getTextContent());
+								// Replace the link node with the text node
+								node.replace(textNode);
+							}
+						});
+					}
+
+					// Get the current paragraph node or create a new one
+					let paragraphNode = selection.anchor.getNode().getParent();
+					if (!paragraphNode || !$isElementNode(paragraphNode)) {
+						paragraphNode = $createParagraphNode();
+						const root = $getRoot();
+						root.append(paragraphNode);
+					}
+
 					if (selection.isCollapsed() || !selectedText) {
 						const textToUse = linkText || linkUrl;
 						const linkTextNode = $createTextNode(textToUse);
-						const linkNode = $createLinkNode(linkUrl, {
+						linkNode = $createLinkNode(linkUrl, {
 							rel: 'noopener noreferrer',
 							target: '_blank',
 						});
 						linkNode.append(linkTextNode);
-						selection.insertNodes([linkNode]);
-					} else {
-						$wrapNodes(selection, () =>
-							$createLinkNode(linkUrl, {
+
+						// Insert the link node at the current selection
+						if (selection.isCollapsed()) {
+							// If we're at the end of a paragraph, append to current paragraph
+							if (selection.anchor.offset === paragraphNode.getTextContentSize()) {
+								paragraphNode.append(linkNode);
+							} else {
+								// Get the current text node
+								const currentNode = selection.anchor.getNode();
+								if ($isTextNode(currentNode)) {
+									// Split the text node at the cursor position
+									const splitPoint = selection.anchor.offset;
+									const textContent = currentNode.getTextContent();
+									const beforeText = textContent.slice(0, splitPoint);
+									const afterText = textContent.slice(splitPoint);
+
+									// Create new text nodes for before and after
+									const beforeNode = $createTextNode(beforeText);
+									const afterNode = $createTextNode(afterText);
+
+									// Replace the current node with the new structure
+									currentNode.replace(beforeNode);
+									beforeNode.insertAfter(linkNode);
+									linkNode.insertAfter(afterNode);
+								} else {
+									// If we're not in a text node, ensure we're in a paragraph
+									const parentNode = currentNode.getParent();
+									if (parentNode) {
+										// Create a new text node for the link
+										const newTextNode = $createTextNode(textToUse);
+										linkNode.append(newTextNode);
+
+										// Insert the link node after the current node
+										currentNode.insertAfter(linkNode);
+									} else {
+										// If no parent node, create a new paragraph
+										const newParagraph = $createParagraphNode();
+										newParagraph.append(linkNode);
+										const root = $getRoot();
+										root.append(newParagraph);
+									}
+								}
+							}
+						} else {
+							// If text is selected, wrap it in a link
+							linkNode = $createLinkNode(linkUrl, {
 								rel: 'noopener noreferrer',
 								target: '_blank',
-							})
-						);
+							});
+							$wrapNodes(selection, () => linkNode);
+						}
+					} else {
+						linkNode = $createLinkNode(linkUrl, {
+							rel: 'noopener noreferrer',
+							target: '_blank',
+						});
+						$wrapNodes(selection, () => linkNode);
 					}
+
+					// Ensure the link is in a paragraph node
+					if (linkNode) {
+						const linkParent = linkNode.getParent();
+						if (!linkParent || !$isElementNode(linkParent)) {
+							const newParagraph = $createParagraphNode();
+							newParagraph.append(linkNode);
+							const root = $getRoot();
+							root.append(newParagraph);
+						}
+					}
+
+					// Clean up empty paragraphs
+					const root = $getRoot();
+					const children = root.getChildren();
+					children.forEach(child => {
+						if (child.getTextContentSize() === 0) {
+							child.remove();
+						}
+					});
 				}
 			});
 
 			setLinkUrl('');
 			setLinkText('');
+			setIsEditingExistingLink(false);
 			setLinkModalOpen(false);
 		}
-	}, [activeEditor, linkUrl, linkText, selectedText]);
+	}, [activeEditor, linkUrl, linkText, selectedText, isEditingExistingLink]);
 
 	// Memoized Link Modal component
 	const LinkModal = useMemo(

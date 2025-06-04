@@ -34,6 +34,11 @@ class Event_Model extends Model {
 
 
 
+
+
+
+
+
 	/**
 	 * Table name
 	 *
@@ -942,7 +947,6 @@ class Event_Model extends Model {
 	 */
 	public function get_available_slots( $start_date, $timezone, $duration, $calendar_id ) {
 		$this->validate_availability();
-		$this->apply_duration_limits( $start_date );
 
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
 		$end_date   = $this->calculate_end_date( $start_date, $timezone );
@@ -998,9 +1002,6 @@ class Event_Model extends Model {
 		foreach ( $frequency_limits as $frequency ) {
 			if ( ! $frequency['limit'] || ! $frequency['unit'] ) {
 				throw new \Exception( __( 'Frequency limit or unit is not set', 'quillbooking' ) );
-			}
-			if ( ! in_array( $frequency['unit'], array( 'days', 'weeks', 'months' ), true ) ) {
-				throw new \Exception( __( 'Invalid frequency unit', 'quillbooking' ) );
 			}
 
 			$this->validate_frequency_limits( $frequency['limit'], $frequency['unit'], $start_date, 'Event reached the frequency limit' );
@@ -1093,19 +1094,35 @@ class Event_Model extends Model {
 	/**
 	 * Apply duration limits to ensure total booking time is within allowed constraints.
 	 *
-	 * @param int $start_date Start date timestamp.
+	 * @param \DateTime|string|int $start_date Start date (DateTime object, timestamp or string).
 	 */
 	private function apply_duration_limits( $start_date ) {
 		if ( ! Arr::get( $this->limits, 'duration.enable', false ) ) {
 			return;
 		}
 
-		$duration_limit      = Arr::get( $this->limits, 'duration.limit', 60 );
-		$duration_unit       = Arr::get( $this->limits, 'duration.unit', 'days' );
-		$duration_start_time = strtotime( 'midnight', $start_date );
-		$duration_end_time   = strtotime( 'tomorrow', $duration_start_time ) - 1;
+		$duration_limit = Arr::get( $this->limits, 'duration.limit', 60 );
+		$duration_unit  = Arr::get( $this->limits, 'duration.unit', 'days' );
 
-		$this->validate_limit( $duration_limit, $duration_unit, $duration_start_time, $duration_end_time, 'Event reached the duration limit', true );
+		// Convert $start_date to DateTime if it's not already one
+		if ( ! ( $start_date instanceof \DateTime ) ) {
+			if ( is_numeric( $start_date ) ) {
+				$start_date = new \DateTime( '@' . $start_date );
+			} else {
+				$start_date = new \DateTime( $start_date );
+			}
+		}
+
+		// Handle start_date as DateTime object
+		$start = clone $start_date;
+		$start->setTime( 0, 0, 0 );  // Start of the day
+		$end = clone $start;
+		$end->setTime( 23, 59, 59 );  // End of the day
+
+		$start_time = $start->format( 'Y-m-d H:i:s' );
+		$end_time   = $end->format( 'Y-m-d H:i:s' );
+
+		$this->validate_duration_limit( $duration_limit, $duration_unit, strtotime( $start_time ), strtotime( $end_time ), 'Event reached the duration limit', true );
 	}
 
 	/**
@@ -1118,21 +1135,43 @@ class Event_Model extends Model {
 	 * @param string $message    Error message to display if the limit is exceeded.
 	 * @param bool   $sum        Whether to sum bookings (for duration limits).
 	 */
-	private function validate_limit( $limit, $unit, $start_time, $end_time, $message, $sum = false ) {
-		$unit_multiplier = array(
-			'weeks'  => 7,
-			'months' => 30,
-		);
-		$limit          *= $unit_multiplier[ $unit ] ?? 1;
+	private function validate_duration_limit( $limit, $unit, $start_time, $end_time, $message, $sum = false ) {
+		// Convert limit to minutes based on unit
+		$limit_in_minutes = $limit;
+		switch ( $unit ) {
+			case 'weeks':
+				$limit_in_minutes = $limit * 7 * 24 * 60; // weeks to minutes
+				break;
+			case 'months':
+				$limit_in_minutes = $limit * 30 * 24 * 60; // approximate months to minutes
+				break;
+			case 'days':
+				$limit_in_minutes = $limit * 24 * 60; // days to minutes
+				break;
+			// Default is already in minutes
+		}
 
 		$query = Booking_Model::where( 'event_id', $this->id )
-			->where( 'start_date', '>=', $start_time )
-			->where( 'start_date', '<=', $end_time )
-			->whereNot( 'status', 'cancelled' );
+			->where( 'start_time', '>=', date( 'Y-m-d H:i:s', $start_time ) )
+			->where( 'start_time', '<=', date( 'Y-m-d H:i:s', $end_time ) )
+			->where( 'status', '!=', 'cancelled' );
 
-		$result = $sum ? $query->sum( 'duration' ) : $query->count();
+		if ( $sum ) {
+			// Calculate duration in minutes from the difference between end_time and start_time
+			$total_minutes = $query->get()->sum(
+				function ( $booking ) {
+					$start = new \DateTime( $booking->start_time );
+					$end   = new \DateTime( $booking->end_time );
+					$diff  = $end->diff( $start );
+					return ( $diff->days * 24 * 60 ) + ( $diff->h * 60 ) + $diff->i;
+				}
+			);
+			$result        = $total_minutes;
+		} else {
+			$result = $query->count();
+		}
 
-		if ( $result >= $limit ) {
+		if ( $result >= $limit_in_minutes ) {
 			throw new \Exception( __( $message, 'quillbooking' ) );
 		}
 	}
@@ -1207,6 +1246,7 @@ class Event_Model extends Model {
 					$day_end   = new \DateTime( $current_date_formatted . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
 					try {
 						$this->apply_frequency_limits( $day_start );
+						$this->apply_duration_limits( $day_start );
 					} catch ( \Exception $e ) {
 						continue; // Skip this time block if frequency limits are exceeded
 					}
@@ -1618,24 +1658,24 @@ class Event_Model extends Model {
 			case 'one-to-one':
 			case 'group':
 				$slots_query->where( 'calendar_id', $this->calendar_id )
-				->where(
-					function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-						$query->where(
-							function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-								$q->where(
-									function ( $subq ) use ( $day_start, $buffer_after ) {
-										$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
-									}
-								)
-									->where(
-										function ( $subq ) use ( $day_end, $buffer_before ) {
-											$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
+					->where(
+						function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+							$query->where(
+								function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+									$q->where(
+										function ( $subq ) use ( $day_start, $buffer_after ) {
+											$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
 										}
-									);
-							}
-						);
-					}
-				);
+									)
+										->where(
+											function ( $subq ) use ( $day_end, $buffer_before ) {
+												$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
+											}
+										);
+								}
+							);
+						}
+					);
 				$event_spots = 'one-to-one' === $this->type ? 1 : Arr::get( $this->group_settings, 'max_invites', 2 );
 				break;
 			case 'round-robin':
@@ -1643,24 +1683,24 @@ class Event_Model extends Model {
 				$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
 
 				$slots_query->whereIn( 'calendar_id', $team_members )
-				->where(
-					function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-						$query->where(
-							function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-								$q->where(
-									function ( $subq ) use ( $day_start, $buffer_after ) {
-										$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
-									}
-								)
-									->where(
-										function ( $subq ) use ( $day_end, $buffer_before ) {
-											$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
+					->where(
+						function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+							$query->where(
+								function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+									$q->where(
+										function ( $subq ) use ( $day_start, $buffer_after ) {
+											$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
 										}
-									);
-							}
-						);
-					}
-				);
+									)
+										->where(
+											function ( $subq ) use ( $day_end, $buffer_before ) {
+												$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
+											}
+										);
+								}
+							);
+						}
+					);
 
 				// For round-robin, set the number of event spots.
 				if ( 'round-robin' === $this->type ) {
@@ -1696,7 +1736,8 @@ class Event_Model extends Model {
 	 * @param \DateTime $end_time End time
 	 *
 	 * @return bool
-	 */ public function get_slot_availability_count( $start_time, $end_time, $calendar_id ) {
+	 */
+	public function get_slot_availability_count( $start_time, $end_time, $calendar_id ) {
 		$availability         = $this->availability;
 		$start_date_formatted = $start_time->format( 'Y-m-d' );
 
@@ -1731,7 +1772,7 @@ class Event_Model extends Model {
 		}
 
 		return 0;
-}
+	}
 
 	/**
 	 * Override the save method to add validation.
@@ -1740,21 +1781,21 @@ class Event_Model extends Model {
 	 * @return bool
 	 * @throws \Exception
 	 */
-public function save( array $options = array() ) {
-	// Check if calendar exists
-	$calendar = Calendar_Model::find( $this->calendar_id );
-	if ( ! $calendar ) {
-		throw new \Exception( __( 'Calendar does not exist', 'quillbooking' ) );
-	}
+	public function save( array $options = array() ) {
+		// Check if calendar exists
+		$calendar = Calendar_Model::find( $this->calendar_id );
+		if ( ! $calendar ) {
+			throw new \Exception( __( 'Calendar does not exist', 'quillbooking' ) );
+		}
 
-	// Check if user is team member
-	$user = Team_Model::find( $this->calendar->user_id );
-	if ( ! $user->is_team_member() ) {
-		throw new \Exception( __( 'User is not a team member', 'quillbooking' ) );
-	}
+		// Check if user is team member
+		$user = Team_Model::find( $this->calendar->user_id );
+		if ( ! $user->is_team_member() ) {
+			throw new \Exception( __( 'User is not a team member', 'quillbooking' ) );
+		}
 
-	return parent::save( $options );
-}
+		return parent::save( $options );
+	}
 
 	/**
 	 * Boot
@@ -1763,47 +1804,47 @@ public function save( array $options = array() ) {
 	 *
 	 * @return void
 	 */
-public static function boot() {
-	 parent::boot();
+	public static function boot() {
+		 parent::boot();
 
-	static::creating(
-		function ( $event ) {
-			$event->hash_id = Utils::generate_hash_key();
-			$originalSlug   = $slug = Str::slug( $event->name );
-			$count          = 1;
+		static::creating(
+			function ( $event ) {
+				$event->hash_id = Utils::generate_hash_key();
+				$originalSlug   = $slug = Str::slug( $event->name );
+				$count          = 1;
 
-			while ( static::where( 'slug', $slug )->exists() ) {
-				$slug = $originalSlug . '-' . $count++;
+				while ( static::where( 'slug', $slug )->exists() ) {
+					$slug = $originalSlug . '-' . $count++;
+				}
+
+				$event->slug    = $slug;
+				$event->user_id = $event->calendar->user_id;
+
+				if ( ! $event->status ) {
+					$event->status = 'active';
+				}
+
+				if ( ! $event->color ) {
+					$event->color = '#ffffff';
+				}
+
+				if ( ! $event->visibility ) {
+					$event->visibility = 'public';
+				}
 			}
+		);
 
-			$event->slug    = $slug;
-			$event->user_id = $event->calendar->user_id;
-
-			if ( ! $event->status ) {
-				$event->status = 'active';
+		static::deleted(
+			function ( $event ) {
+				$event->meta()->delete();
+				$event->bookings()->delete();
 			}
+		);
 
-			if ( ! $event->color ) {
-				$event->color = '#ffffff';
+		static::updating(
+			function ( $event ) {
+				$event->updateSystemFields();
 			}
-
-			if ( ! $event->visibility ) {
-				$event->visibility = 'public';
-			}
-		}
-	);
-
-	static::deleted(
-		function ( $event ) {
-			$event->meta()->delete();
-			$event->bookings()->delete();
-		}
-	);
-
-	static::updating(
-		function ( $event ) {
-			$event->updateSystemFields();
-		}
-	);
-}
+		);
+	}
 }

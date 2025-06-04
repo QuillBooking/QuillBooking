@@ -38,3 +38,4 @@ export { default as ProVersion } from './pro-version';
 export { default as ProTab } from './pro-tab';
 export { default as ProIntegration } from './pro-integration';
 export { default as ProGlobalIntegrations } from './pro-global-integrations';
+export { default as EventUrl } from './event-url';

@@ -35,14 +35,6 @@ use QuillBooking\Utils;
  */
 class REST_Booking_Controller extends REST_Controller {
 
-
-
-
-
-
-
-
-
 	/**
 	 * REST Base
 	 *
@@ -536,7 +528,7 @@ class REST_Booking_Controller extends REST_Controller {
 				return new WP_Error( 'rest_booking_error', __( 'Booking not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			$booking->load( 'guest', 'event', 'calendar.user', 'logs' );
+			$booking->load( 'guest', 'event', 'calendar.user', 'logs', 'event.calendar' );
 			$booking->fields = $booking->get_meta( 'fields' );
 
 			return new WP_REST_Response( $booking, 200 );

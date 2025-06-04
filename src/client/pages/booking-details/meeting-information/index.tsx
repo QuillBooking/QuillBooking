@@ -9,6 +9,7 @@ import { __ } from '@wordpress/i18n';
 import type { Booking } from '@quillbooking/client';
 import {
 	CardHeader,
+	EventUrl,
 	LocationDisplay,
 	PriceIcon,
 } from '@quillbooking/components';
@@ -87,7 +88,13 @@ const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 				/>
 				<InfoItem
 					title={__('Event Link', 'quillbooking')}
-					content={booking.event_url}
+					content={
+						<EventUrl
+							className="text-lg leading-4 font-medium capitalize"
+							calendarSlug={booking.event.calendar.slug}
+							eventSlug={booking.event.slug}
+						/>
+					}
 					icon={<LinkIcon width={24} height={24} />}
 					link={true}
 				/>

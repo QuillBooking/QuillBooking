@@ -6,6 +6,7 @@ export type Config = {
 	calendar: Calendar;
 	event: Event;
 	booking: Booking;
+	global_settings: GlobalSettings;
 };
 
 export type Event = {
@@ -287,3 +288,32 @@ export interface PaymentsSettings {
 	currency?: string;
 	enable_woocommerce: boolean;
 }
+
+export type GlobalSettings = {
+	general: {
+		admin_email: string;
+		start_from: string;
+		time_format: string;
+		auto_cancel_after: number;
+		auto_complete_after: number;
+		default_country_code: string;
+		enable_summary_email: boolean;
+		summary_email_frequency: string;
+	};
+	payments: {
+		currency: string;
+	};
+	email: {
+		from_name: string;
+		from_email: string;
+		reply_to_name: string;
+		reply_to_email: string;
+		use_host_from_name: boolean;
+		use_host_reply_to_email: boolean;
+		include_ics: boolean;
+		footer: string;
+	};
+	theme: {
+		color_scheme: string;
+	};
+};

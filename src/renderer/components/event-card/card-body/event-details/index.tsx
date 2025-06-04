@@ -20,6 +20,7 @@ interface EventDetailsProps {
 	selectedDate: Dayjs | null;
 	selectedTime: string | null; // time string like '14:30'
 	booking?: any; // Optional booking data, if needed
+	globalCurrency: string;
 }
 
 interface WooProductPrice {
@@ -37,6 +38,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 	selectedDate,
 	selectedTime,
 	booking, // Optional booking data, if needed
+	globalCurrency,
 }) => {
 	const isMultiDurations =
 		event.additional_settings.allow_attendees_to_select_duration;
@@ -325,7 +327,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 			}
 		}
 
-		return get(event, 'currency', 'USD');
+		return get(event, 'currency', globalCurrency);
 	};
 
 	const currency = getCurrency();
@@ -347,7 +349,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 										}
 										className={`duration-btn ${selectedDuration === duration ? 'selected' : ''}`}
 									>
-										{duration} Minutes
+										{duration} {__('min', '@quillbooking')}
 									</button>
 								)
 							)}

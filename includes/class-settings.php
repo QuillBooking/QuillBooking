@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Settings
  *
@@ -14,7 +15,9 @@ namespace QuillBooking;
  *
  * @since 1.0.0
  */
-class Settings {
+class Settings
+{
+
 
 	/**
 	 * Option name where to store all settings
@@ -32,9 +35,10 @@ class Settings {
 	 * @param mixed  $default Default value.
 	 * @return mixed
 	 */
-	public static function get( $key, $default = false ) {
+	public static function get($key, $default = false)
+	{
 		$settings = self::get_all();
-		return isset( $settings[ $key ] ) ? $settings[ $key ] : $default;
+		return isset($settings[$key]) ? $settings[$key] : $default;
 	}
 
 	/**
@@ -46,8 +50,9 @@ class Settings {
 	 * @param mixed  $value Value.
 	 * @return boolean
 	 */
-	public static function update( $key, $value ) {
-		return self::update_many( array( $key => $value ) );
+	public static function update($key, $value)
+	{
+		return self::update_many(array($key => $value));
 	}
 
 	/**
@@ -58,10 +63,11 @@ class Settings {
 	 * @param string $key Key.
 	 * @return boolean
 	 */
-	public static function delete( $key ) {
+	public static function delete($key)
+	{
 		$settings = self::get_all();
-		unset( $settings[ $key ] );
-		return update_option( self::OPTION_NAME, $settings );
+		unset($settings[$key]);
+		return update_option(self::OPTION_NAME, $settings);
 	}
 
 	/**
@@ -71,8 +77,54 @@ class Settings {
 	 *
 	 * @return array
 	 */
-	public static function get_all() {
-		return get_option( self::OPTION_NAME, array() );
+	public static function get_all()
+	{
+		$defaults = array(
+			'general'  => array(
+				'admin_email'             => get_option('admin_email'),
+				'start_from'              => 'Monday',
+				'time_format'             => '12',
+				'auto_cancel_after'       => 30,
+				'auto_complete_after'     => 30,
+				'default_country_code'    => 'US',
+				'enable_summary_email'    => false,
+				'summary_email_frequency' => 'daily',
+			),
+			'payments' => array(
+				'currency' => 'USD',
+			),
+			'email'    => array(
+				'from_name'               => '',
+				'from_email'              => '',
+				'reply_to_name'           => '',
+				'reply_to_email'          => '',
+				'use_host_from_name'      => false,
+				'use_host_reply_to_email' => false,
+				'include_ics'             => false,
+				'footer'                  => '',
+			),
+			'theme'    => array(
+				'color_scheme' => 'light',
+			),
+		);
+
+		$settings = get_option(self::OPTION_NAME, array());
+
+		if (empty($settings)) {
+			$settings = array();
+		}
+
+		$settings = wp_parse_args($settings, $defaults);
+
+		// If email settings are empty, try to get them from WordPress
+		if (empty($settings['email']['from_name'])) {
+			$settings['email']['from_name'] = get_bloginfo('name');
+		}
+		if (empty($settings['email']['from_email'])) {
+			$settings['email']['from_email'] = get_option('admin_email');
+		}
+
+		return $settings;
 	}
 
 	/**
@@ -83,10 +135,11 @@ class Settings {
 	 * @param array $new_settings New settings.
 	 * @return boolean
 	 */
-	public static function update_many( $new_settings ) {
+	public static function update_many($new_settings)
+	{
 		$old_settings = self::get_all();
-		$settings     = array_replace( $old_settings, $new_settings );
-		return update_option( self::OPTION_NAME, $settings );
+		$settings     = array_replace($old_settings, $new_settings);
+		return update_option(self::OPTION_NAME, $settings);
 	}
 
 	/**
@@ -96,8 +149,8 @@ class Settings {
 	 *
 	 * @return boolean
 	 */
-	public static function delete_all() {
-		return delete_option( self::OPTION_NAME );
+	public static function delete_all()
+	{
+		return delete_option(self::OPTION_NAME);
 	}
-
 }

@@ -21,22 +21,27 @@ use QuillBooking\Models\Event_Model;
 use Illuminate\Support\Arr;
 use QuillBooking\Models\User_Model;
 use QuillBooking\Renderer;
+use QuillBooking\Settings;
 
 class Booking_Actions {
+
 
 	// --- Dependency Properties ---
 	private string $calendarModelClass;
 	private string $eventModelClass;
 	private string $bookingValidatorClass; // Inject validator class name too
+	private string $globalSettingsClass;
 
 	public function __construct(
 		string $calendarModelClass = Calendar_Model::class,
 		string $eventModelClass = Event_Model::class,
-		string $bookingValidatorClass = Booking_Validator::class
+		string $bookingValidatorClass = Booking_Validator::class,
+		string $GlobalSettingsClass = Settings::class
 	) {
 		$this->calendarModelClass    = $calendarModelClass;
 		$this->eventModelClass       = $eventModelClass;
 		$this->bookingValidatorClass = $bookingValidatorClass;
+		$this->globalSettingsClass   = $GlobalSettingsClass;
 
 		add_action( 'wp_loaded', array( $this, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -120,8 +125,8 @@ class Booking_Actions {
 	}
 
 	public function render_booking_page() {
-		 $calendar = Arr::get( $_GET, 'quillbooking_calendar', null );
-
+		 $calendar       = Arr::get( $_GET, 'quillbooking_calendar', null );
+		$global_settings = $this->globalSettingsClass::get_all();
 		if ( ! $calendar ) {
 			return;
 		}
@@ -150,8 +155,9 @@ class Booking_Actions {
 
 		add_filter(
 			'quillbooking_config',
-			function ( $config ) use ( $calendar, $event ) {
-				$config['calendar'] = $calendar->toArray();
+			function ( $config ) use ( $calendar, $event, $global_settings ) {
+				$config['calendar']        = $calendar->toArray();
+				$config['global_settings'] = $global_settings;
 				if ( $event ) {
 					$config['event'] = $event->toArray();
 				}

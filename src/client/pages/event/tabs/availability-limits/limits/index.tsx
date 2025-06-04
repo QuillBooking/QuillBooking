@@ -65,6 +65,7 @@ const EventLimits: React.FC<EventLimitsProps> = ({
 	};
 
 	const addLimit = (section: 'frequency' | 'duration') => {
+		setDisabled(false);
 		// Choose which map to use
 		const bookingState =
 			section === 'duration'
@@ -125,6 +126,7 @@ const EventLimits: React.FC<EventLimitsProps> = ({
 	};
 
 	const removeLimit = (section: 'frequency' | 'duration', index: number) => {
+		setDisabled(false);
 		// First, capture the unit we're removing so we can re-enable it
 		const unitBeingRemoved = limits?.[section].limits[index]?.unit;
 

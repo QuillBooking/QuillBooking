@@ -28,6 +28,7 @@ class REST_Settings_Controller extends REST_Controller {
 
 
 
+
 	/**
 	 * REST Base
 	 *
@@ -131,7 +132,7 @@ class REST_Settings_Controller extends REST_Controller {
 						'currency' => array(
 							'type'        => 'string',
 							'description' => __( 'Currency', 'quillbooking' ),
-							'default'     => '',
+							'default'     => 'USD',
 						),
 					),
 				),

@@ -170,10 +170,12 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 		const saveWebhookFeeds = async (feeds: WebhookFeedType[]) => {
 			try {
 				if (!event) {
-					console.warn('Cannot save webhook feeds - no event available');
+					console.warn(
+						'Cannot save webhook feeds - no event available'
+					);
 					return;
 				}
-		
+
 				await saveApi({
 					path: `events/${event.id}`,
 					method: 'POST',
@@ -182,7 +184,10 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 					},
 					onSuccess() {
 						successNotice(
-							__('Webhook Feeds saved successfully', 'quillbooking')
+							__(
+								'Webhook Feeds saved successfully',
+								'quillbooking'
+							)
 						);
 						props.setDisabled(true);
 					},
@@ -191,7 +196,7 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 						throw new Error(error.message);
 					},
 				});
-			} catch (error:any) {
+			} catch (error: any) {
 				console.error('Error saving webhook feeds:', error);
 				// Re-throw the error to maintain existing behavior
 				throw new Error(error.message);
@@ -201,18 +206,20 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 		const toggleWebhookStatus = async (feed: WebhookFeedType) => {
 			try {
 				if (!event || !webhookFeeds) {
-					console.warn('Cannot toggle webhook status - missing event or feeds');
+					console.warn(
+						'Cannot toggle webhook status - missing event or feeds'
+					);
 					return;
 				}
-		
+
 				const updatedFeed = { ...feed, enabled: !feed.enabled };
 				const updatedWebhookFeeds = webhookFeeds.map((f) =>
 					f.name === feed.name ? updatedFeed : f
 				);
-		
+
 				// Optimistic UI update
 				setWebhookFeeds(updatedWebhookFeeds);
-		
+
 				await saveApi({
 					path: `events/${event.id}`,
 					method: 'POST',
@@ -222,8 +229,14 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 					onSuccess() {
 						successNotice(
 							updatedFeed.enabled
-								? __('Webhook enabled successfully', 'quillbooking')
-								: __('Webhook disabled successfully', 'quillbooking')
+								? __(
+										'Webhook enabled successfully',
+										'quillbooking'
+									)
+								: __(
+										'Webhook disabled successfully',
+										'quillbooking'
+									)
 						);
 					},
 					onError(error) {
@@ -232,7 +245,7 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 						throw new Error(error.message);
 					},
 				});
-			} catch (error:any) {
+			} catch (error: any) {
 				console.error('Error toggling webhook status:', error);
 				// Re-throw the error to maintain existing behavior
 				throw new Error(error.message);
@@ -246,15 +259,17 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 			try {
 				// Validate required data
 				if (!event || !webhookFeeds) {
-					console.warn('Cannot remove webhook feed - missing event or feeds data');
+					console.warn(
+						'Cannot remove webhook feed - missing event or feeds data'
+					);
 					return;
 				}
-		
+
 				// Prepare updated feeds list
 				const updatedWebhookFeeds = webhookFeeds.filter(
 					(feed) => feed.name !== name
 				);
-		
+
 				// Make API request
 				await deleteApi({
 					path: `events/${event.id}`,
@@ -266,7 +281,10 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 						// Update state and show success message
 						setWebhookFeeds(updatedWebhookFeeds);
 						successNotice(
-							__('Webhook Feed deleted successfully', 'quillbooking')
+							__(
+								'Webhook Feed deleted successfully',
+								'quillbooking'
+							)
 						);
 					},
 					onError(error) {
@@ -274,7 +292,7 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 						throw new Error(error.message);
 					},
 				});
-			} catch (error:any) {
+			} catch (error: any) {
 				console.error('Failed to remove webhook feed:', error);
 				// Re-throw error if you want calling code to handle it
 				throw new Error(error.message);
@@ -379,19 +397,57 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 									</Flex>
 
 									<Flex gap={15} wrap>
-										{feed.triggers.map((trigger) => (
-											<Flex
-												gap={5}
-												align="center"
-												key={trigger}
-												className="trigger-tag text-[#232323] text-[12px] font-semibold bg-[#EEE7F4] py-1 px-4 rounded-full"
-											>
-												<div>
-													<VerifyIcon />
-												</div>
-												<div>{trigger}</div>
-											</Flex>
-										))}
+										{feed.triggers.map((trigger) => {
+											// Get the translated text for each trigger type
+											let displayText = trigger;
+
+											switch (trigger) {
+												case 'confirmation':
+													displayText = __(
+														'Booking Confirmed',
+														'quillbooking'
+													);
+													break;
+												case 'cancelled':
+													displayText = __(
+														'Booking Canceled',
+														'quillbooking'
+													);
+													break;
+												case 'rescheduled':
+													displayText = __(
+														'Booking Rescheduled',
+														'quillbooking'
+													);
+													break;
+												case 'completed':
+													displayText = __(
+														'Booking Completed',
+														'quillbooking'
+													);
+													break;
+												case 'rejected':
+													displayText = __(
+														'Booking Rejected',
+														'quillbooking'
+													);
+													break;
+											}
+
+											return (
+												<Flex
+													gap={5}
+													align="center"
+													key={trigger}
+													className="trigger-tag text-[#232323] text-[12px] font-semibold bg-[#EEE7F4] py-1 px-4 rounded-full"
+												>
+													<div>
+														<VerifyIcon />
+													</div>
+													<div>{displayText}</div>
+												</Flex>
+											);
+										})}
 									</Flex>
 								</Flex>
 							</Card>

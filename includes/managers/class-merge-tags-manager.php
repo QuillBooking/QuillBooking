@@ -41,7 +41,7 @@ final class Merge_Tags_Manager extends Manager {
 
 		$this->groups[ $merge_tag->group ]['mergeTags'][ $slug ] = array(
 			'name'  => $merge_tag->name,
-			'value' => "{{{$merge_tag->group}:{$merge_tag->slug}}}",
+			'value' => "{{{$merge_tag->group}:{$slug}}}",
 		);
 	}
 
@@ -95,7 +95,7 @@ final class Merge_Tags_Manager extends Manager {
 		if ( empty( $content ) ) {
 			return '';
 		}
-		
+
 		return preg_replace_callback(
 			'/{{(.*?):(.*?)}}/',
 			function( $matches ) use ( $booking ) {

@@ -34,6 +34,12 @@ class Event_Model extends Model {
 
 
 
+
+
+
+
+
+
 	/**
 	 * Table name
 	 *
@@ -942,7 +948,6 @@ class Event_Model extends Model {
 	 */
 	public function get_available_slots( $start_date, $timezone, $duration, $calendar_id ) {
 		$this->validate_availability();
-		$this->apply_duration_limits( $start_date );
 
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
 		$end_date   = $this->calculate_end_date( $start_date, $timezone );
@@ -999,9 +1004,6 @@ class Event_Model extends Model {
 			if ( ! $frequency['limit'] || ! $frequency['unit'] ) {
 				throw new \Exception( __( 'Frequency limit or unit is not set', 'quillbooking' ) );
 			}
-			if ( ! in_array( $frequency['unit'], array( 'days', 'weeks', 'months' ), true ) ) {
-				throw new \Exception( __( 'Invalid frequency unit', 'quillbooking' ) );
-			}
 
 			$this->validate_frequency_limits( $frequency['limit'], $frequency['unit'], $start_date, 'Event reached the frequency limit' );
 		}
@@ -1010,20 +1012,20 @@ class Event_Model extends Model {
 	/**
 	 *  Validate booking frequency limits.
 	 */
-	private function validate_frequency_limits( $limit, $unit, $start_day, $message ) {
+	private function validate_frequency_limits( $limit, $unit, $start_date, $message ) {
 		if ( ! in_array( $unit, array( 'days', 'weeks', 'months' ), true ) ) {
 			throw new \Exception( __( 'Invalid frequency unit', 'quillbooking' ) );
 		}
 
 		switch ( $unit ) {
 			case 'days':
-				$start = clone $start_day;
+				$start = clone $start_date;
 				$start->setTime( 0, 0, 0 );  // Start of the day
 				$end = clone $start;
 				$end->setTime( 23, 59, 59 );  // End of the day
 				break;
 			case 'weeks':
-				$start = clone $start_day;
+				$start = clone $start_date;
 
 				// Get user's preferred start of week from settings
 				$settings   = get_option( 'quillbooking_settings', array() );
@@ -1032,7 +1034,7 @@ class Event_Model extends Model {
 				$start_from = ucfirst( strtolower( $start_from ) );
 
 				// Get the current day of week (0 = Sunday, 1 = Monday, etc.)
-				$current_day_num = (int) $start_day->format( 'w' );
+				$current_day_num = (int) $start_date->format( 'w' );
 
 				// Convert start_from to a day number (0-6)
 				$day_map = array(
@@ -1063,7 +1065,7 @@ class Event_Model extends Model {
 				$end->setTime( 23, 59, 59 );
 				break;
 			case 'months':
-				$start = clone $start_day;
+				$start = clone $start_date;
 				// Set to first day of the month
 				$start->modify( 'first day of this month' );
 				$start->setTime( 0, 0, 0 );
@@ -1093,19 +1095,21 @@ class Event_Model extends Model {
 	/**
 	 * Apply duration limits to ensure total booking time is within allowed constraints.
 	 *
-	 * @param int $start_date Start date timestamp.
+	 * @param \DateTime|string|int $start_date Start date (DateTime object, timestamp or string).
 	 */
 	private function apply_duration_limits( $start_date ) {
 		if ( ! Arr::get( $this->limits, 'duration.enable', false ) ) {
 			return;
 		}
 
-		$duration_limit      = Arr::get( $this->limits, 'duration.limit', 60 );
-		$duration_unit       = Arr::get( $this->limits, 'duration.unit', 'days' );
-		$duration_start_time = strtotime( 'midnight', $start_date );
-		$duration_end_time   = strtotime( 'tomorrow', $duration_start_time ) - 1;
+		$duration_limits = Arr::get( $this->limits, 'duration.limits', array() );
+		foreach ( $duration_limits as $duration ) {
+			if ( ! $duration['limit'] || ! $duration['unit'] ) {
+				throw new \Exception( __( 'Duration limit or unit is not set', 'quillbooking' ) );
+			}
 
-		$this->validate_limit( $duration_limit, $duration_unit, $duration_start_time, $duration_end_time, 'Event reached the duration limit', true );
+			$this->validate_duration_limit( $duration['limit'], $duration['unit'], $start_date, 'Event reached the duration limit', true );
+		}
 	}
 
 	/**
@@ -1118,21 +1122,81 @@ class Event_Model extends Model {
 	 * @param string $message    Error message to display if the limit is exceeded.
 	 * @param bool   $sum        Whether to sum bookings (for duration limits).
 	 */
-	private function validate_limit( $limit, $unit, $start_time, $end_time, $message, $sum = false ) {
-		$unit_multiplier = array(
-			'weeks'  => 7,
-			'months' => 30,
-		);
-		$limit          *= $unit_multiplier[ $unit ] ?? 1;
+	private function validate_duration_limit( $limit, $unit, $start_date, $message, $sum = false ) {
+		switch ( $unit ) {
+			case 'days':
+				$start = clone $start_date;
+				$start->setTime( 0, 0, 0 );  // Start of the day
+				$end = clone $start;
+				$end->setTime( 23, 59, 59 );  // End of the day
+				break;
+			case 'weeks':
+				$start = clone $start_date;
+
+				// Get user's preferred start of week from settings
+				$settings   = get_option( 'quillbooking_settings', array() );
+				$start_from = isset( $settings['general']['start_from'] ) ?
+					$settings['general']['start_from'] : 'Monday';
+				$start_from = ucfirst( strtolower( $start_from ) );
+
+				// Get the current day of week (0 = Sunday, 1 = Monday, etc.)
+				$current_day_num = (int) $start_date->format( 'w' );
+
+				// Convert start_from to a day number (0-6)
+				$day_map = array(
+					'Sunday'    => 0,
+					'Monday'    => 1,
+					'Tuesday'   => 2,
+					'Wednesday' => 3,
+					'Thursday'  => 4,
+					'Friday'    => 5,
+					'Saturday'  => 6,
+				);
+
+				$start_from_num = isset( $day_map[ $start_from ] ) ? $day_map[ $start_from ] : 1; // Default to Monday (1)
+
+				// Calculate days to subtract to get to the start of the week
+				$days_to_subtract = ( $current_day_num - $start_from_num ) % 7;
+				if ( $days_to_subtract < 0 ) {
+					$days_to_subtract += 7;
+				}
+
+				// Set to start of the week based on user preference
+				$start->modify( "-{$days_to_subtract} days" );
+				$start->setTime( 0, 0, 0 );
+
+				// Set to end of week (7 days from start)
+				$end = clone $start;
+				$end->modify( '+6 days' );  // End of the week (6 days after start)
+				$end->setTime( 23, 59, 59 );
+				break;
+			case 'months':
+				$start = clone $start_date;
+				// Set to first day of the month
+				$start->modify( 'first day of this month' );
+				$start->setTime( 0, 0, 0 );
+
+				// Set to last day of the month
+				$end = clone $start;
+				$end->modify( 'last day of this month' );
+				$end->setTime( 23, 59, 59 );
+				break;
+		}
+
+		$start_time = $start->format( 'Y-m-d H:i:s' );
+		$end_time   = $end->format( 'Y-m-d H:i:s' );
 
 		$query = Booking_Model::where( 'event_id', $this->id )
-			->where( 'start_date', '>=', $start_time )
-			->where( 'start_date', '<=', $end_time )
-			->whereNot( 'status', 'cancelled' );
+			->where( 'start_time', '>=', $start_time )
+			->where( 'end_time', '<=', $end_time )
+			->where( 'status', '!=', 'cancelled' );
 
-		$result = $sum ? $query->sum( 'duration' ) : $query->count();
+		$duration = 0;
+		foreach ( $query->get() as $booking ) {
+			$duration += $booking->slot_time;
+		}
 
-		if ( $result >= $limit ) {
+		if ( $duration >= $limit ) {
 			throw new \Exception( __( $message, 'quillbooking' ) );
 		}
 	}
@@ -1184,15 +1248,30 @@ class Event_Model extends Model {
 	private function generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id ) {
 		$slots = array();
 		for ( $current_date = $start_date; $current_date <= $end_date; $current_date = strtotime( '+1 day', $current_date ) ) {
-			$day_of_week = strtolower( date( 'l', $current_date ) );
+			$current_date_formatted = date( 'Y-m-d', $current_date );
+			$day_of_week            = strtolower( date( 'l', $current_date ) );
 
-			if ( empty( $this->availability['weekly_hours'][ $day_of_week ]['off'] ) ) {
-				foreach ( $this->availability['weekly_hours'][ $day_of_week ]['times'] as $time_block ) {
+			// Check for date-specific override first
+			$has_override = false;
+			$time_blocks  = array();
 
-					$day_start = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
-					$day_end   = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+			if ( isset( $this->availability['override'][ $current_date_formatted ] ) ) {
+				// We have a date-specific override for this day
+				$has_override = true;
+				$time_blocks  = $this->availability['override'][ $current_date_formatted ];
+			} elseif ( empty( $this->availability['weekly_hours'][ $day_of_week ]['off'] ) ) {
+				// Fall back to regular weekly hours if no override exists
+				$time_blocks = $this->availability['weekly_hours'][ $day_of_week ]['times'];
+			}
+
+			// If we have time blocks (either from override or weekly hours), process them
+			if ( ! empty( $time_blocks ) ) {
+				foreach ( $time_blocks as $time_block ) {
+					$day_start = new \DateTime( $current_date_formatted . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
+					$day_end   = new \DateTime( $current_date_formatted . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
 					try {
 						$this->apply_frequency_limits( $day_start );
+						$this->apply_duration_limits( $day_start );
 					} catch ( \Exception $e ) {
 						continue; // Skip this time block if frequency limits are exceeded
 					}
@@ -1684,18 +1763,35 @@ class Event_Model extends Model {
 	 * @return bool
 	 */
 	public function get_slot_availability_count( $start_time, $end_time, $calendar_id ) {
-		$availability = $this->availability;
-		$weekly_hours = $availability['weekly_hours'] ?? array();
-		$day_of_week  = strtolower( date( 'l', $start_time->getTimestamp() ) ); // Get the day of the week (e.g., Monday, Tuesday)
+		$availability         = $this->availability;
+		$start_date_formatted = $start_time->format( 'Y-m-d' );
 
-		if ( ! $weekly_hours[ $day_of_week ]['off'] ) {
-			foreach ( $weekly_hours[ $day_of_week ]['times'] as $time_block ) {
-				$day_start = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
-				$day_end   = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+		// Check for date-specific override first
+		if ( isset( $availability['override'][ $start_date_formatted ] ) ) {
+			// We have a date-specific override for this day
+			foreach ( $availability['override'][ $start_date_formatted ] as $time_block ) {
+				$day_start = new \DateTime( $start_date_formatted . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
+				$day_end   = new \DateTime( $start_date_formatted . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
 
 				if ( $start_time >= $day_start && $end_time <= $day_end ) {
 					$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
 					return $slots;
+				}
+			}
+		} else {
+			// Fall back to regular weekly hours
+			$weekly_hours = $availability['weekly_hours'] ?? array();
+			$day_of_week  = strtolower( date( 'l', $start_time->getTimestamp() ) ); // Get the day of the week (e.g., Monday, Tuesday)
+
+			if ( ! $weekly_hours[ $day_of_week ]['off'] ) {
+				foreach ( $weekly_hours[ $day_of_week ]['times'] as $time_block ) {
+					$day_start = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
+					$day_end   = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+
+					if ( $start_time >= $day_start && $end_time <= $day_end ) {
+						$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
+						return $slots;
+					}
 				}
 			}
 		}
@@ -1772,6 +1868,7 @@ class Event_Model extends Model {
 
 		static::updating(
 			function ( $event ) {
+
 				$event->updateSystemFields();
 			}
 		);

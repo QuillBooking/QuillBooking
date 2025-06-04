@@ -24,6 +24,8 @@ const LimitRow: React.FC<LimitRowProps> = ({
 	setBookingState,
 	type,
 }) => {
+	console.log('LimitRow', limits, type);
+	console.log(unitOptions);
 	return (
 		<>
 			{limits[type].enable && (

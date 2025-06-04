@@ -187,7 +187,7 @@ const LatestEvents: React.FC<{ canManageAllCalendars: boolean }> = ({
 										</div>
 										<div className="font-medium text-[#09090B]">
 											{__(
-												`Bookings No. (${event.id})`,
+												`Bookings No. (${event.booking_count ?? 0})`,
 												'quillbooking'
 											)}
 										</div>

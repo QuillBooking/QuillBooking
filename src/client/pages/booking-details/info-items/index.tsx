@@ -30,33 +30,9 @@ const InfoItem: React.FC<InfoItemProps> = ({
 			<span>{icon}</span>
 			<div>
 				<p className="text-[#71717A] text-sm font-normal">{title}</p>
-				{link == true ? (
-					<div className="flex gap-1">
-						<a
-							target="__blank"
-							href={content as string}
-							className="text-[#09090B] text-lg leading-4 font-medium"
-						>
-							{content}
-						</a>
-						<span
-							className="flex items-center gap-1 ml-2 text-color-primary cursor-pointer"
-							onClick={() =>
-								copyToClipboard(
-									content as string,
-									__('Event URL copied', 'quillbooking')
-								)
-							}
-						>
-							<CopyWhiteIcon width={16} height={16} />
-							{__('Copy', 'quillbooking')}
-						</span>
-					</div>
-				) : (
-					<p className="text-[#09090B] text-lg leading-4 font-medium capitalize">
-						{content}
-					</p>
-				)}
+				<p className="text-[#09090B] text-lg leading-4 font-medium capitalize flex">
+					{content}
+				</p>
 			</div>
 		</div>
 	);

@@ -14,10 +14,9 @@ import {
 	LocationIcon,
 	LinkIcon,
 	AttendeeIcon,
-	CopyWhiteIcon,
 	LocationDisplay,
+	EventUrl,
 } from '@quillbooking/components';
-import { useCopyToClipboard } from '@quillbooking/hooks';
 import { NavLink as Link } from '@quillbooking/navigation';
 
 interface CardDetailsProps {
@@ -26,8 +25,6 @@ interface CardDetailsProps {
 }
 
 const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
-	const copyToClipboard = useCopyToClipboard();
-
 	return (
 		<Flex gap={12} wrap="wrap" className="flex-1 min-w-0">
 			<div className="flex-1 min-w-[200px] max-w-[400px]">
@@ -78,25 +75,10 @@ const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
 					<span className="text-color-primary-text flex-shrink-0">
 						<LinkIcon width={18} height={18} />
 					</span>
-					<a
-						target="_blank"
-						href={booking.event_url}
-						className="truncate text-sm"
-					>
-						{booking.event_url}
-					</a>
-					<span
-						className="flex items-center gap-1 ml-1 text-color-primary cursor-pointer flex-shrink-0 text-sm"
-						onClick={() =>
-							copyToClipboard(
-								booking.event_url,
-								__('Event URL copied', 'quillbooking')
-							)
-						}
-					>
-						<CopyWhiteIcon width={14} height={14} />
-						{__('Copy', 'quillbooking')}
-					</span>
+					<EventUrl
+						calendarSlug={booking.event.calendar.slug}
+						eventSlug={booking.event.slug}
+					/>
 				</Flex>
 			</div>
 		</Flex>

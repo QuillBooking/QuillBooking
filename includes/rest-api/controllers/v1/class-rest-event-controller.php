@@ -808,8 +808,7 @@ class REST_Event_Controller extends REST_Controller {
 			$reserve_times       = $request->get_param( 'reserve_times' );
 			$hosts               = $request->get_param( 'hosts' );
 
-			$event = Event_Model::find( $id );
-
+			$event = Event_Model::find( $id )->with( 'calendar' )->first();
 			if ( ! $event ) {
 				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
@@ -862,7 +861,7 @@ class REST_Event_Controller extends REST_Controller {
 				$updated['slug'] = $slug;
 			}
 
-			if ( $hosts ) {
+			if ( ! empty( $hosts ) && $event->calendar->type === 'team' ) {
 				$event->setTeamMembersAttribute( $hosts );
 			}
 

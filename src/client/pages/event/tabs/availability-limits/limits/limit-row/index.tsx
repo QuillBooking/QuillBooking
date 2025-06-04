@@ -57,7 +57,7 @@ const LimitRow: React.FC<LimitRowProps> = ({
 								options={Object.entries(unitOptions).map(
 									([key, option]) => ({
 										value: key,
-										label: option.label,
+										label: `${__('per', 'quillbooking')} ${option.label}`,
 										disabled: option.disabled,
 									})
 								)}

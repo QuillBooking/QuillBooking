@@ -1276,13 +1276,13 @@ class REST_Event_Controller extends REST_Controller {
 	protected function prepare_event_for_response( $event ) {
 		// Extract only the essential data needed for display
 		$prepared_data = array(
-			'id'          => $event->id,
-			'name'        => $event->name,
-			'duration'    => $event->duration,
-			'type'        => $event->type,
-			'booking_no'  => $event->id,
-			'location'    => $event->location,
-			'calendar_id' => $event->calendar_id,
+			'id'            => $event->id,
+			'name'          => $event->name,
+			'duration'      => $event->duration,
+			'type'          => $event->type,
+			'booking_count' => $event->getBookingCountAttribute(),
+			'location'      => $event->location,
+			'calendar_id'   => $event->calendar_id,
 		);
 
 		return $prepared_data;

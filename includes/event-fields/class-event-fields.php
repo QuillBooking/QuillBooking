@@ -20,6 +20,7 @@ use QuillBooking\Traits\Singleton;
  */
 class Event_Fields {
 
+
 	use Singleton;
 
 	/**
@@ -55,7 +56,7 @@ class Event_Fields {
 				'event_location' => 'all',
 				'placeholder'    => __( 'Enter your message', 'quillbooking' ),
 				'order'          => 3,
-				'enabled' 			 => true,
+				'enabled'        => true,
 			),
 		);
 
@@ -77,7 +78,7 @@ class Event_Fields {
 				'event_location' => 'all',
 				'placeholder'    => __( 'Why are you cancelling?', 'quillbooking' ),
 				'order'          => 1,
-				'enabled' 			 => true,
+				'enabled'        => true,
 			),
 			'rescheduling_reason' => array(
 				'label'          => __( 'Reason for reschedule', 'quillbooking' ),
@@ -87,7 +88,7 @@ class Event_Fields {
 				'event_location' => 'all',
 				'placeholder'    => __( 'Let others know why you need to reschedule', 'quillbooking' ),
 				'order'          => 2,
-				'enabled' 			 => true,
+				'enabled'        => true,
 			),
 		);
 
@@ -180,7 +181,7 @@ class Event_Fields {
 				'limits' => array(
 					array(
 						'limit' => 120,
-						'unit'  => 'hours',
+						'unit'  => 'days',
 					),
 				),
 			),
@@ -201,116 +202,116 @@ class Event_Fields {
 	 * @return array
 	 */
 	public function get_default_email_notification_settings() {
-		return array(
-			'attendee_confirmation'          => array(
-				'label'    => __( 'Attendee Confirmation', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'Booking Confirmation', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'attendee_confirmation' ),
-				),
-			),
-			'organizer_notification'         => array(
-				'label'    => __( 'Organizer Notification', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'New Booking', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'organizer_notification' ),
-				),
-			),
-			'attendee_reminder'              => array(
-				'label'    => __( 'Attendee Reminder', 'quillbooking' ),
-				'default'  => false,
-				'template' => array(
-					'subject' => __( 'Booking Reminder', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'attendee_reminder' ),
-				),
-				'times'    => array(
-					array(
-						'unit'  => 'hours',
-						'value' => 24,
-					),
-				),
-			),
-			'organizer_reminder'             => array(
-				'label'    => __( 'Organizer Reminder', 'quillbooking' ),
-				'default'  => false,
-				'template' => array(
-					'subject' => __( 'Booking Reminder', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'organizer_reminder' ),
-				),
-				'times'    => array(
-					array(
-						'unit'  => 'hours',
-						'value' => 24,
-					),
-				),
-			),
-			'attendee_cancelled_organizer'   => array(
-				'label'    => __( 'Booking Cancelled by Attendee to Organizer', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'Booking Cancelled', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'attendee_cancelled_organizer' ),
-				),
-			),
-			'organizer_cancelled_attendee'   => array(
-				'label'    => __( 'Booking Cancelled by Organizer to Attendee', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'Booking Cancelled', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'organizer_cancelled_attendee' ),
-				),
-			),
-			'attendee_rescheduled_organizer' => array(
-				'label'    => __( 'Booking Rescheduled by Attendee to Organizer', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'Booking Rescheduled', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'attendee_rescheduled_organizer' ),
-				),
-			),
-			'organizer_rescheduled_attendee' => array(
-				'label'    => __( 'Booking Rescheduled by Organizer to Attendee', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'Booking Rescheduled', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'organizer_rescheduled_attendee' ),
-				),
-			),
-			'host_approval'                  => array(
-				'label'    => __( 'Host Approval', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'Booking Request', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'host_approval' ),
-				),
-			),
-			'host_rejection'                 => array(
-				'label'    => __( 'Host Rejection', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'Booking Rejected', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'host_rejection' ),
-				),
-			),
-			'host_approved_attendee'         => array(
-				'label'    => __( 'Host Approved to Attendee', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'Your Booking is Confirmed!', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'host_approved_attendee' ),
-				),
-			),
-			'attendee_submitted'             => array(
-				'label'    => __( 'Booking Submitted by Attendee', 'quillbooking' ),
-				'default'  => true,
-				'template' => array(
-					'subject' => __( 'Booking Pending Confirmation', 'quillbooking' ),
-					'message' => $this->get_default_email_body_template( 'attendee_submitted' ),
-				),
-			),
-		);
+		 return array(
+			 'attendee_confirmation'          => array(
+				 'label'    => __( 'Attendee Confirmation', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'Booking Confirmation', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'attendee_confirmation' ),
+				 ),
+			 ),
+			 'organizer_notification'         => array(
+				 'label'    => __( 'Organizer Notification', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'New Booking', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'organizer_notification' ),
+				 ),
+			 ),
+			 'attendee_reminder'              => array(
+				 'label'    => __( 'Attendee Reminder', 'quillbooking' ),
+				 'default'  => false,
+				 'template' => array(
+					 'subject' => __( 'Booking Reminder', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'attendee_reminder' ),
+				 ),
+				 'times'    => array(
+					 array(
+						 'unit'  => 'hours',
+						 'value' => 24,
+					 ),
+				 ),
+			 ),
+			 'organizer_reminder'             => array(
+				 'label'    => __( 'Organizer Reminder', 'quillbooking' ),
+				 'default'  => false,
+				 'template' => array(
+					 'subject' => __( 'Booking Reminder', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'organizer_reminder' ),
+				 ),
+				 'times'    => array(
+					 array(
+						 'unit'  => 'hours',
+						 'value' => 24,
+					 ),
+				 ),
+			 ),
+			 'attendee_cancelled_organizer'   => array(
+				 'label'    => __( 'Booking Cancelled by Attendee to Organizer', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'Booking Cancelled', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'attendee_cancelled_organizer' ),
+				 ),
+			 ),
+			 'organizer_cancelled_attendee'   => array(
+				 'label'    => __( 'Booking Cancelled by Organizer to Attendee', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'Booking Cancelled', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'organizer_cancelled_attendee' ),
+				 ),
+			 ),
+			 'attendee_rescheduled_organizer' => array(
+				 'label'    => __( 'Booking Rescheduled by Attendee to Organizer', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'Booking Rescheduled', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'attendee_rescheduled_organizer' ),
+				 ),
+			 ),
+			 'organizer_rescheduled_attendee' => array(
+				 'label'    => __( 'Booking Rescheduled by Organizer to Attendee', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'Booking Rescheduled', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'organizer_rescheduled_attendee' ),
+				 ),
+			 ),
+			 'host_approval'                  => array(
+				 'label'    => __( 'Host Approval', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'Booking Request', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'host_approval' ),
+				 ),
+			 ),
+			 'host_rejection'                 => array(
+				 'label'    => __( 'Host Rejection', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'Booking Rejected', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'host_rejection' ),
+				 ),
+			 ),
+			 'host_approved_attendee'         => array(
+				 'label'    => __( 'Host Approved to Attendee', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'Your Booking is Confirmed!', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'host_approved_attendee' ),
+				 ),
+			 ),
+			 'attendee_submitted'             => array(
+				 'label'    => __( 'Booking Submitted by Attendee', 'quillbooking' ),
+				 'default'  => true,
+				 'template' => array(
+					 'subject' => __( 'Booking Pending Confirmation', 'quillbooking' ),
+					 'message' => $this->get_default_email_body_template( 'attendee_submitted' ),
+				 ),
+			 ),
+		 );
 	}
 
 	/**

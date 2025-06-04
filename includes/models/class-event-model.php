@@ -1184,13 +1184,27 @@ class Event_Model extends Model {
 	private function generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id ) {
 		$slots = array();
 		for ( $current_date = $start_date; $current_date <= $end_date; $current_date = strtotime( '+1 day', $current_date ) ) {
-			$day_of_week = strtolower( date( 'l', $current_date ) );
+			$current_date_formatted = date( 'Y-m-d', $current_date );
+			$day_of_week            = strtolower( date( 'l', $current_date ) );
 
-			if ( empty( $this->availability['weekly_hours'][ $day_of_week ]['off'] ) ) {
-				foreach ( $this->availability['weekly_hours'][ $day_of_week ]['times'] as $time_block ) {
+			// Check for date-specific override first
+			$has_override = false;
+			$time_blocks  = array();
 
-					$day_start = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
-					$day_end   = new \DateTime( date( 'Y-m-d', $current_date ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+			if ( isset( $this->availability['override'][ $current_date_formatted ] ) ) {
+				// We have a date-specific override for this day
+				$has_override = true;
+				$time_blocks  = $this->availability['override'][ $current_date_formatted ];
+			} elseif ( empty( $this->availability['weekly_hours'][ $day_of_week ]['off'] ) ) {
+				// Fall back to regular weekly hours if no override exists
+				$time_blocks = $this->availability['weekly_hours'][ $day_of_week ]['times'];
+			}
+
+			// If we have time blocks (either from override or weekly hours), process them
+			if ( ! empty( $time_blocks ) ) {
+				foreach ( $time_blocks as $time_block ) {
+					$day_start = new \DateTime( $current_date_formatted . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
+					$day_end   = new \DateTime( $current_date_formatted . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
 					try {
 						$this->apply_frequency_limits( $day_start );
 					} catch ( \Exception $e ) {
@@ -1604,24 +1618,24 @@ class Event_Model extends Model {
 			case 'one-to-one':
 			case 'group':
 				$slots_query->where( 'calendar_id', $this->calendar_id )
-					->where(
-						function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-							$query->where(
-								function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-									$q->where(
-										function ( $subq ) use ( $day_start, $buffer_after ) {
-											$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
+				->where(
+					function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+						$query->where(
+							function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+								$q->where(
+									function ( $subq ) use ( $day_start, $buffer_after ) {
+										$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
+									}
+								)
+									->where(
+										function ( $subq ) use ( $day_end, $buffer_before ) {
+											$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
 										}
-									)
-										->where(
-											function ( $subq ) use ( $day_end, $buffer_before ) {
-												$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
-											}
-										);
-								}
-							);
-						}
-					);
+									);
+							}
+						);
+					}
+				);
 				$event_spots = 'one-to-one' === $this->type ? 1 : Arr::get( $this->group_settings, 'max_invites', 2 );
 				break;
 			case 'round-robin':
@@ -1629,24 +1643,24 @@ class Event_Model extends Model {
 				$team_members = $calendar_id ? array( $calendar_id ) : $this->calendar->getTeamMembers();
 
 				$slots_query->whereIn( 'calendar_id', $team_members )
-					->where(
-						function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-							$query->where(
-								function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-									$q->where(
-										function ( $subq ) use ( $day_start, $buffer_after ) {
-											$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
+				->where(
+					function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+						$query->where(
+							function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+								$q->where(
+									function ( $subq ) use ( $day_start, $buffer_after ) {
+										$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
+									}
+								)
+									->where(
+										function ( $subq ) use ( $day_end, $buffer_before ) {
+											$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
 										}
-									)
-										->where(
-											function ( $subq ) use ( $day_end, $buffer_before ) {
-												$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
-											}
-										);
-								}
-							);
-						}
-					);
+									);
+							}
+						);
+					}
+				);
 
 				// For round-robin, set the number of event spots.
 				if ( 'round-robin' === $this->type ) {
@@ -1682,26 +1696,42 @@ class Event_Model extends Model {
 	 * @param \DateTime $end_time End time
 	 *
 	 * @return bool
-	 */
-	public function get_slot_availability_count( $start_time, $end_time, $calendar_id ) {
-		$availability = $this->availability;
-		$weekly_hours = $availability['weekly_hours'] ?? array();
-		$day_of_week  = strtolower( date( 'l', $start_time->getTimestamp() ) ); // Get the day of the week (e.g., Monday, Tuesday)
+	 */ public function get_slot_availability_count( $start_time, $end_time, $calendar_id ) {
+		$availability         = $this->availability;
+		$start_date_formatted = $start_time->format( 'Y-m-d' );
 
-		if ( ! $weekly_hours[ $day_of_week ]['off'] ) {
-			foreach ( $weekly_hours[ $day_of_week ]['times'] as $time_block ) {
-				$day_start = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
-				$day_end   = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+		// Check for date-specific override first
+		if ( isset( $availability['override'][ $start_date_formatted ] ) ) {
+			// We have a date-specific override for this day
+			foreach ( $availability['override'][ $start_date_formatted ] as $time_block ) {
+				$day_start = new \DateTime( $start_date_formatted . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
+				$day_end   = new \DateTime( $start_date_formatted . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
 
 				if ( $start_time >= $day_start && $end_time <= $day_end ) {
 					$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
 					return $slots;
 				}
 			}
+		} else {
+			// Fall back to regular weekly hours
+			$weekly_hours = $availability['weekly_hours'] ?? array();
+			$day_of_week  = strtolower( date( 'l', $start_time->getTimestamp() ) ); // Get the day of the week (e.g., Monday, Tuesday)
+
+			if ( ! $weekly_hours[ $day_of_week ]['off'] ) {
+				foreach ( $weekly_hours[ $day_of_week ]['times'] as $time_block ) {
+					$day_start = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
+					$day_end   = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+
+					if ( $start_time >= $day_start && $end_time <= $day_end ) {
+						$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
+						return $slots;
+					}
+				}
+			}
 		}
 
 		return 0;
-	}
+}
 
 	/**
 	 * Override the save method to add validation.
@@ -1710,21 +1740,21 @@ class Event_Model extends Model {
 	 * @return bool
 	 * @throws \Exception
 	 */
-	public function save( array $options = array() ) {
-		// Check if calendar exists
-		$calendar = Calendar_Model::find( $this->calendar_id );
-		if ( ! $calendar ) {
-			throw new \Exception( __( 'Calendar does not exist', 'quillbooking' ) );
-		}
-
-		// Check if user is team member
-		$user = Team_Model::find( $this->calendar->user_id );
-		if ( ! $user->is_team_member() ) {
-			throw new \Exception( __( 'User is not a team member', 'quillbooking' ) );
-		}
-
-		return parent::save( $options );
+public function save( array $options = array() ) {
+	// Check if calendar exists
+	$calendar = Calendar_Model::find( $this->calendar_id );
+	if ( ! $calendar ) {
+		throw new \Exception( __( 'Calendar does not exist', 'quillbooking' ) );
 	}
+
+	// Check if user is team member
+	$user = Team_Model::find( $this->calendar->user_id );
+	if ( ! $user->is_team_member() ) {
+		throw new \Exception( __( 'User is not a team member', 'quillbooking' ) );
+	}
+
+	return parent::save( $options );
+}
 
 	/**
 	 * Boot
@@ -1733,47 +1763,47 @@ class Event_Model extends Model {
 	 *
 	 * @return void
 	 */
-	public static function boot() {
-		 parent::boot();
+public static function boot() {
+	 parent::boot();
 
-		static::creating(
-			function ( $event ) {
-				$event->hash_id = Utils::generate_hash_key();
-				$originalSlug   = $slug = Str::slug( $event->name );
-				$count          = 1;
+	static::creating(
+		function ( $event ) {
+			$event->hash_id = Utils::generate_hash_key();
+			$originalSlug   = $slug = Str::slug( $event->name );
+			$count          = 1;
 
-				while ( static::where( 'slug', $slug )->exists() ) {
-					$slug = $originalSlug . '-' . $count++;
-				}
-
-				$event->slug    = $slug;
-				$event->user_id = $event->calendar->user_id;
-
-				if ( ! $event->status ) {
-					$event->status = 'active';
-				}
-
-				if ( ! $event->color ) {
-					$event->color = '#ffffff';
-				}
-
-				if ( ! $event->visibility ) {
-					$event->visibility = 'public';
-				}
+			while ( static::where( 'slug', $slug )->exists() ) {
+				$slug = $originalSlug . '-' . $count++;
 			}
-		);
 
-		static::deleted(
-			function ( $event ) {
-				$event->meta()->delete();
-				$event->bookings()->delete();
-			}
-		);
+			$event->slug    = $slug;
+			$event->user_id = $event->calendar->user_id;
 
-		static::updating(
-			function ( $event ) {
-				$event->updateSystemFields();
+			if ( ! $event->status ) {
+				$event->status = 'active';
 			}
-		);
-	}
+
+			if ( ! $event->color ) {
+				$event->color = '#ffffff';
+			}
+
+			if ( ! $event->visibility ) {
+				$event->visibility = 'public';
+			}
+		}
+	);
+
+	static::deleted(
+		function ( $event ) {
+			$event->meta()->delete();
+			$event->bookings()->delete();
+		}
+	);
+
+	static::updating(
+		function ( $event ) {
+			$event->updateSystemFields();
+		}
+	);
+}
 }

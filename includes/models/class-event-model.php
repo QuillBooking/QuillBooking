@@ -28,6 +28,11 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  */
 class Event_Model extends Model {
 
+
+
+
+
+
 	/**
 	 * Table name
 	 *
@@ -1018,13 +1023,18 @@ class Event_Model extends Model {
 				break;
 			case 'weeks':
 				$start = clone $start_day;
-				// Set to start of week (Monday as first day)
-				$start->modify( 'Monday this week' );
+
+				// Get user's preferred start of week from settings
+				$settings   = get_option( 'quillbooking_settings', array() );
+				$start_from = isset( $settings['general']['start_from'] ) ?
+					$settings['general']['start_from'] : 'Monday';
+				error_log( 'Start day: ' . $start_from );
+				// Set to start of week based on user preference
+				$start->modify( $start_from . ' this week' );
 				$start->setTime( 0, 0, 0 );
 
-				// Set to end of week (Sunday)
 				$end = clone $start;
-				$end->modify( '+6 days' );  // End of Sunday
+				$end->modify( '+6 days' );  // End of the week
 				$end->setTime( 23, 59, 59 );
 				break;
 			case 'months':

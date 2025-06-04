@@ -239,9 +239,9 @@ const Event: React.FC = () => {
 				error instanceof Error
 					? error.message
 					: __(
-							'Failed to update event status. Please try again.',
-							'quillbooking'
-						);
+						'Failed to update event status. Please try again.',
+						'quillbooking'
+					);
 			setStatusMessage({
 				title: __('Status Update Failed', 'quillbooking'),
 				message: errorMsg,
@@ -276,9 +276,9 @@ const Event: React.FC = () => {
 				error instanceof Error
 					? error.message
 					: __(
-							'Failed to save changes. Please try again.',
-							'quillbooking'
-						);
+						'Failed to save changes. Please try again.',
+						'quillbooking'
+					);
 			setErrorMessage(errorMsg);
 			setShowErrorBanner(true);
 			setTimeout(() => setShowErrorBanner(false), 5000);
@@ -317,7 +317,7 @@ const Event: React.FC = () => {
 		},
 		{
 			key: 'question',
-			label: __('Question Settings', 'quillbooking'),
+			label: __('Questions', 'quillbooking'),
 			children: (
 				<EventFieldsTab
 					ref={childRef}
@@ -365,7 +365,7 @@ const Event: React.FC = () => {
 		},
 		{
 			key: 'payment-settings',
-			label: __('Payments Settings', 'quillbooking'),
+			label: __('Payments', 'quillbooking'),
 			children: (
 				<Payments
 					ref={childRef}
@@ -377,7 +377,7 @@ const Event: React.FC = () => {
 		},
 		{
 			key: 'webhooks-feeds',
-			label: __('Webhooks Feeds', 'quillbooking'),
+			label: __('Webhooks', 'quillbooking'),
 			children: (
 				<WebhookFeeds
 					ref={childRef}
@@ -511,11 +511,10 @@ const Event: React.FC = () => {
 								onClick={handleSave}
 								loading={isSaving}
 								disabled={saveDisabled || isSaving}
-								className={`rounded-lg font-[500] text-white ${
-									saveDisabled || isSaving
-										? 'bg-gray-400 cursor-not-allowed'
-										: 'bg-color-primary '
-								}`}
+								className={`rounded-lg font-[500] text-white ${saveDisabled || isSaving
+									? 'bg-gray-400 cursor-not-allowed'
+									: 'bg-color-primary '
+									}`}
 							>
 								{__('Save Changes', 'quillbooking')}
 							</Button>
@@ -528,15 +527,15 @@ const Event: React.FC = () => {
 							width: '100%',
 							bgcolor: '#FBFBFB',
 							display: 'flex',
-							justifyContent: 'center',
-							padding: '20px 16px',
+							justifyContent: 'flex-start',
+							padding: '20px 15px',
 						}}
 					>
 						<Tabs
 							value={activeTab}
 							onChange={handleTabChange}
 							variant="scrollable"
-							//scrollButtons="auto"
+							scrollButtons="auto"
 							sx={{
 								'& .MuiTabs-indicator': { display: 'none' },
 							}}
@@ -559,12 +558,12 @@ const Event: React.FC = () => {
 												? '#953AE4'
 												: 'transparent',
 										color: '#292D32',
-										borderRadius: '16px',
+										borderRadius: '12px',
 										textTransform: 'capitalize',
-										px: 3,
+										//px: 3,
 										minHeight: '48px', // Force tab height
 										height: '48px', // Force height to override default
-										mx: 1,
+										mx: 0.5,
 										fontWeight: '700',
 										transition: '0.3s',
 										'&.Mui-selected': { color: 'white' },

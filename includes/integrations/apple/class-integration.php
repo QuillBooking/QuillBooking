@@ -512,7 +512,6 @@ class Integration extends Abstract_Integration {
 	 * @return array
 	 */
 	public function get_available_slots( $slots, $event, $start_date, $end_date, $timezone ) {
-		xdebug_break();
 		$this->set_host( $event->calendar );
 		$apple_integration = $this->host->get_meta( $this->meta_key, array() );
 		if ( empty( $apple_integration ) ) {

@@ -210,7 +210,9 @@ const GeneralSettingsCard = ({ settings, updateSettings }) => {
 					<Select
 						id="default_country_code"
 						className="w-full rounded-lg h-[48px]"
-						value={settings.default_country_code || 'US'}
+						value={(
+							settings.default_country_code || 'US'
+						).toUpperCase()}
 						onChange={(value) =>
 							updateSettings('default_country_code', value)
 						}

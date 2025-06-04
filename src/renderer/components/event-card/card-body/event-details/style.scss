@@ -5,12 +5,14 @@
 
 .event-details-container {
 	padding-bottom: 20px;
+	margin-bottom: 20px;
 	border-bottom: 1px solid #ededed;
 }
 
 .event-header {
 	text-transform: capitalize;
 	font-weight: 600;
+	color: #1A1A1A;
 	font-size: 24px;
 }
 
@@ -24,6 +26,7 @@
 	gap: 10px;
 	font-weight: 400;
 	font-size: 16px;
+	color: #292D32;
 	text-transform: capitalize;
 	margin-bottom: 8px;
 }
@@ -31,6 +34,7 @@
 .event-description {
 	font-weight: 400;
 	font-size: 16px;
+	color: #292D32;
 	letter-spacing: 0%;
 }
 

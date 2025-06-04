@@ -85,7 +85,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 			</div>
 			<div>
 				<p className="date-time-timezone">
-					{__('Time Zone', '@quillbooking')}
+					{__('Time zone', '@quillbooking')}
 				</p>
 				<div className="date-time-timezone-select">
 					<GlobalIcon />

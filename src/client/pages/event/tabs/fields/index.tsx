@@ -24,12 +24,13 @@ import { useEventContext } from '../../state/context';
 import './style.scss';
 import {
 	CardHeader,
-	ProVersion,
+	ProIcon,
 	QuestionOutlineIcon,
 } from '@quillbooking/components';
 import { EventTabHandle, EventTabProps, Fields, FieldType } from 'client/types';
 import Question from './question';
 import { doAction } from '@wordpress/hooks';
+import { Link } from 'react-router';
 
 const LoadingSkeleton = () => (
 	<Card>
@@ -340,8 +341,35 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 					onCancel={() => setShowModal(false)}
 					footer={null}
 					getContainer={false}
+					width={800}
 				>
-					<ProVersion />
+					<div className="flex flex-col items-center text-center py-10">
+						<div className="bg-[#F1E0FF] rounded-full p-4 mb-2 flex items-center justify-center">
+							<ProIcon width={72} height={72} />
+						</div>
+						<div>
+							<h2 className="text-base font-semibold my-1 text-[#3F4254]">
+								{__(
+									'Add another Questions feature is available in Pro Version',
+									'quillbooking'
+								)}
+							</h2>
+							<p className="text-[#9197A4] mb-4 text-xs">
+								{__(
+									'Please upgrade to get all the advanced features.',
+									'quillbooking'
+								)}
+							</p>
+							<div className="mt-5">
+								<Link
+									className="bg-color-primary text-[#FBF9FC] rounded-lg py-3 px-4 font-medium"
+									to="/"
+								>
+									{__('Upgrade To Pro Now', 'quillbooking')}
+								</Link>
+							</div>
+						</div>
+					</div>
 				</Modal>
 			</>
 		);

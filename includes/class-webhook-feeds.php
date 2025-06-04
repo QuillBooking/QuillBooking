@@ -23,59 +23,72 @@ class Webhook_Feeds {
 	 * Constructor.
 	 */
 	private function __construct() {
-		add_action( 'quillbooking_after_booking_created', array( $this, 'send_trigger_webhook' ), 10, 2 );
-		add_action( 'quillbooking_booking_cancelled', array( $this, 'send_trigger_webhook' ) );
-		add_action( 'quillbooking_booking_rescheduled', array( $this, 'send_trigger_webhook' ) );
-		add_action( 'quillbooking_booking_completed', array( $this, 'send_trigger_webhook' ) );
-		add_action( 'quillbooking_booking_rejected', array( $this, 'send_trigger_webhook' ) );
+		$hooks = array(
+			'quillbooking_after_booking_created' => 'confirmation',
+			'quillbooking_booking_cancelled'     => 'cancelled',
+			'quillbooking_booking_rescheduled'   => 'rescheduled',
+			'quillbooking_booking_completed'     => 'completed',
+			'quillbooking_booking_rejected'      => 'rejected',
+		);
+
+		foreach ( $hooks as $hook => $trigger_type ) {
+			add_action(
+				$hook,
+				function ( $booking ) use ( $trigger_type ) {
+					$type = $trigger_type ?? $booking->status;
+					$this->handle_webhook_trigger( $booking, $type );
+				},
+				10,
+				1
+			);
+		}
 	}
 
 	/**
-	 * After booking created.
+	 * Handle webhook trigger based on type.
 	 *
 	 * @param Models\Booking_Model $booking Booking model.
+	 * @param string               $trigger_type Trigger type.
 	 */
-	public function send_trigger_webhook( $booking ) {
-		$this->send_webhook( $booking );
-	}
-
-	/**
-	 * Send webhook.
-	 *
-	 * @param Models\Booking_Model $booking Booking model.
-	 */
-	public function send_webhook( $booking ) {
+	private function handle_webhook_trigger( $booking, $trigger_type ) {
 		$webhook_feeds = $booking->event->webhook_feeds ?? array();
+
 		if ( empty( $webhook_feeds ) ) {
 			return;
 		}
 
 		foreach ( $webhook_feeds as $webhook_feed ) {
-			if ( ! Arr::get( $webhook_feed, 'enabled', false ) || ! in_array( $booking->status, Arr::get( $webhook_feed, 'triggers', array() ) ) ) {
+			$enabled  = Arr::get( $webhook_feed, 'enabled', false );
+			$triggers = Arr::get( $webhook_feed, 'triggers', array() );
+
+			if ( ! $enabled || ! in_array( $trigger_type, $triggers, true ) ) {
 				continue;
 			}
 
-			$url              = Arr::get( $webhook_feed, 'url', '' );
-			$method           = Arr::get( $webhook_feed, 'method', 'post' );
-			$headers          = Arr::get( $webhook_feed, 'headers', array() );
-			$body             = array();
-			$body['booking']  = $booking->toArray();
-			$body['event']    = $booking->event->toArray();
-			$body['calendar'] = $booking->calendar->toArray();
-			$format           = Arr::get( $webhook_feed, 'format', 'json' );
+			$body = array(
+				'booking'  => $booking->toArray(),
+				'event'    => $booking->event->toArray(),
+				'calendar' => $booking->calendar->toArray(),
+			);
 
-			$this->send_request( $url, $method, $headers, $body, $format );
+			$this->send_request(
+				Arr::get( $webhook_feed, 'url', '' ),
+				Arr::get( $webhook_feed, 'method', 'post' ),
+				Arr::get( $webhook_feed, 'headers', array() ),
+				$body,
+				Arr::get( $webhook_feed, 'format', 'json' )
+			);
 		}
 	}
 
 	/**
-	 * Send request.
+	 * Send HTTP request to webhook URL.
 	 *
-	 * @param string $url     URL.
-	 * @param string $method  Method.
-	 * @param array  $headers Headers.
-	 * @param array  $body    Body.
-	 * @param string $format  Format.
+	 * @param string $url     The webhook URL.
+	 * @param string $method  The HTTP method (GET, POST, etc).
+	 * @param array  $headers Array of HTTP headers.
+	 * @param array  $body    Request body.
+	 * @param string $format  Format of body ('json' or 'form').
 	 */
 	public function send_request( $url, $method, $headers, $body, $format ) {
 		$args = array(
@@ -90,6 +103,10 @@ class Webhook_Feeds {
 			$args['body'] = http_build_query( $body );
 		}
 
-		wp_remote_request( $url, $args );
+		$response = wp_remote_request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Webhook request failed: ' . $response->get_error_message() );
+		}
 	}
 }

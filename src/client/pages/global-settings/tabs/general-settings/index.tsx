@@ -91,7 +91,7 @@ const GeneralSettings = () => {
 			time_format: '',
 			auto_cancel_after: 60, // 1 hour default
 			auto_complete_after: 120, // 2 hours default
-			default_country_code: '+1',
+			default_country_code: 'US',
 			enable_summary_email: false,
 			summary_email_frequency: 'daily',
 		},
@@ -160,7 +160,10 @@ const GeneralSettings = () => {
 					showNotice({
 						type: 'success',
 						title: __('Success', 'quillbooking'),
-						message: __('Settings saved successfully', 'quillbooking'),
+						message: __(
+							'Settings saved successfully',
+							'quillbooking'
+						),
 					});
 				},
 				onError(error) {
@@ -179,7 +182,10 @@ const GeneralSettings = () => {
 				title: __('Error', 'quillbooking'),
 				message:
 					error.message ||
-					__('An unexpected error occurred while saving settings', 'quillbooking'),
+					__(
+						'An unexpected error occurred while saving settings',
+						'quillbooking'
+					),
 			});
 			console.error('Error in handleSave:', error);
 		}
@@ -243,10 +249,11 @@ const GeneralSettings = () => {
 					type="primary"
 					onClick={handleSave}
 					disabled={saveLoading}
-					className={`rounded-lg font-medium px-10 text-white ${saveLoading
-						? 'bg-gray-400 cursor-not-allowed'
-						: 'bg-color-primary '
-						}`}
+					className={`rounded-lg font-medium px-10 text-white ${
+						saveLoading
+							? 'bg-gray-400 cursor-not-allowed'
+							: 'bg-color-primary '
+					}`}
 				>
 					{__('Save', 'quillbooking')}
 				</Button>

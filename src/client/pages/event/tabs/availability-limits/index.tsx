@@ -63,9 +63,17 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 
 		// Limits state
 		const [bookingDurationOptions, setBookingDurationOptions] =
-			useState<UnitOptionsType>(UnitOptions);
+			useState<UnitOptionsType>({
+				days: { label: __('Day', 'quillbooking'), disabled: false },
+				weeks: { label: __('Week', 'quillbooking'), disabled: false },
+				months: { label: __('Month', 'quillbooking'), disabled: false },
+			});
 		const [bookingFrequencyOptions, setBookingFrequencyOptions] =
-			useState<UnitOptionsType>(UnitOptions);
+			useState<UnitOptionsType>({
+				days: { label: __('Day', 'quillbooking'), disabled: false },
+				weeks: { label: __('Week', 'quillbooking'), disabled: false },
+				months: { label: __('Month', 'quillbooking'), disabled: false },
+			});
 		const [limits, setLimits] = useState<EventLimitsType | null>(null);
 
 		const { state: event } = useEventContext();
@@ -134,13 +142,13 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 					override: dateOverrides,
 					...(commonSchedule ? { is_common: commonSchedule } : {}),
 				};
-		
+
 				const eventTeamAvailability = {
 					users_availability: teamAvailability,
 					type: availabilityType,
 					is_common: commonSchedule,
 				};
-		
+
 				await callApi({
 					path: `events/${event?.id}`,
 					method: 'PUT',
@@ -161,9 +169,9 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 						throw new Error(error.message);
 					},
 				});
-			} catch (error:any) {
+			} catch (error: any) {
 				console.error('Failed to save event details:', error);
-				
+
 				// Re-throw the error if you want calling code to handle it
 				throw new Error(error.message);
 			}

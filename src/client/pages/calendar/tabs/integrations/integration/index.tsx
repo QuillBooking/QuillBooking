@@ -23,7 +23,11 @@ import {
 	CheckboxChangeEvent,
 } from 'antd';
 
-import { PlusSquareOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+	PlusSquareOutlined,
+	DeleteOutlined,
+	ArrowLeftOutlined,
+} from '@ant-design/icons';
 import { isEmpty, map } from 'lodash';
 
 /**
@@ -1041,6 +1045,17 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 				<>
 					{visible ? (
 						<Flex vertical gap={10} className="w-full">
+							{/* add back button */}
+							<Flex justify="space-between" align="center">
+								<Button
+									type="link"
+									onClick={() => setVisible(false)}
+									className="text-[#3F4254] font-semibold mb-2"
+									icon={<ArrowLeftOutlined />}
+								>
+									{__('Back', 'quillbooking')}
+								</Button>
+							</Flex>
 							<div className="text-[#71717A] italic">
 								{__(
 									'To connect to Apple Server, please enter your Apple Email and app specific password. Generate App Specific Password at',
@@ -1114,24 +1129,6 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 														className="rounded-lg h-[48px]"
 													/>
 												</Form.Item>
-
-												{accounts.length > 0 && (
-													<Button
-														danger
-														className="h-[48px]"
-														onClick={() =>
-															handleDeleteAccount(
-																accounts[0].id
-															)
-														}
-														loading={loading}
-													>
-														{__(
-															'Disconnect',
-															'quillbooking'
-														)}
-													</Button>
-												)}
 											</Flex>
 										) : (
 											<Input

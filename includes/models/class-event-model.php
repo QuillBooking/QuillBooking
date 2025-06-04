@@ -28,6 +28,12 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  */
 class Event_Model extends Model {
 
+
+
+
+
+
+
 	/**
 	 * Table name
 	 *
@@ -1018,13 +1024,42 @@ class Event_Model extends Model {
 				break;
 			case 'weeks':
 				$start = clone $start_day;
-				// Set to start of week (Monday as first day)
-				$start->modify( 'Monday this week' );
+
+				// Get user's preferred start of week from settings
+				$settings   = get_option( 'quillbooking_settings', array() );
+				$start_from = isset( $settings['general']['start_from'] ) ?
+					$settings['general']['start_from'] : 'Monday';
+				$start_from = ucfirst( strtolower( $start_from ) );
+
+				// Get the current day of week (0 = Sunday, 1 = Monday, etc.)
+				$current_day_num = (int) $start_day->format( 'w' );
+
+				// Convert start_from to a day number (0-6)
+				$day_map = array(
+					'Sunday'    => 0,
+					'Monday'    => 1,
+					'Tuesday'   => 2,
+					'Wednesday' => 3,
+					'Thursday'  => 4,
+					'Friday'    => 5,
+					'Saturday'  => 6,
+				);
+
+				$start_from_num = isset( $day_map[ $start_from ] ) ? $day_map[ $start_from ] : 1; // Default to Monday (1)
+
+				// Calculate days to subtract to get to the start of the week
+				$days_to_subtract = ( $current_day_num - $start_from_num ) % 7;
+				if ( $days_to_subtract < 0 ) {
+					$days_to_subtract += 7;
+				}
+
+				// Set to start of the week based on user preference
+				$start->modify( "-{$days_to_subtract} days" );
 				$start->setTime( 0, 0, 0 );
 
-				// Set to end of week (Sunday)
+				// Set to end of week (7 days from start)
 				$end = clone $start;
-				$end->modify( '+6 days' );  // End of Sunday
+				$end->modify( '+6 days' );  // End of the week (6 days after start)
 				$end->setTime( 23, 59, 59 );
 				break;
 			case 'months':

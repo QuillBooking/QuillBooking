@@ -156,6 +156,13 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 			$calendars = Arr::get( $data, 'calendars', array() );
 
 			$this->integration->set_host( $host_id );
+			// check if exists this account.
+			$existing_account = $this->integration->accounts->get_account( $account_id );
+
+			if ( $existing_account ) {
+				return new WP_Error( 'account_exists', __( 'This Apple account already exists.', 'quillbooking' ), array( 'status' => 400 ) );
+			}
+
 			$this->integration->accounts->add_account(
 				$account_id,
 				array(

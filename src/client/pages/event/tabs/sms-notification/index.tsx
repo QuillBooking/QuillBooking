@@ -1,8 +1,22 @@
 import { ProTab, SmsNotificationIcon } from '@quillbooking/components';
 import { applyFilters } from '@wordpress/hooks';
 import { __ } from '@wordpress/i18n';
+import { forwardRef } from 'react';
 
-const SmsNotificationTab: React.FC = () => {
+export interface SmsNotificationsTabHandle {
+	saveSettings: () => Promise<void>;
+}
+
+interface SmsNotificationsTabProps {
+	disabled: boolean;
+	setDisabled: (disabled: boolean) => void;
+}
+
+const SmsNotificationTab = forwardRef<
+	SmsNotificationsTabHandle,
+	SmsNotificationsTabProps
+>(({ disabled, setDisabled }, ref) => {
+
 	return applyFilters(
 		'quillbooking.event.sms_notification_tab',
 		<ProTab
@@ -12,8 +26,15 @@ const SmsNotificationTab: React.FC = () => {
 				'quillbooking'
 			)}
 			icon={<SmsNotificationIcon />}
-		/>
+		/>,
+		{
+			disabled,
+			setDisabled,
+			ref,
+		}
 	) as React.ReactNode;
-};
+});
+
+SmsNotificationTab.displayName = 'SmsNotificationTab';
 
 export default SmsNotificationTab;

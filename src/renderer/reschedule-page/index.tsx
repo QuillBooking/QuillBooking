@@ -11,6 +11,7 @@ interface ReschedulePageProps {
 	type: string;
 	booking: Booking;
 	url: string;
+	globalCurrency: string;
 }
 
 const ReschedulePage: React.FC<ReschedulePageProps> = ({
@@ -19,6 +20,7 @@ const ReschedulePage: React.FC<ReschedulePageProps> = ({
 	type,
 	booking,
 	url,
+	globalCurrency,
 }) => {
 	return (
 		<div className="event-card-container">
@@ -30,6 +32,7 @@ const ReschedulePage: React.FC<ReschedulePageProps> = ({
 					type={type}
 					booking={booking}
 					url={url}
+					globalCurrency={globalCurrency}
 				/>
 			</div>
 		</div>

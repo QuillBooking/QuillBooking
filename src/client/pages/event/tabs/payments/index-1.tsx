@@ -30,7 +30,12 @@ import { FaPlus } from 'react-icons/fa';
 /**
  * Internal Dependencies
  */
-import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
+import {
+	useApi,
+	useNotice,
+	useBreadcrumbs,
+	useGlobalSettings,
+} from '@quillbooking/hooks';
 import {
 	AlertIcon,
 	CardHeader,
@@ -45,6 +50,7 @@ import './style.scss';
 import paypal from '@quillbooking/assets/icons/paypal/paypal.png';
 import stripe from '@quillbooking/assets/icons/stripe/stripe.png';
 import { PaymentsSettings } from 'client/types';
+import { getCurrencySymbol } from '@quillbooking/utils';
 
 interface EventPaymentProps {
 	disabled: boolean;
@@ -135,10 +141,15 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 		const setBreadcrumbs = useBreadcrumbs();
 		const { successNotice } = useNotice();
 		const [dataFetched, setDataFetched] = useState(false);
+		const { settings: globalSettings, loading: globalSettingsLoading } =
+			useGlobalSettings();
 
 		// Single state for all payment settings with default values
 		const [paymentSettings, setPaymentSettings] =
 			useState<PaymentsSettings>({} as PaymentsSettings);
+
+		// Get the currency from global settings
+		const globalCurrency = get(globalSettings, 'payments.currency', 'USD');
 
 		useImperativeHandle(ref, () => ({
 			saveSettings: async () => {
@@ -1041,7 +1052,9 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 																			)}
 																			suffix={
 																				<span className="border-l pl-2">
-																					$
+																					{getCurrencySymbol(
+																						globalCurrency
+																					)}
 																				</span>
 																			}
 																			className="h-[48px] rounded-lg w-full"
@@ -1138,7 +1151,9 @@ const Payments = forwardRef<EventPaymentHandle, EventPaymentProps>(
 																)}
 																suffix={
 																	<span className="border-l pl-2">
-																		$
+																		{getCurrencySymbol(
+																			globalCurrency
+																		)}
 																	</span>
 																}
 																className="h-[48px] rounded-lg w-full"

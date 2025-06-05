@@ -7,12 +7,27 @@ import { __ } from '@wordpress/i18n';
  * External dependencies
  */
 import React, { useState, useEffect } from 'react';
-import { Input, Select, Checkbox, Radio, Button, Card, Flex } from 'antd';
+import {
+	Input,
+	Select,
+	Checkbox,
+	Radio,
+	Button,
+	Card,
+	Flex,
+	Modal,
+} from 'antd';
 
 /**
  * Internal dependencies
  */
-import { FlashIcon, TrashIcon } from '@quillbooking/components';
+import {
+	FlashIcon,
+	TrashIcon,
+	UrlIcon,
+	Header,
+	MergeTagModal,
+} from '@quillbooking/components';
 import { useApi } from '@quillbooking/hooks';
 
 const { Option } = Select;
@@ -55,6 +70,10 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 	const [formState, setFormState] = useState<WebhookFeedType>(initialState);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const { loading } = useApi();
+	const [activeModalType, setActiveModalType] = useState<
+		null | 'header' | 'field'
+	>(null);
+	const [activeIndex, setActiveIndex] = useState<number>(-1);
 
 	// Update form state when webhookFeed prop changes
 	useEffect(() => {
@@ -230,6 +249,30 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 		}
 	};
 
+	const handleHeaderValueClick = (mention: string) => {
+		setFormState((prev) => {
+			const newHeaders = [...prev.headers];
+			newHeaders[activeIndex] = {
+				...newHeaders[activeIndex],
+				value: newHeaders[activeIndex].value + mention,
+			};
+			return { ...prev, headers: newHeaders };
+		});
+		setActiveModalType(null);
+	};
+
+	const handleFieldValueClick = (mention: string) => {
+		setFormState((prev) => {
+			const newBodyFields = [...prev.bodyFields];
+			newBodyFields[activeIndex] = {
+				...newBodyFields[activeIndex],
+				value: newBodyFields[activeIndex].value + mention,
+			};
+			return { ...prev, bodyFields: newBodyFields };
+		});
+		setActiveModalType(null);
+	};
+
 	return (
 		<>
 			<Card className="mt-5">
@@ -285,7 +328,7 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 								addHeader();
 							}
 						}}
-						className='flex w-full'
+						className="flex w-full"
 					>
 						<Radio
 							value={false}
@@ -366,6 +409,20 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 												? 'error'
 												: ''
 										}
+										suffix={
+											<span
+												className="bg-[#EEEEEE] p-[0.7rem] rounded-r-lg"
+												onClick={() => {
+													setActiveModalType(
+														'header'
+													);
+													setActiveIndex(index);
+												}}
+											>
+												<UrlIcon />
+											</span>
+										}
+										style={{ padding: '0 0 0 10px' }}
 									/>
 									{errors[`header-${index}-value`] && (
 										<div className="text-red-500 mt-1">
@@ -373,7 +430,7 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 										</div>
 									)}
 								</Flex>
-								{formState.headers.length > 1 && ( // Only show remove if more than one field
+								{formState.headers.length > 1 && (
 									<Button
 										onClick={() => removeHeader(index)}
 										className="border border-[#EDEBEB] rounded-md shadow-none h-[48px] text-[#B3261E]"
@@ -387,7 +444,7 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 							onClick={addHeader}
 							className="mt-2 text-color-primary font-semibold text-[16px] border-none shadow-none w-fit"
 						>
-							{__('+ Add Other Request', 'quillbooking')}
+							{__('+ Add Other Field', 'quillbooking')}
 						</Button>
 					</Flex>
 				)}
@@ -463,7 +520,7 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 								addBodyField();
 							}
 						}}
-						className='flex w-full'
+						className="flex w-full"
 					>
 						<Radio
 							value={false}
@@ -544,6 +601,18 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 												? 'error'
 												: ''
 										}
+										suffix={
+											<span
+												className="bg-[#EEEEEE] p-[0.7rem] rounded-r-lg"
+												onClick={() => {
+													setActiveModalType('field');
+													setActiveIndex(index);
+												}}
+											>
+												<UrlIcon />
+											</span>
+										}
+										style={{ padding: '0 0 0 10px' }}
 									/>
 									{errors[`field-${index}-value`] && (
 										<div className="text-red-500 mt-1">
@@ -551,7 +620,7 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 										</div>
 									)}
 								</Flex>
-								{formState.bodyFields.length > 1 && ( // Only show remove if more than one field
+								{formState.bodyFields.length > 1 && (
 									<Button
 										onClick={() => removeBodyField(index)}
 										className="border border-[#EDEBEB] rounded-md shadow-none h-[48px] text-[#B3261E]"
@@ -565,7 +634,7 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 							onClick={addBodyField}
 							className="mt-2 text-color-primary font-semibold text-[16px] border-none shadow-none w-fit"
 						>
-							{__('+ Add Other Request', 'quillbooking')}
+							{__('+ Add Other Field', 'quillbooking')}
 						</Button>
 					</Flex>
 				)}
@@ -596,34 +665,19 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 						}
 						className="text-[#3F4254] font-semibold mb-4"
 					>
-						<Checkbox
-							value="Booking Confirmed"
-							className="custom-check"
-						>
+						<Checkbox value="confirmation" className="custom-check">
 							{__('Booking Confirmed', 'quillbooking')}
 						</Checkbox>
-						<Checkbox
-							value="Booking Canceled"
-							className="custom-check"
-						>
+						<Checkbox value="cancelled" className="custom-check">
 							{__('Booking Canceled', 'quillbooking')}
 						</Checkbox>
-						<Checkbox
-							value="Booking Completed"
-							className="custom-check"
-						>
+						<Checkbox value="completed" className="custom-check">
 							{__('Booking Completed', 'quillbooking')}
 						</Checkbox>
-						<Checkbox
-							value="Booking Rescheduled"
-							className="custom-check"
-						>
+						<Checkbox value="rescheduled" className="custom-check">
 							{__('Booking Rescheduled', 'quillbooking')}
 						</Checkbox>
-						<Checkbox
-							value="Booking Rejected"
-							className="custom-check"
-						>
+						<Checkbox value="rejected" className="custom-check">
 							{__('Booking Rejected', 'quillbooking')}
 						</Checkbox>
 					</Checkbox.Group>
@@ -646,6 +700,38 @@ const WebhookFeedComponent: React.FC<WebhookFeedComponentProps> = ({
 						: __('Submit Webhook', 'quillbooking')}
 				</Button>
 			</Flex>
+
+			<Modal
+				open={activeModalType !== null}
+				onCancel={() => setActiveModalType(null)}
+				footer={null}
+				width={1000}
+				getContainer={false}
+			>
+				<Flex gap={10} className="items-center border-b pb-4 mb-4">
+					<div className="bg-[#EDEDED] rounded-lg p-3 mt-2">
+						<UrlIcon />
+					</div>
+					<Header
+						header={
+							activeModalType === 'header'
+								? __('Header Value Merge tags', 'quillbooking')
+								: __('Field Value Merge tags', 'quillbooking')
+						}
+						subHeader={__(
+							'Choose your Merge tags type and Select one of them related to your input.',
+							'quillbooking'
+						)}
+					/>
+				</Flex>
+				<MergeTagModal
+					onMentionClick={
+						activeModalType === 'header'
+							? handleHeaderValueClick
+							: handleFieldValueClick
+					}
+				/>
+			</Modal>
 		</>
 	);
 };

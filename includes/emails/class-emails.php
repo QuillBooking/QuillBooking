@@ -10,6 +10,8 @@
 
 namespace QuillBooking\Emails;
 
+use QuillBooking\Settings;
+
 use function add_action;
 use function add_filter;
 use function remove_filter;
@@ -41,23 +43,6 @@ use function wp_kses_post;
  * @since 1.0.0
  */
 class Emails {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	/**
 	 * Store the from address.
@@ -779,55 +764,9 @@ class Emails {
 	 */
 	public static function getGlobalSettings( $settingsKey = null ) {
 
-		$defaults = array(
-			'general'  => array(
-				'admin_email'             => get_option( 'admin_email' ),
-				'start_from'              => 'Monday',
-				'time_format'             => '12',
-				'auto_cancel_after'       => 30,
-				'auto_complete_after'     => 30,
-				'default_country_code'    => 'US',
-				'enable_summary_email'    => false,
-				'summary_email_frequency' => 'daily',
-			),
-			'payments' => array(
-				'currency' => 'USD',
-			),
-			'email'    => array(
-				'from_name'               => '',
-				'from_email'              => '',
-				'reply_to_name'           => '',
-				'reply_to_email'          => '',
-				'use_host_from_name'      => false,
-				'use_host_reply_to_email' => false,
-				'include_ics'             => false,
-				'footer'                  => '',
-			),
-			'theme'    => array(
-				'color_scheme' => 'light',
-			),
-		);
-
-		$settings = get_option( 'quillbooking_settings', array() );
-
-		if ( empty( $settings ) ) {
-			$settings = array();
-		}
-
-		$settings = wp_parse_args( $settings, $defaults );
-
-		// If email settings are empty, try to get them from WordPress
-		if ( empty( $settings['email']['from_name'] ) ) {
-			$settings['email']['from_name'] = get_bloginfo( 'name' );
-		}
-		if ( empty( $settings['email']['from_email'] ) ) {
-			$settings['email']['from_email'] = get_option( 'admin_email' );
-		}
-
 		if ( $settingsKey ) {
-			return isset( $settings[ $settingsKey ] ) ? $settings[ $settingsKey ] : array();
+			return Settings::get( $settingsKey, array() );
 		}
-
-		return $settings;
+		return Settings::get_all();
 	}
 }

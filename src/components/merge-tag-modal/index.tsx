@@ -35,6 +35,10 @@ const DEFAULT_DESCRIPTION = __(
 );
 
 // Merge tag group type definition
+// The value field should be in the format {{group:slug}} where:
+// - group: The merge tag group (e.g., 'host', 'guest', 'booking')
+// - slug: The specific identifier for the merge tag (e.g., 'name', 'email')
+// Example: {{host:name}} will be replaced with the host's name
 type MergeTagGroup = {
 	mergeTags: {
 		[slug: string]: {
@@ -70,6 +74,9 @@ const MergeTagModal: React.FC<MergeTagProps> = ({ onMentionClick }) => {
 	}, [groupKeys, selectedKey]);
 
 	// Tag card component to reduce repetition
+	// When a user clicks on a merge tag, the value (formatted as {{group:slug}})
+	// is passed to the onMentionClick callback which inserts it into the field
+	// These merge tags will be processed by Merge_Tags_Manager in PHP when needed
 	const TagCard = ({ name, value, category }) => (
 		<Card
 			onClick={() => onMentionClick(value, category)}

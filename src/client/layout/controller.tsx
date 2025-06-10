@@ -7,7 +7,7 @@ import ConfigAPI from '@quillbooking/config';
 /**
  * WordPress dependencies
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -30,7 +30,7 @@ import Event from '../pages/event';
 import GettingStarted from '../pages/getting-started';
 import Integrations from '../pages/integrations';
 import GeneralSettings from '../pages/global-settings';
-import { useApi } from '@quillbooking/hooks';
+
 import {
 	AvailabilityIcon,
 	BookingIcon,
@@ -101,57 +101,25 @@ const CalendarContext = React.createContext({
 
 // Create a single instance of CalendarProvider at the app level
 const AppCalendarProvider = ({ children }) => {
-	const { callApi } = useApi();
-	const configHasCalendarsValue =
+	// Get hasCalendars value directly from config
+	const hasCalendars =
 		typeof ConfigAPI.getHasCalendars === 'function'
 			? ConfigAPI.getHasCalendars()
 			: false;
 
-	console.log('Calendars = ', configHasCalendarsValue);
-	const [hasCalendars, setHasCalendars] = useState(configHasCalendarsValue);
-	const [isLoading, setIsLoading] = useState(false);
-	const [initialized, setInitialized] = useState(true);
+	// Since we're getting the value from config, we're never loading
+	const isLoading = false;
 
-	// Memoize context value to prevent unnecessary re-renders
-	const contextValue = React.useMemo(() => {
-		const checkCalendars = async () => {
-			// Skip API call if we already have calendar info from config
-			if (configHasCalendarsValue !== false) {
-				return;
-			}
-
-			setIsLoading(true);
-			try {
-				await callApi({
-					path: 'calendars',
-					method: 'GET',
-					onSuccess: (response) => {
-						setHasCalendars(response.data.length > 0);
-					},
-					onError: () => {
-						setHasCalendars(false);
-					},
-				});
-			} catch {
-				setHasCalendars(false);
-			} finally {
-				setIsLoading(false);
-				setInitialized(true);
-			}
-		};
-
-		return {
+	// Create the context value with simplified props
+	const contextValue = React.useMemo(
+		() => ({
 			hasCalendars,
 			isLoading,
-			checkCalendars,
-		};
-	}, [hasCalendars, isLoading, callApi, configHasCalendarsValue]);
-
-	useEffect(() => {
-		if (!initialized && !configHasCalendarsValue) {
-			contextValue.checkCalendars();
-		}
-	}, [initialized, contextValue, configHasCalendarsValue]);
+			// Empty function for backwards compatibility
+			checkCalendars: async () => {},
+		}),
+		[hasCalendars]
+	);
 
 	return (
 		<CalendarContext.Provider value={contextValue}>
@@ -205,12 +173,6 @@ const DashboardLabelWithProvider = () => (
 	</AppCalendarProvider>
 );
 
-registerAdminPage('dashboard', {
-	path: '/',
-	component: DashboardPageWithProvider,
-	label: <DashboardLabelWithProvider />,
-});
-
 export const Controller = ({ page }) => {
 	useEffect(() => {
 		window.document.documentElement.scrollTop = 0;
@@ -221,12 +183,16 @@ export const Controller = ({ page }) => {
 			layoutScroll
 			className="quillbooking-page-component-wrapper"
 		>
-			<AppCalendarProvider>
-				<ProtectedRoute page={page} />
-			</AppCalendarProvider>
+			<ProtectedRoute page={page} />
 		</motion.div>
 	);
 };
+
+registerAdminPage('dashboard', {
+	path: '/',
+	component: DashboardPageWithProvider,
+	label: <DashboardLabelWithProvider />,
+});
 
 registerAdminPage('calendars', {
 	path: 'calendars',

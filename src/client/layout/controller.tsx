@@ -2,6 +2,7 @@
  * QuillCRM dependencies
  */
 import { registerAdminPage } from '@quillbooking/navigation';
+import ConfigAPI from '@quillbooking/config';
 
 /**
  * WordPress dependencies
@@ -27,18 +28,14 @@ import Bookings from '../pages/bookings';
 import BookingDetails from '../pages/booking-details';
 import Event from '../pages/event';
 import GettingStarted from '../pages/getting-started';
-import Help from '../pages/help';
-import Logout from '../pages/logout';
 import Integrations from '../pages/integrations';
 import GeneralSettings from '../pages/global-settings';
 import { useApi } from '@quillbooking/hooks';
 import {
 	AvailabilityIcon,
 	BookingIcon,
-	HelpIcon,
 	HomeIcon,
 	SettingsIcon,
-	LogoutIcon,
 	UpcomingCalendarIcon,
 	IntegrationsTabIcon,
 } from '@quillbooking/components';
@@ -54,6 +51,47 @@ declare global {
 	}
 }
 
+const ShimmerLoader = () => (
+	<div className="p-16 pt-8 animate-pulse">
+		{/* Header */}
+		<div className="flex justify-between border-b border-[#E5E5E5] pb-7 mb-10">
+			<div className="h-8 w-48 bg-gray-200 rounded-md" />
+			<div className="h-8 w-32 bg-gray-200 rounded-md" />
+		</div>
+
+		{/* Main Flex Row */}
+		<div className="flex gap-8">
+			{/* Left Column: 4 Cards (2/3 width) */}
+			<div className="w-2/3 flex flex-col gap-6">
+				{Array.from({ length: 4 }).map((_, index) => (
+					<div
+						key={index}
+						className="bg-white shadow border border-gray-200 rounded-xl p-6"
+					>
+						<div className="h-5 w-1/3 bg-gray-200 rounded" />
+						<div className="mt-4 h-4 w-2/3 bg-gray-200 rounded" />
+						<div className="mt-2 h-4 w-1/2 bg-gray-200 rounded" />
+					</div>
+				))}
+			</div>
+
+			{/* Right Column: 3 Cards (1/3 width) */}
+			<div className="w-1/3 flex flex-col gap-6">
+				{Array.from({ length: 3 }).map((_, index) => (
+					<div
+						key={index}
+						className="bg-white shadow border border-gray-200 rounded-xl p-6"
+					>
+						<div className="h-5 w-1/2 bg-gray-200 rounded" />
+						<div className="mt-4 h-4 w-3/4 bg-gray-200 rounded" />
+						<div className="mt-2 h-4 w-full bg-gray-200 rounded" />
+					</div>
+				))}
+			</div>
+		</div>
+	</div>
+);
+
 // Create a context for calendar state
 const CalendarContext = React.createContext({
 	hasCalendars: false,
@@ -61,40 +99,62 @@ const CalendarContext = React.createContext({
 	checkCalendars: async () => {},
 });
 
-// Create a provider component
-const CalendarProvider = ({ children }) => {
+// Create a single instance of CalendarProvider at the app level
+const AppCalendarProvider = ({ children }) => {
 	const { callApi } = useApi();
-	const [hasCalendars, setHasCalendars] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+	const configHasCalendarsValue =
+		typeof ConfigAPI.getHasCalendars === 'function'
+			? ConfigAPI.getHasCalendars()
+			: false;
 
-	const checkCalendars = async () => {
-		setIsLoading(true);
-		try {
-			await callApi({
-				path: 'calendars',
-				method: 'GET',
-				onSuccess: (response) => {
-					setHasCalendars(response.data.length > 0);
-				},
-				onError: () => {
-					setHasCalendars(false);
-				},
-			});
-		} catch {
-			setHasCalendars(false);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	console.log('Calendars = ', configHasCalendarsValue);
+	const [hasCalendars, setHasCalendars] = useState(configHasCalendarsValue);
+	const [isLoading, setIsLoading] = useState(false);
+	const [initialized, setInitialized] = useState(true);
+
+	// Memoize context value to prevent unnecessary re-renders
+	const contextValue = React.useMemo(() => {
+		const checkCalendars = async () => {
+			// Skip API call if we already have calendar info from config
+			if (configHasCalendarsValue !== false) {
+				return;
+			}
+
+			setIsLoading(true);
+			try {
+				await callApi({
+					path: 'calendars',
+					method: 'GET',
+					onSuccess: (response) => {
+						setHasCalendars(response.data.length > 0);
+					},
+					onError: () => {
+						setHasCalendars(false);
+					},
+				});
+			} catch {
+				setHasCalendars(false);
+			} finally {
+				setIsLoading(false);
+				setInitialized(true);
+			}
+		};
+
+		return {
+			hasCalendars,
+			isLoading,
+			checkCalendars,
+		};
+	}, [hasCalendars, isLoading, callApi, configHasCalendarsValue]);
 
 	useEffect(() => {
-		checkCalendars();
-	}, []);
+		if (!initialized && !configHasCalendarsValue) {
+			contextValue.checkCalendars();
+		}
+	}, [initialized, contextValue, configHasCalendarsValue]);
 
 	return (
-		<CalendarContext.Provider
-			value={{ hasCalendars, isLoading, checkCalendars }}
-		>
+		<CalendarContext.Provider value={contextValue}>
 			{children}
 		</CalendarContext.Provider>
 	);
@@ -103,11 +163,10 @@ const CalendarProvider = ({ children }) => {
 // Create a wrapper component for Dashboard to handle the visibility check
 const DashboardWrapper = () => {
 	const { hasCalendars, isLoading } = React.useContext(CalendarContext);
-	console.log('hasCalendars', hasCalendars);
 
-	// Show nothing while loading
+	// Show loading spinner while loading
 	if (isLoading) {
-		return null;
+		return <ShimmerLoader />;
 	}
 
 	// If no calendars, show getting started page
@@ -122,8 +181,7 @@ const DashboardWrapper = () => {
 // Create a custom component for the dashboard label
 const DashboardLabel = () => {
 	const { hasCalendars } = React.useContext(CalendarContext);
-	console.log('hasCalendars', hasCalendars);
-
+	// Always use "Dashboard" for the label to avoid flickering
 	return (
 		<Navmenu
 			icon={<HomeIcon width={24} height={24} />}
@@ -135,6 +193,23 @@ const DashboardLabel = () => {
 		/>
 	);
 };
+const DashboardPageWithProvider = () => (
+	<AppCalendarProvider>
+		<DashboardWrapper />
+	</AppCalendarProvider>
+);
+
+const DashboardLabelWithProvider = () => (
+	<AppCalendarProvider>
+		<DashboardLabel />
+	</AppCalendarProvider>
+);
+
+registerAdminPage('dashboard', {
+	path: '/',
+	component: DashboardPageWithProvider,
+	label: <DashboardLabelWithProvider />,
+});
 
 export const Controller = ({ page }) => {
 	useEffect(() => {
@@ -146,24 +221,12 @@ export const Controller = ({ page }) => {
 			layoutScroll
 			className="quillbooking-page-component-wrapper"
 		>
-			<ProtectedRoute page={page} />
+			<AppCalendarProvider>
+				<ProtectedRoute page={page} />
+			</AppCalendarProvider>
 		</motion.div>
 	);
 };
-
-registerAdminPage('dashboard', {
-	path: '/',
-	component: () => (
-		<CalendarProvider>
-			<DashboardWrapper />
-		</CalendarProvider>
-	),
-	label: (
-		<CalendarProvider>
-			<DashboardLabel />
-		</CalendarProvider>
-	),
-});
 
 registerAdminPage('calendars', {
 	path: 'calendars',

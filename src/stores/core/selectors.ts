@@ -2,7 +2,7 @@
  * Internal Dependencies
  */
 import { State } from './reducer';
-import { Notices } from './types';
+import { Notices } from '../types';
 
 /**
  * Get notices.

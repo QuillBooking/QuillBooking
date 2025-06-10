@@ -1,11 +1,11 @@
 import { register, createReduxStore } from '@wordpress/data';
-import reducer from './reducer';
+import reducer from '../reducer';
 import * as actions from './actions';
 import * as selectors from './selectors';
 import { STORE_KEY } from './constants';
 import type { State } from './reducer';
 
-import type { DispatchFromMap, SelectFromMap } from './types';
+import type { DispatchFromMap, SelectFromMap } from '../types';
 
 const store: ReturnType<typeof createReduxStore> = createReduxStore<
 	State,
@@ -18,7 +18,7 @@ const store: ReturnType<typeof createReduxStore> = createReduxStore<
 });
 
 export default store;
-export * from './types';
+export * from '../types';
 register(store);
 
 declare module '@wordpress/data' {

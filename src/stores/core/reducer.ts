@@ -9,7 +9,7 @@ import type { Reducer } from 'redux';
  * Internal Dependencies.
  */
 import { ADD_NOTICE, DELETE_NOTICE, SET_BREADCRUMBS } from './constants';
-import { CorePureState, CoreActionTypes } from './types';
+import { CorePureState, CoreActionTypes } from '../types';
 
 // Initial State
 const initialState: CorePureState = {

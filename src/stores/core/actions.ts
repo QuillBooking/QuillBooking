@@ -2,7 +2,7 @@
  * Internal Dependencies.
  */
 import { ADD_NOTICE, DELETE_NOTICE, SET_BREADCRUMBS } from './constants';
-import { CoreActionTypes, Notice } from './types';
+import { CoreActionTypes, Notice } from '../types';
 
 /**
  * Add Notice Action.

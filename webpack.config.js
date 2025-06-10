@@ -17,7 +17,7 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js'],
         alias: {
             '@quillbooking/navigation': path.resolve(__dirname, 'src/navigation'),
-            '@quillbooking/store': path.resolve(__dirname, 'src/store'),
+            '@quillbooking/stores': path.resolve(__dirname, 'src/stores'),
             '@quillbooking/config': path.resolve(__dirname, 'src/config'),
             '@quillbooking/client': path.resolve(__dirname, 'src/client/index.tsx'),
             '@quillbooking/components': path.resolve(__dirname, 'src/components'),

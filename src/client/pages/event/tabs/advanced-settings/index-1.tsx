@@ -30,7 +30,7 @@ import {
  * Internal dependencies
  */
 import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
-import { useEventContext } from '../../state/context';
+import { useEvent } from '@quillbooking/hooks'; // Use event store hook
 import {
 	AdvancedSettingsIcon,
 	EditIcon,
@@ -86,7 +86,9 @@ const EventAdvancedSettings = forwardRef<
 	EventAdvancedSettingsHandle,
 	EventAdvancedSettingsProps
 >((props, ref) => {
-	const { state: event } = useEventContext();
+	// Use event store instead of context
+	const { currentEvent: event, setEvent } = useEvent();
+
 	const [slug, setSlug] = useState<string>('');
 	const [activeModalType, setActiveModalType] = useState<
 		| null
@@ -257,7 +259,7 @@ const EventAdvancedSettings = forwardRef<
 				console.warn('No event available to save settings');
 				return;
 			}
-	
+
 			await saveApi({
 				path: `events/${event.id}`,
 				method: 'POST',
@@ -265,21 +267,47 @@ const EventAdvancedSettings = forwardRef<
 					advanced_settings: settings,
 					slug: slug,
 				},
-				onSuccess() {
+				onSuccess(response) {
 					successNotice(__('Settings saved successfully', 'quillbooking'));
+
 					// Update initial state to reflect saved state
 					setInitialSettings(JSON.parse(JSON.stringify(settings)));
 					setInitialSlug(slug);
 					props.setDisabled(true);
+
+					// Update event in store if the response contains updated event data
+					if (response && response.slug !== event.slug) {
+						const updatedEvent = { ...event, slug: response.slug || slug };
+						setEvent(updatedEvent);
+					}
 				},
 				onError(error) {
 					throw new Error(error.message); // Re-throw to be caught by the outer try-catch
 				},
 			});
-		} catch (error:any) {
+		} catch (error: any) {
 			throw new Error(error.message);
 		}
 	};
+
+	// Show loading if no event in store
+	if (!event) {
+		return (
+			<div className="grid grid-cols-2 gap-5 px-9">
+				<Card className="rounded-lg">
+					<Flex vertical gap={20}>
+						<Skeleton.Input active block className="h-8" />
+						<Skeleton.Input active block className="h-4 w-3/4" />
+						<div className="text-center py-8">
+							<p className="text-gray-500">
+								{__('No event selected', 'quillbooking')}
+							</p>
+						</div>
+					</Flex>
+				</Card>
+			</div>
+		);
+	}
 
 	if (!settings) {
 		return (
@@ -620,53 +648,53 @@ const EventAdvancedSettings = forwardRef<
 									</FieldWrapper>
 									{settings.cannot_cancel_time ===
 										'less_than' && (
-										<FieldWrapper
-											label={
-												<span className="text-[#09090B] text-[16px] font-[500]">
-													{__(
-														'Add Time',
-														'quillbooking'
-													)}
-												</span>
-											}
-										>
-											<Flex
-												gap={15}
-												className="w-full mb-4"
+											<FieldWrapper
+												label={
+													<span className="text-[#09090B] text-[16px] font-[500]">
+														{__(
+															'Add Time',
+															'quillbooking'
+														)}
+													</span>
+												}
 											>
-												<InputNumber
-													value={
-														settings.cannot_cancel_time_value
-													}
-													onChange={(value) =>
-														handleChange(
-															'cannot_cancel_time_value',
-															value
-														)
-													}
-													size="large"
-													className="rounded-lg h-[48px] w-full"
-												/>
-												<Select
-													value={
-														settings.cannot_cancel_time_unit
-													}
-													options={unitOptions}
-													onChange={(value) =>
-														handleChange(
-															'cannot_cancel_time_unit',
-															value
-														)
-													}
-													size="large"
-													getPopupContainer={(
-														trigger
-													) => trigger.parentElement}
-													className="rounded-lg h-[48px] w-full"
-												/>
-											</Flex>
-										</FieldWrapper>
-									)}
+												<Flex
+													gap={15}
+													className="w-full mb-4"
+												>
+													<InputNumber
+														value={
+															settings.cannot_cancel_time_value
+														}
+														onChange={(value) =>
+															handleChange(
+																'cannot_cancel_time_value',
+																value
+															)
+														}
+														size="large"
+														className="rounded-lg h-[48px] w-full"
+													/>
+													<Select
+														value={
+															settings.cannot_cancel_time_unit
+														}
+														options={unitOptions}
+														onChange={(value) =>
+															handleChange(
+																'cannot_cancel_time_unit',
+																value
+															)
+														}
+														size="large"
+														getPopupContainer={(
+															trigger
+														) => trigger.parentElement}
+														className="rounded-lg h-[48px] w-full"
+													/>
+												</Flex>
+											</FieldWrapper>
+										)}
 									<FieldWrapper
 										label={
 											<span className="text-[#09090B] text-[16px] font-[500]">
@@ -799,13 +827,13 @@ const EventAdvancedSettings = forwardRef<
 									? __('Redirect URL', 'quillbooking')
 									: activeModalType === 'queryString'
 										? __(
-												'Redirect Query String',
-												'quillbooking'
-											)
+											'Redirect Query String',
+											'quillbooking'
+										)
 										: __(
-												'Permission Denied Message',
-												'quillbooking'
-											)
+											'Permission Denied Message',
+											'quillbooking'
+										)
 						}
 						subHeader={__(
 							'Choose your Merge tags type and Select one of them related to your input.',

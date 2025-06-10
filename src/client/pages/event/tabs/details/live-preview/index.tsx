@@ -10,7 +10,6 @@ import React from 'react';
 import { Flex } from 'antd';
 import { SlArrowUp } from 'react-icons/sl';
 import { CardContent, Card } from '@mui/material';
-import { CiShare1 } from 'react-icons/ci';
 import { LuClock5 } from 'react-icons/lu';
 /**
  * Internal dependencies

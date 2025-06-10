@@ -30,6 +30,7 @@ import {
 	useNotice,
 	useBreadcrumbs,
 	useNavigate,
+	useEvent,
 } from '@quillbooking/hooks';
 import { useParams } from '@quillbooking/navigation';
 import {
@@ -47,7 +48,6 @@ import {
 	ShareModal,
 	NoticeBanner,
 } from '@quillbooking/components';
-import { Provider } from './state/context';
 import Calendar from '../calendar';
 import {
 	EventDetails,
@@ -72,6 +72,7 @@ const Event: React.FC = () => {
 		eventId: id,
 		tab,
 	} = useParams<{ id: string; eventId: string; tab: string }>();
+
 	if (!id?.match(/^\d+$/)) {
 		return <Calendar />;
 	}
@@ -79,8 +80,17 @@ const Event: React.FC = () => {
 	const childRef = useRef<any>(null);
 	const siteUrl = ConfigAPI.getSiteUrl();
 	const { callApi } = useApi();
-	const { errorNotice, successNotice } = useNotice();
-	const [event, setEvent] = useState<EventType | null>(null);
+	const { errorNotice, successNotice, infoNotice } = useNotice();
+
+	// Use event store instead of local state
+	const {
+		currentEvent: event,
+		setEvent,
+		clearEvent,
+		loading: eventLoading,
+		error: eventError
+	} = useEvent();
+
 	const [open, setOpen] = useState(!!id);
 	const [modalShareId, setModalShareId] = useState<string | null>(null);
 	const [saveDisabled, setSaveDisabled] = useState(true);
@@ -117,6 +127,7 @@ const Event: React.FC = () => {
 
 	const navigate = useNavigate();
 	const setBreadcrumbs = useBreadcrumbs();
+
 	if (!id) {
 		return null;
 	}
@@ -126,6 +137,7 @@ const Event: React.FC = () => {
 			path: `events/${id}`,
 			method: 'GET',
 			onSuccess(response: EventType) {
+				// Update event store instead of local state
 				setEvent(response);
 				setBreadcrumbs([
 					{
@@ -146,7 +158,19 @@ const Event: React.FC = () => {
 
 	useEffect(() => {
 		fetchEvent();
+
+		// Cleanup: Clear event when component unmounts
+		return () => {
+			clearEvent();
+		};
 	}, []);
+
+	// Handle event store errors
+	useEffect(() => {
+		if (eventError) {
+			errorNotice(eventError);
+		}
+	}, [eventError, errorNotice]);
 
 	console.log(event);
 
@@ -189,6 +213,9 @@ const Event: React.FC = () => {
 			method: 'DELETE',
 			onSuccess: () => {
 				successNotice(__('Event deleted successfully', 'quillbooking'));
+
+				// Clear event from store
+				clearEvent();
 				setOpen(false);
 				navigate('calendars'); // Redirect after deletion
 			},
@@ -221,6 +248,9 @@ const Event: React.FC = () => {
 				? __('Event has been disabled successfully.', 'quillbooking')
 				: __('Event has been enabled successfully.', 'quillbooking');
 
+			// Use existing useNotice hook
+			successNotice(`${title}: ${message}`);
+
 			setStatusMessage({
 				title,
 				message,
@@ -229,11 +259,10 @@ const Event: React.FC = () => {
 			setShowStatusBanner(true);
 			setTimeout(() => setShowStatusBanner(false), 5000);
 
-			// Only update state after successful API call
+			// Update event in store
+			const updatedEvent = { ...event, is_disabled: newStatus };
+			setEvent(updatedEvent);
 			setIsEventDisabled(newStatus);
-			setEvent((prev) =>
-				prev ? { ...prev, is_disabled: newStatus } : null
-			);
 		} catch (error: unknown) {
 			const errorMsg =
 				error instanceof Error
@@ -242,6 +271,10 @@ const Event: React.FC = () => {
 						'Failed to update event status. Please try again.',
 						'quillbooking'
 					);
+
+			// Use existing useNotice hook
+			errorNotice(errorMsg);
+
 			setStatusMessage({
 				title: __('Status Update Failed', 'quillbooking'),
 				message: errorMsg,
@@ -257,6 +290,8 @@ const Event: React.FC = () => {
 	const handleClose = () => {
 		if (discardChanges()) {
 			setOpen(false);
+			// Clear event from store when closing
+			clearEvent();
 			navigate('calendars');
 		}
 	};
@@ -269,6 +304,10 @@ const Event: React.FC = () => {
 
 		try {
 			await childRef.current.saveSettings(); // Wait for save to complete
+
+			// Use existing useNotice hook
+			successNotice(__('Your changes have been saved successfully.', 'quillbooking'));
+
 			setShowSavedBanner(true);
 			setTimeout(() => setShowSavedBanner(false), 5000);
 		} catch (error: unknown) {
@@ -279,6 +318,10 @@ const Event: React.FC = () => {
 						'Failed to save changes. Please try again.',
 						'quillbooking'
 					);
+
+			// Use existing useNotice hook
+			errorNotice(errorMsg);
+
 			setErrorMessage(errorMsg);
 			setShowErrorBanner(true);
 			setTimeout(() => setShowErrorBanner(false), 5000);
@@ -387,12 +430,6 @@ const Event: React.FC = () => {
 			),
 			icon: <WebhookIcon />,
 		},
-		// {
-		// 	key: 'integrations',
-		// 	label: __('Integrations', 'quillbooking'),
-		// 	children: <Fields />,
-		// 	icon: <IntegrationsIcon />,
-		// },
 	];
 
 	useEffect(() => {
@@ -438,214 +475,200 @@ const Event: React.FC = () => {
 		}
 	};
 
-	return (
-		<Provider
-			value={{
-				state: event,
-				actions: {
-					setEvent,
-				},
-			}}
-		>
-			<Dialog
-				open={open}
-				onClose={handleClose}
-				fullScreen
-				className="z-[150000]"
-			>
-				<DialogTitle className="border-b" sx={{ padding: '10px 16px' }}>
-					<Flex className="justify-between items-center">
-						<Flex gap={10}>
-							<DialogActions>
-								<DialogActions
-									className="cursor-pointer"
-									onClick={handleClose}
-									color="primary"
-								>
-									<IoCloseSharp />
-								</DialogActions>
-								<div className="text-[#09090B] text-[24px] font-[500]">
-									{__('Event Setup', 'quillbooking')}
-								</div>
-							</DialogActions>
-						</Flex>
-						<Flex gap={24} className="items-center">
-							<Flex gap={16} className="items-center">
-								<Switch
-									checked={!isEventDisabled}
-									onChange={toggleEventStatus}
-									loading={isSwitchLoading}
-									disabled={isSwitchLoading}
-									className={
-										!isEventDisabled
-											? 'bg-color-primary'
-											: 'bg-gray-400'
-									}
-								/>
-								<DialogActions
-									className="cursor-pointer"
-									color="primary"
-									onClick={handleDeleteEvent}
-								>
-									<TrashRedIcon />
-								</DialogActions>
-								<Button
-									type="text"
-									icon={<ShareIcon />}
-									style={{ paddingLeft: 0, paddingRight: 0 }}
-									onClick={() => setModalShareId(id)}
-								>
-									{__('Share', 'quillbooking')}
-								</Button>
-								{modalShareId !== null && (
-									<ShareModal
-										open={modalShareId !== null}
-										onClose={() => setModalShareId(null)}
-										url={`${siteUrl}?quillbooking_calendar=${event?.calendar.slug}&event=${event?.slug}`}
-									/>
-								)}
-							</Flex>
-							<Button
-								type="primary"
-								size="middle"
-								onClick={handleSave}
-								loading={isSaving}
-								disabled={saveDisabled || isSaving}
-								className={`rounded-lg font-[500] text-white ${saveDisabled || isSaving
-									? 'bg-gray-400 cursor-not-allowed'
-									: 'bg-color-primary '
-									}`}
-							>
-								{__('Save Changes', 'quillbooking')}
-							</Button>
-						</Flex>
-					</Flex>
-				</DialogTitle>
-				<div className="quillbooking-event">
-					<Box
-						sx={{
-							width: '100%',
-							bgcolor: '#FBFBFB',
-							display: 'flex',
-							justifyContent: 'flex-start',
-							padding: '20px 15px',
-						}}
-					>
-						<Tabs
-							value={activeTab}
-							onChange={handleTabChange}
-							variant="scrollable"
-							scrollButtons="auto"
-							sx={{
-								'& .MuiTabs-indicator': { display: 'none' },
-							}}
-						>
-							{tabs.map((tab) => (
-								<Tab
-									key={tab.key}
-									label={tab.label}
-									value={tab.key}
-									icon={tab.icon}
-									// onClick={() => setActiveTab(tab.key)}
-									iconPosition="start" // Ensures icon is placed before the label
-									sx={{
-										display: 'flex',
-										alignItems: 'center',
-										justifyContent: 'center',
-										gap: '8px', // Ensures spacing between icon & label
-										bgcolor:
-											activeTab === tab.key
-												? '#953AE4'
-												: 'transparent',
-										color: '#292D32',
-										borderRadius: '12px',
-										textTransform: 'capitalize',
-										//px: 3,
-										minHeight: '48px', // Force tab height
-										height: '48px', // Force height to override default
-										mx: 0.5,
-										fontWeight: '700',
-										transition: '0.3s',
-										'&.Mui-selected': { color: 'white' },
-									}}
-								/>
-							))}
-						</Tabs>
-					</Box>
-					<div className="p-5">
-						{showSavedBanner && (
-							<div className="px-9">
-								<NoticeBanner
-									notice={{
-										type: 'success',
-										title: __(
-											'Successfully Saved',
-											'quillbooking'
-										),
-										message: __(
-											'Your changes have been saved successfully.',
-											'quillbooking'
-										),
-									}}
-									closeNotice={() =>
-										setShowSavedBanner(false)
-									}
-								/>
-							</div>
-						)}
-						{showErrorBanner && (
-							<div className="px-9">
-								<NoticeBanner
-									notice={{
-										type: 'error',
-										title: __(
-											'Save Failed',
-											'quillbooking'
-										),
-										message: errorMessage,
-									}}
-									closeNotice={() =>
-										setShowErrorBanner(false)
-									}
-								/>
-							</div>
-						)}
-						{showStatusBanner && (
-							<div className="px-9">
-								<NoticeBanner
-									notice={{
-										type: statusMessage.type,
-										title: statusMessage.title,
-										message: statusMessage.message,
-									}}
-									closeNotice={() =>
-										setShowStatusBanner(false)
-									}
-								/>
-							</div>
-						)}
-						{tabs.find((t) => t.key === activeTab)?.children || (
-							<p>No content available</p>
-						)}
-					</div>
-
-					{/* <Tabs
-                        defaultActiveKey={tab || 'details'}
-                        activeKey={tab || 'details'}
-                        items={tabs}
-                        tabPosition="top"
-                        className="custom-tabs"
-                        style={{borderBottom:"none", outline:"none"}}
-                        //tabBarStyle={{ width: "100%", backgroundColor: "#FBFBFB", borderBottom: "none" }}
-                        onChange={(key) => {
-                            if (event) {
-                                navigate(`calendars/${event.calendar.id}/events/${event.id}/${key}`);
-                            }
-                        }}
-                    /> */}
+	// Show loading state from event store
+	if (eventLoading) {
+		return (
+			<Dialog open={true} fullScreen className="z-[150000]">
+				<div className="flex items-center justify-center h-full">
+					<div>Loading event...</div>
 				</div>
 			</Dialog>
-		</Provider>
+		);
+	}
+
+	return (
+		// No need for Provider wrapper anymore - using global store
+		<Dialog
+			open={open}
+			onClose={handleClose}
+			fullScreen
+			className="z-[150000]"
+		>
+			<DialogTitle className="border-b" sx={{ padding: '10px 16px' }}>
+				<Flex className="justify-between items-center">
+					<Flex gap={10}>
+						<DialogActions>
+							<DialogActions
+								className="cursor-pointer"
+								onClick={handleClose}
+								color="primary"
+							>
+								<IoCloseSharp />
+							</DialogActions>
+							<div className="text-[#09090B] text-[24px] font-[500]">
+								{__('Event Setup', 'quillbooking')}
+							</div>
+						</DialogActions>
+					</Flex>
+					<Flex gap={24} className="items-center">
+						<Flex gap={16} className="items-center">
+							<Switch
+								checked={!isEventDisabled}
+								onChange={toggleEventStatus}
+								loading={isSwitchLoading}
+								disabled={isSwitchLoading}
+								className={
+									!isEventDisabled
+										? 'bg-color-primary'
+										: 'bg-gray-400'
+								}
+							/>
+							<DialogActions
+								className="cursor-pointer"
+								color="primary"
+								onClick={handleDeleteEvent}
+							>
+								<TrashRedIcon />
+							</DialogActions>
+							<Button
+								type="text"
+								icon={<ShareIcon />}
+								style={{ paddingLeft: 0, paddingRight: 0 }}
+								onClick={() => setModalShareId(id)}
+							>
+								{__('Share', 'quillbooking')}
+							</Button>
+							{modalShareId !== null && (
+								<ShareModal
+									open={modalShareId !== null}
+									onClose={() => setModalShareId(null)}
+									url={`${siteUrl}?quillbooking_calendar=${event?.calendar.slug}&event=${event?.slug}`}
+								/>
+							)}
+						</Flex>
+						<Button
+							type="primary"
+							size="middle"
+							onClick={handleSave}
+							loading={isSaving}
+							disabled={saveDisabled || isSaving}
+							className={`rounded-lg font-[500] text-white ${saveDisabled || isSaving
+								? 'bg-gray-400 cursor-not-allowed'
+								: 'bg-color-primary '
+								}`}
+						>
+							{__('Save Changes', 'quillbooking')}
+						</Button>
+					</Flex>
+				</Flex>
+			</DialogTitle>
+			<div className="quillbooking-event">
+				<Box
+					sx={{
+						width: '100%',
+						bgcolor: '#FBFBFB',
+						display: 'flex',
+						justifyContent: 'flex-start',
+						padding: '20px 15px',
+					}}
+				>
+					<Tabs
+						value={activeTab}
+						onChange={handleTabChange}
+						variant="scrollable"
+						scrollButtons="auto"
+						sx={{
+							'& .MuiTabs-indicator': { display: 'none' },
+						}}
+					>
+						{tabs.map((tab) => (
+							<Tab
+								key={tab.key}
+								label={tab.label}
+								value={tab.key}
+								icon={tab.icon}
+								iconPosition="start"
+								sx={{
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									gap: '8px',
+									bgcolor:
+										activeTab === tab.key
+											? '#953AE4'
+											: 'transparent',
+									color: '#292D32',
+									borderRadius: '12px',
+									textTransform: 'capitalize',
+									minHeight: '48px',
+									height: '48px',
+									mx: 0.5,
+									fontWeight: '700',
+									transition: '0.3s',
+									'&.Mui-selected': { color: 'white' },
+								}}
+							/>
+						))}
+					</Tabs>
+				</Box>
+				<div className="p-5">
+					{showSavedBanner && (
+						<div className="px-9">
+							<NoticeBanner
+								notice={{
+									type: 'success',
+									title: __(
+										'Successfully Saved',
+										'quillbooking'
+									),
+									message: __(
+										'Your changes have been saved successfully.',
+										'quillbooking'
+									),
+								}}
+								closeNotice={() =>
+									setShowSavedBanner(false)
+								}
+							/>
+						</div>
+					)}
+					{showErrorBanner && (
+						<div className="px-9">
+							<NoticeBanner
+								notice={{
+									type: 'error',
+									title: __(
+										'Save Failed',
+										'quillbooking'
+									),
+									message: errorMessage,
+								}}
+								closeNotice={() =>
+									setShowErrorBanner(false)
+								}
+							/>
+						</div>
+					)}
+					{showStatusBanner && (
+						<div className="px-9">
+							<NoticeBanner
+								notice={{
+									type: statusMessage.type,
+									title: statusMessage.title,
+									message: statusMessage.message,
+								}}
+								closeNotice={() =>
+									setShowStatusBanner(false)
+								}
+							/>
+						</div>
+					)}
+					{tabs.find((t) => t.key === activeTab)?.children || (
+						<p>No content available</p>
+					)}
+				</div>
+			</div>
+		</Dialog>
 	);
 };
 

@@ -18,8 +18,7 @@ import { get } from 'lodash';
 /**
  * Internal dependencies
  */
-import { useApi, useNotice, useBreadcrumbs } from '@quillbooking/hooks';
-import { useEventContext } from '../../state/context';
+import { useApi, useNotice, useBreadcrumbs, useEvent } from '@quillbooking/hooks';
 import EventInfo from './event-info';
 import LivePreview from './live-preview';
 import Duration from './duration';
@@ -128,7 +127,14 @@ interface EventDetailsProps {
 
 const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 	({ onKeepDialogOpen, notice, clearNotice, disabled, setDisabled }, ref) => {
-		const { state: event, actions } = useEventContext();
+		// Use event store instead of context
+		const {
+			currentEvent: event,
+			setEvent,
+			updateEvent,
+			loading: eventLoading
+		} = useEvent();
+
 		const { callApi } = useApi();
 		const { successNotice } = useNotice();
 		const setBreadcrumbs = useBreadcrumbs();
@@ -168,14 +174,24 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 
 			const isCustomDuration = ![15, 30, 45, 60].includes(event.duration);
 			setDurationMode(isCustomDuration ? 'custom' : 'preset');
-		}, []);
+		}, [event?.id]); // Only depend on event ID to prevent unnecessary rerenders
 
-		if (isInitialLoading) {
+		// Show loading state if event store is loading
+		if (eventLoading || isInitialLoading) {
 			return <EventDetailsShimmer />;
 		}
 
+		// Show error state if no event in store
 		if (!event) {
-			return null;
+			return (
+				<div className="w-full px-9">
+					<Card className="text-center py-8">
+						<p className="text-gray-500">
+							{__('No event selected', 'quillbooking')}
+						</p>
+					</Card>
+				</div>
+			);
 		}
 
 		const saveSettings = async () => {
@@ -187,8 +203,8 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 					method: 'PUT',
 					data: event,
 					onSuccess: (response) => {
-						// Update the event state with the response data
-						actions.setEvent(response);
+						// Update the event state in the store with the response data
+						setEvent(response);
 						successNotice(
 							__(
 								'Event settings saved successfully',
@@ -211,18 +227,24 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 		};
 
 		const handleChange = (key: string, value: any) => {
-			actions.setEvent({ ...event, [key]: value });
+			// Use updateEvent helper if available, otherwise use setEvent
+			if (updateEvent) {
+				updateEvent({ [key]: value });
+			} else {
+				setEvent({ ...event, [key]: value });
+			}
 			setDisabled(false);
 		};
 
 		const handleAdditionalSettingsChange = (key: string, value: any) => {
-			actions.setEvent({
+			const updatedEvent = {
 				...event,
 				additional_settings: {
 					...event.additional_settings,
 					[key]: value,
 				},
-			});
+			};
+			setEvent(updatedEvent);
 			setDisabled(false);
 		};
 
@@ -230,7 +252,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 			key: 'max_invites' | 'show_remaining',
 			value: number | boolean
 		) => {
-			actions.setEvent({
+			const updatedEvent = {
 				...event,
 				group_settings: {
 					max_invites:
@@ -242,7 +264,8 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 							? (value as boolean)
 							: (event.group_settings?.show_remaining ?? true),
 				},
-			});
+			};
+			setEvent(updatedEvent);
 			setDisabled(false);
 		};
 
@@ -283,11 +306,11 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 				'additional_settings.selectable_durations'
 			)
 				? get(event, 'additional_settings.selectable_durations').map(
-						(duration) => ({
-							value: duration,
-							label: `${duration} minutes`,
-						})
-					)
+					(duration) => ({
+						value: duration,
+						label: `${duration} minutes`,
+					})
+				)
 				: [];
 
 			return options;
@@ -319,7 +342,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 							<TeamAssignment
 								team={
 									Array.isArray(event.hosts) &&
-									event.hosts.length > 0
+										event.hosts.length > 0
 										? event.hosts
 										: []
 								}

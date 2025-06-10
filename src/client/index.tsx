@@ -12,7 +12,8 @@ import { ConfigProvider } from 'antd';
  * Internal dependencies
  */
 import PageLayout from './layout';
-import '@quillbooking/store';
+import '../stores/core';
+import '../stores/event';
 export * from './types';
 
 const appRoot = document.getElementById('quillbooking-admin-root');

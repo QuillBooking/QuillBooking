@@ -14,7 +14,7 @@ import { __ } from '@wordpress/i18n';
  */
 import { Card, Modal, Skeleton } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-
+import slugify from 'slugify';
 /**
  * Internal dependencies
  */
@@ -25,10 +25,10 @@ import {
 	ProIcon,
 	QuestionOutlineIcon,
 } from '@quillbooking/components';
-import { EventTabHandle, EventTabProps, Fields } from 'client/types';
+import { EventTabHandle, EventTabProps, Fields, FieldType } from 'client/types';
 import Question from './question';
-import { doAction } from '@wordpress/hooks';
-import { Link } from 'react-router';
+import { doAction, applyFilters } from '@wordpress/hooks';
+import { Link } from 'react-router-dom';
 
 const LoadingSkeleton = () => (
 	<Card>
@@ -150,35 +150,12 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		};
 
 		const addField = () => {
-			doAction('quillbooking.event.fields.add_field', event, fields);
-			setShowModal(true);
-
-			// if (!fields) return;
-			// const order =
-			// 	Object.keys(fields?.system || {}).length +
-			// 	Object.keys(fields?.location || {}).length +
-			// 	Object.keys(fields?.custom || {}).length +
-			// 	1;
-			// const defaultLabel =
-			// 	__('New Question', 'quillbooking') + ' ' + order;
-			// const newFieldKey = slugify(defaultLabel, { lower: true });
-			// const newField: FieldType = {
-			// 	label: defaultLabel,
-			// 	type: 'text', // default type
-			// 	required: false,
-			// 	group: 'custom',
-			// 	event_location: 'all',
-			// 	placeholder: '',
-			// 	order: order,
-			// 	settings: {},
-			// 	enabled: true,
-			// };
-			// const updatedFields = {
-			// 	...fields,
-			// 	custom: { ...fields.custom, [newFieldKey]: newField },
-			// };
-			// setFields(updatedFields);
-			// props.setDisabled(false);
+			doAction('quillbooking.event.fields.add_field', {
+				event,
+				fields,
+				setFields,
+				setDisabled: props.setDisabled,
+			});
 		};
 
 		const removeField = async (
@@ -295,15 +272,26 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 							</>
 						)}
 
-						<div
-							className="w-full text-center border border-color-primary text-color-primary rounded-lg py-4 border-dashed bg-color-secondary font-bold cursor-pointer hover:bg-color-primary hover:text-white transition-all duration-200 ease-in-out mt-2"
-							onClick={addField}
-						>
-							<div className="flex items-center justify-center gap-2">
-								<PlusOutlined />
-								{__('Add New Question', 'quillbooking')}
-							</div>
-						</div>
+						{
+							applyFilters(
+								'quillbooking.event.fields.add_field_component',
+								<div
+									className="w-full text-center border border-color-primary text-color-primary rounded-lg py-4 border-dashed bg-color-secondary font-bold cursor-pointer hover:bg-color-primary hover:text-white transition-all duration-200 ease-in-out mt-2"
+									onClick={() => setShowModal(true)}
+								>
+									<div className="flex items-center justify-center gap-2">
+										<PlusOutlined />
+										{__('Add New Question', 'quillbooking')}
+									</div>
+								</div>,
+								{
+									event,
+									fields,
+									setFields,
+									setDisabled: props.setDisabled,
+								}
+							) as any
+						}
 					</Card>
 
 					<Card className="mt-4">
@@ -361,7 +349,7 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 							<div className="mt-5">
 								<Link
 									className="bg-color-primary text-[#FBF9FC] rounded-lg py-3 px-4 font-medium"
-									to="/"
+									to="/plugins.php?s=quillbooking-pro&tab=search&type=term"
 								>
 									{__('Upgrade To Pro Now', 'quillbooking')}
 								</Link>

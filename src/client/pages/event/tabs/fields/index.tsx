@@ -14,20 +14,18 @@ import { __ } from '@wordpress/i18n';
  */
 import { Card, Modal, Skeleton } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import slugify from 'slugify';
 
 /**
  * Internal dependencies
  */
-import { useApi, useNotice } from '@quillbooking/hooks';
-import { useEventContext } from '../../state/context';
+import { useApi, useNotice, useEvent } from '@quillbooking/hooks';
 import './style.scss';
 import {
 	CardHeader,
 	ProIcon,
 	QuestionOutlineIcon,
 } from '@quillbooking/components';
-import { EventTabHandle, EventTabProps, Fields, FieldType } from 'client/types';
+import { EventTabHandle, EventTabProps, Fields } from 'client/types';
 import Question from './question';
 import { doAction } from '@wordpress/hooks';
 import { Link } from 'react-router';
@@ -56,7 +54,7 @@ const LoadingSkeleton = () => (
 
 const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 	(props, ref) => {
-		const { state: event } = useEventContext();
+		const { currentEvent: event } = useEvent();
 		const { callApi, loading } = useApi();
 		const { callApi: saveApi } = useApi();
 		const { successNotice, errorNotice } = useNotice();

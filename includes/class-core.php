@@ -16,6 +16,7 @@ use QuillBooking\Managers\Payment_Gateways_Manager;
 use QuillBooking\Managers\Merge_Tags_Manager;
 use QuillBooking\Availabilities;
 use QuillBooking\Capabilities;
+use QuillBooking\Models\Calendar_Model; 
 
 /**
  * Main Core Class
@@ -42,6 +43,14 @@ class Core {
 			'capabilities' => Capabilities::get_current_user_capabilities(),
 		);
 
+		// Check if the user has calendars
+		$has_calendars = false;
+		if ( class_exists( '\QuillBooking\Models\Calendar_Model' ) ) {
+			$user_id         = get_current_user_id();
+			$calendars_count = Calendar_Model::query()->where( 'user_id', $user_id )->count();
+			$has_calendars   = $calendars_count > 0;
+		}
+
 		wp_add_inline_script(
 			'quillbooking-config',
 			'quillbooking.config.setBlogName("' . get_bloginfo( 'name' ) . '");' .
@@ -59,7 +68,8 @@ class Core {
 			'quillbooking.config.setCapabilities( ' . json_encode( Capabilities::get_core_capabilities() ) . ' );' .
 			'quillbooking.config.setPaymentGateways( ' . json_encode( Payment_Gateways_Manager::instance()->get_options() ) . ' );' .
 			'quillbooking.config.setCurrentUser( ' . json_encode( $current_user ) . ' );' .
-			'quillbooking.config.setMergeTags( ' . json_encode( Merge_Tags_Manager::instance()->get_groups() ) . ' );' 
+			'quillbooking.config.setMergeTags( ' . json_encode( Merge_Tags_Manager::instance()->get_groups() ) . ' );' .
+			'quillbooking.config.setHasCalendars( ' . ( $has_calendars ? 'true' : 'false' ) . ' );'
 		);
 	}
 }

@@ -281,7 +281,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 		}
 	};
 
-	if (eventLoading) {
+	if (eventLoading || loading) {
 		return (
 			<Card className="rounded-lg">
 				<div className="animate-pulse">

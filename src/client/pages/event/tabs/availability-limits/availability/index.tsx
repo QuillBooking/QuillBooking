@@ -21,7 +21,7 @@ import {
 } from '@quillbooking/components';
 import { RangeSection } from './sections';
 import ConfigAPI from '@quillbooking/config';
-import { useApi, useNotice } from '@quillbooking/hooks';
+import { useApi, useEvent, useNotice } from '@quillbooking/hooks';
 import {
 	Availability,
 	AvailabilityRange,
@@ -30,7 +30,6 @@ import {
 	Host,
 	TimeSlot,
 } from 'client/types';
-import { useEventContext } from '../../../state/context';
 import AvailabilityType from './availability-type';
 import SelectSchedule from './select-schedule';
 
@@ -72,7 +71,8 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 		Availability | CustomAvailability
 	>(customAvailability);
 	const storedAvailabilities = ConfigAPI.getAvailabilities();
-	const { state: event } = useEventContext();
+	const { currentEvent: event, loading: eventLoading } = useEvent();
+
 	const { callApi, loading } = useApi();
 	const { errorNotice } = useNotice();
 	const [selectedCard, setSelectedCard] = useState<number | null>(null);
@@ -281,7 +281,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 		}
 	};
 
-	if (loading) {
+	if (eventLoading || loading) {
 		return (
 			<Card className="rounded-lg">
 				<div className="animate-pulse">

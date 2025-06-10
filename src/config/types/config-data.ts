@@ -8,6 +8,7 @@ export type ConfigData = Record<string, unknown> & {
 	adminEmail: string;
 	ajaxUrl: string;
 	nonce: string;
+	hasCalendars: boolean;
 	isWoocommerceActive: boolean;
 	timezones: Record<string, string>;
 	integrations: Integrations;
@@ -71,20 +72,20 @@ export type FieldsTypes = {
 
 export type FieldType = {
 	type:
-		| 'text'
-		| 'textarea'
-		| 'checkbox'
-		| 'select'
-		| 'radio'
-		| 'date'
-		| 'time'
-		| 'datetime'
-		| 'number'
-		| 'multiple_select'
-		| 'file'
-		| 'hidden'
-		| 'checkbox_group'
-		| 'terms';
+	| 'text'
+	| 'textarea'
+	| 'checkbox'
+	| 'select'
+	| 'radio'
+	| 'date'
+	| 'time'
+	| 'datetime'
+	| 'number'
+	| 'multiple_select'
+	| 'file'
+	| 'hidden'
+	| 'checkbox_group'
+	| 'terms';
 	has_options: boolean;
 	multiple: boolean;
 };

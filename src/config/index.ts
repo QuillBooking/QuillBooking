@@ -20,6 +20,7 @@ const configData: ConfigData = {
     ajaxUrl: '',
     siteUrl: '',
     nonce: '',
+    hasCalendars: false,
     isWoocommerceActive: false,
     timezones: {},
     integrations: {},
@@ -377,6 +378,30 @@ export const setMergeTags = (data: ConfigData) => (value: MergeTagGroups) => {
     data.mergeTags = value;
 };
 
+
+/**
+ * Get has calendars
+ *
+ * @param data the json environment configuration to use for getting config values
+ * @returns boolean
+ */
+export const getHasCalendars = (data: ConfigData) => (): boolean => {
+    return data.hasCalendars;
+};
+
+
+/**
+ * Set has calendars
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * @param value the value to set
+ */
+export const setHasCalendars = (data: ConfigData) => (value: boolean) => {
+    data.hasCalendars = value;
+};
+
+
+
 // Update your ConfigApi interface to include the new methods
 export interface ConfigApi {
     <T>(key: string): T;
@@ -412,6 +437,8 @@ export interface ConfigApi {
     setCurrentUser: (value: CurrentUser) => void;
     getMergeTags: () => MergeTagGroups; // New method
     setMergeTags: (value: MergeTagGroups) => void; // New method
+    getHasCalendars: () => boolean; // New method
+    setHasCalendars: (value: boolean) => void; // New method
 }
 
 // Update the createConfig function to include the new methods
@@ -449,7 +476,8 @@ const createConfig = (data: ConfigData): ConfigApi => {
     configApi.setCurrentUser = setCurrentUser(data);
     configApi.getMergeTags = () => getMergeTags(data); // New method
     configApi.setMergeTags = setMergeTags(data); // New method
-
+    configApi.getHasCalendars = getHasCalendars(data); // New method
+    configApi.setHasCalendars = setHasCalendars(data); // New method
     return configApi;
 };
 

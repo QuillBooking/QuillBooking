@@ -14,7 +14,7 @@ import { __ } from '@wordpress/i18n';
  */
 import { Card, Modal, Skeleton } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import slugify from 'slugify';
+
 /**
  * Internal dependencies
  */
@@ -25,7 +25,7 @@ import {
 	ProIcon,
 	QuestionOutlineIcon,
 } from '@quillbooking/components';
-import { EventTabHandle, EventTabProps, Fields, FieldType } from 'client/types';
+import { EventTabHandle, EventTabProps, Fields } from 'client/types';
 import Question from './question';
 import { doAction, applyFilters } from '@wordpress/hooks';
 import { Link } from 'react-router-dom';
@@ -147,15 +147,6 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 				// Consider adding error recovery or state reset here if needed
 				throw new Error(error.message); // Re-throw to allow calling code to handle
 			}
-		};
-
-		const addField = () => {
-			doAction('quillbooking.event.fields.add_field', {
-				event,
-				fields,
-				setFields,
-				setDisabled: props.setDisabled,
-			});
 		};
 
 		const removeField = async (

@@ -16,7 +16,7 @@ const OutlookFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
 	return applyFilters(
 		'quillbooking.outlookFields',
 		<ProGlobalIntegrations list={outlookList} />,
-		[CACHE_TIME_OPTIONS, form, calendar]
+		{ CACHE_TIME_OPTIONS, form, calendar }
 	) as React.ReactNode;
 };
 

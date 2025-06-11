@@ -16,7 +16,7 @@ const GoogleFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
 	return applyFilters(
 		'quillbooking.googleFields',
 		<ProGlobalIntegrations list={googleList} />,
-		[CACHE_TIME_OPTIONS, form, calendar]
+		{ CACHE_TIME_OPTIONS, form, calendar }
 	) as React.ReactNode;
 };
 

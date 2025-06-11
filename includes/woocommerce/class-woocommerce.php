@@ -11,21 +11,19 @@ namespace QuillBooking\WooCommerce;
 
 use QuillBooking\Traits\Singleton;
 
-if (!class_exists('\QuillBooking_Pro\WooCommerce\WooCommerce')) {
-	/**
-	 * WooCommerce class.
-	 */
-	class WooCommerce
-	{
-		use Singleton;
+/**
+ * WooCommerce class.
+ */
+class WooCommerce
+{
+	use Singleton;
 
-		/**
-		 * Constructor
-		 */
-		public function __construct()
-		{
-			// This is a placeholder class.
-			// The actual functionality is in the Pro version.
-		}
+	/**
+	 * Constructor
+	 */
+	public function __construct()
+	{
+		// This is a placeholder class.
+		// The actual functionality is in the Pro version.
 	}
 }

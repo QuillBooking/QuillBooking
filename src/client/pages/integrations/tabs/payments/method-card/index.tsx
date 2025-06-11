@@ -57,8 +57,6 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 	);
 
 	useEffect(() => {
-		// Check if this is the pro version by seeing if we have real payment gateways
-		// In the free version, we use placeholder gateways, in pro version we have real ones
 		const configGateways = ConfigAPI.getPaymentGateways();
 		const hasRealGateways = Object.keys(configGateways).length > 0;
 

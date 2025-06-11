@@ -10,13 +10,13 @@ export interface SmsNotificationsTabHandle {
 interface SmsNotificationsTabProps {
 	disabled: boolean;
 	setDisabled: (disabled: boolean) => void;
+	handleNavigation?: (tab: string) => void;
 }
 
 const SmsNotificationTab = forwardRef<
 	SmsNotificationsTabHandle,
 	SmsNotificationsTabProps
->(({ disabled, setDisabled }, ref) => {
-
+>(({ disabled, setDisabled, handleNavigation }, ref) => {
 	return applyFilters(
 		'quillbooking.event.sms_notification_tab',
 		<ProTab
@@ -31,6 +31,7 @@ const SmsNotificationTab = forwardRef<
 			disabled,
 			setDisabled,
 			ref,
+			handleNavigation,
 		}
 	) as React.ReactNode;
 });

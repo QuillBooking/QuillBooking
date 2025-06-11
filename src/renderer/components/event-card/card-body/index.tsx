@@ -365,7 +365,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 				  bookingData ? (
 					(applyFilters(
 						'quillbooking.renderer.payment_component',
-						console.log('Payment component'),
+						null,
 						{
 							ajax_url,
 							setStep,

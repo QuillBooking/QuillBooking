@@ -16,7 +16,7 @@ const AppleFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
 	return applyFilters(
 		'quillbooking.appleFields',
 		<ProGlobalIntegrations list={appleList} />,
-		[CACHE_TIME_OPTIONS, form, calendar]
+		{ CACHE_TIME_OPTIONS, form, calendar }
 	) as React.ReactNode;
 };
 

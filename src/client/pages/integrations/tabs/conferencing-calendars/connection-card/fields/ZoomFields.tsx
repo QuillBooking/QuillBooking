@@ -36,7 +36,8 @@ const ZoomFields = ({
 	return applyFilters(
 		'quillbooking.zoomFields',
 		<ProGlobalIntegrations list={zoomList} />,
-		[fields, form, calendar]
+		// convert to object instead of array
+		{ fields, form, calendar }
 	) as React.ReactNode;
 };
 

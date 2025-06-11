@@ -18,7 +18,7 @@ import { get } from 'lodash';
 /**
  * Internal dependencies
  */
-import { useApi, useNotice, useBreadcrumbs, useEvent } from '@quillbooking/hooks';
+import { useApi, useBreadcrumbs, useEvent } from '@quillbooking/hooks';
 import EventInfo from './event-info';
 import LivePreview from './live-preview';
 import Duration from './duration';
@@ -131,16 +131,11 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 		const {
 			currentEvent: event,
 			setEvent,
-			updateEvent,
-			loading: eventLoading
+			loading: eventLoading,
 		} = useEvent();
 
 		const { callApi } = useApi();
-		const { successNotice } = useNotice();
 		const setBreadcrumbs = useBreadcrumbs();
-		const [durationMode, setDurationMode] = useState<'preset' | 'custom'>(
-			'preset'
-		);
 		const [isInitialLoading, setIsInitialLoading] = useState(true);
 
 		useEffect(() => {
@@ -171,9 +166,6 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 					title: __('General', 'quillbooking'),
 				},
 			]);
-
-			const isCustomDuration = ![15, 30, 45, 60].includes(event.duration);
-			setDurationMode(isCustomDuration ? 'custom' : 'preset');
 		}, [event?.id]); // Only depend on event ID to prevent unnecessary rerenders
 
 		// Show loading state if event store is loading
@@ -205,12 +197,6 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 					onSuccess: (response) => {
 						// Update the event state in the store with the response data
 						setEvent(response);
-						successNotice(
-							__(
-								'Event settings saved successfully',
-								'quillbooking'
-							)
-						);
 						setDisabled(true);
 					},
 					onError: (error) => {
@@ -227,12 +213,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 		};
 
 		const handleChange = (key: string, value: any) => {
-			// Use updateEvent helper if available, otherwise use setEvent
-			if (updateEvent) {
-				updateEvent({ [key]: value });
-			} else {
-				setEvent({ ...event, [key]: value });
-			}
+			setEvent({ ...event, [key]: value });
 			setDisabled(false);
 		};
 
@@ -306,11 +287,11 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 				'additional_settings.selectable_durations'
 			)
 				? get(event, 'additional_settings.selectable_durations').map(
-					(duration) => ({
-						value: duration,
-						label: `${duration} minutes`,
-					})
-				)
+						(duration) => ({
+							value: duration,
+							label: `${duration} minutes`,
+						})
+					)
 				: [];
 
 			return options;
@@ -342,7 +323,7 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 							<TeamAssignment
 								team={
 									Array.isArray(event.hosts) &&
-										event.hosts.length > 0
+									event.hosts.length > 0
 										? event.hosts
 										: []
 								}

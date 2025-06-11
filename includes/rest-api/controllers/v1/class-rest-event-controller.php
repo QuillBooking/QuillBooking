@@ -804,9 +804,9 @@ class REST_Event_Controller extends REST_Controller {
 			$payments_settings   = $request->get_param( 'payments_settings' );
 			$webhook_feeds       = $request->get_param( 'webhook_feeds' );
 			$fields              = $request->get_param( 'fields' );
-			$slug                = $request->get_param( 'slug' );
 			$reserve_times       = $request->get_param( 'reserve_times' );
 			$hosts               = $request->get_param( 'hosts' );
+			// $slug                = $request->get_param( 'slug' );
 
 			$event = Event_Model::find( $id )->with( 'calendar' )->first();
 			if ( ! $event ) {
@@ -851,15 +851,15 @@ class REST_Event_Controller extends REST_Controller {
 				$event->setWebhookFeedsAttribute( $webhook_feeds );
 			}
 
-			if ( ! empty( $slug ) ) {
-				$exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
-				if ( $exists ) {
-					$wpdb->query( 'ROLLBACK' );
-					return new WP_Error( 'rest_event_error', __( 'Event slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
-				}
+			// if ( ! empty( $slug ) ) {
+			// $exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
+			// if ( $exists ) {
+			// $wpdb->query( 'ROLLBACK' );
+			// return new WP_Error( 'rest_event_error', __( 'Event slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
+			// }
 
-				$updated['slug'] = $slug;
-			}
+			// $updated['slug'] = $slug;
+			// }
 
 			if ( ! empty( $hosts ) && $event->calendar->type === 'team' ) {
 				$event->setTeamMembersAttribute( $hosts );

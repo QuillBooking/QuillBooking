@@ -42,6 +42,7 @@ const CalendarEvents: React.FC<{
 	setDeleteMessage: (message: boolean) => void;
 	setCloneMessage: (message: boolean) => void;
 	setErrorMessage?: (message: string | null) => void;
+	navigate: (path: string) => void;
 }> = ({
 	calendar,
 	typesLabels,
@@ -50,6 +51,7 @@ const CalendarEvents: React.FC<{
 	setDeleteMessage,
 	setCloneMessage,
 	setErrorMessage,
+	navigate,
 }) => {
 	const siteUrl = ConfigAPI.getSiteUrl();
 	const copyToClipboard = useCopyToClipboard();
@@ -140,6 +142,7 @@ const CalendarEvents: React.FC<{
 											}}
 											content={
 												<EventActions
+													navigate={navigate}
 													event={event}
 													calendarId={calendar.id}
 													updateCalendarEvents={

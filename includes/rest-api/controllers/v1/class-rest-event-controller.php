@@ -781,7 +781,6 @@ class REST_Event_Controller extends REST_Controller {
 		try {
 			global $wpdb;
 			$wpdb->query( 'START TRANSACTION' );
-
 			$id                  = $request->get_param( 'id' );
 			$user_id             = $request->get_param( 'user_id' );
 			$name                = $request->get_param( 'name' );
@@ -804,11 +803,11 @@ class REST_Event_Controller extends REST_Controller {
 			$payments_settings   = $request->get_param( 'payments_settings' );
 			$webhook_feeds       = $request->get_param( 'webhook_feeds' );
 			$fields              = $request->get_param( 'fields' );
-			$slug                = $request->get_param( 'slug' );
 			$reserve_times       = $request->get_param( 'reserve_times' );
 			$hosts               = $request->get_param( 'hosts' );
+			// $slug                = $request->get_param( 'slug' );
 
-			$event = Event_Model::find( $id )->with( 'calendar' )->first();
+			$event = Event_Model::with( 'calendar' )->find( $id );
 			if ( ! $event ) {
 				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
@@ -851,20 +850,24 @@ class REST_Event_Controller extends REST_Controller {
 				$event->setWebhookFeedsAttribute( $webhook_feeds );
 			}
 
-			if ( ! empty( $slug ) ) {
-				$exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
-				if ( $exists ) {
-					$wpdb->query( 'ROLLBACK' );
-					return new WP_Error( 'rest_event_error', __( 'Event slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
-				}
+			// if ( ! empty( $slug ) ) {
+			// $exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
+			// if ( $exists ) {
+			// $wpdb->query( 'ROLLBACK' );
+			// return new WP_Error( 'rest_event_error', __( 'Event slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
+			// }
 
-				$updated['slug'] = $slug;
-			}
+			// $updated['slug'] = $slug;
+			// }
 
 			if ( ! empty( $hosts ) && $event->calendar->type === 'team' ) {
+				// Normalize hosts to array of IDs if they're arrays with 'id' key
+				if ( is_array( $hosts ) && ! empty( $hosts ) && is_array( $hosts[0] ) && isset( $hosts[0]['id'] ) ) {
+					$hosts = array_column( $hosts, 'id' );
+				}
+
 				$event->setTeamMembersAttribute( $hosts );
 			}
-
 			if ( $user_id ) {
 				$updated['user_id'] = $user_id;
 			}

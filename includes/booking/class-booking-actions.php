@@ -26,6 +26,8 @@ use QuillBooking\Settings;
 class Booking_Actions {
 
 
+
+
 	// --- Dependency Properties ---
 	private string $calendarModelClass;
 	private string $eventModelClass;
@@ -49,7 +51,7 @@ class Booking_Actions {
 	}
 
 	public function enqueue_scripts() {
-		 $asset_file  = QUILLBOOKING_PLUGIN_DIR . 'build/renderer/index.asset.php';
+		$asset_file   = QUILLBOOKING_PLUGIN_DIR . 'build/renderer/index.asset.php';
 		$asset        = file_exists( $asset_file ) ? require $asset_file : null;
 		$dependencies = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
 		$version      = isset( $asset['version'] ) ? $asset['version'] : QUILLBOOKING_VERSION;
@@ -99,6 +101,9 @@ class Booking_Actions {
 
 		wp_style_add_data( 'quillbooking-renderer', 'rtl', 'replace' );
 		Renderer::set_renderer();
+
+		// Trigger action for pro plugin to add its scripts
+		do_action( 'quillbooking_renderer_enqueue_scripts' );
 	}
 
 	public function init() {
@@ -114,6 +119,9 @@ class Booking_Actions {
 	 * @return bool
 	 */
 	private function render_react_page( string $div_id ): bool {
+		// Trigger action for pro plugin to add its scripts
+		do_action( 'quillbooking_renderer_enqueue_scripts' );
+
 		wp_enqueue_script( 'quillbooking-renderer' );
 		wp_enqueue_style( 'quillbooking-renderer' );
 
@@ -149,6 +157,9 @@ class Booking_Actions {
 		if ( ! $event && $event_slug ) {
 			return;
 		}
+
+		// Trigger action for pro plugin to add its scripts
+		do_action( 'quillbooking_renderer_enqueue_scripts' );
 
 		wp_enqueue_script( 'quillbooking-renderer' );
 		wp_enqueue_style( 'quillbooking-renderer' );
@@ -268,8 +279,8 @@ class Booking_Actions {
 		</head>
 
 		<body class="quillbooking-body">
-		<?php
-		return ob_get_clean();
+			<?php
+			return ob_get_clean();
 	}
 
 	public function get_footer() {

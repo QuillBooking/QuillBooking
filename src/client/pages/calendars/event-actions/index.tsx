@@ -19,7 +19,7 @@ import {
 	CalendarDisableIcon,
 } from '@quillbooking/components';
 import type { Event } from '@quillbooking/client';
-import { useApi, useNavigate } from '@quillbooking/hooks';
+import { useApi } from '@quillbooking/hooks';
 
 // Define the props type
 interface EventActionsProps {
@@ -33,6 +33,7 @@ interface EventActionsProps {
 	setCloneMessage: (message: boolean) => void;
 	onActionComplete: () => void; // New prop for closing the popover
 	setErrorMessage?: (message: string | null) => void;
+	navigate: (path: string) => void;
 }
 
 const EventActions: React.FC<EventActionsProps> = ({
@@ -46,12 +47,12 @@ const EventActions: React.FC<EventActionsProps> = ({
 	setCloneMessage,
 	onActionComplete,
 	setErrorMessage,
+	navigate,
 }) => {
 	const [isModalDeleteOpen, setIsModalDeleteOpen] = useState(false);
 	const [isModalDisableOpen, setIsModalDisableOpen] = useState(false);
 
 	const { callApi, loading } = useApi();
-	const navigate = useNavigate();
 
 	const showDisableModal = () => {
 		setIsModalDisableOpen(true);
@@ -87,7 +88,6 @@ const EventActions: React.FC<EventActionsProps> = ({
 		}
 	};
 
-
 	const handleDisableCancel = () => {
 		setIsModalDisableOpen(false);
 	};
@@ -120,7 +120,6 @@ const EventActions: React.FC<EventActionsProps> = ({
 		}
 	};
 
-
 	const handleDeleteCancel = () => {
 		setIsModalDeleteOpen(false);
 	};
@@ -150,7 +149,6 @@ const EventActions: React.FC<EventActionsProps> = ({
 			onActionComplete();
 		}
 	};
-
 
 	const handleEdit = () => {
 		// Close popover before navigation
@@ -293,24 +291,24 @@ const EventActions: React.FC<EventActionsProps> = ({
 					<p className="text-[#09090B] text-[20px] font-[700] mt-5">
 						{isDisabled
 							? __(
-								'Do you really you want to enable this event?',
-								'quillbooking'
-							)
+									'Do you really you want to enable this event?',
+									'quillbooking'
+								)
 							: __(
-								'Do you really you want to disable this event?',
-								'quillbooking'
-							)}
+									'Do you really you want to disable this event?',
+									'quillbooking'
+								)}
 					</p>
 					<span className="text-[#71717A] text-center">
 						{isDisabled
 							? __(
-								'Enabling this event will make it available for booking',
-								'quillbooking'
-							)
+									'Enabling this event will make it available for booking',
+									'quillbooking'
+								)
 							: __(
-								'by Disable this event you will not be able to Share or edit event untiled you Enable it again!',
-								'quillbooking'
-							)}
+									'by Disable this event you will not be able to Share or edit event untiled you Enable it again!',
+									'quillbooking'
+								)}
 					</span>
 				</Flex>
 			</Modal>

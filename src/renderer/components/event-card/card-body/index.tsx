@@ -7,11 +7,11 @@ import './style.scss';
 import { Dayjs } from 'dayjs';
 import QuestionsComponents from './questions';
 import Reschedule from '../../reschedule';
-import Payment from './payment';
 import { Col, Row, Skeleton, Space } from 'antd';
 import { get } from 'lodash';
 import { get_location } from '@quillbooking/utils';
 import tinycolor from 'tinycolor2';
+import { applyFilters } from '@wordpress/hooks';
 
 interface CardBodyProps {
 	event: Event;
@@ -363,15 +363,21 @@ const CardBody: React.FC<CardBodyProps> = ({
 				  requiresPayment &&
 				  hasPaymentGateways &&
 				  bookingData ? (
-					<Payment
-						ajax_url={ajax_url}
-						setStep={setStep}
-						bookingData={bookingData}
-						event={event}
-						totalPrice={totalPrice}
-						baseColor={event.color}
-						darkColor={tinycolor(event.color).darken(20).toString()}
-					/>
+					(applyFilters(
+						'quillbooking.renderer.payment_component',
+						console.log('Payment component'),
+						{
+							ajax_url,
+							setStep,
+							bookingData,
+							event,
+							totalPrice,
+							baseColor: event.color,
+							darkColor: tinycolor(event.color)
+								.darken(20)
+								.toString(),
+						}
+					) as React.ReactNode)
 				) : (
 					<DateTimePicker
 						setIsLoading={setIsLoading}

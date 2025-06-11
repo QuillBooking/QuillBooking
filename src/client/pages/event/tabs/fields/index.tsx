@@ -27,7 +27,7 @@ import {
 } from '@quillbooking/components';
 import { EventTabHandle, EventTabProps, Fields } from 'client/types';
 import Question from './question';
-import { doAction, applyFilters } from '@wordpress/hooks';
+import { applyFilters } from '@wordpress/hooks';
 import { Link } from 'react-router-dom';
 
 const LoadingSkeleton = () => (

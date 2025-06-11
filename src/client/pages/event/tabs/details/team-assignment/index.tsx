@@ -22,7 +22,7 @@ const TeamAssignment: React.FC<TeamAssignmentProps> = ({
 			description={__('Set your Members and Event Host.', 'quillbooking')}
 			icon={<EventInfoIcon />}
 		/>,
-		[team, calendarId, onChange]
+		{ team, calendarId, onChange }
 	) as React.ReactNode;
 };
 

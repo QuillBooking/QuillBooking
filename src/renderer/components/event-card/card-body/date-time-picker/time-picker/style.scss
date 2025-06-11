@@ -56,61 +56,16 @@
 }
 
 .time-slot-spots {
-	font-size: 12px;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	font-size: 14px;
 	font-weight: 600;
-	color: #4b5563;
-	background-color: #f3f4f6;
-	padding: 6px 10px;
-	border-radius: 16px;
-	white-space: normal;
+	color: #ff6200;
 	transition: all 0.2s ease;
 	letter-spacing: 0.2px;
-	border: 1px solid #e5e7eb;
-	display: flex;
-	flex-direction: column;
-	line-height: 1.2;
 	min-width: 70px;
 	text-align: center;
-
-	span:first-child {
-		font-size: 14px;
-		font-weight: 700;
-	}
-
-	span:last-child {
-		font-size: 11px;
-	}
-}
-
-.time-slot-spots-single {
-	color: #dc2626;
-	background-color: #fee2e2;
-	font-weight: 600;
-}
-
-.time-slot:hover .time-slot-spots,
-.time-slot.active .time-slot-spots {
-	background-color: #e9d5ff;
-	color: #6d28d9;
-	font-weight: 600;
-}
-
-.time-slot:hover .time-slot-spots-single,
-.time-slot.active .time-slot-spots-single {
-	background-color: #fee2e2;
-	color: #dc2626;
-}
-
-.time-slot-spots-few {
-	color: #b45309;
-	background-color: #fef3c7;
-	font-weight: 600;
-}
-
-.time-slot:hover .time-slot-spots-few,
-.time-slot.active .time-slot-spots-few {
-	background-color: #fde68a;
-	color: #92400e;
 }
 
 .no-time-slots {
@@ -140,6 +95,12 @@
 .time-picker-container::-webkit-scrollbar-thumb {
 	border: 1px solid #555555;
 	border-radius: 20px;
+}
+
+.group-event-container {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
 }
 
 @media screen and (min-width: 768px) {

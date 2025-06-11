@@ -35,11 +35,12 @@ import {
 	NoticeBanner,
 	ShareIcon,
 	UpcomingCalendarIcon,
+	ProVersion,
 } from '@quillbooking/components';
 import CalendarActions from './calendar-actions';
 import CreateEvent from '../create-event';
 import ConfigAPI from '@quillbooking/config';
-import { Link } from 'react-router';
+import { applyFilters } from '@wordpress/hooks';
 
 /**
  * Main Calendars Component.
@@ -281,6 +282,10 @@ const Calendars: React.FC = () => {
 	const handleCloseCreateEventModal = () => {
 		setShowCreateEventModal(false);
 		setSelectedCalendarId(null);
+	};
+
+	const handleNavigation = (path: string) => {
+		navigate(path);
 	};
 
 	return (
@@ -635,6 +640,7 @@ const Calendars: React.FC = () => {
 													</Flex>
 												</Card>
 												<CalendarEvents
+													navigate={navigate}
 													calendar={calendar}
 													typesLabels={typesLabels}
 													updateCalendarEvents={
@@ -658,156 +664,26 @@ const Calendars: React.FC = () => {
 									))}
 								</>
 							) : (
-								<Flex gap={15} wrap>
-									{getFilteredCalendars().map(
-										(teamCalendar) => {
-											// For non-admins, this will already be filtered to only include teams they're members of
-											return (
-												<Card
-													key={teamCalendar.id}
-													title={
-														<Flex vertical>
-															<div className="text-[#313131] text-base font-semibold">
-																{
-																	teamCalendar.name
-																}
-															</div>
-															<a
-																href={
-																	siteUrl +
-																	'?calendar=' +
-																	teamCalendar.slug
-																}
-																target="_blank"
-															>
-																<div className="text-color-primary flex items-center gap-2 italic text-xs font-medium">
-																	{__(
-																		'View My Landing Page',
-																		'quillbooking'
-																	)}
-																	<ShareIcon
-																		width={
-																			16
-																		}
-																		height={
-																			16
-																		}
-																	/>
-																</div>
-															</a>
-														</Flex>
-													}
-													className="bg-[#FDFDFD] w-[377px]"
-													headStyle={{
-														backgroundColor:
-															'#FFFFFF',
-														textTransform:
-															'capitalize',
-														paddingTop: '20px ',
-														paddingBottom: '20px',
-													}}
-													extra={
-														<div>
-															<Popover
-																trigger={[
-																	'click',
-																]}
-																content={
-																	<CalendarActions
-																		calendar={
-																			teamCalendar
-																		}
-																		setCloneMessage={
-																			setCloneMessage
-																		}
-																		onSaved={
-																			handleSaved
-																		}
-																		onEdit={(
-																			id
-																		) =>
-																			navigate(
-																				`calendars/${id}`
-																			)
-																		}
-																		onDelete={(
-																			id
-																		) =>
-																			deleteCalendar(
-																				{
-																					id: id,
-																				} as Calendar
-																			)
-																		}
-																		setDeleteCalendarMessage={
-																			setDeleteCalendarMessage
-																		}
-																		setErrorMessage={
-																			setErrorMessage
-																		}
-																	/>
-																}
-															>
-																<Button
-																	type="text"
-																	icon={
-																		<SlOptions className="text-color-primary-text text-[18px]" />
-																	}
-																	className="border-[#EDEBEB]"
-																/>
-															</Popover>
-														</div>
-													}
-												>
-													<Flex vertical gap={20}>
-														{filters.type ===
-															'team' && (
-															<Button
-																className="text-color-primary border-2 border-[#C497EC] bg-color-tertiary border-dashed font-[600] flex items-center justify-center h-[56px] w-[310px] text-[16px]"
-																onClick={() =>
-																	handleCreateEvent(
-																		teamCalendar.id
-																	)
-																}
-															>
-																<PlusOutlined className="text-color-primary" />
-																<span>
-																	{__(
-																		'Create New Event',
-																		'quillbooking'
-																	)}
-																</span>
-															</Button>
-														)}
-														<CalendarEvents
-															calendar={
-																teamCalendar
-															}
-															typesLabels={
-																typesLabels
-															}
-															updateCalendarEvents={
-																updateEvents
-															}
-															setStatusMessage={
-																setEventStatusMessage
-															}
-															setDeleteMessage={
-																setDeleteEventMessage
-															}
-															setCloneMessage={
-																setCloneMessage
-															}
-															setErrorMessage={
-																setErrorMessage
-															}
-														/>
-													</Flex>
-												</Card>
-											);
-										}
-									)}
-								</Flex>
+								applyFilters(
+									'quillbooking.event.team_calendars',
+									<ProVersion />,
+									{
+										getFilteredCalendars,
+										siteUrl,
+										setCloneMessage,
+										handleSaved,
+										navigate: handleNavigation,
+										deleteCalendar,
+										setDeleteCalendarMessage,
+										setErrorMessage,
+										filters,
+										handleCreateEvent,
+										typesLabels,
+										updateEvents,
+										setEventStatusMessage,
+										setDeleteEventMessage,
+									}
+								)
 							)}
 						</>
 					)}

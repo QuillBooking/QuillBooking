@@ -30,7 +30,7 @@ import stripe from '@quillbooking/assets/icons/stripe/stripe.png';
 import type { PaymentGateway } from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { ProGlobalIntegrations } from '../../../../../../components';
-import { applyFilters } from '@wordpress/hooks';
+import ConfigAPI from '../../../../../../config';
 
 export interface PaymentGatewayCardProps {
 	slug: string | null;
@@ -57,9 +57,12 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 	);
 
 	useEffect(() => {
-		setIsProVersion(
-			Boolean(applyFilters('quillbooking.integration', false))
-		);
+		// Check if this is the pro version by seeing if we have real payment gateways
+		// In the free version, we use placeholder gateways, in pro version we have real ones
+		const configGateways = ConfigAPI.getPaymentGateways();
+		const hasRealGateways = Object.keys(configGateways).length > 0;
+
+		setIsProVersion(hasRealGateways);
 	}, []);
 	useEffect(() => {
 		// Only set form values if gateway settings exist, form exists, and gateway is enabled
@@ -194,7 +197,7 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 					<Skeleton.Avatar size={64} active />
 					<Skeleton active paragraph={{ rows: 4 }} />
 				</Flex>
-			) : !isProVersion ? (
+			) : isProVersion ? (
 				<>
 					<Flex
 						align="center"

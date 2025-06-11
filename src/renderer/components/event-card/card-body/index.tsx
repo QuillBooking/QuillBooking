@@ -363,21 +363,25 @@ const CardBody: React.FC<CardBodyProps> = ({
 				  requiresPayment &&
 				  hasPaymentGateways &&
 				  bookingData ? (
-					(applyFilters(
-						'quillbooking.renderer.payment_component',
-						null,
-						{
-							ajax_url,
-							setStep,
-							bookingData,
-							event,
-							totalPrice,
-							baseColor: event.color,
-							darkColor: tinycolor(event.color)
-								.darken(20)
-								.toString(),
-						}
-					) as React.ReactNode)
+					(() => {
+						// Use the filter to get the payment component
+						const paymentComponent = applyFilters(
+							'quillbooking.renderer.payment_component',
+							null,
+							{
+								ajax_url,
+								setStep,
+								bookingData,
+								event,
+								totalPrice,
+								baseColor: event.color,
+								darkColor: tinycolor(event.color)
+									.darken(20)
+									.toString(),
+							}
+						);
+						return paymentComponent as React.ReactNode;
+					})()
 				) : (
 					<DateTimePicker
 						setIsLoading={setIsLoading}

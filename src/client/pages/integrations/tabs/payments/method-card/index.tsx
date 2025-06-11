@@ -194,7 +194,7 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 					<Skeleton.Avatar size={64} active />
 					<Skeleton active paragraph={{ rows: 4 }} />
 				</Flex>
-			) : isProVersion ? (
+			) : !isProVersion ? (
 				<>
 					<Flex
 						align="center"

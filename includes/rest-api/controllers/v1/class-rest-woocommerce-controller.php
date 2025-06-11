@@ -15,8 +15,22 @@ if (!class_exists('\QuillBooking_Pro\REST_API\Controllers\v1\REST_WooCommerce_Co
 	 */
 	class REST_WooCommerce_Controller
 	{
+		/**
+		 * Constructor
+		 */
+		public function __construct()
+		{
+			// This is a placeholder class.
+			// The actual functionality is in the Pro version.
+		}
 
-		// This is a placeholder class.
-		// The actual functionality is in the Pro version.
+		/**
+		 * Register routes - placeholder method
+		 */
+		public function register_routes()
+		{
+			// This is a placeholder method.
+			// The actual functionality is in the Pro version.
+		}
 	}
 }

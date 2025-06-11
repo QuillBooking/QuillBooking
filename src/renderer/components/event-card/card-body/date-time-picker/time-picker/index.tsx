@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import { EventTypes } from '../../../../../types';
 import './style.scss';
 import { css } from '@emotion/css';
+import InfoIcon from '../../../../../icons/info-icon';
 
 interface TimeSlot {
 	time: string;
@@ -71,6 +72,9 @@ const TimePicker: React.FC<TimePickerProps> = ({
 		if (spots === 1) {
 			return (
 				<span className="time-slot-spots time-slot-spots-single">
+					<span>
+						<InfoIcon />
+					</span>
 					<span>1</span>
 					<span>{__('last spot', 'quillbooking')}</span>
 				</span>
@@ -78,6 +82,9 @@ const TimePicker: React.FC<TimePickerProps> = ({
 		} else if (spots < 5) {
 			return (
 				<span className="time-slot-spots time-slot-spots-few">
+					<span>
+						<InfoIcon />
+					</span>
 					<span>{spots}</span>
 					<span>{__('spots left', 'quillbooking')}</span>
 				</span>
@@ -85,6 +92,9 @@ const TimePicker: React.FC<TimePickerProps> = ({
 		} else {
 			return (
 				<span className="time-slot-spots">
+					<span>
+						<InfoIcon />
+					</span>
 					<span>{spots}</span>
 					<span>{__('spots available', 'quillbooking')}</span>
 				</span>
@@ -110,7 +120,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
 					timeSlots.map((slot: TimeSlot, index: number) => (
 						<div
 							key={index}
-							className={`time-slot ${!isGroupEvent ? 'time-slot-centered' : ''} ${selectedTime === slot.time ? 'active' : ''} ${css`
+							className={`time-slot ${!isGroupEvent ? 'time-slot-centered' : 'group-event-container'} ${selectedTime === slot.time ? 'active' : ''} ${css`
 								&:hover {
 									background-color: ${lightColor};
 									color: ${baseColor};

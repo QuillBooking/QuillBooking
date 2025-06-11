@@ -20,6 +20,7 @@ import OutlookFields from './fields/OutlookFields';
 import AppleFields from './fields/AppleFields';
 import { addQueryArgs } from '@wordpress/url';
 import { applyFilters } from '@wordpress/hooks';
+import { useNavigate } from 'react-router';
 
 const { Text } = Typography;
 
@@ -44,6 +45,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	if (!slug || !integration) return null;
 
 	const [form] = Form.useForm();
+	const navigate = useNavigate();
 	const { callApi, loading } = useApi();
 	const { successNotice, errorNotice } = useNotice();
 	const [saving, setSaving] = useState(false);
@@ -179,11 +181,22 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 		const formValues = form.getFieldsValue();
 		console.log('All form values:', formValues);
 
+		// Apply any filters from plugins to modify the form values before submission
+		const processedValues = applyFilters(
+			'quillbooking.before_save_settings',
+			formValues,
+			form,
+			slug,
+			CACHE_TIME_OPTIONS
+		);
+
+		console.log('Processed values after filter:', processedValues);
+
 		setSaving(true);
 		callApi({
 			path: `integrations/${slug}`,
 			method: 'POST',
-			data: { settings: { app: formValues } },
+			data: { settings: { app: processedValues } },
 			onSuccess() {
 				successNotice(
 					__(
@@ -207,6 +220,13 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	};
 
 	const renderFields = () => {
+		const handleNavigation = (path: string) => {
+			// Navigate to the specified path
+			navigate(path, {
+				state: { source: 'conferencing-calendars-component' },
+			});
+		};
+
 		switch (slug) {
 			case 'zoom':
 				return (
@@ -222,6 +242,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS}
 						calendar={calendar}
 						form={form}
+						handleNavigation={handleNavigation}
 					/>
 				);
 			case 'outlook':

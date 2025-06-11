@@ -2,7 +2,12 @@ import { applyFilters } from '@wordpress/hooks';
 import { __ } from '@wordpress/i18n';
 import { ProGlobalIntegrations } from '@quillbooking/components';
 
-const AppleFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
+const AppleFields = ({
+	CACHE_TIME_OPTIONS,
+	form,
+	calendar,
+	handleNavigation,
+}) => {
 	const appleList = {
 		[__('Requirements', 'quillbooking')]: [
 			__('Quill Booking Pro Account.', 'quillbooking'),
@@ -16,7 +21,7 @@ const AppleFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
 	return applyFilters(
 		'quillbooking.appleFields',
 		<ProGlobalIntegrations list={appleList} />,
-		{ CACHE_TIME_OPTIONS, form, calendar }
+		{ CACHE_TIME_OPTIONS, form, calendar, handleNavigation }
 	) as React.ReactNode;
 };
 

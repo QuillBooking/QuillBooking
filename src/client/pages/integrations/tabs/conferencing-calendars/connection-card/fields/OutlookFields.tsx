@@ -2,7 +2,12 @@ import { __ } from '@wordpress/i18n';
 import { applyFilters } from '@wordpress/hooks';
 import { ProGlobalIntegrations } from '@quillbooking/components';
 
-const OutlookFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
+const OutlookFields = ({
+	CACHE_TIME_OPTIONS,
+	form,
+	calendar,
+	handleNavigation,
+}) => {
 	const outlookList = {
 		[__('Requirements', 'quillbooking')]: [
 			__('Quill Booking Pro Account.', 'quillbooking'),
@@ -16,7 +21,7 @@ const OutlookFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
 	return applyFilters(
 		'quillbooking.outlookFields',
 		<ProGlobalIntegrations list={outlookList} />,
-		{ CACHE_TIME_OPTIONS, form, calendar }
+		{ CACHE_TIME_OPTIONS, form, calendar, handleNavigation }
 	) as React.ReactNode;
 };
 

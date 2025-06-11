@@ -88,7 +88,7 @@ const Event: React.FC = () => {
 		setEvent,
 		clearEvent,
 		loading: eventLoading,
-		error: eventError
+		error: eventError,
 	} = useEvent();
 
 	const [open, setOpen] = useState(!!id);
@@ -268,9 +268,9 @@ const Event: React.FC = () => {
 				error instanceof Error
 					? error.message
 					: __(
-						'Failed to update event status. Please try again.',
-						'quillbooking'
-					);
+							'Failed to update event status. Please try again.',
+							'quillbooking'
+						);
 
 			// Use existing useNotice hook
 			errorNotice(errorMsg);
@@ -306,7 +306,9 @@ const Event: React.FC = () => {
 			await childRef.current.saveSettings(); // Wait for save to complete
 
 			// Use existing useNotice hook
-			successNotice(__('Your changes have been saved successfully.', 'quillbooking'));
+			successNotice(
+				__('Your changes have been saved successfully.', 'quillbooking')
+			);
 
 			setShowSavedBanner(true);
 			setTimeout(() => setShowSavedBanner(false), 5000);
@@ -315,9 +317,9 @@ const Event: React.FC = () => {
 				error instanceof Error
 					? error.message
 					: __(
-						'Failed to save changes. Please try again.',
-						'quillbooking'
-					);
+							'Failed to save changes. Please try again.',
+							'quillbooking'
+						);
 
 			// Use existing useNotice hook
 			errorNotice(errorMsg);
@@ -328,6 +330,10 @@ const Event: React.FC = () => {
 		} finally {
 			setIsSaving(false); // Re-enable button
 		}
+	};
+
+	const handleNavigation = (path: string) => {
+		navigate(path);
 	};
 
 	const tabs = [
@@ -390,6 +396,7 @@ const Event: React.FC = () => {
 					ref={childRef}
 					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
+					handleNavigation={handleNavigation}
 				/>
 			),
 			icon: <SmsNotiIcon />,
@@ -552,10 +559,11 @@ const Event: React.FC = () => {
 							onClick={handleSave}
 							loading={isSaving}
 							disabled={saveDisabled || isSaving}
-							className={`rounded-lg font-[500] text-white ${saveDisabled || isSaving
-								? 'bg-gray-400 cursor-not-allowed'
-								: 'bg-color-primary '
-								}`}
+							className={`rounded-lg font-[500] text-white ${
+								saveDisabled || isSaving
+									? 'bg-gray-400 cursor-not-allowed'
+									: 'bg-color-primary '
+							}`}
 						>
 							{__('Save Changes', 'quillbooking')}
 						</Button>
@@ -626,9 +634,7 @@ const Event: React.FC = () => {
 										'quillbooking'
 									),
 								}}
-								closeNotice={() =>
-									setShowSavedBanner(false)
-								}
+								closeNotice={() => setShowSavedBanner(false)}
 							/>
 						</div>
 					)}
@@ -637,15 +643,10 @@ const Event: React.FC = () => {
 							<NoticeBanner
 								notice={{
 									type: 'error',
-									title: __(
-										'Save Failed',
-										'quillbooking'
-									),
+									title: __('Save Failed', 'quillbooking'),
 									message: errorMessage,
 								}}
-								closeNotice={() =>
-									setShowErrorBanner(false)
-								}
+								closeNotice={() => setShowErrorBanner(false)}
 							/>
 						</div>
 					)}
@@ -657,9 +658,7 @@ const Event: React.FC = () => {
 									title: statusMessage.title,
 									message: statusMessage.message,
 								}}
-								closeNotice={() =>
-									setShowStatusBanner(false)
-								}
+								closeNotice={() => setShowStatusBanner(false)}
 							/>
 						</div>
 					)}

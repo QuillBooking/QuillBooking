@@ -4,19 +4,14 @@
 import { __ } from '@wordpress/i18n';
 
 /**
- * External dependencies
- */
-import { Button, Flex, Input, Modal } from 'antd';
-
-/**
  * Internal dependencies
  */
-import {
-	CardHeader,
-	HostSelect,
-	UpcomingCalendarOutlinedIcon,
-} from '@quillbooking/components';
+
 import { Calendar } from 'client/types';
+import { applyFilters } from '@wordpress/hooks';
+import { ProIcon } from '@quillbooking/components';
+import { Link } from 'react-router';
+import { Modal } from 'antd';
 
 interface TeamCalendarProps {
 	formData: Partial<Calendar & { members: number[] }>;
@@ -38,61 +33,44 @@ const TeamCalendar: React.FC<TeamCalendarProps> = ({
 	loading,
 	saveCalendar,
 }) => {
-	return (
+	return applyFilters(
+		'quillbooking.addCalendarModal.teamCalendar',
 		<Modal
 			open={open}
 			onCancel={closeHandler}
 			className="rounded-lg"
-			footer={[
-				<Button
-					key="action"
-					type="primary"
-					loading={loading}
-					onClick={saveCalendar}
-					className="w-full bg-color-primary rounded-lg font-[500] mt-5"
-				>
-					{__('Add Team', 'quillbooking')}
-				</Button>,
-			]}
+			footer={null}
 		>
-			<Flex vertical>
-				<CardHeader
-					title={__('Add New Team', 'quillbooking')}
-					description={__(
-						'Add the following data to Add New Team',
-						'quillbooking'
-					)}
-					icon={<UpcomingCalendarOutlinedIcon />}
-				/>
-				<div className="text-[#09090B] text-[16px] mt-5">
-					{__('Team Name', 'quillbooking')}
-					<span className="text-red-500">*</span>
+			<div className="flex flex-col items-center text-center py-10">
+				<div className="bg-[#F1E0FF] rounded-full p-4 mb-2 flex items-center justify-center">
+					<ProIcon width={72} height={72} />
 				</div>
-				<Input
-					value={formData.name}
-					onChange={(e) => updateFormData('name', e.target.value)}
-					className="h-[48px] rounded-lg"
-					placeholder="Enter Name of this Team"
-				/>
-				<div className="text-[#09090B] text-[16px] mt-5">
-					{__('Select Team Members', 'quillbooking')}
-					<span className="text-red-500">*</span>
+				<div>
+					<h2 className="text-base font-semibold my-1 text-[#3F4254]">
+						{__(
+							'Add another Questions feature is available in Pro Version',
+							'quillbooking'
+						)}
+					</h2>
+					<p className="text-[#9197A4] mb-4 text-xs">
+						{__(
+							'Please upgrade to get all the advanced features.',
+							'quillbooking'
+						)}
+					</p>
+					<div className="mt-5">
+						<Link
+							className="bg-color-primary text-[#FBF9FC] rounded-lg py-3 px-4 font-medium"
+							to="/plugins.php?s=quillbooking-pro&tab=search&type=term"
+						>
+							{__('Upgrade To Pro Now', 'quillbooking')}
+						</Link>
+					</div>
 				</div>
-				<HostSelect
-					value={formData.members || []}
-					onChange={(value) => updateFormData('members', value)}
-					multiple
-					placeholder={__('Select team members...', 'quillbooking')}
-				/>
-				<div className="text-[#848484]">
-					{__(
-						'Select the members you want to assign to this team',
-						'quillbooking'
-					)}
-				</div>
-			</Flex>
-		</Modal>
-	);
+			</div>
+		</Modal>,
+		{ formData, updateFormData, open, closeHandler, loading, saveCalendar }
+	) as React.ReactElement;
 };
 
 export default TeamCalendar;

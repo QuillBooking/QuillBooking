@@ -92,7 +92,6 @@ class QuillBooking
 	{
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/functions.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/event-locations/loader.php';
-		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/integrations/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/merge-tags/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/payment-gateways/loader.php';
 	}

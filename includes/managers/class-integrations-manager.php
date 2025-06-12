@@ -11,7 +11,7 @@
 namespace QuillBooking\Managers;
 
 use QuillBooking\Abstracts\Manager;
-use QuillBooking\Integration\Integration;
+use QuillBooking_Pro\Integration\Integration;
 use QuillBooking\Traits\Singleton;
 
 /**

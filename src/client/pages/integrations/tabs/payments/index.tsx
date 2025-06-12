@@ -18,8 +18,57 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const PaymentsTab: React.FC = () => {
 	const [activeTab, setActiveTab] = useState<string | null>(null);
+
+	// Get payment gateways from config, or use placeholders for free version
+	const configGateways = ConfigAPI.getPaymentGateways();
+	const hasGateways = Object.keys(configGateways).length > 0;
+
+	// Placeholder payment gateways for free version
+	const placeholderGateways = {
+		paypal: {
+			name: 'PayPal',
+			description: 'Accept payments with PayPal',
+			settings: { mode: 'sandbox' as const },
+			fields: {
+				client_id: {
+					label: 'Client ID',
+					type: 'text',
+					required: true,
+					description: 'Your PayPal client ID',
+				},
+				client_secret: {
+					label: 'Client Secret',
+					type: 'password',
+					required: true,
+					description: 'Your PayPal client secret',
+				},
+			},
+			enabled: false,
+		},
+		stripe: {
+			name: 'Stripe',
+			description: 'Accept credit card payments with Stripe',
+			settings: { mode: 'sandbox' as const },
+			fields: {
+				publishable_key: {
+					label: 'Publishable Key',
+					type: 'text',
+					required: true,
+					description: 'Your Stripe publishable key',
+				},
+				secret_key: {
+					label: 'Secret Key',
+					type: 'password',
+					required: true,
+					description: 'Your Stripe secret key',
+				},
+			},
+			enabled: false,
+		},
+	};
+
 	const [paymentGateways, setPaymentGateways] = useState(() =>
-		ConfigAPI.getPaymentGateways()
+		hasGateways ? configGateways : placeholderGateways
 	);
 	const [isLoading, setIsLoading] = useState(false);
 	const { callApi } = useApi();
@@ -33,6 +82,11 @@ const PaymentsTab: React.FC = () => {
 
 	const fetchGatewaySettings = useCallback(
 		async (gatewayId: string, forceRefresh = false) => {
+			// Skip API call for free version placeholder gateways
+			if (!hasGateways) {
+				return Promise.resolve(true);
+			}
+
 			setIsLoading(true);
 			return new Promise((resolve) => {
 				callApi({
@@ -67,7 +121,7 @@ const PaymentsTab: React.FC = () => {
 				});
 			});
 		},
-		[callApi]
+		[callApi, hasGateways]
 	);
 
 	const handleTabChange = useCallback(
@@ -96,6 +150,11 @@ const PaymentsTab: React.FC = () => {
 		property: string,
 		value: any
 	) => {
+		// Skip API calls for free version placeholder gateways
+		if (!hasGateways) {
+			return;
+		}
+
 		setPaymentGateways((prevGateways) => ({
 			...prevGateways,
 			[gatewayId]: {
@@ -136,6 +195,11 @@ const PaymentsTab: React.FC = () => {
 
 	// Update gateway settings
 	const updateGatewaySettings = (gatewayId: string, settings: any) => {
+		// Skip updates for free version placeholder gateways
+		if (!hasGateways) {
+			return;
+		}
+
 		setPaymentGateways((prevGateways) => ({
 			...prevGateways,
 			[gatewayId]: {

@@ -23,7 +23,8 @@ use QuillBooking\Traits\Singleton;
  *
  * @since 1.0.0
  */
-class REST_API {
+class REST_API
+{
 
 
 
@@ -34,15 +35,18 @@ class REST_API {
 	 *
 	 * @since 1.0.0
 	 */
-	private function __clone() {    } /* do nothing */
+	private function __clone()
+	{
+	} /* do nothing */
 
 	/**
 	 * REST_API constructor.
 	 *
 	 * @since 1.0.0
 	 */
-	private function __construct() {
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+	private function __construct()
+	{
+		add_action('rest_api_init', array($this, 'register_rest_routes'));
 	}
 
 	/**
@@ -50,7 +54,8 @@ class REST_API {
 	 *
 	 * @since 1.0.0
 	 */
-	public function register_rest_routes() {
+	public function register_rest_routes()
+	{
 		$controllers = array(
 			REST_Calendar_Controller::class,
 			REST_Team_Controller::class,
@@ -61,7 +66,7 @@ class REST_API {
 			REST_WooCommerce_Controller::class,
 		);
 
-		foreach ( $controllers as $controller ) {
+		foreach ($controllers as $controller) {
 			$controller = new $controller();
 			/** @var \QuillBooking\Abstracts\REST_Controller $controller */
 			$controller->register_routes();

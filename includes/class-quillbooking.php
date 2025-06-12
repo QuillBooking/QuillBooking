@@ -16,7 +16,7 @@ use QuillBooking\Capabilities;
 use QuillBooking\Availabilities;
 use QuillBooking\Booking\Booking;
 use QuillBooking\Traits\Singleton;
-use QuillBooking\WooCommerce\WooCommerce;
+
 use QuillBooking\Webhook_Feeds;
 use QuillBooking\Admin\Admin;
 use QuillBooking\Admin\Admin_Loader;
@@ -27,7 +27,8 @@ use QuillBooking\Admin\Admin_Loader;
  *
  * @since 1.0.0
  */
-class QuillBooking {
+class QuillBooking
+{
 
 	use Singleton;
 
@@ -45,7 +46,8 @@ class QuillBooking {
 	 *
 	 * @since 1.0.0
 	 */
-	public function __construct() {
+	public function __construct()
+	{
 		$this->init_illuminate();
 		$this->load_dependencies();
 		$this->init_objects();
@@ -57,23 +59,24 @@ class QuillBooking {
 	 *
 	 * @since 1.0.0
 	 */
-	private function init_illuminate() {
+	private function init_illuminate()
+	{
 		$capsule = new Capsule();
 
 		$capsule->addConnection(
 			array(
-				'driver'    => 'mysql',
-				'host'      => DB_HOST,
-				'database'  => DB_NAME,
-				'username'  => DB_USER,
-				'password'  => DB_PASSWORD,
-				'charset'   => DB_CHARSET,
+				'driver' => 'mysql',
+				'host' => DB_HOST,
+				'database' => DB_NAME,
+				'username' => DB_USER,
+				'password' => DB_PASSWORD,
+				'charset' => DB_CHARSET,
 				'collation' => DB_COLLATE,
-				'prefix'    => '',
+				'prefix' => '',
 			)
 		);
 
-		$capsule->setEventDispatcher( new Dispatcher( new Container ) );
+		$capsule->setEventDispatcher(new Dispatcher(new Container));
 
 		$capsule->setAsGlobal();
 
@@ -85,7 +88,8 @@ class QuillBooking {
 	 *
 	 * @since 1.0.0
 	 */
-	private function load_dependencies() {
+	private function load_dependencies()
+	{
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/functions.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/event-locations/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/integrations/loader.php';
@@ -98,17 +102,23 @@ class QuillBooking {
 	 *
 	 * @since 1.0.0
 	 */
-	private function init_objects() {
-		$this->tasks = new Tasks( 'quillbooking' );
+	private function init_objects()
+	{
+		$this->tasks = new Tasks('quillbooking');
 
 		Admin::instance();
 		Admin_Loader::instance();
 		REST_API::instance();
 		Capabilities::assign_capabilities_for_user_roles();
 		Booking::instance();
-		WooCommerce::instance();
+
+		// Load WooCommerce integration if available
+		if (class_exists('QuillBooking\WooCommerce\WooCommerce')) {
+			\QuillBooking\WooCommerce\WooCommerce::instance();
+		}
+
 		Webhook_Feeds::instance();
-		
+
 	}
 
 	/**
@@ -116,8 +126,9 @@ class QuillBooking {
 	 *
 	 * @since 1.0.0
 	 */
-	private function init_hooks() {
-		add_action( 'init', array( Capabilities::class, 'assign_capabilities_for_user_roles' ) );
-		add_action( 'init', array( Availabilities::class, 'add_default_availability' ) );
+	private function init_hooks()
+	{
+		add_action('init', array(Capabilities::class, 'assign_capabilities_for_user_roles'));
+		add_action('init', array(Availabilities::class, 'add_default_availability'));
 	}
 }

@@ -30,7 +30,7 @@ import stripe from '@quillbooking/assets/icons/stripe/stripe.png';
 import type { PaymentGateway } from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { ProGlobalIntegrations } from '../../../../../../components';
-import { applyFilters } from '@wordpress/hooks';
+import ConfigAPI from '../../../../../../config';
 
 export interface PaymentGatewayCardProps {
 	slug: string | null;
@@ -57,9 +57,10 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 	);
 
 	useEffect(() => {
-		setIsProVersion(
-			Boolean(applyFilters('quillbooking.integration', false))
-		);
+		const configGateways = ConfigAPI.getPaymentGateways();
+		const hasRealGateways = Object.keys(configGateways).length > 0;
+
+		setIsProVersion(hasRealGateways);
 	}, []);
 	useEffect(() => {
 		// Only set form values if gateway settings exist, form exists, and gateway is enabled

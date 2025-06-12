@@ -13,7 +13,7 @@ import { Card, Button, Flex, Form, Skeleton, Typography, Spin } from 'antd';
  * Internal dependencies
  */
 import type { Integration } from '@quillbooking/config';
-import { useApi, useNotice } from '@quillbooking/hooks';
+import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import ZoomFields from './fields/ZoomFields';
 import GoogleFields from './fields/GoogleFields';
 import OutlookFields from './fields/OutlookFields';
@@ -44,6 +44,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	if (!slug || !integration) return null;
 
 	const [form] = Form.useForm();
+	const navigate = useNavigate();
 	const { callApi, loading } = useApi();
 	const { successNotice, errorNotice } = useNotice();
 	const [saving, setSaving] = useState(false);
@@ -166,12 +167,6 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 
 	const handleSaveSettings = (values: any) => {
 		console.log('Submitted values:', values);
-
-		if (slug === 'zoom') {
-			form.submit();
-			return;
-		}
-
 		// Log the form field value directly from the form instance
 		console.log('Direct form value:', form.getFieldValue('cache_time'));
 
@@ -179,11 +174,27 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 		const formValues = form.getFieldsValue();
 		console.log('All form values:', formValues);
 
+		// Apply any filters from plugins to modify the form values before submission
+		const processedValues = applyFilters(
+			'quillbooking.before_save_settings',
+			formValues,
+			form,
+			slug,
+			CACHE_TIME_OPTIONS
+		);
+
+		console.log('Processed values after filter:', processedValues);
+		if (slug === 'zoom') {
+		}
+
+		return;
+		form.submit();
+
 		setSaving(true);
 		callApi({
 			path: `integrations/${slug}`,
 			method: 'POST',
-			data: { settings: { app: formValues } },
+			data: { settings: { app: processedValues } },
 			onSuccess() {
 				successNotice(
 					__(
@@ -206,6 +217,10 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 		});
 	};
 
+	const handleNavigation = (path: string) => {
+		navigate(path);
+	};
+
 	const renderFields = () => {
 		switch (slug) {
 			case 'zoom':
@@ -214,6 +229,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						fields={integration.fields}
 						calendar={calendar}
 						form={form}
+						handleNavigation={handleNavigation}
 					/>
 				);
 			case 'google':
@@ -222,6 +238,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS}
 						calendar={calendar}
 						form={form}
+						handleNavigation={handleNavigation}
 					/>
 				);
 			case 'outlook':
@@ -230,6 +247,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS}
 						calendar={calendar}
 						form={form}
+						handleNavigation={handleNavigation}
 					/>
 				);
 			case 'apple':
@@ -238,6 +256,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS}
 						calendar={calendar}
 						form={form}
+						handleNavigation={handleNavigation}
 					/>
 				);
 			default:

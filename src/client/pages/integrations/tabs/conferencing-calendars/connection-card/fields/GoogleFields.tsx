@@ -2,7 +2,12 @@ import { applyFilters } from '@wordpress/hooks';
 import { __ } from '@wordpress/i18n';
 import { ProGlobalIntegrations } from '@quillbooking/components';
 
-const GoogleFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
+const GoogleFields = ({
+	CACHE_TIME_OPTIONS,
+	form,
+	calendar,
+	handleNavigation,
+}) => {
 	const googleList = {
 		[__('Requirements', 'quillbooking')]: [
 			__('Quill Booking Pro Account.', 'quillbooking'),
@@ -16,7 +21,7 @@ const GoogleFields = ({ CACHE_TIME_OPTIONS, form, calendar }) => {
 	return applyFilters(
 		'quillbooking.googleFields',
 		<ProGlobalIntegrations list={googleList} />,
-		{ CACHE_TIME_OPTIONS, form, calendar }
+		{ CACHE_TIME_OPTIONS, form, calendar, handleNavigation }
 	) as React.ReactNode;
 };
 

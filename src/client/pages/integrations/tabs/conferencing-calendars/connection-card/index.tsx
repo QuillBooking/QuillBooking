@@ -166,15 +166,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	};
 
 	const handleSaveSettings = (values: any) => {
-		console.log('Submitted values:', values);
-		// Log the form field value directly from the form instance
-		console.log('Direct form value:', form.getFieldValue('cache_time'));
-
-		// Make sure we're getting the latest value
 		const formValues = form.getFieldsValue();
-		console.log('All form values:', formValues);
-
-		// Apply any filters from plugins to modify the form values before submission
 		const processedValues = applyFilters(
 			'quillbooking.before_save_settings',
 			formValues,
@@ -182,13 +174,6 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 			slug,
 			CACHE_TIME_OPTIONS
 		);
-
-		console.log('Processed values after filter:', processedValues);
-		if (slug === 'zoom') {
-		}
-
-		return;
-		form.submit();
 
 		setSaving(true);
 		callApi({

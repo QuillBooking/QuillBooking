@@ -13,7 +13,6 @@ import PaymentGatewayCard from './method-card';
 import { useApi } from '@quillbooking/hooks';
 import { NoticeBanner } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/client';
-import IntegrationsShimmerLoader from '../../shimmer-loader';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const PaymentsTab: React.FC = () => {
@@ -23,46 +22,16 @@ const PaymentsTab: React.FC = () => {
 	const configGateways = ConfigAPI.getPaymentGateways();
 	const hasGateways = Object.keys(configGateways).length > 0;
 
-	// Placeholder payment gateways for free version
+	// Simplified placeholder payment gateways for free version
 	const placeholderGateways = {
 		paypal: {
 			name: 'PayPal',
 			description: 'Accept payments with PayPal',
-			settings: { mode: 'sandbox' as const },
-			fields: {
-				client_id: {
-					label: 'Client ID',
-					type: 'text',
-					required: true,
-					description: 'Your PayPal client ID',
-				},
-				client_secret: {
-					label: 'Client Secret',
-					type: 'password',
-					required: true,
-					description: 'Your PayPal client secret',
-				},
-			},
 			enabled: false,
 		},
 		stripe: {
 			name: 'Stripe',
 			description: 'Accept credit card payments with Stripe',
-			settings: { mode: 'sandbox' as const },
-			fields: {
-				publishable_key: {
-					label: 'Publishable Key',
-					type: 'text',
-					required: true,
-					description: 'Your Stripe publishable key',
-				},
-				secret_key: {
-					label: 'Secret Key',
-					type: 'password',
-					required: true,
-					description: 'Your Stripe secret key',
-				},
-			},
 			enabled: false,
 		},
 	};
@@ -212,10 +181,6 @@ const PaymentsTab: React.FC = () => {
 		}));
 	};
 
-	if (isLoading) {
-		return <IntegrationsShimmerLoader />;
-	}
-
 	return (
 		<div className="quillbooking-payment-settings grid grid-cols-2 gap-5 w-full">
 			{notice && (
@@ -230,7 +195,6 @@ const PaymentsTab: React.FC = () => {
 				paymentGateways={paymentGateways}
 				activeTab={activeTab}
 				setActiveTab={handleTabChange}
-				isLoading={isLoading}
 			/>
 			<AnimatePresence mode="wait">
 				{activeTab && activeGateway && (

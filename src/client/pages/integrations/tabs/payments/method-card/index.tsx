@@ -2,23 +2,12 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
+import { applyFilters } from '@wordpress/hooks';
 
 /**
  * External dependencies
  */
-import {
-	Card,
-	Button,
-	Flex,
-	Form,
-	Input,
-	Divider,
-	Radio,
-	Switch,
-	Checkbox,
-	Skeleton,
-} from 'antd';
+import { Card, Flex, Skeleton } from 'antd';
 
 /**
  * Internal dependencies
@@ -28,9 +17,7 @@ import paypal from '@quillbooking/assets/icons/paypal/paypal_vertical.png';
 // @ts-ignore
 import stripe from '@quillbooking/assets/icons/stripe/stripe.png';
 import type { PaymentGateway } from '@quillbooking/config';
-import { useApi, useNotice } from '@quillbooking/hooks';
 import { ProGlobalIntegrations } from '../../../../../../components';
-import ConfigAPI from '../../../../../../config';
 
 export interface PaymentGatewayCardProps {
 	slug: string | null;
@@ -40,117 +27,29 @@ export interface PaymentGatewayCardProps {
 	isLoading?: boolean;
 }
 
-const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
-	slug,
-	gateway,
-	updateGatewayProperty,
-	updateGatewaySettings,
-	isLoading = false,
-}) => {
+const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = (props) => {
+	const { slug, isLoading = false } = props;
+
 	if (!slug) return null;
-	const [isProVersion, setIsProVersion] = useState<boolean>(false);
-	const [form] = Form.useForm();
-	const { callApi, loading: isSaving } = useApi();
-	const { successNotice, errorNotice } = useNotice();
-	const [formMode, setFormMode] = useState(
-		gateway.settings?.mode || 'sandbox'
+
+	// Check if we have a pro version of the component available
+	const proComponent = applyFilters(
+		'quillbooking.payment_gateway_card',
+		null,
+		props
 	);
 
-	useEffect(() => {
-		const configGateways = ConfigAPI.getPaymentGateways();
-		const hasRealGateways = Object.keys(configGateways).length > 0;
+	// If pro component is available, use it
+	if (proComponent) {
+		return proComponent as React.ReactNode;
+	}
 
-		setIsProVersion(hasRealGateways);
-	}, []);
-	useEffect(() => {
-		// Only set form values if gateway settings exist, form exists, and gateway is enabled
-		if (gateway.settings && form && gateway.enabled) {
-			const settings = gateway.settings || {};
-			// Reset fields first to avoid field value persistence between different gateways
-			form.resetFields();
-			// Then set the values
-			form.setFieldsValue({
-				...settings,
-				mode: settings.mode || 'sandbox',
-			});
-			setFormMode(settings.mode || 'sandbox');
-		} else if (gateway.settings?.mode) {
-			// Just update the form mode without manipulating the form
-			setFormMode(gateway.settings.mode);
-		}
-	}, [gateway, form]);
+	// Get gateway info for the free version
+	const title = slug === 'paypal' ? 'PayPal' : 'Stripe';
+	const logo = slug === 'paypal' ? paypal : stripe;
+	const logoClass = slug === 'paypal' ? 'size-12' : 'w-16 h-8';
 
-	const handleSaveSettings = (values: any) => {
-		// Only validate if gateway is enabled
-		if (gateway.enabled) {
-			form.validateFields()
-				.then(() => {
-					callApi({
-						path: `payment-gateways/${slug}`,
-						method: 'POST',
-						data: values,
-						onSuccess() {
-							successNotice(
-								__(
-									'Payment gateway settings saved successfully',
-									'quillbooking'
-								)
-							);
-							// Update the local state with the new settings
-							updateGatewaySettings(slug, values);
-							setFormMode(values.mode || 'sandbox');
-						},
-						onError(error) {
-							errorNotice(
-								error.message ||
-									__(
-										'Failed to save payment gateway settings',
-										'quillbooking'
-									)
-							);
-						},
-					});
-				})
-				.catch((error) => {
-					errorNotice(
-						error.message ||
-							__('Failed to save settings', 'quillbooking')
-					);
-				});
-		}
-	};
-
-	const renderField = (field: any) => {
-		switch (field.type) {
-			case 'switch':
-			case 'checkbox':
-				return <Switch />;
-			case 'password':
-				return (
-					<Input.Password
-						placeholder={field.placeholder || ''}
-						className="h-[48px] w-full"
-					/>
-				);
-			case 'email':
-				return (
-					<Input
-						type="email"
-						placeholder={field.placeholder || ''}
-						className="h-[48px] w-full"
-					/>
-				);
-			case 'text':
-			default:
-				return (
-					<Input
-						placeholder={field.placeholder || ''}
-						className="h-[48px] w-full"
-					/>
-				);
-		}
-	};
-
+	// Prepare payment information for the free version
 	const paymentList = {
 		stripe: {
 			[__('Save time and reduce no-shows:', 'quillbooking')]: [
@@ -182,12 +81,6 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 		},
 	};
 
-	// Get gateway info
-	const gatewayFields = gateway.fields || {};
-	const title = slug === 'paypal' ? 'PayPal' : 'Stripe';
-	const logo = slug === 'paypal' ? paypal : stripe;
-	const logoClass = slug === 'paypal' ? 'size-12' : 'w-16 h-8';
-
 	return (
 		<Card className="rounded-lg mb-6 w-full">
 			{isLoading ? (
@@ -195,213 +88,6 @@ const PaymentGatewayCard: React.FC<PaymentGatewayCardProps> = ({
 					<Skeleton.Avatar size={64} active />
 					<Skeleton active paragraph={{ rows: 4 }} />
 				</Flex>
-			) : isProVersion ? (
-				<>
-					<Flex
-						align="center"
-						gap={16}
-						className="p-0 text-color-primary-text border-b pb-5"
-					>
-						<img
-							src={logo}
-							alt={`${slug}.png`}
-							className={logoClass}
-						/>
-						<div>
-							<p className="text-[#09090B] font-bold text-2xl">
-								{__(title, 'quillbooking')}
-							</p>
-							<p className="text-[#71717A] font-medium text-sm">
-								{__(`${title} Information`, 'quillbooking')}
-							</p>
-						</div>
-					</Flex>
-					<Flex vertical gap={15} className="mt-5">
-						<div style={{ flexGrow: 1 }}>
-							<Flex vertical gap={4}>
-								<div className="font-semibold text-[16px]">
-									{__('Status', 'quillbooking')}
-								</div>
-								<Checkbox
-									className="custom-check text-[#3F4254] font-semibold"
-									checked={gateway.enabled}
-									onChange={(e) =>
-										updateGatewayProperty(
-											'enabled',
-											e.target.checked
-										)
-									}
-									disabled={isLoading}
-								>
-									{__(
-										`Enable ${title} payment for booking payment`,
-										'quillbooking'
-									)}
-								</Checkbox>
-							</Flex>
-							{gateway.enabled && (
-								<Form
-									form={form}
-									layout="vertical"
-									onFinish={handleSaveSettings}
-									initialValues={{ mode: 'sandbox' }}
-									onValuesChange={(changedValues) => {
-										if (changedValues.mode) {
-											setFormMode(changedValues.mode);
-										}
-									}}
-									disabled={isLoading}
-								>
-									<Form.Item
-										name="mode"
-										className="mt-3"
-										label={
-											<div className="text-[#3F4254] font-semibold text-[16px]">
-												{__(
-													'Payment Mode',
-													'quillbooking'
-												)}
-											</div>
-										}
-									>
-										<Radio.Group className="flex gap-2 mt-2 w-full">
-											<Radio
-												value="sandbox"
-												className={`custom-radio border w-1/2 rounded-lg p-3 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                                ${
-													formMode === 'sandbox'
-														? 'bg-color-secondary border-color-primary'
-														: 'border'
-												}`}
-											>
-												{__(
-													'Sandbox (Testing)',
-													'quillbooking'
-												)}
-											</Radio>
-											<Radio
-												value="live"
-												className={`custom-radio border w-1/2 rounded-lg p-3 font-semibold cursor-pointer transition-all duration-300 text-[#3F4254] 
-                                                ${
-													formMode === 'live'
-														? 'bg-color-secondary border-color-primary'
-														: 'border'
-												}`}
-											>
-												{__(
-													'Live (Production)',
-													'quillbooking'
-												)}
-											</Radio>
-										</Radio.Group>
-									</Form.Item>
-
-									<Form.Item shouldUpdate>
-										{({ getFieldValue }) => {
-											const mode =
-												getFieldValue('mode') ||
-												'sandbox';
-											return (
-												<>
-													{isLoading ? (
-														<Skeleton
-															active
-															paragraph={{
-																rows: 4,
-															}}
-														/>
-													) : (
-														<Flex vertical gap={10}>
-															{Object.entries(
-																gatewayFields
-															).map(
-																([
-																	fieldKey,
-																	field,
-																]) => (
-																	<Flex
-																		vertical
-																		gap={10}
-																		key={
-																			fieldKey
-																		}
-																	>
-																		<Form.Item
-																			name={`${mode}_${fieldKey}`}
-																			label={
-																				<div className="text-[#3F4254] font-semibold text-[16px]">
-																					{
-																						field.label
-																					}
-																					{field.required && (
-																						<span className="text-red-500">
-																							*
-																						</span>
-																					)}
-																				</div>
-																			}
-																			tooltip={
-																				field.description
-																			}
-																			rules={[
-																				{
-																					required:
-																						field.required,
-																					message:
-																						__(
-																							'This field is required',
-																							'quillbooking'
-																						),
-																				},
-																			]}
-																		>
-																			{renderField(
-																				field
-																			)}
-																		</Form.Item>
-																	</Flex>
-																)
-															)}
-														</Flex>
-													)}
-													<Divider />
-													{slug === 'paypal' && (
-														<span className="text-[#71717A] italic">
-															{__(
-																'If you are unable to use Payment Data Transfer and payments are not getting marked as complete, then check this box. This forces the site to use a slightly less secure method of verifying purchases.',
-																'quillbooking'
-															)}
-														</span>
-													)}
-													<Form.Item className="mt-4">
-														<Flex justify="flex-end">
-															<Button
-																type="primary"
-																htmlType="submit"
-																loading={
-																	isSaving ||
-																	isLoading
-																}
-																disabled={
-																	isLoading
-																}
-															>
-																{__(
-																	'Save Settings',
-																	'quillbooking'
-																)}
-															</Button>
-														</Flex>
-													</Form.Item>
-												</>
-											);
-										}}
-									</Form.Item>
-								</Form>
-							)}
-						</div>
-					</Flex>
-				</>
 			) : (
 				<>
 					<Flex

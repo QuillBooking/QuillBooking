@@ -520,7 +520,7 @@ class Booking_Actions {
 	 */
 	public function template_loader( $template ) {
 		// Only override for booking pages (adjust logic as needed)
-		if ( isset( $_GET['quillbooking_calendar'] ) || isset( $_GET['quillbooking'] ) || isset( $_GET['id'] ) ) {
+		if ( isset( $_GET['quillbooking_calendar'] ) || isset( $_GET['quillbooking'] ) || isset( $_GET['id'] ) || isset( $_GET['calendar'] ) ) {
 			return QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderer-template.php';
 		}
 		return $template;

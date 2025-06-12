@@ -292,6 +292,7 @@ const LatestEvents: React.FC<{ canManageAllCalendars: boolean }> = ({
 						</Flex>
 						{modalShareId === event.id && (
 							<ShareModal
+								event={event}
 								open={modalShareId === event.id}
 								onClose={() => setModalShareId(null)}
 								url={`${siteUrl}?quillbooking_event=${event.id}`}

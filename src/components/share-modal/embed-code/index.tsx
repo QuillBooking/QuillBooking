@@ -50,7 +50,7 @@ const EmbedCode: React.FC<{
 				</div>
 				<Flex gap={10}>
 					<Input
-						value={url}
+						value={`<iframe src="${url}" width="100%" height="600" style="border:0;"></iframe>`}
 						readOnly
 						className="h-[48px] text-[#999999] rounded-lg"
 					/>
@@ -58,7 +58,7 @@ const EmbedCode: React.FC<{
 						className="bg-color-primary h-[48px] px-7 rounded-lg text-white"
 						onClick={() =>
 							copyToClipboard(
-								url,
+								`<iframe src="${url}" width="100%" height="600" style="border:0;"></iframe>`,
 								__('Link copied', 'quillbooking')
 							)
 						}

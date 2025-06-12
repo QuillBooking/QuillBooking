@@ -547,6 +547,7 @@ const Event: React.FC = () => {
 							</Button>
 							{modalShareId !== null && (
 								<ShareModal
+									event={event as EventType}
 									open={modalShareId !== null}
 									onClose={() => setModalShareId(null)}
 									url={`${siteUrl}?quillbooking_calendar=${event?.calendar.slug}&event=${event?.slug}`}

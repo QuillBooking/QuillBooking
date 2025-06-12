@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react';
 /**
  * Internal dependencies
  */
-import type { Calendar } from '@quillbooking/client';
+import type { Calendar, Event } from '@quillbooking/client';
 import ConfigAPI from '@quillbooking/config';
 import {
 	CloneIcon,
@@ -352,6 +352,7 @@ const CalendarEvents: React.FC<{
 															modalShareId
 													)?.slug || ''
 												}`}
+												event={event as Event}
 											/>
 										)}
 									</Flex>

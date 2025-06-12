@@ -14,18 +14,19 @@ import React, { useState } from 'react';
  */
 import { CopyWhiteIcon } from '@quillbooking/components';
 import { useCopyToClipboard, useApi } from '@quillbooking/hooks';
+import { Event } from '@quillbooking/client';
 
 const ShortCode: React.FC<{
-	url: string;
+	event: Event;
 	icon: React.ReactNode;
 	title: string;
-}> = ({ url, icon, title }) => {
+}> = ({ event, icon, title }) => {
 	const copyToClipboard = useCopyToClipboard();
 	const { loading } = useApi();
 	const [shortCode, setShortCode] = useState({
-		Width: { value: 100, unit: '%' },
-		MinHeight: { value: 500, unit: 'Px' },
-		MaxHeight: { value: 0, unit: 'Auto' },
+		width: { value: 100, unit: '%' },
+		minHeight: { value: 500, unit: 'Px' },
+		maxHeight: { value: 0, unit: 'Auto' },
 	});
 	const handleSizeChange = (field, value, unit) => {
 		setShortCode((prev) => ({
@@ -33,7 +34,22 @@ const ShortCode: React.FC<{
 			[field]: { value, unit },
 		}));
 	};
-	console.log(shortCode);
+	const generateShortcode = () => {
+		const width =
+			shortCode.width.unit === 'Auto'
+				? 'Auto'
+				: `${shortCode.width.value}${shortCode.width.unit}`;
+		const minHeight =
+			shortCode.minHeight.unit === 'Auto'
+				? 'Auto'
+				: `${shortCode.minHeight.value}${shortCode.minHeight.unit}`;
+		const maxHeight =
+			shortCode.maxHeight.unit === 'Auto'
+				? 'Auto'
+				: `${shortCode.maxHeight.value}${shortCode.maxHeight.unit}`;
+
+		return `[quillbooking id="${event?.id}" width="${width}" min_height="${minHeight}" max_height="${maxHeight}"]`;
+	};
 
 	return (
 		<>
@@ -61,29 +77,29 @@ const ShortCode: React.FC<{
 				<Flex vertical gap={20}>
 					<Flex className="items-center justify-between">
 						<span className="text-[#1E2125] text-[16px] font-[700]">
-							Width
+							{__('Width', 'quillbooking')}
 						</span>
 						<Flex gap={18}>
 							<Input
 								className="h-[48px] rounded-lg w-[132px]"
 								placeholder="100"
-								value={shortCode.Width.value}
+								value={shortCode.width.value}
 								onChange={(e) =>
 									handleSizeChange(
-										'Width',
+										'width',
 										e.target.value,
-										shortCode.Width.unit
+										shortCode.width.unit
 									)
 								}
 								type="number"
 							/>
 							<Select
-								defaultValue={shortCode.Width.unit}
+								defaultValue={shortCode.width.unit}
 								className="h-[48px] rounded-lg w-[132px]"
 								onChange={(unit) =>
 									handleSizeChange(
-										'Width',
-										shortCode.Width.value,
+										'width',
+										shortCode.width.value,
 										unit
 									)
 								}
@@ -100,29 +116,29 @@ const ShortCode: React.FC<{
 					</Flex>
 					<Flex className="items-center justify-between">
 						<span className="text-[#1E2125] text-[16px] font-[700]">
-							Minimum Height
+							{__('Minimum Height', 'quillbooking')}
 						</span>
 						<Flex gap={18}>
 							<Input
 								className="h-[48px] rounded-lg w-[132px]"
 								placeholder="100"
-								value={shortCode.MinHeight.value}
+								value={shortCode.minHeight.value}
 								onChange={(e) =>
 									handleSizeChange(
-										'MinHeight',
+										'minHeight',
 										e.target.value,
-										shortCode.MinHeight.unit
+										shortCode.minHeight.unit
 									)
 								}
 								type="number"
 							/>
 							<Select
-								defaultValue={shortCode.MinHeight.unit}
+								defaultValue={shortCode.minHeight.unit}
 								className="h-[48px] rounded-lg w-[132px]"
 								onChange={(unit) =>
 									handleSizeChange(
-										'MinHeight',
-										shortCode.MinHeight.value,
+										'minHeight',
+										shortCode.minHeight.value,
 										unit
 									)
 								}
@@ -139,29 +155,29 @@ const ShortCode: React.FC<{
 					</Flex>
 					<Flex className="items-center justify-between">
 						<span className="text-[#1E2125] text-[16px] font-[700]">
-							Maximum Height
+							{__('Maximum Height', 'quillbooking')}
 						</span>
 						<Flex gap={18}>
 							<Input
 								className="h-[48px] rounded-lg w-[132px]"
 								placeholder="100"
-								value={shortCode.MaxHeight.value}
+								value={shortCode.maxHeight.value}
 								onChange={(e) =>
 									handleSizeChange(
-										'MaxHeight',
+										'maxHeight',
 										e.target.value,
-										shortCode.MaxHeight.unit
+										shortCode.maxHeight.unit
 									)
 								}
 								type="number"
 							/>
 							<Select
-								defaultValue={shortCode.MaxHeight.unit}
+								defaultValue={shortCode.maxHeight.unit}
 								className="h-[48px] rounded-lg w-[132px]"
 								onChange={(unit) =>
 									handleSizeChange(
-										'MaxHeight',
-										shortCode.MaxHeight.value,
+										'maxHeight',
+										shortCode.maxHeight.value,
 										unit
 									)
 								}
@@ -184,7 +200,7 @@ const ShortCode: React.FC<{
 				</div>
 				<Flex gap={10}>
 					<Input
-						value={url}
+						value={generateShortcode()}
 						readOnly
 						className="h-[48px] text-[#999999] rounded-lg"
 					/>
@@ -192,7 +208,7 @@ const ShortCode: React.FC<{
 						className="bg-color-primary h-[48px] px-7 rounded-lg text-white"
 						onClick={() =>
 							copyToClipboard(
-								url,
+								generateShortcode(),
 								__('Link copied', 'quillbooking')
 							)
 						}

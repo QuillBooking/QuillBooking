@@ -301,9 +301,10 @@ class Booking_Actions {
 	public function route_frontend() {
 		$hash          = sanitize_text_field( Arr::get( $_GET, 'id', '' ) );
 		$type          = sanitize_text_field( Arr::get( $_GET, 'type', '' ) );
-		$calendar_slug = sanitize_text_field( Arr::get( $_GET, 'calendar', '' ) );
+		$calendar_slug = sanitize_text_field( Arr::get( $_GET, 'quillbooking_calendar', '' ) );
+		$event         = sanitize_text_field( Arr::get( $_GET, 'event', '' ) );
 
-		if ( $calendar_slug ) {
+		if ( $calendar_slug && ! $hash && ! $type && ! $event ) {
 			return $this->render_calendar_page( $calendar_slug );
 		}
 
@@ -520,7 +521,7 @@ class Booking_Actions {
 	 */
 	public function template_loader( $template ) {
 		// Only override for booking pages (adjust logic as needed)
-		if ( isset( $_GET['quillbooking_calendar'] ) || isset( $_GET['quillbooking'] ) || isset( $_GET['id'] ) || isset( $_GET['calendar'] ) ) {
+		if ( isset( $_GET['quillbooking_calendar'] ) || isset( $_GET['quillbooking'] ) ) {
 			return QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderer-template.php';
 		}
 		return $template;

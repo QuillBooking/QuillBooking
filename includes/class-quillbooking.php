@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class QuillBooking
  *
@@ -27,8 +28,8 @@ use QuillBooking\Admin\Admin_Loader;
  *
  * @since 1.0.0
  */
-class QuillBooking
-{
+class QuillBooking {
+
 
 	use Singleton;
 
@@ -46,9 +47,8 @@ class QuillBooking
 	 *
 	 * @since 1.0.0
 	 */
-	public function __construct()
-	{
-		$this->init_illuminate();
+	public function __construct() {
+		 $this->init_illuminate();
 		$this->load_dependencies();
 		$this->init_objects();
 		$this->init_hooks();
@@ -59,24 +59,23 @@ class QuillBooking
 	 *
 	 * @since 1.0.0
 	 */
-	private function init_illuminate()
-	{
+	private function init_illuminate() {
 		$capsule = new Capsule();
 
 		$capsule->addConnection(
 			array(
-				'driver' => 'mysql',
-				'host' => DB_HOST,
-				'database' => DB_NAME,
-				'username' => DB_USER,
-				'password' => DB_PASSWORD,
-				'charset' => DB_CHARSET,
+				'driver'    => 'mysql',
+				'host'      => DB_HOST,
+				'database'  => DB_NAME,
+				'username'  => DB_USER,
+				'password'  => DB_PASSWORD,
+				'charset'   => DB_CHARSET,
 				'collation' => DB_COLLATE,
-				'prefix' => '',
+				'prefix'    => '',
 			)
 		);
 
-		$capsule->setEventDispatcher(new Dispatcher(new Container));
+		$capsule->setEventDispatcher( new Dispatcher( new Container ) );
 
 		$capsule->setAsGlobal();
 
@@ -88,8 +87,7 @@ class QuillBooking
 	 *
 	 * @since 1.0.0
 	 */
-	private function load_dependencies()
-	{
+	private function load_dependencies() {
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/functions.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/event-locations/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/merge-tags/loader.php';
@@ -101,20 +99,19 @@ class QuillBooking
 	 *
 	 * @since 1.0.0
 	 */
-	private function init_objects()
-	{
-		$this->tasks = new Tasks('quillbooking');
+	private function init_objects() {
+		$this->tasks = new Tasks( 'quillbooking' );
 
 		Admin::instance();
 		Admin_Loader::instance();
 		REST_API::instance();
 		Capabilities::assign_capabilities_for_user_roles();
 		Booking::instance();
+		Shortcode::instance();
 
 		// WooCommerce integration is now in the Pro version
 
 		Webhook_Feeds::instance();
-
 	}
 
 	/**
@@ -122,9 +119,8 @@ class QuillBooking
 	 *
 	 * @since 1.0.0
 	 */
-	private function init_hooks()
-	{
-		add_action('init', array(Capabilities::class, 'assign_capabilities_for_user_roles'));
-		add_action('init', array(Availabilities::class, 'add_default_availability'));
+	private function init_hooks() {
+		 add_action( 'init', array( Capabilities::class, 'assign_capabilities_for_user_roles' ) );
+		add_action( 'init', array( Availabilities::class, 'add_default_availability' ) );
 	}
 }

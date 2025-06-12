@@ -34,25 +34,19 @@ const SMSIntegration: React.FC = () => {
 	);
 
 	// Add safety check for integrations
-	const integration =
-		integrations.length > 0
-			? integrations[0][1]
-			: {
-					name: 'Twilio',
-					description: 'Twilio SMS Integration',
-					icon: `${ConfigAPI.getPluginDirUrl()}assets/images/integrations/twilio.svg`,
-				};
+	const integration = integrations[0][1];
 
 	const [form] = Form.useForm();
 	const { callApi, loading } = useApi();
 	const { successNotice, errorNotice } = useNotice();
 	const [saving, setSaving] = useState(false);
 	const [accountData, setAccountData] = useState<any>(null);
-	const [loadingAccount, setLoadingAccount] = useState(true);
+	const [loadingAccount, setLoadingAccount] = useState(false);
 	const [isProVersion, setIsProVersion] = useState<boolean>(false);
 
 	useEffect(() => {
-		fetchTwilioAccount();
+		if (isProVersion) fetchTwilioAccount();
+		console.log('ProVersion:', isProVersion);
 		setIsProVersion(
 			Boolean(applyFilters('quillbooking.integration', false))
 		);
@@ -70,6 +64,7 @@ const SMSIntegration: React.FC = () => {
 	}, [accountData]);
 
 	const fetchTwilioAccount = () => {
+		console.log('fetchTwilioAccount');
 		setLoadingAccount(true);
 		callApi({
 			path: `integrations/twilio`,
@@ -162,7 +157,9 @@ const SMSIntegration: React.FC = () => {
 			},
 		});
 	};
-	if (loading) {
+
+	if (loading && isProVersion) {
+		console.log('Loading SMS Integration...');
 		return <IntegrationsShimmerLoader />;
 	}
 
@@ -217,183 +214,192 @@ const SMSIntegration: React.FC = () => {
 					</div>
 				</Flex>
 				<div className="mt-5">
-					<div className="text-[#71717A] italic mb-4">
-						{__(
-							'Please read the step-by-step documentation to setup Account SID and Auth Token and get the Sender Numbers for your app.',
-							'quillbooking'
-						)}
-						<span className="cursor-pointer font-semibold underline ml-1">
-							{__(
-								'Go to the documentation article',
-								'quillbooking'
-							)}
-						</span>
-					</div>
 					{loadingAccount ? (
 						<Skeleton active paragraph={{ rows: 4 }} />
 					) : isProVersion ? (
-						<Form
-							form={form}
-							layout="vertical"
-							onFinish={handleSaveSettings}
-							className="twilio-form"
-							requiredMark={false}
-						>
-							<Form.Item
-								name="sms_number"
-								label={
-									<div className="text-[#3F4254] font-semibold text-[16px]">
-										{__('SMS Number', 'quillbooking')}
-										<span className="text-[#E53E3E]">
-											{__('*', 'quillbooking')}
-										</span>
-									</div>
-								}
-								rules={[
-									{
-										required: true,
-										message: 'SMS number is required',
-									},
-								]}
-							>
-								<Input
-									className="h-[48px] w-full rounded-lg"
-									type="text"
-									placeholder="enter your Twilio SMS Number"
-								/>
-							</Form.Item>
-							<Form.Item
-								name="whatsapp_number"
-								label={
-									<div className="text-[#3F4254] font-semibold text-[16px]">
-										{__('WhatsApp Number', 'quillbooking')}
-										<span className="text-[#E53E3E]">
-											{__('*', 'quillbooking')}
-										</span>
-									</div>
-								}
-								rules={[
-									{
-										required: true,
-										message: 'WhatsApp number is required',
-									},
-								]}
-							>
-								<Input
-									className="h-[48px] w-full rounded-lg"
-									type="text"
-									placeholder="enter Twilio sender WhatsApp Number"
-								/>
-							</Form.Item>
-							<Form.Item
-								name="account_sid"
-								label={
-									<div className="text-[#3F4254] font-semibold text-[16px]">
-										{__('Account SID', 'quillbooking')}
-										<span className="text-[#E53E3E]">
-											{__('*', 'quillbooking')}
-										</span>
-									</div>
-								}
-								rules={[
-									{
-										required: true,
-										message: 'Account SID is required',
-									},
-								]}
-							>
-								<Input
-									className="h-[48px] w-full rounded-lg"
-									type="text"
-									placeholder="enter your Twilio Account SID"
-								/>
-							</Form.Item>
-
-							<Form.Item
-								name="auth_token"
-								label={
-									<div className="text-[#3F4254] font-semibold text-[16px]">
-										{__('Auth Token', 'quillbooking')}
-										<span className="text-[#E53E3E]">
-											{__('*', 'quillbooking')}
-										</span>
-									</div>
-								}
-							>
-								<Flex gap={10}>
-									<Form.Item
-										name="auth_token"
-										noStyle
-										rules={[
-											{
-												required: true,
-												message:
-													'Auth Token is required',
-											},
-										]}
-									>
-										<Input.Password
-											className="h-[48px] w-full rounded-lg"
-											type="password"
-											placeholder="*****************"
-										/>
-									</Form.Item>
-
-									{accountData && (
-										<Button
-											danger
-											className="h-[48px]"
-											onClick={handleDisconnect}
-											loading={saving}
-										>
-											{__('Disconnect', 'quillbooking')}
-										</Button>
-									)}
-								</Flex>
-
-								{accountData && (
-									<div className="text-[#9197A4] mt-2">
-										{__(
-											'Your Twilio API integration is up and running.',
-											'quillbooking'
-										)}
-									</div>
-								)}
-							</Form.Item>
-
-							<div className="text-[#71717A] italic my-3">
+						<>
+							<div className="text-[#71717A] italic mb-4">
 								{__(
-									'The above app secret key will be encrypted and stored securely.',
+									'Please read the step-by-step documentation to setup Account SID and Auth Token and get the Sender Numbers for your app.',
 									'quillbooking'
 								)}
+								<span className="cursor-pointer font-semibold underline ml-1">
+									{__(
+										'Go to the documentation article',
+										'quillbooking'
+									)}
+								</span>
 							</div>
+							<Form
+								form={form}
+								layout="vertical"
+								onFinish={handleSaveSettings}
+								className="twilio-form"
+								requiredMark={false}
+							>
+								<Form.Item
+									name="sms_number"
+									label={
+										<div className="text-[#3F4254] font-semibold text-[16px]">
+											{__('SMS Number', 'quillbooking')}
+											<span className="text-[#E53E3E]">
+												{__('*', 'quillbooking')}
+											</span>
+										</div>
+									}
+									rules={[
+										{
+											required: true,
+											message: 'SMS number is required',
+										},
+									]}
+								>
+									<Input
+										className="h-[48px] w-full rounded-lg"
+										type="text"
+										placeholder="enter your Twilio SMS Number"
+									/>
+								</Form.Item>
+								<Form.Item
+									name="whatsapp_number"
+									label={
+										<div className="text-[#3F4254] font-semibold text-[16px]">
+											{__(
+												'WhatsApp Number',
+												'quillbooking'
+											)}
+											<span className="text-[#E53E3E]">
+												{__('*', 'quillbooking')}
+											</span>
+										</div>
+									}
+									rules={[
+										{
+											required: true,
+											message:
+												'WhatsApp number is required',
+										},
+									]}
+								>
+									<Input
+										className="h-[48px] w-full rounded-lg"
+										type="text"
+										placeholder="enter Twilio sender WhatsApp Number"
+									/>
+								</Form.Item>
+								<Form.Item
+									name="account_sid"
+									label={
+										<div className="text-[#3F4254] font-semibold text-[16px]">
+											{__('Account SID', 'quillbooking')}
+											<span className="text-[#E53E3E]">
+												{__('*', 'quillbooking')}
+											</span>
+										</div>
+									}
+									rules={[
+										{
+											required: true,
+											message: 'Account SID is required',
+										},
+									]}
+								>
+									<Input
+										className="h-[48px] w-full rounded-lg"
+										type="text"
+										placeholder="enter your Twilio Account SID"
+									/>
+								</Form.Item>
 
-							<Form.Item className="mt-6 flex justify-end">
-								<Button
-									type="primary"
-									htmlType="submit"
-									loading={saving || loading}
-									className={`twilio-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
-									icon={
-										saving || loading ? (
-											<Spin
-												size="small"
-												className="mr-2"
-												style={{ color: 'white' }}
-											/>
-										) : null
+								<Form.Item
+									name="auth_token"
+									label={
+										<div className="text-[#3F4254] font-semibold text-[16px]">
+											{__('Auth Token', 'quillbooking')}
+											<span className="text-[#E53E3E]">
+												{__('*', 'quillbooking')}
+											</span>
+										</div>
 									}
 								>
-									{accountData
-										? saving || loading
-											? 'Processing...'
-											: 'Update Settings'
-										: saving || loading
-											? 'Processing...'
-											: 'Connect Twilio'}
-								</Button>
-							</Form.Item>
-						</Form>
+									<Flex gap={10}>
+										<Form.Item
+											name="auth_token"
+											noStyle
+											rules={[
+												{
+													required: true,
+													message:
+														'Auth Token is required',
+												},
+											]}
+										>
+											<Input.Password
+												className="h-[48px] w-full rounded-lg"
+												type="password"
+												placeholder="*****************"
+											/>
+										</Form.Item>
+
+										{accountData && (
+											<Button
+												danger
+												className="h-[48px]"
+												onClick={handleDisconnect}
+												loading={saving}
+											>
+												{__(
+													'Disconnect',
+													'quillbooking'
+												)}
+											</Button>
+										)}
+									</Flex>
+
+									{accountData && (
+										<div className="text-[#9197A4] mt-2">
+											{__(
+												'Your Twilio API integration is up and running.',
+												'quillbooking'
+											)}
+										</div>
+									)}
+								</Form.Item>
+
+								<div className="text-[#71717A] italic my-3">
+									{__(
+										'The above app secret key will be encrypted and stored securely.',
+										'quillbooking'
+									)}
+								</div>
+
+								<Form.Item className="mt-6 flex justify-end">
+									<Button
+										type="primary"
+										htmlType="submit"
+										loading={saving || loading}
+										className={`twilio-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
+										icon={
+											saving || loading ? (
+												<Spin
+													size="small"
+													className="mr-2"
+													style={{ color: 'white' }}
+												/>
+											) : null
+										}
+									>
+										{accountData
+											? saving || loading
+												? 'Processing...'
+												: 'Update Settings'
+											: saving || loading
+												? 'Processing...'
+												: 'Connect Twilio'}
+									</Button>
+								</Form.Item>
+							</Form>
+						</>
 					) : (
 						<ProGlobalIntegrations
 							list={{

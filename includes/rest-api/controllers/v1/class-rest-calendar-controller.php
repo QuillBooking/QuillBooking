@@ -912,6 +912,8 @@ class REST_Calendar_Controller extends REST_Controller {
 				$global_settings     = $integration->get_settings();
 				$set_global_settings = false;
 				$teams_enabled       = false;
+				$has_get_started     = false;
+				$has_pro_version     = true;
 
 				if ( $integration->slug == 'zoom' ) {
 					$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
@@ -952,11 +954,13 @@ class REST_Calendar_Controller extends REST_Controller {
 				}
 
 				$connected_integrations[ $integration->slug ] = array(
-					'name'          => $integration->name,
-					'connected'     => $all_connected,
-					'has_accounts'  => $has_accounts,
-					'has_settings'  => $set_global_settings,
-					'teams_enabled' => $teams_enabled,
+					'name'            => $integration->name,
+					'connected'       => $all_connected,
+					'has_accounts'    => $has_accounts,
+					'has_settings'    => $set_global_settings,
+					'teams_enabled'   => $teams_enabled,
+					'has_get_started' => $has_get_started,
+					'has_pro_version' => $has_pro_version,
 				);
 			}
 

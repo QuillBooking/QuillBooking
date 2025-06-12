@@ -32,28 +32,21 @@ class Integrations_Helper {
 	public static function get_default_integrations( $context = 'event' ) {
 		if ( $context === 'manager' ) {
 			return array(
-				'apple'   => array(
-					'name'         => 'Apple',
-					'description'  => 'Apple Calendar Integration',
-					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'apple' . '/icon.svg',
-					'is_calendar'  => true,
-					'auth_type'    => 'oauth2',
-					'has_accounts' => false,
-					'is_global'    => false,
-				),
+
 				'google'  => array(
 					'name'         => 'Google',
 					'description'  => 'Google Calendar Integration',
-					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'google' . '/icon.svg',
+					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'google' . '/icon.svg',
 					'is_calendar'  => true,
 					'auth_type'    => 'oauth2',
 					'has_accounts' => false,
 					'is_global'    => false,
 				),
+
 				'outlook' => array(
 					'name'         => 'Outlook',
 					'description'  => 'Outlook Calendar Integration',
-					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'outlook' . '/icon.svg',
+					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'outlook' . '/icon.svg',
 					'is_calendar'  => true,
 					'auth_type'    => 'oauth2',
 					'has_accounts' => false,
@@ -62,8 +55,17 @@ class Integrations_Helper {
 				'zoom'    => array(
 					'name'         => 'Zoom',
 					'description'  => 'Zoom Meeting Integration',
-					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'zoom' . '/icon.svg',
+					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'zoom' . '/icon.svg',
 					'is_calendar'  => false,
+					'auth_type'    => 'oauth2',
+					'has_accounts' => false,
+					'is_global'    => false,
+				),
+				'apple'   => array(
+					'name'         => 'Apple',
+					'description'  => 'Apple Calendar Integration',
+					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'apple' . '/icon.svg',
+					'is_calendar'  => true,
 					'auth_type'    => 'oauth2',
 					'has_accounts' => false,
 					'is_global'    => false,
@@ -71,7 +73,7 @@ class Integrations_Helper {
 				'twilio'  => array(
 					'name'         => 'Twilio',
 					'description'  => 'Twilio SMS Integration',
-					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'twilio' . '/icon.svg',
+					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'twilio' . '/icon.svg',
 					'is_calendar'  => false,
 					'auth_type'    => 'api_key',
 					'has_accounts' => false,
@@ -81,21 +83,13 @@ class Integrations_Helper {
 		} else {
 			// For event context or default
 			return array(
-				'apple'   => array(
-					'name'            => 'Apple',
-					'connected'       => false,
-					'has_accounts'    => false,
-					'has_settings'    => false,
-					'teams_enabled'   => false,
-					'has_get_started' => false,
-				),
 				'google'  => array(
 					'name'            => 'Google',
 					'connected'       => false,
 					'has_accounts'    => false,
 					'has_settings'    => false,
-					'teams_enabled'   => false,
 					'has_get_started' => false,
+					'has_pro_version' => false,
 				),
 				'outlook' => array(
 					'name'            => 'Outlook',
@@ -104,22 +98,31 @@ class Integrations_Helper {
 					'has_settings'    => false,
 					'teams_enabled'   => false,
 					'has_get_started' => false,
+					'has_pro_version' => false,
 				),
-				'twilio'  => array(
-					'name'            => 'Twilio',
+				'apple'   => array(
+					'name'            => 'Apple',
 					'connected'       => false,
 					'has_accounts'    => false,
 					'has_settings'    => false,
-					'teams_enabled'   => false,
 					'has_get_started' => false,
+					'has_pro_version' => false,
 				),
 				'zoom'    => array(
 					'name'            => 'Zoom',
 					'connected'       => false,
 					'has_accounts'    => false,
 					'has_settings'    => false,
-					'teams_enabled'   => false,
 					'has_get_started' => false,
+					'has_pro_version' => false,
+				),
+				'twilio'  => array(
+					'name'            => 'Twilio',
+					'connected'       => false,
+					'has_accounts'    => false,
+					'has_settings'    => false,
+					'has_get_started' => false,
+					'has_pro_version' => false,
 				),
 			);
 		}

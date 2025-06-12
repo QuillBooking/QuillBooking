@@ -4,6 +4,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { addQueryArgs } from '@wordpress/url';
+import { applyFilters } from '@wordpress/hooks';
 
 /**
  * External dependencies
@@ -20,7 +21,6 @@ import {
 	Spin,
 	Form,
 	Input,
-	CheckboxChangeEvent,
 } from 'antd';
 
 import {
@@ -36,8 +36,82 @@ import { isEmpty, map } from 'lodash';
 import type { Integration } from '@quillbooking/config';
 import { useApi } from '@quillbooking/hooks';
 import { NoticeMessage } from '../../../../..';
+import { ProGlobalIntegrations } from '@quillbooking/components';
 
 const { Text } = Typography;
+
+const getIntegrationRequirements = (
+	integrationSlug: string,
+	integrationName: string
+) => {
+	switch (integrationSlug) {
+		case 'google':
+			return {
+				[__('Requirements', 'quillbooking')]: [
+					__('Quill Booking Pro Account.', 'quillbooking'),
+					__('A Google account.', 'quillbooking'),
+					__(
+						'Give Quill Booking Full Access to manage Calendar and Conferencing.',
+						'quillbooking'
+					),
+				],
+			};
+		case 'outlook':
+			return {
+				[__('Requirements', 'quillbooking')]: [
+					__('Quill Booking Pro Account.', 'quillbooking'),
+					__('Microsoft account.', 'quillbooking'),
+					__(
+						'Give Quill Booking Full Access to manage Calendar and Conferencing.',
+						'quillbooking'
+					),
+				],
+			};
+		case 'apple':
+			return {
+				[__('Requirements', 'quillbooking')]: [
+					__('Quill Booking Pro Account.', 'quillbooking'),
+					__('Apple account.', 'quillbooking'),
+					__(
+						'Give Quill Booking Full Access to manage Calendar.',
+						'quillbooking'
+					),
+				],
+			};
+		case 'zoom':
+			return {
+				[__('Features that save you time:', 'quillbooking')]: [
+					__(
+						'Automatically create Zoom meetings at the time an event is scheduled',
+						'quillbooking'
+					),
+					__(
+						'Instantly share unique conferencing details upon confirmation.',
+						'quillbooking'
+					),
+				],
+				[__('Requirements', 'quillbooking')]: [
+					__('Quill Booking Pro Account.', 'quillbooking'),
+					__('A Zoom account.', 'quillbooking'),
+					__(
+						'Give Quill Booking Full Access to manage Zoom meetings.',
+						'quillbooking'
+					),
+				],
+			};
+		default:
+			return {
+				[__('Requirements', 'quillbooking')]: [
+					__('Quill Booking Pro Account.', 'quillbooking'),
+					__(`A ${integrationName} account.`, 'quillbooking'),
+					__(
+						`Give Quill Booking Full Access to manage ${integrationName}.`,
+						'quillbooking'
+					),
+				],
+			};
+	}
+};
 
 interface Props {
 	integration: Integration & { id?: string };
@@ -82,8 +156,7 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 	const [form] = Form.useForm();
 	const { callApi, loading } = useApi();
 	const { callApi: connectApi, loading: connectLoading } = useApi();
-	const { callApi: toggleCalendarApi, loading: toggleCalendarLoading } =
-		useApi();
+	const { callApi: toggleCalendarApi } = useApi();
 	const { callApi: updateSettingsApi } = useApi();
 	const { callApi: deleteApi } = useApi();
 	const [visible, setVisible] = useState(false);
@@ -91,14 +164,23 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 		integration?.id || slug
 	);
 	const [selectedCalendar, setSelectedCalendar] = useState<string>('');
+	const [isProVersion, setIsProVersion] = useState<boolean>(false);
 
 	useEffect(() => {
-		fetchAccounts();
-	}, [integrationSlug, calendarId]);
+		if (isProVersion) {
+			fetchAccounts();
+		}
+	}, [integrationSlug, calendarId, isProVersion]);
 
 	useEffect(() => {
 		setIntegrationSlug(integration?.id || slug);
 	}, [integration?.id, slug]);
+
+	useEffect(() => {
+		setIsProVersion(
+			Boolean(applyFilters('quillbooking.integration', false))
+		);
+	}, []);
 
 	// Update selected calendar when accounts change
 	useEffect(() => {
@@ -182,28 +264,56 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 		type: string,
 		e: any
 	) => {
+		if (!isProVersion) {
+			setNotice({
+				type: 'error',
+				title: __('Pro Version Required', 'quillbooking'),
+				message: __(
+					'This feature requires the Pro version of Quill Booking.',
+					'quillbooking'
+				),
+			});
+			return;
+		}
+
 		try {
-			const response = await callApi({
+			callApi({
 				path: `integrations/${integrationSlug}/${calendarId}/accounts/${account.id}/check-teams`,
 				method: 'GET',
-			});
-
-			if (response.success) {
-				// User has Teams capability, proceed with enabling Teams
-				handleSettingsChange(account.id, type, e.target.checked);
-			} else {
-				// User doesn't have Teams capability
-				setNotice({
-					type: 'error',
-					title: __('Error', 'quillbooking'),
-					message:
-						response.message ||
-						__(
-							'Failed to verify Teams capabilities',
+				onSuccess(response: any) {
+					if (response.success) {
+						// User has Teams capability, proceed with enabling Teams
+						handleSettingsChange(
+							account.id,
+							type,
+							e.target.checked
+						);
+					} else {
+						// User doesn't have Teams capability
+						setNotice({
+							type: 'error',
+							title: __('Error', 'quillbooking'),
+							message:
+								response.message ||
+								__(
+									'Failed to verify Teams capabilities',
+									'quillbooking'
+								),
+						});
+					}
+				},
+				onError(error: any) {
+					console.error('Error checking Teams capabilities:', error);
+					setNotice({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message: __(
+							'Failed to verify Teams capabilities. Please try again later.',
 							'quillbooking'
 						),
-				});
-			}
+					});
+				},
+			});
 		} catch (error) {
 			console.error('Error checking Teams capabilities:', error);
 			setNotice({
@@ -218,6 +328,18 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 	};
 
 	const handleDeleteAccount = async (accountId: string) => {
+		if (!isProVersion) {
+			setNotice({
+				type: 'error',
+				title: __('Pro Version Required', 'quillbooking'),
+				message: __(
+					'This feature requires the Pro version of Quill Booking.',
+					'quillbooking'
+				),
+			});
+			return;
+		}
+
 		try {
 			await deleteApi({
 				path: `integrations/${integrationSlug}/${calendarId}/accounts/${accountId}`,
@@ -261,6 +383,18 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 	};
 
 	const handleConnectOAuth = () => {
+		if (!isProVersion) {
+			setNotice({
+				type: 'error',
+				title: __('Pro Version Required', 'quillbooking'),
+				message: __(
+					'This feature requires the Pro version of Quill Booking.',
+					'quillbooking'
+				),
+			});
+			return;
+		}
+
 		connectApi({
 			path: addQueryArgs(`integrations/${integrationSlug}/auth`, {
 				host_id: calendarId,
@@ -280,6 +414,18 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 	};
 
 	const handleConnectBasic = () => {
+		if (!isProVersion) {
+			setNotice({
+				type: 'error',
+				title: __('Pro Version Required', 'quillbooking'),
+				message: __(
+					'This feature requires the Pro version of Quill Booking.',
+					'quillbooking'
+				),
+			});
+			return;
+		}
+
 		form.validateFields()
 			.then((values) => {
 				// Extract integration-specific settings from form values
@@ -348,6 +494,18 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 		calId: string,
 		checked: boolean
 	) => {
+		if (!isProVersion) {
+			setNotice({
+				type: 'error',
+				title: __('Pro Version Required', 'quillbooking'),
+				message: __(
+					'This feature requires the Pro version of Quill Booking.',
+					'quillbooking'
+				),
+			});
+			return;
+		}
+
 		const newAccounts = accounts.map((account) => {
 			if (account.id === accountId) {
 				// Initialize calendars array if it doesn't exist
@@ -402,6 +560,18 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 	const canAddAccount = () => integration.has_accounts && visible == false;
 
 	const handleRemoteCalendarChange = (value: string) => {
+		if (!isProVersion) {
+			setNotice({
+				type: 'error',
+				title: __('Pro Version Required', 'quillbooking'),
+				message: __(
+					'This feature requires the Pro version of Quill Booking.',
+					'quillbooking'
+				),
+			});
+			return;
+		}
+
 		// Find which account this calendar belongs to
 		let foundAccount: Account | undefined = undefined;
 		let foundCalendar: any = null;
@@ -525,6 +695,18 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 		setting: string,
 		checked: boolean
 	) => {
+		if (!isProVersion) {
+			setNotice({
+				type: 'error',
+				title: __('Pro Version Required', 'quillbooking'),
+				message: __(
+					'This feature requires the Pro version of Quill Booking.',
+					'quillbooking'
+				),
+			});
+			return;
+		}
+
 		const newAccounts = accounts.map((account) => {
 			if (account.id === accountId) {
 				return {
@@ -845,202 +1027,224 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 				</Flex>
 			</Flex>
 			{!integration.has_accounts ? (
-				<>
-					<div className="zoom-fields">
-						<Flex vertical gap={10} className="w-full">
-							<div className="text-[#71717A] italic">
-								{__('Please read the', 'quillbooking')}
-								<span className="cursor-pointer font-semibold underline mx-1">
-									{__('documentation here', 'quillbooking')}
-								</span>
-								{__(
-									'for step by step guide to know how you can get credentials from Zoom Account',
-									'quillbooking'
-								)}
-							</div>
-							<Form form={form} layout="vertical">
-								{map(integration.fields, (field, fieldKey) => (
-									<Form.Item
-										name={fieldKey}
-										key={fieldKey}
-										label={
-											<label
-												htmlFor={`${integrationSlug}-${fieldKey}`}
-												className="text-[#3F4254] font-semibold text-[16px]"
+				isProVersion ? (
+					<>
+						<div className="zoom-fields">
+							<Flex vertical gap={10} className="w-full">
+								<div className="text-[#71717A] italic">
+									{__('Please read the', 'quillbooking')}
+									<span className="cursor-pointer font-semibold underline mx-1">
+										{__(
+											'documentation here',
+											'quillbooking'
+										)}
+									</span>
+									{__(
+										'for step by step guide to know how you can get credentials from Zoom Account',
+										'quillbooking'
+									)}
+								</div>
+								<Form form={form} layout="vertical">
+									{map(
+										integration.fields,
+										(field, fieldKey) => (
+											<Form.Item
+												name={fieldKey}
+												key={fieldKey}
+												label={
+													<label
+														htmlFor={`${integrationSlug}-${fieldKey}`}
+														className="text-[#3F4254] font-semibold text-[16px]"
+													>
+														{field.label}
+													</label>
+												}
+												rules={[
+													{
+														required:
+															field.required,
+														message: __(
+															'This field is required',
+															'quillbooking'
+														),
+													},
+												]}
+												extra={
+													<Text
+														type="secondary"
+														className="text-xs"
+													>
+														{field.description ||
+															`You Can Find Your ${field.label.replace('*', '')} In Your ${integration.name} App Settings.`}
+													</Text>
+												}
 											>
-												{field.label}
-											</label>
-										}
-										rules={[
-											{
-												required: field.required,
-												message: __(
-													'This field is required',
-													'quillbooking'
-												),
-											},
-										]}
-										extra={
-											<Text
-												type="secondary"
-												className="text-xs"
-											>
-												{field.description ||
-													`You Can Find Your ${field.label.replace('*', '')} In Your ${integration.name} App Settings.`}
-											</Text>
-										}
-									>
-										{field.type === 'password' ||
-										fieldKey === 'client_secret' ? (
-											<Flex gap={10}>
-												<Form.Item
-													name={fieldKey}
-													noStyle
-													rules={[
-														{
-															required:
-																field.required,
-															message: __(
-																'This field is required',
-																'quillbooking'
-															),
-														},
-													]}
-												>
-													<Input.Password
+												{field.type === 'password' ||
+												fieldKey === 'client_secret' ? (
+													<Flex gap={10}>
+														<Form.Item
+															name={fieldKey}
+															noStyle
+															rules={[
+																{
+																	required:
+																		field.required,
+																	message: __(
+																		'This field is required',
+																		'quillbooking'
+																	),
+																},
+															]}
+														>
+															<Input.Password
+																id={`${integrationSlug}-${fieldKey}`}
+																placeholder={
+																	field.placeholder
+																}
+																className="rounded-lg h-[48px]"
+															/>
+														</Form.Item>
+
+														{accounts.length >
+															0 && (
+															<Button
+																danger
+																className="h-[48px]"
+																onClick={() =>
+																	handleDeleteAccount(
+																		accounts[0]
+																			.id
+																	)
+																}
+																loading={
+																	loading
+																}
+															>
+																{__(
+																	'Disconnect',
+																	'quillbooking'
+																)}
+															</Button>
+														)}
+													</Flex>
+												) : (
+													<Input
 														id={`${integrationSlug}-${fieldKey}`}
+														type={field.type}
 														placeholder={
 															field.placeholder
 														}
 														className="rounded-lg h-[48px]"
 													/>
-												</Form.Item>
-
-												{accounts.length > 0 && (
-													<Button
-														danger
-														className="h-[48px]"
-														onClick={() =>
-															handleDeleteAccount(
-																accounts[0].id
-															)
-														}
-														loading={loading}
-													>
-														{__(
-															'Disconnect',
-															'quillbooking'
-														)}
-													</Button>
 												)}
-											</Flex>
-										) : (
-											<Input
-												id={`${integrationSlug}-${fieldKey}`}
-												type={field.type}
-												placeholder={field.placeholder}
-												className="rounded-lg h-[48px]"
-											/>
-										)}
-									</Form.Item>
-								))}
-
-								{/* Additional integration-specific settings */}
-								{integrationSlug === 'google' && (
-									<>
-										<Divider
-											orientation="left"
-											className="mt-4"
-										>
-											{__(
-												'Additional Google Calendar Settings',
-												'quillbooking'
-											)}
-										</Divider>
-										<Form.Item
-											name="enable_notifications"
-											valuePropName="checked"
-											className="mb-2"
-										>
-											<Checkbox className="custom-checkbox text-color-primary-text font-semibold">
-												{__(
-													'Enable Google Calendar Notifications',
-													'quillbooking'
-												)}
-											</Checkbox>
-										</Form.Item>
-										<Form.Item
-											name="guests_can_see_others"
-											valuePropName="checked"
-										>
-											<Checkbox className="custom-checkbox text-color-primary-text font-semibold">
-												{__(
-													'Guests can see other guests of the slot',
-													'quillbooking'
-												)}
-											</Checkbox>
-										</Form.Item>
-									</>
-								)}
-
-								{integrationSlug === 'outlook' && (
-									<>
-										<Divider
-											orientation="left"
-											className="mt-4"
-										>
-											{__(
-												'Additional Microsoft Settings',
-												'quillbooking'
-											)}
-										</Divider>
-										<Form.Item
-											name="enable_teams"
-											valuePropName="checked"
-										>
-											<Checkbox className="custom-checkbox text-color-primary-text font-semibold">
-												{__(
-													'Enable Microsoft Teams (Requires work/school account)',
-													'quillbooking'
-												)}
-											</Checkbox>
-										</Form.Item>
-									</>
-								)}
-							</Form>
-
-							<Divider />
-
-							<div className="text-[#71717A] italic">
-								{__(
-									'The above credentials will be encrypted and stored securely.',
-									'quillbooking'
-								)}
-							</div>
-						</Flex>
-						<div className="flex justify-end">
-							<Button
-								type="primary"
-								onClick={() => {
-									handleConnectBasic();
-									setVisible(false);
-								}}
-								loading={connectLoading}
-								style={{ marginTop: '10px' }}
-							>
-								{connectLoading
-									? __(
-											'Saving & Validating...',
-											'quillbooking'
+											</Form.Item>
 										)
-									: __(
-											'Save & Validate Credentials',
-											'quillbooking'
-										)}
-							</Button>
+									)}
+
+									{/* Additional integration-specific settings */}
+									{integrationSlug === 'google' && (
+										<>
+											<Divider
+												orientation="left"
+												className="mt-4"
+											>
+												{__(
+													'Additional Google Calendar Settings',
+													'quillbooking'
+												)}
+											</Divider>
+											<Form.Item
+												name="enable_notifications"
+												valuePropName="checked"
+												className="mb-2"
+											>
+												<Checkbox className="custom-checkbox text-color-primary-text font-semibold">
+													{__(
+														'Enable Google Calendar Notifications',
+														'quillbooking'
+													)}
+												</Checkbox>
+											</Form.Item>
+											<Form.Item
+												name="guests_can_see_others"
+												valuePropName="checked"
+											>
+												<Checkbox className="custom-checkbox text-color-primary-text font-semibold">
+													{__(
+														'Guests can see other guests of the slot',
+														'quillbooking'
+													)}
+												</Checkbox>
+											</Form.Item>
+										</>
+									)}
+
+									{integrationSlug === 'outlook' && (
+										<>
+											<Divider
+												orientation="left"
+												className="mt-4"
+											>
+												{__(
+													'Additional Microsoft Settings',
+													'quillbooking'
+												)}
+											</Divider>
+											<Form.Item
+												name="enable_teams"
+												valuePropName="checked"
+											>
+												<Checkbox className="custom-checkbox text-color-primary-text font-semibold">
+													{__(
+														'Enable Microsoft Teams (Requires work/school account)',
+														'quillbooking'
+													)}
+												</Checkbox>
+											</Form.Item>
+										</>
+									)}
+								</Form>
+
+								<Divider />
+
+								<div className="text-[#71717A] italic">
+									{__(
+										'The above credentials will be encrypted and stored securely.',
+										'quillbooking'
+									)}
+								</div>
+							</Flex>
+							<div className="flex justify-end">
+								<Button
+									type="primary"
+									onClick={() => {
+										handleConnectBasic();
+										setVisible(false);
+									}}
+									loading={connectLoading}
+									style={{ marginTop: '10px' }}
+								>
+									{connectLoading
+										? __(
+												'Saving & Validating...',
+												'quillbooking'
+											)
+										: __(
+												'Save & Validate Credentials',
+												'quillbooking'
+											)}
+								</Button>
+							</div>
 						</div>
-					</div>
-				</>
+					</>
+				) : (
+					<ProGlobalIntegrations
+						list={getIntegrationRequirements(
+							integrationSlug,
+							integration.name
+						)}
+					/>
+				)
 			) : (
 				<>
 					{visible ? (

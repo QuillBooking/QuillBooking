@@ -26,7 +26,7 @@ import meet from '@quillbooking/assets/icons/google/google_meet.png';
 import zoom from '@quillbooking/assets/icons/zoom/zoom_video.png';
 import teams from '@quillbooking/assets/icons/teams/teams.png';
 import TextArea from 'antd/es/input/TextArea';
-import { NavLink } from '../../navigation';
+import { useNavigate } from '@quillbooking/hooks';
 
 // Extended Location type to include custom ID for multiple custom locations
 interface ExtendedLocation extends Location {
@@ -54,6 +54,8 @@ const Locations: React.FC<{
 	calendar,
 	handleSubmit = async (redirect: boolean) => {},
 }) => {
+	console.log('Connected Integrations:', connected_integrations);
+	const navigate = useNavigate();
 	const [isModalVisible, setIsModalVisible] = useState(false);
 	const [editingLocationIndex, setEditingLocationIndex] = useState<
 		number | null
@@ -118,6 +120,19 @@ const Locations: React.FC<{
 		}
 	};
 
+	const hasProVersion = (type: string): boolean => {
+		switch (type) {
+			case 'google-meet':
+				return connected_integrations.google.has_pro_version;
+			case 'zoom':
+				return connected_integrations.zoom.has_pro_version;
+			case 'ms-teams':
+				return connected_integrations.outlook.has_pro_version;
+			default:
+				return false;
+		}
+	};
+
 	const convertToSlug = (type: string) => {
 		switch (type) {
 			case 'google-meet':
@@ -158,7 +173,13 @@ const Locations: React.FC<{
 		hasSettings = false,
 		hasAccounts = false
 	) => {
-		if (handleSubmit && hasGetStarted(integrationType)) {
+		if (!hasProVersion(integrationType)) {
+			navigate(
+				`integrations&tab=conferencing-calendars&subtab=${convertToSlug(integrationType)}`
+			);
+		}
+
+		if (hasProVersion(integrationType) && hasGetStarted(integrationType)) {
 			// First add the location to the locations array
 			const updatedLocations = [...locations];
 			const existingIndex = updatedLocations.findIndex(
@@ -191,15 +212,20 @@ const Locations: React.FC<{
 					return;
 				}
 
-				const adminUrl = ConfigAPI.getAdminUrl();
 				const path = `calendars/${response.id}`;
 
 				if (!hasSettings) {
-					window.location.href = `${adminUrl}?page=quillbooking&path=integrations&tab=conferencing-calendars&subtab=${convertToSlug(integrationType)}`;
+					navigate(
+						`integrations&tab=conferencing-calendars&subtab=${convertToSlug(integrationType)}`
+					);
 				} else if (!hasAccounts) {
-					window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`;
+					navigate(
+						`${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`
+					);
 				} else {
-					window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`;
+					navigate(
+						`${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`
+					);
 				}
 			} catch (error) {
 				console.error('Error saving calendar:', error);
@@ -214,28 +240,34 @@ const Locations: React.FC<{
 			return;
 		}
 
-		const adminUrl = ConfigAPI.getAdminUrl();
 		const path = `calendars/${calendar.id}`;
 
 		if (!hasSettings) {
-			window.location.href = `${adminUrl}?page=quillbooking&path=integrations&tab=conferencing-calendars&subtab=${convertToSlug(integrationType)}`;
+			navigate(
+				`integrations&tab=conferencing-calendars&subtab=${convertToSlug(integrationType)}`
+			);
 		} else if (!hasAccounts) {
-			window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`;
+			navigate(
+				`${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`
+			);
 		} else {
-			window.location.href = `${adminUrl}?page=quillbooking&path=${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`;
+			navigate(
+				`${encodeURIComponent(path)}&tab=integrations&subtab=${convertToSlug(integrationType)}`
+			);
 		}
 	};
 
-	// Modified handleCheckboxChange to prevent checking if integration isn't connected
+	// Modified handleCheckboxChange to check has_pro_version first
 	const handleCheckboxChange = async (type: string, checked: boolean) => {
-		// First check if this is an integration-dependent location that requires connection
+		// First priority: Check if user has Pro version for this integration
 		if (
 			checked &&
+			!hasProVersion(type) &&
 			!isIntegrationConnected(type) &&
 			!hasGetStarted(type) &&
 			!isIntegrationGolbalConnected(type)
 		) {
-			// If trying to check but integration isn't connected, show error message
+			// If trying to check but integration isn't connected and no Pro version, show error message
 			switch (type) {
 				case 'google-meet':
 					messageApi.error({
@@ -245,7 +277,7 @@ const Locations: React.FC<{
 						),
 						duration: 5,
 					});
-					break;
+					return;
 				case 'zoom':
 					messageApi.error({
 						content: __(
@@ -254,7 +286,7 @@ const Locations: React.FC<{
 						),
 						duration: 5,
 					});
-					break;
+					return;
 				case 'ms-teams':
 					// Check if Teams is enabled for the default account
 					if (!connected_integrations.outlook.teams_enabled) {
@@ -274,10 +306,8 @@ const Locations: React.FC<{
 							duration: 5,
 						});
 					}
-					break;
+					return;
 			}
-			// Prevent checking the checkbox
-			return;
 		}
 
 		// If not custom and integration is connected (or not required), handle regular location toggle
@@ -556,6 +586,73 @@ const Locations: React.FC<{
 		onChange(updatedLocations);
 	};
 
+	// Helper function to determine if Google Meet checkbox should be disabled
+	const isGoogleMeetDisabled = (): boolean => {
+		// If Google Meet is already selected, allow unchecking
+		if (locations.some((loc) => loc.type === 'google-meet')) {
+			return false;
+		}
+
+		if (!connected_integrations.google.has_pro_version) {
+			return true;
+		}
+		if (connected_integrations.google.has_get_started) {
+			return false;
+		}
+		if (
+			!connected_integrations.google.has_settings ||
+			!connected_integrations.google.has_accounts
+		) {
+			return true;
+		}
+		return false;
+	};
+
+	const isOutlookDisabled = (): boolean => {
+		// If Google Meet is already selected, allow unchecking
+		if (locations.some((loc) => loc.type === 'ms-teams')) {
+			return false;
+		}
+
+		if (!connected_integrations.outlook.has_pro_version) {
+			return true;
+		}
+		if (connected_integrations.outlook.has_get_started) {
+			return false;
+		}
+		if (
+			!connected_integrations.outlook.has_settings ||
+			!connected_integrations.outlook.has_accounts
+		) {
+			return true;
+		}
+		if (!connected_integrations.outlook.teams_enabled) {
+			return true;
+		}
+		return false;
+	};
+
+	const isZoomDisabled = (): boolean => {
+		// If Zoom is already selected, allow unchecking
+		if (locations.some((loc) => loc.type === 'zoom')) {
+			return false;
+		}
+
+		if (!connected_integrations.zoom.has_pro_version) {
+			return true;
+		}
+		if (connected_integrations.zoom.has_get_started) {
+			return false;
+		}
+		if (
+			!connected_integrations.zoom.has_settings &&
+			!connected_integrations.zoom.has_accounts
+		) {
+			return true;
+		}
+		return false;
+	};
+
 	return (
 		<>
 			{contextHolder}
@@ -564,6 +661,8 @@ const Locations: React.FC<{
 					<div className="text-[#09090B] text-[16px]">
 						{__('Conferencing', 'quillbooking')}
 					</div>
+
+					{/* google */}
 					<Checkbox
 						className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${
 							locations.some((loc) => loc.type === 'google-meet')
@@ -579,15 +678,7 @@ const Locations: React.FC<{
 								e.target.checked
 							)
 						}
-						disabled={
-							!connected_integrations.google.has_get_started &&
-							(!connected_integrations.google.connected ||
-								!connected_integrations.google.has_settings ||
-								(connected_integrations.google.connected &&
-									!connected_integrations.google
-										.has_accounts)) &&
-							!locations.some((loc) => loc.type === 'google-meet')
-						}
+						disabled={isGoogleMeetDisabled()}
 					>
 						<Flex
 							justify="space-between"
@@ -604,68 +695,127 @@ const Locations: React.FC<{
 									<div className="text-[#3F4254] text-[16px] font-semibold">
 										{__('Google Meet', 'quillbooking')}
 									</div>
+
 									<div className="text-[#9197A4] text-[12px] italic">
-										{connected_integrations.google
-											.has_settings &&
-										connected_integrations.google
-											.has_accounts
-											? __('Connected', 'quillbooking')
-											: connected_integrations.google
-														.has_settings
-												? __(
-														'An account needs to be added first – visit the Google Meet tab in Calendar Settings.',
-														'quillbooking'
-													)
-												: __(
-														'Need to connect first – visit the Google Meet integration page from Settings.',
-														'quillbooking'
-													)}
+										{(() => {
+											let googleStatusMessage = '';
+
+											if (
+												!connected_integrations.google
+													.has_pro_version
+											) {
+												googleStatusMessage = __(
+													'Upgrade to Pro to access Google Meet integration.',
+													'quillbooking'
+												);
+											} else if (
+												!connected_integrations.google
+													.has_settings
+											) {
+												googleStatusMessage = __(
+													'Add Global Settings to use Google Meet integration.',
+													'quillbooking'
+												);
+											} else if (
+												!connected_integrations.google
+													.has_accounts
+											) {
+												googleStatusMessage = __(
+													'Add an account to use Google Meet integration.',
+													'quillbooking'
+												);
+											}
+
+											return googleStatusMessage;
+										})()}
 									</div>
 								</Flex>
 							</Flex>
-							{!connected_integrations.google.has_settings ? (
-								<Button
-									onClick={async () => {
-										await navigateToIntegrations(
-											'google-meet',
-											false,
-											false
-										);
-									}}
-									className="bg-transparent shadow-none border border-color-primary text-color-primary"
-								>
-									{__('Connect', 'quillbooking')}
-								</Button>
-							) : !connected_integrations.google.has_accounts ? (
-								<Button
-									onClick={async () => {
-										await navigateToIntegrations(
-											'google-meet',
-											true,
-											false
-										);
-									}}
-									className="bg-transparent shadow-none border border-color-primary text-color-primary"
-								>
-									{__('Add Account', 'quillbooking')}
-								</Button>
-							) : (
-								<Button
-									onClick={async () => {
-										await navigateToIntegrations(
-											'google-meet',
-											true,
-											true
-										);
-									}}
-									className="bg-transparent border-none text-[#3F4254] shadow-none p-0"
-								>
-									<EditIcon />
-									{__('Manage Accounts', 'quillbooking')}
-								</Button>
-							)}
+							{(() => {
+								// User doesn't have pro version or settings
+								if (
+									!connected_integrations.google
+										.has_pro_version
+								) {
+									return (
+										<Button
+											onClick={async () => {
+												await navigateToIntegrations(
+													'google-meet',
+													false,
+													false
+												);
+											}}
+											className="bg-transparent shadow-none border border-color-primary text-color-primary"
+										>
+											{__(
+												'Upgrade to Pro',
+												'quillbooking'
+											)}
+										</Button>
+									);
+								}
+
+								// User has pro and settings but no accounts
+								if (
+									!connected_integrations.google.has_settings
+								) {
+									return (
+										<Button
+											onClick={async () => {
+												await navigateToIntegrations(
+													'google-meet',
+													true,
+													false
+												);
+											}}
+											className="bg-transparent shadow-none border border-color-primary text-color-primary"
+										>
+											{__('Connect', 'quillbooking')}
+										</Button>
+									);
+								}
+
+								if (
+									!connected_integrations.google.has_accounts
+								) {
+									return (
+										<Button
+											onClick={async () => {
+												await navigateToIntegrations(
+													'google-meet',
+													true,
+													false
+												);
+											}}
+											className="bg-transparent shadow-none border border-color-primary text-color-primary"
+										>
+											{__('Add Account', 'quillbooking')}
+										</Button>
+									);
+								}
+
+								// User has everything configured - show manage accounts
+								return (
+									<Button
+										onClick={async () => {
+											await navigateToIntegrations(
+												'google-meet',
+												true,
+												true
+											);
+										}}
+										className="bg-transparent border-none text-[#3F4254] shadow-none p-0"
+									>
+										<EditIcon />
+										{__('Manage Accounts', 'quillbooking')}
+									</Button>
+								);
+							})()}
 						</Flex>
 					</Checkbox>
+
+					{/* zoom */}
 					<Checkbox
 						className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${
 							locations.some((loc) => loc.type === 'zoom')
@@ -676,12 +826,7 @@ const Locations: React.FC<{
 						onChange={(e) =>
 							handleCheckboxChange('zoom', e.target.checked)
 						}
-						disabled={
-							!connected_integrations.zoom.has_settings &&
-							!connected_integrations.zoom.has_accounts &&
-							!connected_integrations.zoom.has_get_started &&
-							!locations.some((loc) => loc.type === 'zoom')
-						}
+						disabled={isZoomDisabled()}
 					>
 						<Flex
 							justify="space-between"
@@ -698,82 +843,122 @@ const Locations: React.FC<{
 									<div className="text-[#3F4254] text-[16px] font-semibold">
 										{__('Zoom Video', 'quillbooking')}
 									</div>
+
 									<div className="text-[#9197A4] text-[12px] italic">
-										{connected_integrations.zoom
-											.has_settings &&
-										!connected_integrations.zoom
-											.has_accounts ? (
-											<NavLink
-												to={`integrations&tab=conferencing-calendars&subtab=zoom`}
-											>
-												<span className="text-blue-500 hover:text-blue-600 transition-colors font-medium cursor-pointer">
-													{__(
-														'Connected By Your Global Settings',
-														'quillbooking'
-													)}
-												</span>
-											</NavLink>
-										) : connected_integrations.zoom
-												.has_accounts ? (
-											<div className="text-[#9197A4] text-[12px] italic">
-												{__(
-													'Connected By Your Host Settings',
+										{(() => {
+											let zoomStatusMessage = '';
+
+											if (
+												!connected_integrations.zoom
+													.has_pro_version
+											) {
+												zoomStatusMessage = __(
+													'Upgrade to Pro to access Zoom Video integration.',
 													'quillbooking'
-												)}
-											</div>
-										) : (
-											__(
-												'An account needs to be added first – visit the Zoom Video tab in Calendar Settings.',
-												'quillbooking'
-											)
-										)}
+												);
+											} else if (
+												!connected_integrations.zoom
+													.has_accounts
+											) {
+												zoomStatusMessage = __(
+													'Add an account to use Zoom Video integration.',
+													'quillbooking'
+												);
+											} else if (
+												!connected_integrations.zoom
+													.has_settings
+											) {
+												zoomStatusMessage = __(
+													'Add an account to use Zoom Video integration.',
+													'quillbooking'
+												);
+											}
+
+											return zoomStatusMessage;
+										})()}
 									</div>
 								</Flex>
 							</Flex>
-							{!connected_integrations.zoom.has_settings &&
-							!connected_integrations.zoom.has_accounts ? (
-								<Button
-									onClick={async () => {
-										await navigateToIntegrations(
-											'zoom',
-											true,
-											false
-										);
-									}}
-									className="bg-transparent shadow-none border border-color-primary text-color-primary"
-								>
-									{__('Add Account', 'quillbooking')}
-								</Button>
-							) : !connected_integrations.zoom.has_accounts ? (
-								<Button
-									onClick={async () => {
-										await navigateToIntegrations(
-											'zoom',
-											true,
-											false
-										);
-									}}
-									className="bg-transparent shadow-none border border-color-primary text-color-primary"
-								>
-									{__('Add Account', 'quillbooking')}
-								</Button>
-							) : (
-								<Button
-									onClick={async () => {
-										await navigateToIntegrations(
-											'zoom',
-											true,
-											true
-										);
-									}}
-									className="bg-transparent border-none text-[#3F4254] shadow-none p-0"
-								>
-									<EditIcon />
-									{__('Manage Accounts', 'quillbooking')}
-								</Button>
-							)}
+							{(() => {
+								// User doesn't have pro version or settings
+								if (
+									!connected_integrations.zoom.has_pro_version
+								) {
+									return (
+										<Button
+											onClick={async () => {
+												await navigateToIntegrations(
+													'zoom',
+													false,
+													false
+												);
+											}}
+											className="bg-transparent shadow-none border border-color-primary text-color-primary"
+										>
+											{__(
+												'Upgrade to Pro',
+												'quillbooking'
+											)}
+										</Button>
+									);
+								}
+
+								// User has pro and settings but no accounts
+								if (!connected_integrations.zoom.has_settings) {
+									return (
+										<Button
+											onClick={async () => {
+												await navigateToIntegrations(
+													'zoom',
+													true,
+													false
+												);
+											}}
+											className="bg-transparent shadow-none border border-color-primary text-color-primary"
+										>
+											{__('Add Account', 'quillbooking')}
+										</Button>
+									);
+								}
+
+								if (!connected_integrations.zoom.has_accounts) {
+									return (
+										<Button
+											onClick={async () => {
+												await navigateToIntegrations(
+													'zoom',
+													true,
+													false
+												);
+											}}
+											className="bg-transparent shadow-none border border-color-primary text-color-primary"
+										>
+											{__('Add Account', 'quillbooking')}
+										</Button>
+									);
+								}
+
+								// User has everything configured - show manage accounts
+								return (
+									<Button
+										onClick={async () => {
+											await navigateToIntegrations(
+												'zoom',
+												true,
+												true
+											);
+										}}
+										className="bg-transparent border-none text-[#3F4254] shadow-none p-0"
+									>
+										<EditIcon />
+										{__('Manage Accounts', 'quillbooking')}
+									</Button>
+								);
+							})()}
 						</Flex>
 					</Checkbox>
+
+					{/* outlook */}
 					<Checkbox
 						className={`border rounded-lg p-4 w-full transition-all duration-300 custom-check ${
 							locations.some((loc) => loc.type === 'ms-teams')
@@ -786,16 +971,7 @@ const Locations: React.FC<{
 						onChange={(e) =>
 							handleCheckboxChange('ms-teams', e.target.checked)
 						}
-						disabled={
-							!connected_integrations.outlook.has_get_started &&
-							(!connected_integrations.outlook.connected ||
-								!connected_integrations.outlook.teams_enabled ||
-								!connected_integrations.outlook.has_settings ||
-								(connected_integrations.outlook.connected &&
-									!connected_integrations.outlook
-										.has_accounts)) &&
-							!locations.some((loc) => loc.type === 'ms-teams')
-						}
+						disabled={isOutlookDisabled()}
 					>
 						<Flex
 							justify="space-between"
@@ -812,87 +988,130 @@ const Locations: React.FC<{
 									<div className="text-[#3F4254] text-[16px] font-semibold">
 										{__('MS Teams', 'quillbooking')}
 									</div>
-									<div className="text-[#9197A4] text-[12px] italic">
-										{connected_integrations.outlook
-											.has_settings &&
-										connected_integrations.outlook
-											.has_accounts
-											? __('Connected', 'quillbooking')
-											: connected_integrations.outlook
-														.has_settings
-												? __(
-														'An account needs to be added first – visit the MS Teams tab in Calendar Settings.',
-														'quillbooking'
-													)
-												: __(
-														'Need to connect first – visit the MS Teams integration page from Settings.',
-														'quillbooking'
-													)}
 
-										{connected_integrations.outlook
-											.has_settings &&
-											connected_integrations.outlook
-												.has_accounts &&
-											(connected_integrations.outlook
-												.teams_enabled ? (
-												<div className="text-[#9197A4] text-[12px] italic">
-													{__(
-														'Teams is enabled',
-														'quillbooking'
-													)}
-												</div>
-											) : (
-												<div className="text-[#9197A4] text-[12px] italic">
-													{__(
-														'Teams is not enabled',
-														'quillbooking'
-													)}
-												</div>
-											))}
+									<div className="text-[#9197A4] text-[12px] italic">
+										{(() => {
+											let outlookStatusMessage = '';
+
+											if (
+												!connected_integrations.outlook
+													.has_pro_version
+											) {
+												outlookStatusMessage = __(
+													'Upgrade to Pro to access Outlook integration.',
+													'quillbooking'
+												);
+											} else if (
+												!connected_integrations.outlook
+													.has_settings
+											) {
+												outlookStatusMessage = __(
+													'Add Global Settings to use Outlook integration.',
+													'quillbooking'
+												);
+											} else if (
+												!connected_integrations.outlook
+													.has_accounts
+											) {
+												outlookStatusMessage = __(
+													'Add an account to use Outlook integration.',
+													'quillbooking'
+												);
+											} else if (
+												!connected_integrations.outlook
+													.teams_enabled
+											) {
+												outlookStatusMessage = __(
+													'Teams is not enabled for your default account. Please enable it in the Outlook integration settings.',
+													'quillbooking'
+												);
+											}
+											return outlookStatusMessage;
+										})()}
 									</div>
 								</Flex>
 							</Flex>
-							{!connected_integrations.outlook.has_settings ? (
-								<Button
-									onClick={async () => {
-										await navigateToIntegrations(
-											'ms-teams',
-											false,
-											false
-										);
-									}}
-									className="bg-transparent shadow-none border border-color-primary text-color-primary"
-								>
-									{__('Connect', 'quillbooking')}
-								</Button>
-							) : !connected_integrations.outlook.has_accounts ? (
-								<Button
-									onClick={async () => {
-										await navigateToIntegrations(
-											'ms-teams',
-											true,
-											false
-										);
-									}}
-									className="bg-transparent shadow-none border border-color-primary text-color-primary"
-								>
-									{__('Add Account', 'quillbooking')}
-								</Button>
-							) : (
-								<Button
-									onClick={async () => {
-										await navigateToIntegrations(
-											'ms-teams',
-											true,
-											true
-										);
-									}}
-									className="bg-transparent border-none text-[#3F4254] shadow-none p-0"
-								>
-									<EditIcon />
-									{__('Manage Accounts', 'quillbooking')}
-								</Button>
-							)}
+							{(() => {
+								// User doesn't have pro version or settings
+								if (
+									!connected_integrations.outlook
+										.has_pro_version
+								) {
+									return (
+										<Button
+											onClick={async () => {
+												await navigateToIntegrations(
+													'ms-teams',
+													false,
+													false
+												);
+											}}
+											className="bg-transparent shadow-none border border-color-primary text-color-primary"
+										>
+											{__(
+												'Upgrade to Pro',
+												'quillbooking'
+											)}
+										</Button>
+									);
+								}
+
+								// User has pro and settings but no accounts
+								if (
+									!connected_integrations.outlook.has_settings
+								) {
+									return (
+										<Button
+											onClick={async () => {
+												await navigateToIntegrations(
+													'ms-teams',
+													true,
+													false
+												);
+											}}
+											className="bg-transparent shadow-none border border-color-primary text-color-primary"
+										>
+											{__('Connect', 'quillbooking')}
+										</Button>
+									);
+								}
+
+								if (
+									!connected_integrations.outlook.has_accounts
+								) {
+									return (
+										<Button
+											onClick={async () => {
+												await navigateToIntegrations(
+													'ms-teams',
+													true,
+													false
+												);
+											}}
+											className="bg-transparent shadow-none border border-color-primary text-color-primary"
+										>
+											{__('Add Account', 'quillbooking')}
+										</Button>
+									);
+								}
+
+								// User has everything configured - show manage accounts
+								return (
+									<Button
+										onClick={async () => {
+											await navigateToIntegrations(
+												'ms-teams',
+												true,
+												true
+											);
+										}}
+										className="bg-transparent border-none text-[#3F4254] shadow-none p-0"
+									>
+										<EditIcon />
+										{__('Manage Accounts', 'quillbooking')}
+									</Button>
+								);
+							})()}
 						</Flex>
 					</Checkbox>
 				</Flex>

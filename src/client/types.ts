@@ -59,6 +59,7 @@ export type ConnectedIntegrationsFields = {
 	has_settings: boolean;
 	has_accounts: boolean;
 	has_get_started: boolean;
+	has_pro_version: boolean;
 };
 
 export type ConnectedIntegrationsFieldsMicrosoft =

@@ -96,6 +96,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				has_settings: false,
 				has_accounts: false,
 				has_get_started: false,
+				has_pro_version: false,
 			},
 			google: {
 				name: 'google',
@@ -103,6 +104,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				has_settings: false,
 				has_accounts: false,
 				has_get_started: false,
+				has_pro_version: false,
 			},
 			outlook: {
 				name: 'outlook',
@@ -111,6 +113,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				has_accounts: false,
 				teams_enabled: false,
 				has_get_started: false,
+				has_pro_version: false,
 			},
 			twilio: {
 				name: 'twilio',
@@ -118,6 +121,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				has_settings: false,
 				has_accounts: false,
 				has_get_started: false,
+				has_pro_version: false,
 			},
 			zoom: {
 				name: 'zoom',
@@ -125,6 +129,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 				has_settings: false,
 				has_accounts: false,
 				has_get_started: false,
+				has_pro_version: false,
 			},
 		},
 	});

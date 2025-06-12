@@ -22,15 +22,12 @@ export interface IntegrateCardProps {
 	paymentGateways: Record<string, any>;
 	activeTab: string | null;
 	setActiveTab: (tab: string) => void;
-	isLoading?: boolean;
 }
 
 const IntegrateCard: React.FC<IntegrateCardProps> = ({
 	paymentGateways,
 	activeTab,
 	setActiveTab,
-	// We keep isLoading in the props for compatibility, but we won't use it
-	isLoading = false,
 }) => {
 	// Manage notice visibility state locally since it's only used in this component
 	const [isNoticeVisible, setNoticeVisible] = useState(true);

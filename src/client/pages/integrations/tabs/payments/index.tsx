@@ -195,7 +195,6 @@ const PaymentsTab: React.FC = () => {
 				paymentGateways={paymentGateways}
 				activeTab={activeTab}
 				setActiveTab={handleTabChange}
-				isLoading={isLoading}
 			/>
 			<AnimatePresence mode="wait">
 				{activeTab && activeGateway && (

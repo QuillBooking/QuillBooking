@@ -358,7 +358,8 @@ class Booking_Actions {
 	 * Render reschedule page
 	 */
 	protected function render_reschedule_page() {
-		$booking_id = Arr::get( $_GET, 'id', null );
+		$booking_id      = Arr::get( $_GET, 'id', null );
+		$global_settings = $this->globalSettingsClass::get_all();
 
 		if ( ! $booking_id ) {
 			wp_redirect( home_url() );
@@ -388,10 +389,11 @@ class Booking_Actions {
 
 		add_filter(
 			'quillbooking_config',
-			function ( $config ) use ( $booking, $calendar, $event ) {
-				$config['calendar'] = $calendar->toArray();
-				$config['event']    = $event->toArray();
-				$config['booking']  = $booking->toArray();
+			function ( $config ) use ( $booking, $calendar, $event, $global_settings ) {
+				$config['calendar']        = $calendar->toArray();
+				$config['event']           = $event->toArray();
+				$config['booking']         = $booking->toArray();
+				$config['global_settings'] = $global_settings;
 
 				return $config;
 			}
@@ -518,7 +520,7 @@ class Booking_Actions {
 	 */
 	public function template_loader( $template ) {
 		// Only override for booking pages (adjust logic as needed)
-		if ( isset( $_GET['quillbooking_calendar'] ) || isset( $_GET['quillbooking'] ) || isset( $_GET['id'] ) ) {
+		if ( isset( $_GET['quillbooking_calendar'] ) || isset( $_GET['quillbooking'] ) || isset( $_GET['id'] ) || isset( $_GET['calendar'] ) ) {
 			return QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderer-template.php';
 		}
 		return $template;

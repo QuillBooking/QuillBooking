@@ -111,10 +111,7 @@ class QuillBooking
 		Capabilities::assign_capabilities_for_user_roles();
 		Booking::instance();
 
-		// Load WooCommerce integration if available
-		if (class_exists('QuillBooking\WooCommerce\WooCommerce')) {
-			\QuillBooking\WooCommerce\WooCommerce::instance();
-		}
+		// WooCommerce integration is now in the Pro version
 
 		Webhook_Feeds::instance();
 

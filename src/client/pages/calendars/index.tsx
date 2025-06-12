@@ -566,7 +566,7 @@ const Calendars: React.FC = () => {
 															<a
 																href={
 																	siteUrl +
-																	'?calendar=' +
+																	'?quillbooking_calendar=' +
 																	calendar.slug
 																}
 																target="_blank"

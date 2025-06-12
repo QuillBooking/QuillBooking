@@ -267,19 +267,19 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 		setDisabled(false);
 	};
 
-	const handleCardChange = (id: number) => {
-		setDisabled(false);
-		setSelectedCard(id);
-		const selected = Object.values(
-			event?.availability_data.users_availability
-		).find((a) => a.user_id === id);
-		console.log('selected', selected);
-		if (selected) {
-			setAvailability(selected);
-			setDateOverrides(selected.override);
-			setLastAvailability(selected);
-		}
-	};
+	// const handleCardChange = (id: number) => {
+	// 	setDisabled(false);
+	// 	setSelectedCard(id);
+	// 	const selected = Object.values(
+	// 		event?.availability_data.users_availability
+	// 	).find((a) => a.user_id === id);
+	// 	console.log('selected', selected);
+	// 	if (selected) {
+	// 		setAvailability(selected);
+	// 		setDateOverrides(selected.override);
+	// 		setLastAvailability(selected);
+	// 	}
+	// };
 
 	if (eventLoading || loading) {
 		return (
@@ -368,7 +368,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 				</Flex>
 			)} */}
 
-			{event?.calendar.type === 'team' && !commonSchedule && (
+			{/* {event?.calendar.type === 'team' && !commonSchedule && (
 				<Flex vertical gap={10} className="mt-4">
 					<div className="text-[#09090B] text-[16px]">
 						{__('Add Availability Per Users', 'quillbooking')}
@@ -397,7 +397,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 						))}
 					</Flex>
 				</Flex>
-			)}
+			)} */}
 
 			{(commonSchedule || event?.calendar.type === 'host') && (
 				<AvailabilityType

@@ -13,7 +13,6 @@ import PaymentGatewayCard from './method-card';
 import { useApi } from '@quillbooking/hooks';
 import { NoticeBanner } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/client';
-import IntegrationsShimmerLoader from '../../shimmer-loader';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const PaymentsTab: React.FC = () => {
@@ -181,10 +180,6 @@ const PaymentsTab: React.FC = () => {
 			},
 		}));
 	};
-
-	if (isLoading) {
-		return <IntegrationsShimmerLoader />;
-	}
 
 	return (
 		<div className="quillbooking-payment-settings grid grid-cols-2 gap-5 w-full">

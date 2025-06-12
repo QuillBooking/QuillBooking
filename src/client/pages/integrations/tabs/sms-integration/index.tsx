@@ -29,9 +29,20 @@ import { ProGlobalIntegrations } from '@quillbooking/components';
 const { Text } = Typography;
 
 const SMSIntegration: React.FC = () => {
-	const integration = Object.entries(ConfigAPI.getIntegrations()).filter(
+	const integrations = Object.entries(ConfigAPI.getIntegrations()).filter(
 		([key]) => key == 'twilio'
-	)[0][1];
+	);
+
+	// Add safety check for integrations
+	const integration =
+		integrations.length > 0
+			? integrations[0][1]
+			: {
+					name: 'Twilio',
+					description: 'Twilio SMS Integration',
+					icon: `${ConfigAPI.getPluginDirUrl()}assets/images/integrations/twilio.svg`,
+				};
+
 	const [form] = Form.useForm();
 	const { callApi, loading } = useApi();
 	const { successNotice, errorNotice } = useNotice();

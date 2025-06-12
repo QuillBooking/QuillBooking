@@ -22,19 +22,12 @@ use QuillBooking\Managers\Fields_Manager;
 use QuillBooking\Availabilities;
 use QuillBooking\Managers\Integrations_Manager;
 use QuillBooking\Payment_Gateway\Payment_Validator;
+use QuillBooking\Helpers\Integrations_Helper;
 
 /**
  * Calendar Events Model class
  */
 class Event_Model extends Model {
-
-
-
-
-
-
-
-
 
 
 
@@ -533,13 +526,29 @@ class Event_Model extends Model {
 	}
 
 	/**
+	 * Check if integrations are available
+	 *
+	 * @return bool
+	 */
+	private function has_integrations() {
+		return Integrations_Helper::has_integrations();
+	}
+
+	/**
 	 * Get Connected Integrations
 	 *
 	 * @return array
 	 */
 	public function getConnectedIntegrationsAttribute() {
 		$connected_integrations = array();
-		$integrations           = Integrations_Manager::instance()->get_integrations();
+
+		// Check if integrations are available
+		if ( ! $this->has_integrations() ) {
+			// Return default values if pro plugin is not active
+			return Integrations_Helper::get_default_integrations();
+		}
+
+		$integrations = Integrations_Manager::instance()->get_integrations();
 
 		$calendar_ids = array( $this->calendar_id );
 		if ( in_array( $this->type, array( 'round-robin', 'collective' ) ) ) {
@@ -547,75 +556,93 @@ class Event_Model extends Model {
 			$calendar_ids = $team_members;
 		}
 
-		foreach ( $integrations as $integration_class ) {
-			$integration         = new $integration_class();
-			$all_connected       = true;
-			$has_accounts        = false;
-			$global_settings     = $integration->get_settings();
-			$set_global_settings = false;
-			$teams_enabled       = false;
+		foreach ( $integrations as $integration_key => $integration_class ) {
+			// Check if integration_class is a string (class name) or an array (default values)
+			if ( is_string( $integration_class ) ) {
+				// It's a class name, instantiate it
+				$integration = new $integration_class();
+				$slug        = $integration->slug;
+				$name        = $integration->name;
 
-			if ( $integration->slug == 'zoom' ) {
-				$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
-				if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['client_id'] ) && ! empty( $app_credentials['client_secret'] ) ) {
-					$set_global_settings = true;
-				} else {
-					$set_global_settings = false;
-				}
-			} elseif ( $integration->slug == 'twilio' ) {
-				$app_credentials = Arr::get( $global_settings, 'credentials', null );
-				if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['auth_token'] ) && ! empty( $app_credentials['account_sid'] ) ) {
-					$set_global_settings = true;
-				} else {
-					$set_global_settings = false;
-				}
-			} else {
-				$app = Arr::get( $global_settings, 'app', null );
-				if ( $app && is_array( $app ) && ! empty( $app['cache_time'] ) ) {
-					$set_global_settings = true;
-				} else {
-					$set_global_settings = false;
-				}
-			}
+				$all_connected       = true;
+				$has_accounts        = false;
+				$global_settings     = $integration->get_settings();
+				$set_global_settings = false;
+				$teams_enabled       = false;
+				$has_get_started     = false;
 
-			foreach ( $calendar_ids as $calendar_id ) {
-				$integration->set_host( $calendar_id );
-
-				// Check if host was successfully set before trying to access accounts
-				if ( $integration->host ) {
-					$accounts = $integration->accounts->get_accounts();
-
-					if ( empty( $accounts ) ) {
-						$all_connected = false;
+				if ( $slug == 'zoom' ) {
+					$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
+					if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['client_id'] ) && ! empty( $app_credentials['client_secret'] ) ) {
+						$set_global_settings = true;
 					} else {
-						$has_accounts = true;
-						// Check if this is the default account and has Teams enabled
-						if ( $integration->slug === 'outlook' ) {
-							foreach ( $accounts as $account ) {
-								if (
-									isset( $account['config']['default_calendar'] )
-								) {
-									// Check if Teams is explicitly enabled in the account settings
-									$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
-										$account['config']['settings']['enable_teams'] === true;
-									break;
+						$set_global_settings = false;
+					}
+				} elseif ( $slug == 'twilio' ) {
+					$app_credentials = Arr::get( $global_settings, 'credentials', null );
+					if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['auth_token'] ) && ! empty( $app_credentials['account_sid'] ) ) {
+						$set_global_settings = true;
+					} else {
+						$set_global_settings = false;
+					}
+				} else {
+					$app = Arr::get( $global_settings, 'app', null );
+					if ( $app && is_array( $app ) && ! empty( $app['cache_time'] ) ) {
+						$set_global_settings = true;
+					} else {
+						$set_global_settings = false;
+					}
+				}
+
+				foreach ( $calendar_ids as $calendar_id ) {
+					$integration->set_host( $calendar_id );
+
+					// Check if host was successfully set before trying to access accounts
+					if ( $integration->host ) {
+						$accounts = $integration->accounts->get_accounts();
+
+						if ( empty( $accounts ) ) {
+							$all_connected = false;
+						} else {
+							$has_accounts = true;
+							// Check if this is the default account and has Teams enabled
+							if ( $slug === 'outlook' ) {
+								foreach ( $accounts as $account ) {
+									if ( isset( $account['config']['default_calendar'] ) ) {
+										// Check if Teams is explicitly enabled in the account settings
+										$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
+											$account['config']['settings']['enable_teams'] === true;
+										break;
+									}
 								}
 							}
 						}
+					} else {
+						// If host is null, mark as not connected
+						$all_connected = false;
 					}
-				} else {
-					// If host is null, mark as not connected
-					$all_connected = false;
 				}
-			}
 
-			$connected_integrations[ $integration->slug ] = array(
-				'name'          => $integration->name,
-				'connected'     => $all_connected,
-				'has_accounts'  => $has_accounts,
-				'has_settings'  => $set_global_settings,
-				'teams_enabled' => $teams_enabled,
-			);
+				$connected_integrations[ $slug ] = array(
+					'name'            => $name,
+					'connected'       => $all_connected,
+					'has_accounts'    => $has_accounts,
+					'has_settings'    => $set_global_settings,
+					'teams_enabled'   => $teams_enabled,
+					'has_get_started' => $has_get_started,
+				);
+			} elseif ( is_array( $integration_class ) ) {
+				// It's already an array with default values
+				$slug                            = $integration_key;
+				$connected_integrations[ $slug ] = array(
+					'name'            => $integration_class['name'],
+					'connected'       => false,
+					'has_accounts'    => false,
+					'has_settings'    => false,
+					'teams_enabled'   => false,
+					'has_get_started' => false,
+				);
+			}
 		}
 
 		return $connected_integrations;

@@ -25,11 +25,15 @@ use QuillBooking\Models\Event_Model;
 use QuillBooking\Capabilities;
 use QuillBooking\Managers\Integrations_Manager;
 use QuillBooking\Models\User_Model;
+use QuillBooking\Helpers\Integrations_Helper;
 
 /**
  * Calendar Controller class
  */
 class REST_Calendar_Controller extends REST_Controller {
+
+
+
 
 	/**
 	 * REST Base
@@ -887,7 +891,13 @@ class REST_Calendar_Controller extends REST_Controller {
 			}
 
 			$connected_integrations = array();
-			$integrations           = Integrations_Manager::instance()->get_integrations();
+
+			// Check if integrations are available
+			if ( ! Integrations_Helper::has_integrations() ) {
+				return rest_ensure_response( Integrations_Helper::get_default_integrations() );
+			}
+
+			$integrations = Integrations_Manager::instance()->get_integrations();
 
 			$calendar_ids = array( $calendar_id );
 			if ( in_array( $calendar->type, array( 'round-robin', 'collective' ) ) ) {

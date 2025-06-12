@@ -23,46 +23,16 @@ const PaymentsTab: React.FC = () => {
 	const configGateways = ConfigAPI.getPaymentGateways();
 	const hasGateways = Object.keys(configGateways).length > 0;
 
-	// Placeholder payment gateways for free version
+	// Simplified placeholder payment gateways for free version
 	const placeholderGateways = {
 		paypal: {
 			name: 'PayPal',
 			description: 'Accept payments with PayPal',
-			settings: { mode: 'sandbox' as const },
-			fields: {
-				client_id: {
-					label: 'Client ID',
-					type: 'text',
-					required: true,
-					description: 'Your PayPal client ID',
-				},
-				client_secret: {
-					label: 'Client Secret',
-					type: 'password',
-					required: true,
-					description: 'Your PayPal client secret',
-				},
-			},
 			enabled: false,
 		},
 		stripe: {
 			name: 'Stripe',
 			description: 'Accept credit card payments with Stripe',
-			settings: { mode: 'sandbox' as const },
-			fields: {
-				publishable_key: {
-					label: 'Publishable Key',
-					type: 'text',
-					required: true,
-					description: 'Your Stripe publishable key',
-				},
-				secret_key: {
-					label: 'Secret Key',
-					type: 'password',
-					required: true,
-					description: 'Your Stripe secret key',
-				},
-			},
 			enabled: false,
 		},
 	};

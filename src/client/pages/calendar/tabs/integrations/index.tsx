@@ -41,7 +41,7 @@ const IntegrationCards: React.FC<{
 	}>();
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<string | null>(null);
-	const integrations = Object.entries(ConfigAPI.getIntegrations())
+	const integrations = Object.entries(ConfigAPI.getIntegrations() || {})
 		.filter(([key]) => key !== 'twilio')
 		.map(([key, integration]) => ({
 			id: key,

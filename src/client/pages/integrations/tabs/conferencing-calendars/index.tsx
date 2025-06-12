@@ -21,14 +21,20 @@ import IntegrationsShimmerLoader from '../../shimmer-loader';
 const ConferencingCalendars: React.FC = () => {
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<string | null>(null);
-	const [integrations, setIntegrations] = useState(() =>
-		Object.entries(ConfigAPI.getIntegrations())
+	const [integrations, setIntegrations] = useState(() => {
+		const availableIntegrations = Object.entries(
+			ConfigAPI.getIntegrations() || {}
+		)
 			.filter(([key]) => key !== 'twilio')
 			.map(([key, integration]) => ({
 				id: key,
 				...integration,
-			}))
-	);
+			}));
+
+		console.log('Available Integrations:', availableIntegrations);
+
+		return availableIntegrations;
+	});
 	const [isLoading, setIsLoading] = useState(false);
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 
@@ -161,6 +167,22 @@ const ConferencingCalendars: React.FC = () => {
 
 	if (isLoading) {
 		return <IntegrationsShimmerLoader />;
+	}
+
+	// Handle case when no integrations are available
+	if (integrations.length === 0) {
+		return (
+			<div className="quillbooking-conferencing-calendars w-full">
+				<div className="text-center py-8">
+					<p className="text-gray-600">
+						{__(
+							'No integrations available. Please contact your administrator.',
+							'quillbooking'
+						)}
+					</p>
+				</div>
+			</div>
+		);
 	}
 
 	return (

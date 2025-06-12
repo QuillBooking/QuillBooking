@@ -17,7 +17,6 @@ import ConnectionCard from './connection-card';
 import { NoticeBanner, SelectionCard } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/client';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
-import type { Integration } from '@quillbooking/config';
 
 const ConferencingCalendars: React.FC = () => {
 	const navigate = useNavigate();
@@ -32,50 +31,7 @@ const ConferencingCalendars: React.FC = () => {
 				...integration,
 			}));
 
-		// Provide default integrations if none are available
-		if (availableIntegrations.length === 0) {
-			return [
-				{
-					id: 'google',
-					name: 'Google',
-					description: 'Google Calendar Integration',
-					icon: `${ConfigAPI.getPluginDirUrl()}assets/images/integrations/google.svg`,
-					is_calendar: true,
-					auth_type: 'oauth' as const,
-					fields: {},
-					auth_fields: {},
-					settings: {},
-					is_global: false,
-					has_accounts: false,
-				},
-				{
-					id: 'outlook',
-					name: 'Outlook',
-					description: 'Outlook Calendar Integration',
-					icon: `${ConfigAPI.getPluginDirUrl()}assets/images/integrations/outlook.svg`,
-					is_calendar: true,
-					auth_type: 'oauth' as const,
-					fields: {},
-					auth_fields: {},
-					settings: {},
-					is_global: false,
-					has_accounts: false,
-				},
-				{
-					id: 'zoom',
-					name: 'Zoom',
-					description: 'Zoom Meeting Integration',
-					icon: `${ConfigAPI.getPluginDirUrl()}assets/images/integrations/zoom.svg`,
-					is_calendar: false,
-					auth_type: 'oauth' as const,
-					fields: {},
-					auth_fields: {},
-					settings: {},
-					is_global: false,
-					has_accounts: false,
-				},
-			];
-		}
+		console.log('Available Integrations:', availableIntegrations);
 
 		return availableIntegrations;
 	});
@@ -211,6 +167,22 @@ const ConferencingCalendars: React.FC = () => {
 
 	if (isLoading) {
 		return <IntegrationsShimmerLoader />;
+	}
+
+	// Handle case when no integrations are available
+	if (integrations.length === 0) {
+		return (
+			<div className="quillbooking-conferencing-calendars w-full">
+				<div className="text-center py-8">
+					<p className="text-gray-600">
+						{__(
+							'No integrations available. Please contact your administrator.',
+							'quillbooking'
+						)}
+					</p>
+				</div>
+			</div>
+		);
 	}
 
 	return (

@@ -30,6 +30,7 @@ use QuillBooking\Admin\Admin_Loader;
  */
 class QuillBooking {
 
+
 	use Singleton;
 
 	/**
@@ -90,7 +91,7 @@ class QuillBooking {
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/functions.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/event-locations/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/merge-tags/loader.php';
-		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/payment-gateways/loader.php';
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/payment-gateway/loader.php';
 	}
 
 	/**
@@ -108,10 +109,7 @@ class QuillBooking {
 		Booking::instance();
 		Shortcode::instance();
 
-		// Load WooCommerce integration if available
-		if ( class_exists( 'QuillBooking\WooCommerce\WooCommerce' ) ) {
-			\QuillBooking\WooCommerce\WooCommerce::instance();
-		}
+		// WooCommerce integration is now in the Pro version
 
 		Webhook_Feeds::instance();
 	}

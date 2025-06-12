@@ -99,7 +99,7 @@ export type Integration = {
 	description: string;
 	icon: string;
 	is_calendar: boolean;
-	auth_type: 'oauth' | 'basic';
+	auth_type: 'oauth' | 'oauth2' | 'basic' | 'api_key';
 	fields: Fields;
 	auth_fields: Fields;
 	settings: Record<string, unknown>;

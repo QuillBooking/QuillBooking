@@ -35,7 +35,7 @@ class Integrations_Helper {
 				'apple'   => array(
 					'name'         => 'Apple',
 					'description'  => 'Apple Calendar Integration',
-					'icon'         => '',
+					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'apple' . '/icon.svg',
 					'is_calendar'  => true,
 					'auth_type'    => 'oauth2',
 					'has_accounts' => false,
@@ -44,7 +44,7 @@ class Integrations_Helper {
 				'google'  => array(
 					'name'         => 'Google',
 					'description'  => 'Google Calendar Integration',
-					'icon'         => '',
+					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'google' . '/icon.svg',
 					'is_calendar'  => true,
 					'auth_type'    => 'oauth2',
 					'has_accounts' => false,
@@ -53,7 +53,7 @@ class Integrations_Helper {
 				'outlook' => array(
 					'name'         => 'Outlook',
 					'description'  => 'Outlook Calendar Integration',
-					'icon'         => '',
+					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'outlook' . '/icon.svg',
 					'is_calendar'  => true,
 					'auth_type'    => 'oauth2',
 					'has_accounts' => false,
@@ -62,7 +62,7 @@ class Integrations_Helper {
 				'zoom'    => array(
 					'name'         => 'Zoom',
 					'description'  => 'Zoom Meeting Integration',
-					'icon'         => '',
+					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'zoom' . '/icon.svg',
 					'is_calendar'  => false,
 					'auth_type'    => 'oauth2',
 					'has_accounts' => false,
@@ -71,7 +71,7 @@ class Integrations_Helper {
 				'twilio'  => array(
 					'name'         => 'Twilio',
 					'description'  => 'Twilio SMS Integration',
-					'icon'         => '',
+					'icon'         =>  QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'twilio' . '/icon.svg',
 					'is_calendar'  => false,
 					'auth_type'    => 'api_key',
 					'has_accounts' => false,

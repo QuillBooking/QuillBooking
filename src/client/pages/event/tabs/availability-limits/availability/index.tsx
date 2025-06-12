@@ -342,7 +342,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 				icon={<CalendarTickIcon />}
 			/>
 
-			{event?.calendar.type === 'team' && (
+			{/* {event?.calendar.type === 'team' && (
 				<Flex className="items-center mt-4">
 					<Flex vertical gap={1}>
 						<div className="text-[#09090B] text-[16px] font-semibold">
@@ -366,7 +366,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 						}
 					/>
 				</Flex>
-			)}
+			)} */}
 
 			{event?.calendar.type === 'team' && !commonSchedule && (
 				<Flex vertical gap={10} className="mt-4">

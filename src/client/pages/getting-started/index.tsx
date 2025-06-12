@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
+import { applyFilters } from '@wordpress/hooks';
 /**
  * External dependencies
  */
@@ -46,6 +47,13 @@ const GettingStarted: React.FC = () => {
 	const totalSteps = 3;
 	const { callApi } = useApi();
 	const { getId: getCurrentUserId } = useCurrentUser();
+
+	// Helper function to check if Pro version is available
+	const isProVersionAvailable = (): boolean => {
+		// Check for Pro version using the same pattern as other components
+		// This filter is provided by the Pro plugin when it's active
+		return Boolean(applyFilters('quillbooking.integration', false));
+	};
 
 	const [event, setEvent] = useState<Omit<Event, 'id'> & { id?: number }>({
 		name: '',
@@ -109,6 +117,7 @@ const GettingStarted: React.FC = () => {
 				connected: false,
 				has_settings: true,
 				has_accounts: false,
+				has_pro_version: isProVersionAvailable(),
 			},
 			google: {
 				name: 'google',
@@ -116,6 +125,7 @@ const GettingStarted: React.FC = () => {
 				connected: false,
 				has_settings: true,
 				has_accounts: false,
+				has_pro_version: isProVersionAvailable(),
 			},
 			outlook: {
 				name: 'outlook',
@@ -124,6 +134,7 @@ const GettingStarted: React.FC = () => {
 				has_settings: true,
 				has_accounts: false,
 				teams_enabled: false,
+				has_pro_version: isProVersionAvailable(),
 			},
 			twilio: {
 				name: 'twilio',
@@ -131,6 +142,7 @@ const GettingStarted: React.FC = () => {
 				connected: false,
 				has_settings: false,
 				has_accounts: false,
+				has_pro_version: isProVersionAvailable(),
 			},
 			zoom: {
 				name: 'zoom',
@@ -138,6 +150,7 @@ const GettingStarted: React.FC = () => {
 				connected: false,
 				has_settings: false,
 				has_accounts: false,
+				has_pro_version: isProVersionAvailable(),
 			},
 		},
 		availability_data: {

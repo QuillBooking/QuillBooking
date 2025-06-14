@@ -33,6 +33,10 @@ class Event_Model extends Model {
 
 
 
+
+
+
+
 	/**
 	 * Table name
 	 *
@@ -555,18 +559,18 @@ class Event_Model extends Model {
 		}
 
 		foreach ( $integrations as $integration_key => $integration_class ) {
-				// It's a class name, instantiate it
-				$integration = new $integration_class();
-				$slug        = $integration->slug;
-				$name        = $integration->name;
+			// It's a class name, instantiate it
+			$integration = new $integration_class();
+			$slug        = $integration->slug;
+			$name        = $integration->name;
 
-				$all_connected       = true;
-				$has_accounts        = false;
-				$global_settings     = $integration->get_settings();
-				$set_global_settings = false;
-				$teams_enabled       = false;
-				$has_get_started     = false;
-				$has_pro_version     = true;
+			$all_connected       = true;
+			$has_accounts        = false;
+			$global_settings     = $integration->get_settings();
+			$set_global_settings = false;
+			$teams_enabled       = false;
+			$has_get_started     = false;
+			$has_pro_version     = true;
 
 			if ( $slug == 'zoom' ) {
 				$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
@@ -620,15 +624,15 @@ class Event_Model extends Model {
 				}
 			}
 
-				$connected_integrations[ $slug ] = array(
-					'name'            => $name,
-					'connected'       => $all_connected,
-					'has_accounts'    => $has_accounts,
-					'has_settings'    => $set_global_settings,
-					'teams_enabled'   => $teams_enabled,
-					'has_get_started' => $has_get_started,
-					'has_pro_version' => $has_pro_version,
-				);
+			$connected_integrations[ $slug ] = array(
+				'name'            => $name,
+				'connected'       => $all_connected,
+				'has_accounts'    => $has_accounts,
+				'has_settings'    => $set_global_settings,
+				'teams_enabled'   => $teams_enabled,
+				'has_get_started' => $has_get_started,
+				'has_pro_version' => $has_pro_version,
+			);
 		}
 
 		return $connected_integrations;
@@ -874,7 +878,8 @@ class Event_Model extends Model {
 
 		// If WooCommerce is enabled and properly configured, payment is required
 		if ( $woocommerce_enabled && $woo_product_set && class_exists( 'WooCommerce' ) ) {
-			return true;
+			// Check if payment is available via filter
+			return apply_filters( 'quillbooking_payment_available', true );
 		}
 
 		// Check if payment gateways are registered in the system
@@ -885,6 +890,11 @@ class Event_Model extends Model {
 		if ( empty( $payment_gateways ) ) {
 			// Log this issue since it's a configuration problem
 			error_log( 'QuillBooking: Payment is enabled but no payment gateways are registered in the system.' );
+			return false;
+		}
+
+		if ( ! defined( 'QUILLBOOKING_PRO_VERSION' ) ) {
+			error_log( 'QuillBooking: Payment is enabled but Pro plugin is not active.' );
 			return false;
 		}
 
@@ -903,7 +913,8 @@ class Event_Model extends Model {
 			return false;
 		}
 
-		return true;
+		// Check if payment is available via filter
+		return apply_filters( 'quillbooking_payment_available', true );
 	}
 
 	/**

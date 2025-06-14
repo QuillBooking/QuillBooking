@@ -49,7 +49,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 	const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(false);
 	const { callApi } = useApi();
 
-	// Helper function to get product ID from multi_duration_items regardless of format
+	const isWooCommerceActive =
+		(window as any).quillbooking?.config?.isWoocommerceActive || false;
+
 	const getProductIdForDuration = (
 		paymentSettings: PaymentsSettings,
 		durationStr: string
@@ -104,16 +106,22 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 	};
 
 	useEffect(() => {
-		// Check if the event uses WooCommerce for payments
+		// Check if the event uses WooCommerce for payments and if WooCommerce is active
 		const paymentSettings = get(
 			event,
 			'payments_settings',
 			{}
 		) as PaymentsSettings;
+
 		if (
 			paymentSettings.enable_payment &&
 			paymentSettings.type === 'woocommerce'
 		) {
+			if (!isWooCommerceActive) {
+				setWooPrices({});
+				return;
+			}
+
 			// For multi-duration events with different WooCommerce products
 			if (
 				isMultiDurations &&
@@ -181,7 +189,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 				});
 			}
 		}
-	}, [event.id, selectedDuration]);
+	}, [event.id, selectedDuration, isWooCommerceActive]);
 
 	let timeRangeText = '';
 	if (selectedDate && selectedTime) {
@@ -226,9 +234,11 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 
 		if (!isPaymentEnabled) return null;
 
-		// If using WooCommerce
-		if (paymentSettings.type === 'woocommerce') {
-			// For multi-duration with different WooCommerce products
+		if (paymentSettings.type === 'woocommerce' && !isWooCommerceActive) {
+			return null;
+		}
+
+		if (paymentSettings.type === 'woocommerce' && isWooCommerceActive) {
 			if (
 				isMultiDurations &&
 				paymentSettings.enable_items_based_on_duration
@@ -281,19 +291,23 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 					return null;
 				}
 			}
+
+			return null;
 		}
 
-		// Otherwise use the standard pricing logic
-		if (
-			isMultiDurations &&
-			paymentSettings.enable_items_based_on_duration
-		) {
-			const durationStr = selectedDuration.toString();
-			return getPriceForDuration(paymentSettings, durationStr);
-		} else {
-			const items = paymentSettings.items || [];
-			if (items.length > 0) {
-				return items[0].price || 0;
+		// For non-WooCommerce payment methods, use standard pricing logic
+		if (paymentSettings.type !== 'woocommerce') {
+			if (
+				isMultiDurations &&
+				paymentSettings.enable_items_based_on_duration
+			) {
+				const durationStr = selectedDuration.toString();
+				return getPriceForDuration(paymentSettings, durationStr);
+			} else {
+				const items = paymentSettings.items || [];
+				if (items.length > 0) {
+					return items[0].price || 0;
+				}
 			}
 		}
 
@@ -309,7 +323,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 			{}
 		) as PaymentsSettings;
 
-		if (paymentSettings.type === 'woocommerce') {
+		// Only use WooCommerce currency if WooCommerce is active
+		if (paymentSettings.type === 'woocommerce' && isWooCommerceActive) {
 			if (
 				isMultiDurations &&
 				paymentSettings.enable_items_based_on_duration
@@ -327,6 +342,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 			}
 		}
 
+		// For non-WooCommerce payment methods or if WooCommerce price not found
 		return get(event, 'currency', globalCurrency);
 	};
 

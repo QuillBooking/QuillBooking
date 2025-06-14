@@ -366,7 +366,10 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 						<PriceIcon width={20} height={20} rectFill={false} />
 						<p>{__('Loading price...', '@quillbooking')}</p>
 					</div>
-				) : price !== null && price > 0 ? (
+				) : price !== null &&
+				  price > 0 &&
+				  event.payments_settings?.enable_payment &&
+				  (window as any).quillbooking?.pro_active === true ? (
 					<div className="detail-row">
 						<PriceIcon width={20} height={20} rectFill={false} />
 						<p>{formatPrice(price, currency)}</p>

@@ -138,12 +138,14 @@ const CardBody: React.FC<CardBodyProps> = ({
 		setTotalPrice(calculatePrice());
 	}, [selectedDuration, event]);
 
+	const proActive = (window as any).quillbooking?.pro_active === true;
 	const requiresPayment =
-		event.payments_settings?.enable_payment && totalPrice > 0;
+		event.payments_settings?.enable_payment && totalPrice > 0 && proActive;
 	const hasPaymentGateways =
-		event.payments_settings?.enable_stripe ||
-		event.payments_settings?.enable_paypal ||
-		event.payments_settings?.type === 'woocommerce';
+		proActive &&
+		(event.payments_settings?.enable_stripe ||
+			event.payments_settings?.enable_paypal ||
+			event.payments_settings?.type === 'woocommerce');
 
 	const handleSelectedTime = (time: string | null) => {
 		setSelectedTime(time);

@@ -37,6 +37,8 @@ class Event_Model extends Model {
 
 
 
+
+
 	/**
 	 * Table name
 	 *
@@ -872,16 +874,29 @@ class Event_Model extends Model {
 			return false;
 		}
 
-		// Check if WooCommerce integration is enabled
-		$woocommerce_enabled = Arr::get( $payments_settings, 'enable_woocommerce', false );
-		$woo_product_set     = Arr::get( $payments_settings, 'woo_product', false );
+		// Check payment type - WooCommerce or native
+		$payment_type = Arr::get( $payments_settings, 'type', 'native' );
 
-		// If WooCommerce is enabled and properly configured, payment is required
-		if ( $woocommerce_enabled && $woo_product_set && class_exists( 'WooCommerce' ) ) {
-			// Check if payment is available via filter
-			return apply_filters( 'quillbooking_payment_available', true );
+		// If WooCommerce is the payment type
+		if ( $payment_type === 'woocommerce' ) {
+			$woo_product_set = Arr::get( $payments_settings, 'woo_product', false );
+
+			// Check if WooCommerce is active and a product is set
+			if ( $woo_product_set && class_exists( 'WooCommerce' ) ) {
+				// Check if payment is available via filter
+				return apply_filters( 'quillbooking_payment_available', true );
+			} else {
+				// Log appropriate error
+				if ( ! class_exists( 'WooCommerce' ) ) {
+					error_log( 'QuillBooking: Payment is enabled with WooCommerce but WooCommerce plugin is not active.' );
+				} elseif ( ! $woo_product_set ) {
+					error_log( 'QuillBooking: Payment is enabled with WooCommerce but no product is selected.' );
+				}
+				return false;
+			}
 		}
 
+		// For native payment type, check payment gateways
 		// Check if payment gateways are registered in the system
 		$payment_gateways_manager = \QuillBooking\Managers\Payment_Gateways_Manager::instance();
 		$payment_gateways         = $payment_gateways_manager->get_items();

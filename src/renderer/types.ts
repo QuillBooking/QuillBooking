@@ -286,7 +286,6 @@ export interface PaymentsSettings {
 	enable_paypal: boolean;
 	enable_stripe: boolean;
 	currency?: string;
-	enable_woocommerce: boolean;
 }
 
 export type GlobalSettings = {

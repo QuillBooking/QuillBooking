@@ -180,12 +180,26 @@ const CardBody: React.FC<CardBodyProps> = ({
 
 			// If payment is required, we need to include a payment method
 			if (requiresPayment && hasPaymentGateways) {
-				// If WooCommerce is enabled, use it directly
 				formData.append('status', 'pending');
+
+				// If WooCommerce is enabled, always use it directly
 				if (isWooCommerceEnabled) {
+					console.log(
+						'WooCommerce payment method selected automatically'
+					);
 					formData.append('payment_method', 'woocommerce');
-				} else {
-					// Default to the first available payment method for Stripe/PayPal flow
+				}
+				// For PayPal, use it directly without showing payment selection screen
+				else if (
+					event.payments_settings?.enable_paypal &&
+					!event.payments_settings?.enable_stripe
+				) {
+					console.log('PayPal payment method selected automatically');
+					formData.append('payment_method', 'paypal');
+				}
+				// For Stripe or multiple payment methods, go to payment selection
+				else {
+					// Default to Stripe if available, otherwise PayPal
 					const defaultMethod = event.payments_settings?.enable_stripe
 						? 'stripe'
 						: event.payments_settings?.enable_paypal
@@ -265,17 +279,9 @@ const CardBody: React.FC<CardBodyProps> = ({
 				return;
 			}
 
-			// If payment is required and we have Stripe/PayPal payment gateways, go to payment step
-			if (
-				requiresPayment &&
-				hasPaymentGateways &&
-				!isWooCommerceEnabled &&
-				(window as any).quillbooking?.pro_active === true
-			) {
-				console.log('Payment required, transitioning to payment step', {
-					requiresPayment,
-					bookingData: data.data.booking,
-				});
+			// Handle different payment flows based on payment type and response
+			if (data.data.booking && data.data.booking.hash_id) {
+				// If it's a PayPal redirect, handle it directly
 				if (data.data.redirect_url) {
 					console.log(
 						'PayPal payment, redirecting to:',
@@ -285,20 +291,35 @@ const CardBody: React.FC<CardBodyProps> = ({
 						data.data.redirect_url;
 					return;
 				}
-				setBookingData(data?.data?.booking);
-				setStep(3); // Payment step
-			} else {
-				// Make sure we have a booking with hash_id before trying to use it
-				if (data.data.booking && data.data.booking.hash_id) {
+
+				// If payment is required and we have Stripe payment gateway (not WooCommerce or PayPal), go to payment step
+				if (
+					requiresPayment &&
+					hasPaymentGateways &&
+					!isWooCommerceEnabled &&
+					event.payments_settings?.enable_stripe &&
+					(window as any).quillbooking?.pro_active === true
+				) {
+					console.log(
+						'Stripe payment required, transitioning to payment step',
+						{
+							requiresPayment,
+							bookingData: data.data.booking,
+						}
+					);
+					setBookingData(data?.data?.booking);
+					setStep(3); // Payment step
+				} else {
+					// For non-payment or WooCommerce/PayPal that didn't return a direct URL, redirect to confirmation
 					const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
 					console.log('Redirect URL:', redirectUrl);
 					(window.top || window).location.href = redirectUrl;
-				} else {
-					console.error(
-						'Could not find booking hash_id in response:',
-						data
-					);
 				}
+			} else {
+				console.error(
+					'Could not find booking hash_id in response:',
+					data
+				);
 			}
 		} catch (error) {
 			console.error('Error during booking submission:', error);
@@ -361,6 +382,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 				  requiresPayment &&
 				  hasPaymentGateways &&
 				  bookingData &&
+				  event.payments_settings?.enable_stripe && // Only show payment component for Stripe
 				  (window as any).quillbooking?.pro_active === true ? (
 					(() => {
 						// Use the filter to get the payment component

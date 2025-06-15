@@ -10,8 +10,8 @@ import { __ } from '@wordpress/i18n';
 import { Calendar } from 'client/types';
 import { applyFilters } from '@wordpress/hooks';
 import { ProIcon } from '@quillbooking/components';
-import { Link } from 'react-router';
 import { Modal } from 'antd';
+import { ACTIVE_PRO_URL } from '@quillbooking/constants';
 
 interface TeamCalendarProps {
 	formData: Partial<Calendar & { members: number[] }>;
@@ -48,7 +48,7 @@ const TeamCalendar: React.FC<TeamCalendarProps> = ({
 				<div>
 					<h2 className="text-base font-semibold my-1 text-[#3F4254]">
 						{__(
-							'Add another Questions feature is available in Pro Version',
+							'Create team feature is available in Pro Version',
 							'quillbooking'
 						)}
 					</h2>
@@ -59,12 +59,12 @@ const TeamCalendar: React.FC<TeamCalendarProps> = ({
 						)}
 					</p>
 					<div className="mt-5">
-						<Link
+						<a
 							className="bg-color-primary text-[#FBF9FC] rounded-lg py-3 px-4 font-medium"
-							to="/plugins.php?s=quillbooking-pro&tab=search&type=term"
+							href={ACTIVE_PRO_URL}
 						>
 							{__('Upgrade To Pro Now', 'quillbooking')}
-						</Link>
+						</a>
 					</div>
 				</div>
 			</div>

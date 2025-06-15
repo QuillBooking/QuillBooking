@@ -19,6 +19,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
+use QuillBooking\Availabilities;
 use QuillBooking\Availability_service;
 use QuillBooking\Models\Calendar_Model;
 use QuillBooking\Models\Event_Model;
@@ -31,9 +32,6 @@ use QuillBooking\Helpers\Integrations_Helper;
  * Calendar Controller class
  */
 class REST_Calendar_Controller extends REST_Controller {
-
-
-
 
 	/**
 	 * REST Base
@@ -859,7 +857,21 @@ class REST_Calendar_Controller extends REST_Controller {
 	 */
 	private function create_availability( $user_id, $availability_data, $timezone ) {
 		$service = new Availability_Service();
-		$result  = $service->create_availability(
+
+		// Check if user already has a default availability
+		$existing_availability = Availabilities::get_user_default_availability( $user_id );
+
+		if ( $existing_availability ) {
+			$existing_availability['weekly_hours'] = $availability_data['weekly_hours'];
+			$existing_availability['override']     = $availability_data['override'] ?? array();
+			$existing_availability['timezone']     = $timezone;
+			// update
+			return Availabilities::update_availability(
+				$existing_availability
+			);
+		}
+
+		$result = $service->create_availability(
 			$user_id,
 			'Default Availability',
 			$availability_data['weekly_hours'],

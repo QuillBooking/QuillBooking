@@ -189,7 +189,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 					);
 					formData.append('payment_method', 'woocommerce');
 				}
-				// For PayPal, use it directly without showing payment selection screen
+				// For PayPal only, use it directly without showing payment selection screen
 				else if (
 					event.payments_settings?.enable_paypal &&
 					!event.payments_settings?.enable_stripe
@@ -197,7 +197,15 @@ const CardBody: React.FC<CardBodyProps> = ({
 					console.log('PayPal payment method selected automatically');
 					formData.append('payment_method', 'paypal');
 				}
-				// For Stripe or multiple payment methods, go to payment selection
+				// For Stripe only, use it directly without showing payment selection screen
+				else if (
+					event.payments_settings?.enable_stripe &&
+					!event.payments_settings?.enable_paypal
+				) {
+					console.log('Stripe payment method selected automatically');
+					formData.append('payment_method', 'stripe');
+				}
+				// For multiple payment methods, default to Stripe if available
 				else {
 					// Default to Stripe if available, otherwise PayPal
 					const defaultMethod = event.payments_settings?.enable_stripe
@@ -292,12 +300,13 @@ const CardBody: React.FC<CardBodyProps> = ({
 					return;
 				}
 
-				// If payment is required and we have Stripe payment gateway (not WooCommerce or PayPal), go to payment step
+				// For Stripe payments, go to payment step only if Stripe is enabled
 				if (
 					requiresPayment &&
 					hasPaymentGateways &&
 					!isWooCommerceEnabled &&
 					event.payments_settings?.enable_stripe &&
+					formData.get('payment_method') === 'stripe' &&
 					(window as any).quillbooking?.pro_active === true
 				) {
 					console.log(

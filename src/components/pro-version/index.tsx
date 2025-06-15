@@ -1,6 +1,6 @@
 import { ProIcon } from '@quillbooking/components';
 import { __ } from '@wordpress/i18n';
-import { ACTIVE_PRO_URL } from '../../constants';
+import { ACTIVE_PRO_URL } from '@quillbooking/constants';
 
 const ProVersion: React.FC = ({}) => {
 	return (

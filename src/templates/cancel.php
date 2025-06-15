@@ -5,6 +5,22 @@ $status              = $booking_array['status'] ?? '';
 ?>
 
 <link rel="stylesheet" href="<?php echo esc_url( plugins_url( 'src/templates/css/cancellation.css', QUILLBOOKING_PLUGIN_FILE ) ); ?>">
+<style>
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
+#cancel_booking_button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+#loading_spinner {
+	display: inline-flex;
+	align-items: center;
+}
+</style>
 
 <div class="quillbooking-meeting">
 	<div class="details-container">
@@ -59,7 +75,16 @@ $status              = $booking_array['status'] ?? '';
 
 				<div class="calendar-buttons-container" id="buttons_container">
 					<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=confirm" class="cancel-btn nevermind-btn"><?php esc_html_e( 'Nevermind', 'quillbooking' ); ?></a>
-					<button class="cancel-btn" id="cancel_booking_button"><?php esc_html_e( 'Cancel Booking', 'quillbooking' ); ?></button>
+					<button class="cancel-btn" id="cancel_booking_button">
+						<span id="button_text"><?php esc_html_e( 'Cancel Booking', 'quillbooking' ); ?></span>
+						<span id="loading_spinner" style="display: none;">
+							<svg width="16" height="16" viewBox="0 0 16 16" style="animation: spin 1s linear infinite; margin-right: 8px;">
+								<circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="37.7" stroke-dashoffset="37.7" opacity="0.25"></circle>
+								<circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="37.7" stroke-dashoffset="9.4"></circle>
+							</svg>
+							<?php esc_html_e( 'Cancelling...', 'quillbooking' ); ?>
+						</span>
+					</button>
 				</div>
 			</div>
 		<?php endif; ?>
@@ -73,6 +98,10 @@ $status              = $booking_array['status'] ?? '';
 		event.preventDefault();
 		const textarea = document.getElementById('cancellation_reason');
 		const validation = document.getElementById('validation_message');
+		const button = document.getElementById('cancel_booking_button');
+		const buttonText = document.getElementById('button_text');
+		const loadingSpinner = document.getElementById('loading_spinner');
+		
 		if (validation) {
 			validation.textContent = '';
 		}
@@ -82,6 +111,12 @@ $status              = $booking_array['status'] ?? '';
 			textarea.classList.add('error');
 			return;
 		}
+
+		// Show loading state
+		button.disabled = true;
+		buttonText.style.display = 'none';
+		loadingSpinner.style.display = 'inline-flex';
+		loadingSpinner.style.alignItems = 'center';
 
 		const formData = new FormData();
 		formData.append('id', '<?php echo esc_js( $booking_array['hash_id'] ); ?>');
@@ -104,11 +139,21 @@ $status              = $booking_array['status'] ?? '';
 					successDiv.textContent = '<?php echo esc_js( __( 'Booking successfully canceled.', 'quillbooking' ) ); ?>';
 					successDiv.hidden = false;
 				} else {
+					// Reset loading state on error
+					button.disabled = false;
+					buttonText.style.display = 'inline';
+					loadingSpinner.style.display = 'none';
+					
 					validation.textContent = data.message || '<?php echo esc_js( __( 'An error occurred while canceling the booking.', 'quillbooking' ) ); ?>';
 					textarea.classList.add('error');
 				}
 			})
 			.catch(() => {
+				// Reset loading state on error
+				button.disabled = false;
+				buttonText.style.display = 'inline';
+				loadingSpinner.style.display = 'none';
+				
 				validation.textContent = '<?php echo esc_js( __( 'An error occurred. Please try again later.', 'quillbooking' ) ); ?>';
 				textarea.classList.add('error');
 			});

@@ -25,6 +25,7 @@ import { LuArrowRightToLine } from 'react-icons/lu';
 import './style.scss';
 import { UpgradeIcon, ToggleIcon } from '@quillbooking/components';
 import { useLocation } from 'react-router';
+import { ACTIVE_PRO_URL } from '../../constants';
 
 const NavBar: React.FC = () => {
 	const navigate = useNavigate();
@@ -100,7 +101,7 @@ const NavBar: React.FC = () => {
 	return (
 		<div className={`quillbooking-navbar ${collapsed ? 'collapsed' : ''}`}>
 			{/* Custom Toggle Button outside of Menu component */}
-			<Button 
+			<Button
 				onClick={toggleCollapsed}
 				className="navbar-toggle-button"
 				style={{
@@ -120,15 +121,12 @@ const NavBar: React.FC = () => {
 				}}
 			>
 				{collapsed ? (
-					<LuArrowRightToLine
-						size={18}
-						className="text-[#A1A5B7]"
-					/>
+					<LuArrowRightToLine size={18} className="text-[#A1A5B7]" />
 				) : (
 					<ToggleIcon />
 				)}
 			</Button>
-			
+
 			<Menu
 				className="custom-menu"
 				onClick={onClick}
@@ -162,7 +160,10 @@ const NavBar: React.FC = () => {
 						key: 'button-item',
 						className: 'button-item pl-0',
 						label: (
-							<a className="navbar-upgrade-button" href="/">
+							<a
+								className="navbar-upgrade-button"
+								href={ACTIVE_PRO_URL}
+							>
 								<div className={collapsed ? '' : 'mr-[15px]'}>
 									<UpgradeIcon />
 								</div>

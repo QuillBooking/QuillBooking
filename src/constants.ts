@@ -1,4 +1,5 @@
 export const NAMESPACE = '/qb/v1';
+export const ACTIVE_PRO_URL = 'https://quillbooking.com/';
 export const DEFAULT_WEEKLY_HOURS = {
 	monday: {
 		times: [

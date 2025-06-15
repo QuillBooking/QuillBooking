@@ -1,6 +1,6 @@
 import { ProIcon } from '@quillbooking/components';
 import { __ } from '@wordpress/i18n';
-import { Link } from 'react-router';
+import { ACTIVE_PRO_URL } from '../../constants';
 
 const ProVersion: React.FC = ({}) => {
 	return (
@@ -22,12 +22,13 @@ const ProVersion: React.FC = ({}) => {
 					)}
 				</p>
 				<div className="mt-5">
-					<Link
+					<a
 						className="bg-color-primary text-[#FBF9FC] rounded-lg py-3 px-4 font-medium"
-						to="/"
+						href={ACTIVE_PRO_URL}
+						rel="noopener noreferrer"
 					>
 						{__('Upgrade To Pro Now', 'quillbooking')}
-					</Link>
+					</a>
 				</div>
 			</div>
 		</div>

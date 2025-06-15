@@ -78,7 +78,7 @@ const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 							{booking.order == null &&
 								booking.event.payments_settings
 									.enable_payment &&
-								__('Not Paied Yet', 'quillbooking')}
+								__('Not Paid Yet', 'quillbooking')}
 							{booking.order != null && booking.order.total}
 							{!booking.event.payments_settings.enable_payment &&
 								__('Free', 'quillbooking')}

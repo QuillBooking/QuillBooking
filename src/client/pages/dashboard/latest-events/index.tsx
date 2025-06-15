@@ -295,7 +295,7 @@ const LatestEvents: React.FC<{ canManageAllCalendars: boolean }> = ({
 								event={event}
 								open={modalShareId === event.id}
 								onClose={() => setModalShareId(null)}
-								url={`${siteUrl}?quillbooking_event=${event.id}`}
+								url={`${siteUrl}?quillbooking_calendar=${event.calendar.slug}&event=${event.slug}`}
 							/>
 						)}
 					</div>

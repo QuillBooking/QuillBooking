@@ -1295,6 +1295,8 @@ class REST_Event_Controller extends REST_Controller {
 			'booking_count' => $event->getBookingCountAttribute(),
 			'location'      => $event->location,
 			'calendar_id'   => $event->calendar_id,
+			'slug'          => $event->slug,
+			'calendar'      => $event->calendar,
 		);
 
 		return $prepared_data;

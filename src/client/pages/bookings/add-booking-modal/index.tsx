@@ -218,7 +218,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		const location = form.getFieldValue('location');
 		const location_data = form.getFieldValue('location-data');
 		const locationField = get_location(
-			event.location,
+			selectedEvent?.location || [],
 			location,
 			location_data
 		);

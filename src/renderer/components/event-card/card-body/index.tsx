@@ -269,7 +269,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 			if (
 				requiresPayment &&
 				hasPaymentGateways &&
-				!isWooCommerceEnabled
+				!isWooCommerceEnabled &&
+				(window as any).quillbooking?.pro_active === true
 			) {
 				console.log('Payment required, transitioning to payment step', {
 					requiresPayment,
@@ -287,11 +288,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 				setBookingData(data?.data?.booking);
 				setStep(3); // Payment step
 			} else {
-				// Otherwise redirect to confirmation
-				console.log(
-					'No payment required or no payment gateways configured, redirecting to confirmation'
-				);
-
 				// Make sure we have a booking with hash_id before trying to use it
 				if (data.data.booking && data.data.booking.hash_id) {
 					const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
@@ -364,7 +360,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 				) : step === 3 &&
 				  requiresPayment &&
 				  hasPaymentGateways &&
-				  bookingData ? (
+				  bookingData &&
+				  (window as any).quillbooking?.pro_active === true ? (
 					(() => {
 						// Use the filter to get the payment component
 						const paymentComponent = applyFilters(

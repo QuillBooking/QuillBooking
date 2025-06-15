@@ -11,7 +11,6 @@
 
 namespace QuillBooking\Booking;
 
-use Google\Service\Calendar\Setting;
 use QuillBooking\Tasks;
 use QuillBooking\Models\Booking_Model;
 use QuillBooking\Settings;

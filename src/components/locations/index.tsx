@@ -13,6 +13,7 @@ import { FaPlus } from 'react-icons/fa';
  * Internal dependencies
  */
 import ConfigAPI from '@quillbooking/config';
+import { ACTIVE_PRO_URL } from '../../constants';
 import type { LocationField } from '@quillbooking/config';
 import type {
 	ConnectedIntegrationsFields,
@@ -54,7 +55,6 @@ const Locations: React.FC<{
 	calendar,
 	handleSubmit = async (redirect: boolean) => {},
 }) => {
-	console.log('Connected Integrations:', connected_integrations);
 	const navigate = useNavigate();
 	const [isModalVisible, setIsModalVisible] = useState(false);
 	const [editingLocationIndex, setEditingLocationIndex] = useState<
@@ -174,9 +174,8 @@ const Locations: React.FC<{
 		hasAccounts = false
 	) => {
 		if (!hasProVersion(integrationType)) {
-			navigate(
-				`integrations&tab=conferencing-calendars&subtab=${convertToSlug(integrationType)}`
-			);
+			window.location.href = ACTIVE_PRO_URL;
+			return;
 		}
 
 		if (hasProVersion(integrationType) && hasGetStarted(integrationType)) {

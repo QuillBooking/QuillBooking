@@ -45,12 +45,18 @@ const SMSIntegration: React.FC = () => {
 	const [isProVersion, setIsProVersion] = useState<boolean>(false);
 
 	useEffect(() => {
-		if (isProVersion) fetchTwilioAccount();
-		console.log('ProVersion:', isProVersion);
 		setIsProVersion(
 			Boolean(applyFilters('quillbooking.integration', false))
 		);
 	}, []);
+
+	useEffect(() => {
+		if (isProVersion) {
+			fetchTwilioAccount();
+		} else {
+			setAccountData(null);
+		}
+	}, [isProVersion]);
 
 	useEffect(() => {
 		if (accountData) {
@@ -64,7 +70,6 @@ const SMSIntegration: React.FC = () => {
 	}, [accountData]);
 
 	const fetchTwilioAccount = () => {
-		console.log('fetchTwilioAccount');
 		setLoadingAccount(true);
 		callApi({
 			path: `integrations/twilio`,
@@ -159,7 +164,6 @@ const SMSIntegration: React.FC = () => {
 	};
 
 	if (loading && isProVersion) {
-		console.log('Loading SMS Integration...');
 		return <IntegrationsShimmerLoader />;
 	}
 

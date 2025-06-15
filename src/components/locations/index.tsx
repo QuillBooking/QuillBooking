@@ -863,14 +863,6 @@ const Locations: React.FC<{
 													'Add an account to use Zoom Video integration.',
 													'quillbooking'
 												);
-											} else if (
-												!connected_integrations.zoom
-													.has_settings
-											) {
-												zoomStatusMessage = __(
-													'Add an account to use Zoom Video integration.',
-													'quillbooking'
-												);
 											}
 
 											return zoomStatusMessage;
@@ -898,24 +890,6 @@ const Locations: React.FC<{
 												'Upgrade to Pro',
 												'quillbooking'
 											)}
-										</Button>
-									);
-								}
-
-								// User has pro and settings but no accounts
-								if (!connected_integrations.zoom.has_settings) {
-									return (
-										<Button
-											onClick={async () => {
-												await navigateToIntegrations(
-													'zoom',
-													true,
-													false
-												);
-											}}
-											className="bg-transparent shadow-none border border-color-primary text-color-primary"
-										>
-											{__('Add Account', 'quillbooking')}
 										</Button>
 									);
 								}

@@ -25,7 +25,7 @@ import { LuArrowRightToLine } from 'react-icons/lu';
 import './style.scss';
 import { UpgradeIcon, ToggleIcon } from '@quillbooking/components';
 import { useLocation } from 'react-router';
-import { ACTIVE_PRO_URL } from '../../constants';
+import { ACTIVE_PRO_URL } from '@quillbooking/constants';
 
 const NavBar: React.FC = () => {
 	const navigate = useNavigate();

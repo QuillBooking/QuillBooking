@@ -13,7 +13,7 @@ import { FaPlus } from 'react-icons/fa';
  * Internal dependencies
  */
 import ConfigAPI from '@quillbooking/config';
-import { ACTIVE_PRO_URL } from '../../constants';
+import { ACTIVE_PRO_URL } from '@quillbooking/constants';
 import type { LocationField } from '@quillbooking/config';
 import type {
 	ConnectedIntegrationsFields,

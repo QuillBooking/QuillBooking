@@ -1,15 +1,15 @@
 
 // Add these to your imports
+import type { Availability } from '@quillbooking/client';
 import type {
+    Capabilities,
     ConfigData,
+    CurrentUser,
     Integrations,
     Locations,
-    Capabilities,
+    MergeTagGroups,
     PaymentGateways,
-    CurrentUser,
-    MergeTagGroups, // New import
 } from './types/config-data';
-import type { Availability } from '@quillbooking/client';
 
 // Update your configData object to include mergeTags
 const configData: ConfigData = {
@@ -21,6 +21,7 @@ const configData: ConfigData = {
     siteUrl: '',
     nonce: '',
     hasCalendars: false,
+    hasAvailability: false,
     isWoocommerceActive: false,
     timezones: {},
     integrations: {},
@@ -401,6 +402,28 @@ export const setHasCalendars = (data: ConfigData) => (value: boolean) => {
 };
 
 
+/**
+ * Get has Availability
+ *
+ * @param data the json environment configuration to use for getting config values
+ * @returns boolean
+ */
+export const getHasAvailability = (data: ConfigData) => (): boolean => {
+    return data.hasAvailability;
+};
+
+
+/**
+ * Set has Availability
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * @param value the value to set
+ */
+export const setHasAvailability = (data: ConfigData) => (value: boolean) => {
+    data.hasAvailability = value;
+};
+
+
 
 // Update your ConfigApi interface to include the new methods
 export interface ConfigApi {
@@ -439,6 +462,8 @@ export interface ConfigApi {
     setMergeTags: (value: MergeTagGroups) => void; // New method
     getHasCalendars: () => boolean; // New method
     setHasCalendars: (value: boolean) => void; // New method
+    getHasAvailability: () => boolean; // New method
+    setHasAvailability: (value: boolean) => void; // New method
 }
 
 // Update the createConfig function to include the new methods
@@ -478,6 +503,8 @@ const createConfig = (data: ConfigData): ConfigApi => {
     configApi.setMergeTags = setMergeTags(data); // New method
     configApi.getHasCalendars = getHasCalendars(data); // New method
     configApi.setHasCalendars = setHasCalendars(data); // New method
+    configApi.getHasAvailability = getHasAvailability(data); // New method
+    configApi.setHasAvailability = setHasAvailability(data); // New method
     return configApi;
 };
 

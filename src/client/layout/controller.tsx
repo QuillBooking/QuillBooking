@@ -96,6 +96,7 @@ const ShimmerLoader = () => (
 const CalendarContext = React.createContext({
 	hasCalendars: false,
 	isLoading: true,
+	hasAvailability: false,
 	checkCalendars: async () => {},
 });
 
@@ -110,11 +111,16 @@ const AppCalendarProvider = ({ children }) => {
 	// Since we're getting the value from config, we're never loading
 	const isLoading = false;
 
+	const hasAvailability =
+		typeof ConfigAPI.getHasAvailability === 'function'
+			? ConfigAPI.getHasAvailability()
+			: false;
 	// Create the context value with simplified props
 	const contextValue = React.useMemo(
 		() => ({
 			hasCalendars,
 			isLoading,
+			hasAvailability,
 			// Empty function for backwards compatibility
 			checkCalendars: async () => {},
 		}),
@@ -130,15 +136,18 @@ const AppCalendarProvider = ({ children }) => {
 
 // Create a wrapper component for Dashboard to handle the visibility check
 const DashboardWrapper = () => {
-	const { hasCalendars, isLoading } = React.useContext(CalendarContext);
+	const { hasCalendars, isLoading, hasAvailability } =
+		React.useContext(CalendarContext);
 
 	// Show loading spinner while loading
 	if (isLoading) {
 		return <ShimmerLoader />;
 	}
 
+	console.log('asdfasdfasdf', hasAvailability);
+
 	// If no calendars, show getting started page
-	if (!hasCalendars) {
+	if (!hasCalendars && !hasAvailability) {
 		return <GettingStarted />;
 	}
 
@@ -148,13 +157,13 @@ const DashboardWrapper = () => {
 
 // Create a custom component for the dashboard label
 const DashboardLabel = () => {
-	const { hasCalendars } = React.useContext(CalendarContext);
+	const { hasCalendars, hasAvailability } = React.useContext(CalendarContext);
 	// Always use "Dashboard" for the label to avoid flickering
 	return (
 		<Navmenu
 			icon={<HomeIcon width={24} height={24} />}
 			title={
-				hasCalendars
+				hasCalendars || hasAvailability
 					? __('Dashboard', 'quillbooking')
 					: __('Getting Started', 'quillbooking')
 			}

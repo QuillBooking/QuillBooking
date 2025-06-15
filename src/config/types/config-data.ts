@@ -19,6 +19,7 @@ export type ConfigData = Record<string, unknown> & {
 	capabilities: Capabilities;
 	currentUser: CurrentUser;
 	mergeTags: MergeTagGroups;
+	hasAvailability: boolean;
 };
 
 export type MergeTagGroups = {

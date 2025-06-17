@@ -17,10 +17,10 @@ import {
 	GeneralSettingsTab,
 	TeamTab,
 	LicenseTab,
-	AdvancedModulesTab,
+	// AdvancedModulesTab,
 } from './tabs';
 import {
-	AdvancedModulesIcon,
+	// AdvancedModulesIcon,
 	Header,
 	LicenseIcon,
 	SettingsIcon,
@@ -67,8 +67,8 @@ const GlobalSettings: React.FC = () => {
 				return <TeamTab />;
 			case 'licenses':
 				return <LicenseTab />;
-			case 'advanced':
-				return <AdvancedModulesTab />;
+			// case 'advanced':
+			// 	return <AdvancedModulesTab />;
 			default:
 				return <GeneralSettingsTab />;
 		}

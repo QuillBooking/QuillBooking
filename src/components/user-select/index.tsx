@@ -45,7 +45,7 @@ const UserSelect: React.FC<UserSelectProps> = ({
 
 		return new Promise((resolve) => {
 			callApi({
-				path: addQueryArgs('/wp/v2/users', { per_page: 10, ...data }),
+				path: addQueryArgs('/wp/v2/users', { per_page: -1, ...data }),
 				method: 'GET',
 				onSuccess: (response: { id: number; name: string }[]) => {
 					// Only add users that aren't already in the state

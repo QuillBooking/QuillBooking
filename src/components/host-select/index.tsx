@@ -81,7 +81,6 @@ const HostSelect: React.FC<HostSelectProps> = ({
 		return new Promise<MappedHost[]>((resolve) => {
 			callApi({
 				path: addQueryArgs(`calendars`, {
-					per_page: 10,
 					...data,
 					filters: { type: 'host' },
 				}),

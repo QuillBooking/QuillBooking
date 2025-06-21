@@ -49,7 +49,6 @@ const EventSelect: React.FC<EventSelectProps> = ({
 		return new Promise((resolve) => {
 			callApi({
 				path: addQueryArgs(`calendars`, {
-					per_page: 10,
 					...data,
 					filters: { type },
 				}),

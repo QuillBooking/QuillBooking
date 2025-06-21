@@ -30,9 +30,6 @@ use QuillBooking\Admin\Admin_Loader;
  */
 class QuillBooking {
 
-
-
-
 	use Singleton;
 
 	/**
@@ -123,7 +120,7 @@ class QuillBooking {
 	 */
 	private function init_hooks() {
 		 add_action( 'init', array( Capabilities::class, 'assign_capabilities_for_user_roles' ) );
-		add_action( 'init', array( Availabilities::class, 'add_default_availability' ) );
+		// add_action( 'init', array( Availabilities::class, 'add_default_availability' ) );
 
 		// Add filter to check if payment processing is available
 		add_filter(

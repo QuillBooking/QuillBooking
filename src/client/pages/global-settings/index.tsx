@@ -90,11 +90,11 @@ const GlobalSettings: React.FC = () => {
 			label: __('License', 'quillbooking'),
 			icon: <LicenseIcon />,
 		},
-		{
-			key: 'advanced',
-			label: __('Recommended Plugins', 'quillbooking'),
-			icon: <AdvancedModulesIcon />,
-		},
+		// {
+		// 	key: 'advanced',
+		// 	label: __('Recommended Plugins', 'quillbooking'),
+		// 	icon: <AdvancedModulesIcon />,
+		// },
 	];
 
 	return (

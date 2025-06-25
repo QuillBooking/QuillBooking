@@ -340,6 +340,15 @@ class License {
 			'enterprise' => array(
 				'label' => esc_html__( 'Enterprise', 'quillbooking' ),
 			),
+			'basic-ltd' => array(
+				'label' => esc_html__( 'Basic LTD', 'quillbooking' ),
+			),
+			'plus-ltd'  => array(
+				'label' => esc_html__( 'Plus LTD', 'quillbooking' ),
+			),
+			'enterprise-ltd' => array(
+				'label' => esc_html__( 'Enterprise LTD', 'quillbooking' ),
+			),
 		);
 	}
 
@@ -716,7 +725,7 @@ class License {
 	 */
 	private function check_authorization() {
 		// check for valid nonce field.
-		if ( ! check_ajax_referer( 'quillbooking_license', '_nonce', false ) ) {
+		if ( ! check_ajax_referer( 'quillbooking-admin', '_nonce', false ) ) {
 			wp_send_json_error( esc_html__( 'Invalid nonce', 'quillbooking' ), 403 );
 			exit;
 		}

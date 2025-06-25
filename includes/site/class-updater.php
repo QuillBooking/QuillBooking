@@ -165,7 +165,7 @@ class Updater {
 			'versions'   => array(
 				'php'       => phpversion(),
 				'wp'        => get_bloginfo( 'version' ),
-				'quillbooking' => QUILLBOOKING_PLUGIN_VERSION,
+				'quillbooking' => QUILLBOOKING_VERSION,
 			),
 		);
 

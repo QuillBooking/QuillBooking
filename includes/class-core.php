@@ -18,6 +18,7 @@ use QuillBooking\Managers\Merge_Tags_Manager;
 use QuillBooking\Availabilities;
 use QuillBooking\Capabilities;
 use QuillBooking\Models\Calendar_Model;
+use QuillBooking\Site\License;
 
 /**
  * Main Core Class
@@ -72,7 +73,9 @@ class Core {
 				'quillbooking.config.setCurrentUser( ' . json_encode( $current_user ) . ' );' .
 				'quillbooking.config.setMergeTags( ' . json_encode( Merge_Tags_Manager::instance()->get_groups() ) . ' );' .
 				'quillbooking.config.setHasCalendars( ' . ( $has_calendars ? 'true' : 'false' ) . ' );' .
-				'quillbooking.config.setHasAvailability( ' . ( isset( $has_availability ) && $has_availability ? 'true' : 'false' ) . ' );',
+				'quillbooking.config.setHasAvailability( ' . ( isset( $has_availability ) && $has_availability ? 'true' : 'false' ) . ' );' .
+				'quillbooking.config.setLicense(' . wp_json_encode( License::instance()->get_license_info() ) . ');' .
+				'quillbooking.config.setProPluginData(' . wp_json_encode( License::instance()->plugin_data ) . ');'
 		);
 	}
 }

@@ -20,8 +20,26 @@ export type ConfigData = Record<string, unknown> & {
 	currentUser: CurrentUser;
 	mergeTags: MergeTagGroups;
 	hasAvailability: boolean;
+	license: License | false;
+	proPluginData: ProPluginData;
+
 };
 
+export type ProPluginData = {
+	is_installed: boolean;
+	is_active: boolean;
+};
+
+export type License = {
+	upgrades: {
+		[key: string]: Upgrade;
+	};
+	[key: string]: any;
+};
+
+export type Upgrade = {
+	[key: string]: any;
+};
 export type MergeTagGroups = {
 	[group: string]: {
 		mergeTags: {

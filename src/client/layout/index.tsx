@@ -138,13 +138,6 @@ export const Layout = (props) => {
 					<div className='flex items-center gap-4'>
 
 						<LogoIcon />
-						<div className='h-8 w-[1.6px] bg-[#D6D6D6]'></div>
-						<h2 className='text-xl font-semibold text-gray-800'>Quill Booking</h2>
-					</div>
-					<div className='flex items-center gap-[12px]'>
-						<span className='border-l-[1.6px] border-l-[#D6D6D6] pl-[12px]'>
-							<img src={User} alt='user-img' className='size-10 rounded-full' />
-						</span>
 					</div>
 				</div>
 				<div className="quillbooking-layout w-full">

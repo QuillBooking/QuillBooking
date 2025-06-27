@@ -21,6 +21,7 @@ use QuillBooking\Traits\Singleton;
 use QuillBooking\Webhook_Feeds;
 use QuillBooking\Admin\Admin;
 use QuillBooking\Admin\Admin_Loader;
+use QuillBooking\Site\Site;
 
 /**
  * Main QuillBooking Class
@@ -107,6 +108,7 @@ class QuillBooking {
 		Capabilities::assign_capabilities_for_user_roles();
 		Booking::instance();
 		Shortcode::instance();
+		Site::instance();
 
 		// WooCommerce integration is now in the Pro version
 

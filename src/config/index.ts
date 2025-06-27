@@ -73,7 +73,7 @@ const config =
  * @param data the json environment configuration to use for getting config values
  * @returns string
  */
-const getBlogName = (data: ConfigData) => (): string => {
+export const getBlogName = (data: ConfigData) => (): string => {
     return data.blogName;
 };
 
@@ -91,7 +91,7 @@ const setBlogName = (data: ConfigData) => (value: string) => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const getAdminUrl = (data: ConfigData) => (): string => {
+export const getAdminUrl = (data: ConfigData) => (): string => {
     return data.adminUrl;
 };
 
@@ -100,7 +100,7 @@ const getAdminUrl = (data: ConfigData) => (): string => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const setAdminUrl = (data: ConfigData) => (value: string) => {
+export const setAdminUrl = (data: ConfigData) => (value: string) => {
     data.adminUrl = value;
 };
 
@@ -109,7 +109,7 @@ const setAdminUrl = (data: ConfigData) => (value: string) => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const getAdminEmail = (data: ConfigData) => (): string => {
+export const getAdminEmail = (data: ConfigData) => (): string => {
     return data.adminEmail;
 };
 
@@ -118,7 +118,7 @@ const getAdminEmail = (data: ConfigData) => (): string => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const setAdminEmail = (data: ConfigData) => (value: string) => {
+export const setAdminEmail = (data: ConfigData) => (value: string) => {
     data.adminEmail = value;
 };
 
@@ -127,7 +127,7 @@ const setAdminEmail = (data: ConfigData) => (value: string) => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const getAjaxUrl = (data: ConfigData) => (): string => {
+export const getAjaxUrl = (data: ConfigData) => (): string => {
     return data.ajaxUrl;
 };
 
@@ -136,7 +136,7 @@ const getAjaxUrl = (data: ConfigData) => (): string => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const setAjaxUrl = (data: ConfigData) => (value: string) => {
+export const setAjaxUrl = (data: ConfigData) => (value: string) => {
     data.ajaxUrl = value;
 };
 
@@ -145,7 +145,7 @@ const setAjaxUrl = (data: ConfigData) => (value: string) => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const getNonce = (data: ConfigData) => (): string => {
+export const getNonce = (data: ConfigData) => (): string => {
     return data.nonce;
 };
 
@@ -154,7 +154,7 @@ const getNonce = (data: ConfigData) => (): string => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const setNonce = (data: ConfigData) => (value: string) => {
+export const setNonce = (data: ConfigData) => (value: string) => {
     data.nonce = value;
 };
 
@@ -438,7 +438,7 @@ export const setHasAvailability = (data: ConfigData) => (value: boolean) => {
  *
  * @returns {License | false} license
  */
-const setLicense = (data: ConfigData) => (value: License | false) => {
+export const setLicense = (data: ConfigData) => (value: License | false) => {
     data.license = value;
 };
 
@@ -449,7 +449,7 @@ const setLicense = (data: ConfigData) => (value: License | false) => {
  *
  * @returns {License | false} license
  */
-const getLicense = (data: ConfigData) => (): License | false => {
+export const getLicense = (data: ConfigData) => (): License | false => {
     return data.license;
 };
 
@@ -460,7 +460,7 @@ const getLicense = (data: ConfigData) => (): License | false => {
  * 
  * @returns {ProPluginData} proPluginData
  */
-const setProPluginData = (data: ConfigData) => (value: ProPluginData) => {
+export const setProPluginData = (data: ConfigData) => (value: ProPluginData) => {
     data.proPluginData = value;
 };
 
@@ -471,7 +471,7 @@ const setProPluginData = (data: ConfigData) => (value: ProPluginData) => {
  * 
  * @returns {ProPluginData} proPluginData
  */
-const getProPluginData = (data: ConfigData) => (): ProPluginData => {
+export const getProPluginData = (data: ConfigData) => (): ProPluginData => {
     return data.proPluginData;
 };
 
@@ -578,5 +578,5 @@ if (window.quillbooking === undefined) {
 }
 
 // @ts-ignore
-export default window.quillbooking.config as ConfigApi;
+export default window.quillbooking.config;
 export * from './types/config-data';

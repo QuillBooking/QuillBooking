@@ -46,5 +46,7 @@ class Booking {
 		new Booking_Ajax();
 
 		new Booking_Jobs();
+
+		new Booking_Frontend_Handler();
 	}
 }

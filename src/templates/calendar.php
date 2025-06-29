@@ -83,6 +83,8 @@ $icons_url           = plugins_url('src/templates/icons/', QUILLBOOKING_PLUGIN_F
     .quillbooking-meeting {
         min-height: 100vh;
         padding: 20px;
+        position: relative;
+        z-index: 99;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 

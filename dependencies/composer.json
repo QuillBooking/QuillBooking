@@ -1,8 +1,9 @@
 {
     "name": "quillbooking/quillbooking-deps",
     "require": {
-        "composer/installers": "~1.0",
-        "quillforms/wpeloquent": "^1.0.2"
+        "quillforms/wpeloquent": "^1.0.2",
+        "nesbot/carbon": "^2.0",
+        "carbonphp/carbon-doctrine-types": "^2.1"
     },
     "config": {
         "allow-plugins": {

@@ -2,7 +2,7 @@ import { isToday, isTomorrow } from 'date-fns';
 import { format, fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { __ } from '@wordpress/i18n';
 
-import { Booking, DateOverrides, Location } from '@quillbooking/client';
+import type { Booking, DateOverrides, Location } from '@quillbooking/client';
 
 export const getCurrentTimeInTimezone = (timezone: string): string => {
 	const options: Intl.DateTimeFormatOptions = {

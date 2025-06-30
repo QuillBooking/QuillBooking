@@ -9,6 +9,8 @@ import type {
     Locations,
     MergeTagGroups,
     PaymentGateways,
+    ProPluginData,
+    License,
 } from './types/config-data';
 
 // Update your configData object to include mergeTags
@@ -23,6 +25,11 @@ const configData: ConfigData = {
     hasCalendars: false,
     hasAvailability: false,
     isWoocommerceActive: false,
+    proPluginData: {
+        is_installed: false,
+        is_active: false,
+    },
+    license: false,
     timezones: {},
     integrations: {},
     locations: {},
@@ -66,7 +73,7 @@ const config =
  * @param data the json environment configuration to use for getting config values
  * @returns string
  */
-const getBlogName = (data: ConfigData) => (): string => {
+export const getBlogName = (data: ConfigData) => (): string => {
     return data.blogName;
 };
 
@@ -84,7 +91,7 @@ const setBlogName = (data: ConfigData) => (value: string) => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const getAdminUrl = (data: ConfigData) => (): string => {
+export const getAdminUrl = (data: ConfigData) => (): string => {
     return data.adminUrl;
 };
 
@@ -93,7 +100,7 @@ const getAdminUrl = (data: ConfigData) => (): string => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const setAdminUrl = (data: ConfigData) => (value: string) => {
+export const setAdminUrl = (data: ConfigData) => (value: string) => {
     data.adminUrl = value;
 };
 
@@ -102,7 +109,7 @@ const setAdminUrl = (data: ConfigData) => (value: string) => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const getAdminEmail = (data: ConfigData) => (): string => {
+export const getAdminEmail = (data: ConfigData) => (): string => {
     return data.adminEmail;
 };
 
@@ -111,7 +118,7 @@ const getAdminEmail = (data: ConfigData) => (): string => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const setAdminEmail = (data: ConfigData) => (value: string) => {
+export const setAdminEmail = (data: ConfigData) => (value: string) => {
     data.adminEmail = value;
 };
 
@@ -120,7 +127,7 @@ const setAdminEmail = (data: ConfigData) => (value: string) => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const getAjaxUrl = (data: ConfigData) => (): string => {
+export const getAjaxUrl = (data: ConfigData) => (): string => {
     return data.ajaxUrl;
 };
 
@@ -129,7 +136,7 @@ const getAjaxUrl = (data: ConfigData) => (): string => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const setAjaxUrl = (data: ConfigData) => (value: string) => {
+export const setAjaxUrl = (data: ConfigData) => (value: string) => {
     data.ajaxUrl = value;
 };
 
@@ -138,7 +145,7 @@ const setAjaxUrl = (data: ConfigData) => (value: string) => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const getNonce = (data: ConfigData) => (): string => {
+export const getNonce = (data: ConfigData) => (): string => {
     return data.nonce;
 };
 
@@ -147,7 +154,7 @@ const getNonce = (data: ConfigData) => (): string => {
  *
  * @param data the json environment configuration to use for getting config values
  */
-const setNonce = (data: ConfigData) => (value: string) => {
+export const setNonce = (data: ConfigData) => (value: string) => {
     data.nonce = value;
 };
 
@@ -423,6 +430,50 @@ export const setHasAvailability = (data: ConfigData) => (value: boolean) => {
     data.hasAvailability = value;
 };
 
+// license
+/**
+ * Set license
+ *
+ * @param data the json environment configuration to use for getting config values
+ *
+ * @returns {License | false} license
+ */
+export const setLicense = (data: ConfigData) => (value: License | false) => {
+    data.license = value;
+};
+
+/**
+ * Get license
+ *
+ * @param data the json environment configuration to use for getting config values
+ *
+ * @returns {License | false} license
+ */
+export const getLicense = (data: ConfigData) => (): License | false => {
+    return data.license;
+};
+
+/**
+ * Set pro plugin data
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * 
+ * @returns {ProPluginData} proPluginData
+ */
+export const setProPluginData = (data: ConfigData) => (value: ProPluginData) => {
+    data.proPluginData = value;
+};
+
+/**
+ * Get pro plugin data
+ * 
+ * @param data the json environment configuration to use for getting config values
+ * 
+ * @returns {ProPluginData} proPluginData
+ */
+export const getProPluginData = (data: ConfigData) => (): ProPluginData => {
+    return data.proPluginData;
+};
 
 
 // Update your ConfigApi interface to include the new methods
@@ -464,6 +515,10 @@ export interface ConfigApi {
     setHasCalendars: (value: boolean) => void; // New method
     getHasAvailability: () => boolean; // New method
     setHasAvailability: (value: boolean) => void; // New method
+    getLicense: () => License | false; // New method
+    setLicense: (value: License | false) => void; // New method
+    getProPluginData: () => ProPluginData; // New method
+    setProPluginData: (value: ProPluginData) => void; // New method
 }
 
 // Update the createConfig function to include the new methods
@@ -505,6 +560,10 @@ const createConfig = (data: ConfigData): ConfigApi => {
     configApi.setHasCalendars = setHasCalendars(data); // New method
     configApi.getHasAvailability = getHasAvailability(data); // New method
     configApi.setHasAvailability = setHasAvailability(data); // New method
+    configApi.getLicense = getLicense(data); // New method
+    configApi.setLicense = setLicense(data); // New method
+    configApi.getProPluginData = getProPluginData(data); // New method
+    configApi.setProPluginData = setProPluginData(data); // New method
     return configApi;
 };
 
@@ -519,5 +578,5 @@ if (window.quillbooking === undefined) {
 }
 
 // @ts-ignore
-export default window.quillbooking.config as ConfigApi;
+export default window.quillbooking.config;
 export * from './types/config-data';

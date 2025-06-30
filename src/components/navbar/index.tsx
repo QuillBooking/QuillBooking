@@ -26,12 +26,13 @@ import './style.scss';
 import { UpgradeIcon, ToggleIcon } from '@quillbooking/components';
 import { useLocation } from 'react-router';
 import { ACTIVE_PRO_URL } from '@quillbooking/constants';
-
+import ConfigApi from '@quillbooking/config';
 const NavBar: React.FC = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [collapsed, setCollapsed] = useState(false);
 	const pages = getAdminPages();
+	const license = ConfigApi.getLicense();
 	const getCurrentPath = () => {
 		const params = new URLSearchParams(location.search);
 		return params.get('path') || '';
@@ -98,6 +99,55 @@ const NavBar: React.FC = () => {
 		setCollapsed(!collapsed);
 	};
 
+	let menuItems = [
+		{
+			key: 'group',
+			type: 'group',
+			children: items.map((item, index) => ({
+				...item,
+				key: item?.key ?? index,
+				type: 'item',
+				style: {
+					paddingLeft: '15px',
+					marginBottom: '24px',
+				},
+			})),
+			className: 'group',
+		},
+		{
+			key: 'spacer',
+			label: '',
+			style: {
+				height: '140px',
+				pointerEvents: 'none',
+			},
+		},
+
+	]
+
+	if (!license) {
+		menuItems.push({
+			key: 'button-item',
+			className: 'button-item pl-0',
+			label: (
+				<a
+					className="navbar-upgrade-button"
+					href={ACTIVE_PRO_URL}
+				>
+					<div className={collapsed ? '' : 'mr-[15px]'}>
+						<UpgradeIcon />
+					</div>
+					{!collapsed && (
+						<span>
+							{__('Upgrade Plan', 'quillbooking')}
+						</span>
+					)}
+				</a>
+			),
+			style: { paddingLeft: '0px' },
+		});
+	}
+
 	return (
 		<div className={`quillbooking-navbar ${collapsed ? 'collapsed' : ''}`}>
 			{/* Custom Toggle Button outside of Menu component */}
@@ -133,50 +183,7 @@ const NavBar: React.FC = () => {
 				selectedKeys={[selectedKey]}
 				mode="inline"
 				//inlineCollapsed={collapsed}
-				items={[
-					{
-						key: 'group',
-						type: 'group',
-						children: items.map((item, index) => ({
-							...item,
-							key: item?.key ?? index,
-							type: 'item',
-							style: {
-								paddingLeft: '15px',
-								marginBottom: '24px',
-							},
-						})),
-						className: 'group',
-					},
-					{
-						key: 'spacer',
-						label: '',
-						style: {
-							height: '140px',
-							pointerEvents: 'none',
-						},
-					},
-					{
-						key: 'button-item',
-						className: 'button-item pl-0',
-						label: (
-							<a
-								className="navbar-upgrade-button"
-								href={ACTIVE_PRO_URL}
-							>
-								<div className={collapsed ? '' : 'mr-[15px]'}>
-									<UpgradeIcon />
-								</div>
-								{!collapsed && (
-									<span>
-										{__('Upgrade Plan', 'quillbooking')}
-									</span>
-								)}
-							</a>
-						),
-						style: { paddingLeft: '0px' },
-					},
-				]}
+				items={menuItems}
 			/>
 		</div>
 	);

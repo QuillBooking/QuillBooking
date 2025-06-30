@@ -21,6 +21,7 @@ use QuillBooking\Traits\Singleton;
 use QuillBooking\Webhook_Feeds;
 use QuillBooking\Admin\Admin;
 use QuillBooking\Admin\Admin_Loader;
+use QuillBooking\Site\Site;
 
 /**
  * Main QuillBooking Class
@@ -91,6 +92,17 @@ class QuillBooking {
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/event-locations/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/merge-tags/loader.php';
 		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/payment-gateway/loader.php';
+		
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/booking/data/class-booking-data-formatter.php';
+		// Load template files
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderers/class-base-template-renderer.php';
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderers/class-template-renderer-factory.php';
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderers/class-booking-page-renderer.php';
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderers/class-calenders-page-renderer.php';
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderers/class-confirm-page-renderer.php';
+		require_once QUILLBOOKING_PLUGIN_DIR . 'includes/booking/renderers/class-reschedule-page-renderer.php';
+	
+	
 	}
 
 	/**
@@ -107,6 +119,7 @@ class QuillBooking {
 		Capabilities::assign_capabilities_for_user_roles();
 		Booking::instance();
 		Shortcode::instance();
+		Site::instance();
 
 		// WooCommerce integration is now in the Pro version
 

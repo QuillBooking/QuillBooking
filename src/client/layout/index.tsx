@@ -135,12 +135,9 @@ export const Layout = (props) => {
 		<SlotFillProvider>
 			<AntProvider>
 				<div className='flex justify-between items-center border-b px-8 py-4'>
-					<LogoIcon/>
-					<div className='flex items-center gap-[12px]'>
-						<SearchIcon/>
-						<span className='border-l-[1.6px] border-l-[#D6D6D6] pl-[12px]'>
-							<img src={User} alt='user-img' className='size-10 rounded-full'/>
-						</span>
+					<div className='flex items-center gap-4'>
+
+						<LogoIcon />
 					</div>
 				</div>
 				<div className="quillbooking-layout w-full">

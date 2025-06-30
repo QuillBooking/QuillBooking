@@ -129,23 +129,23 @@ class License {
 		try {
 			$result = activate_plugin( $this->plugin_data['plugin_file'] );
 			if ( is_wp_error( $result ) ) {
-				quillbooking_get_logger()->error(
-					esc_html__( 'Cannot activate Quillbooking Pro', 'quillbooking' ),
-					array(
-						'code'  => 'cannot_activate_pro',
-						'error' => $result,
-					)
-				);
+				// quillbooking_get_logger()->error(
+				// 	esc_html__( 'Cannot activate Quillbooking Pro', 'quillbooking' ),
+				// 	array(
+				// 		'code'  => 'cannot_activate_pro',
+				// 		'error' => $result,
+				// 	)
+				// );
 			}
 			wp_send_json_success( esc_html__( 'Quillbooking Pro activated successfully', 'quillbooking' ), 200 );
 		} catch ( \Exception $e ) {
-			quillbooking_get_logger()->error(
-				esc_html__( 'Cannot activate Quillbooking Pro', 'quillbooking' ),
-				array(
-					'code'  => 'cannot_activate_pro',
-					'error' => $e,
-				)
-			);
+			// quillbooking_get_logger()->error(
+			// 	esc_html__( 'Cannot activate Quillbooking Pro', 'quillbooking' ),
+			// 	array(
+			// 		'code'  => 'cannot_activate_pro',
+			// 		'error' => $e,
+			// 	)
+			// );
 			wp_send_json_error( esc_html__( 'Cannot activate Quillbooking Pro, check log for details', 'quillbooking' ) );
 		}
 	}
@@ -166,7 +166,7 @@ class License {
 		$plugins_dir = trailingslashit( dirname( dirname( QUILLBOOKING_PLUGIN_FILE ) ) );
 
 		// get plugin data.
-		$plugin_file      = 'quillbooking-pro/quillbooking-pro.php';
+		$plugin_file      = 'QuillBooking-pro/quillbooking-pro.php';
 		$full_plugin_file = $plugins_dir . $plugin_file;
 		$plugin_exists    = file_exists( $full_plugin_file );
 		$plugin_data      = $plugin_exists ? get_plugin_data( $full_plugin_file, true, false ) : array();
@@ -177,7 +177,7 @@ class License {
 		$data['is_installed']     = $plugin_exists;
 		$data['is_active']        = is_plugin_active( $plugin_file );
 		$data['version']          = $plugin_data['Version'] ?? null;
-		$data['slug']             = 'quillbooking-pro';
+		$data['slug']             = 'QuillBooking-pro';
 
 		$this->plugin_data = $data;
 	}
@@ -217,14 +217,14 @@ class License {
 		// check download link.
 		$download_link = $plugin_data['data']['download_link'] ?? null;
 		if ( empty( $download_link ) ) {
-			quillbooking_get_logger()->debug(
-				esc_html__( 'Cannot get plugin info', 'quillbooking' ),
-				array(
-					'code'        => 'cannot_get_plugin_info',
-					'plugin_slug' => $this->plugin_data['slug'],
-					'response'    => $plugin_data,
-				)
-			);
+			// quillbooking_get_logger()->debug(
+			// 	esc_html__( 'Cannot get plugin info', 'quillbooking' ),
+			// 	array(
+			// 		'code'        => 'cannot_get_plugin_info',
+			// 		'plugin_slug' => $this->plugin_data['slug'],
+			// 		'response'    => $plugin_data,
+			// 	)
+			// );
 			return array(
 				'success' => false,
 				'message' => esc_html__( 'Cannot get plugin info, please check your license', 'quillbooking' ),
@@ -250,18 +250,20 @@ class License {
 
 		// check wp_error.
 		if ( is_wp_error( $installer_skin->result ) ) {
-			quillbooking_get_logger()->error(
-				esc_html__( 'Cannot install Quillbooking Pro plugin plugin', 'quillbooking' ),
-				array(
-					'code'        => 'cannot_install_plugin_plugin',
-					'plugin_slug' => $plugin_slug,
-					'error'       => array(
-						'code'    => $installer_skin->result->get_error_code(),
-						'message' => $installer_skin->result->get_error_message(),
-						'data'    => $installer_skin->result->get_error_data(),
-					),
-				)
-			);
+		
+
+			// quillbooking_get_logger()->error(
+			// 	esc_html__( 'Cannot install Quillbooking Pro plugin plugin', 'quillbooking' ),
+			// 	array(
+			// 		'code'        => 'cannot_install_plugin_plugin',
+			// 		'plugin_slug' => $plugin_slug,
+			// 		'error'       => array(
+			// 			'code'    => $installer_skin->result->get_error_code(),
+			// 			'message' => $installer_skin->result->get_error_message(),
+			// 			'data'    => $installer_skin->result->get_error_data(),
+			// 		),
+			// 	)
+			// );
 			return array(
 				'success' => false,
 				'message' => esc_html__( 'Cannot install Quillbooking Pro plugin, check log for details', 'quillbooking' ),
@@ -270,14 +272,14 @@ class License {
 
 		// check failed installation.
 		if ( ! $installer_skin->result || ! $installer->plugin_info() ) {
-			quillbooking_get_logger()->error(
-				esc_html__( 'Cannot install Quillbooking Pro plugin plugin', 'quillbooking' ),
-				array(
-					'code'             => 'cannot_install_plugin_plugin',
-					'plugin_slug'      => $plugin_slug,
-					'upgrade_messages' => $installer_skin->get_upgrade_messages(),
-				)
-			);
+			// quillbooking_get_logger()->error(
+			// 	esc_html__( 'Cannot install Quillbooking Pro plugin plugin', 'quillbooking' ),
+			// 	array(
+			// 		'code'             => 'cannot_install_plugin_plugin',
+			// 		'plugin_slug'      => $plugin_slug,
+			// 		'upgrade_messages' => $installer_skin->get_upgrade_messages(),
+			// 	)
+			// );
 			return array(
 				'success' => false,
 				'message' => esc_html__( 'Cannot install Quillbooking Pro plugin, check log for details', 'quillbooking' ),
@@ -286,21 +288,22 @@ class License {
 
 		// check the installed plugin.
 		if ( $installer->plugin_info() !== $this->plugin_data['plugin_file'] ) {
+
 			if ( ! function_exists( 'delete_plugins' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			}
 			$removed = delete_plugins( array( $installer->plugin_info() ) );
-			quillbooking_get_logger()->critical(
-				esc_html__( 'Invalid Quillbooking Pro plugin installation detected', 'quillbooking' ),
-				array(
-					'code'                  => 'invalid_plugin_installation',
-					'plugin_slug'           => $plugin_slug,
-					'plugin_file'           => $this->plugin_data['plugin_file'],
-					'installer_plugin_info' => $installer->plugin_info(),
-					'removed'               => $removed,
-					'upgrade_messages'      => $installer_skin->get_upgrade_messages(),
-				)
-			);
+			// quillbooking_get_logger()->critical(
+			// 	esc_html__( 'Invalid Quillbooking Pro plugin installation detected', 'quillbooking' ),
+			// 	array(
+			// 		'code'                  => 'invalid_plugin_installation',
+			// 		'plugin_slug'           => $plugin_slug,
+			// 		'plugin_file'           => $this->plugin_data['plugin_file'],
+			// 		'installer_plugin_info' => $installer->plugin_info(),
+			// 		'removed'               => $removed,
+			// 		'upgrade_messages'      => $installer_skin->get_upgrade_messages(),
+			// 	)
+			// );
 			return array(
 				'success' => false,
 				'message' => esc_html__( 'Cannot install Quillbooking Pro plugin, check log for details', 'quillbooking' ),
@@ -308,14 +311,14 @@ class License {
 		}
 
 		// log successful installation.
-		quillbooking_get_logger()->info(
-			esc_html__( 'Quillbooking Pro plugin installed successfully', 'quillbooking' ),
-			array(
-				'code'             => 'plugin_installed_successfully',
-				'plugin_slug'      => $this->plugin_data['slug'],
-				'upgrade_messages' => $installer_skin->get_upgrade_messages(),
-			)
-		);
+		// quillbooking_get_logger()->info(
+		// 	esc_html__( 'Quillbooking Pro plugin installed successfully', 'quillbooking' ),
+		// 	array(
+		// 		'code'             => 'plugin_installed_successfully',
+		// 		'plugin_slug'      => $this->plugin_data['slug'],
+		// 		'upgrade_messages' => $installer_skin->get_upgrade_messages(),
+		// 	)
+		// );
 		return array(
 			'success' => true,
 			'message' => esc_html__( 'Quillbooking Pro plugin installed successfully', 'quillbooking' ),
@@ -339,6 +342,15 @@ class License {
 			),
 			'enterprise' => array(
 				'label' => esc_html__( 'Enterprise', 'quillbooking' ),
+			),
+			'basic-ltd' => array(
+				'label' => esc_html__( 'Basic LTD', 'quillbooking' ),
+			),
+			'plus-ltd'  => array(
+				'label' => esc_html__( 'Plus LTD', 'quillbooking' ),
+			),
+			'enterprise-ltd' => array(
+				'label' => esc_html__( 'Enterprise LTD', 'quillbooking' ),
 			),
 		);
 	}
@@ -517,21 +529,21 @@ class License {
 			$result = $this->update_license();
 
 			if ( $result['success'] ) {
-				quillbooking_get_logger()->debug(
-					esc_html__( 'License update task done', 'quillbooking' ),
-					array(
-						'code'    => 'license_update_task_done',
-						'trigger' => $trigger,
-					)
-				);
+				// quillbooking_get_logger()->debug(
+				// 	esc_html__( 'License update task done', 'quillbooking' ),
+				// 	array(
+				// 		'code'    => 'license_update_task_done',
+				// 		'trigger' => $trigger,
+				// 	)
+				// );
 			} else {
-				quillbooking_get_logger()->warning(
-					esc_html__( 'License update task failed', 'quillbooking' ),
-					array(
-						'code'    => 'license_update_task_failed',
-						'trigger' => $trigger,
-					)
-				);
+				// quillbooking_get_logger()->warning(
+				// 	esc_html__( 'License update task failed', 'quillbooking' ),
+				// 	array(
+				// 		'code'    => 'license_update_task_failed',
+				// 		'trigger' => $trigger,
+				// 	)
+				// );
 			}
 		}
 	}
@@ -716,7 +728,7 @@ class License {
 	 */
 	private function check_authorization() {
 		// check for valid nonce field.
-		if ( ! check_ajax_referer( 'quillbooking_license', '_nonce', false ) ) {
+		if ( ! check_ajax_referer( 'quillbooking-admin', '_nonce', false ) ) {
 			wp_send_json_error( esc_html__( 'Invalid nonce', 'quillbooking' ), 403 );
 			exit;
 		}

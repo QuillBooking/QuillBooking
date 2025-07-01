@@ -432,7 +432,7 @@ class REST_Event_Controller extends REST_Controller {
 				return new WP_Error( 'rest_event_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
 			}
 
-			$query = Event_Model::query();
+			$query = Event_Model::with( array( 'calendar' ) );
 
 			if ( $keyword ) {
 				$query->where( 'name', 'LIKE', '%' . $keyword . '%' );
@@ -444,7 +444,15 @@ class REST_Event_Controller extends REST_Controller {
 
 			$events = $query->paginate( $per_page, array( '*' ), 'page', $page );
 
-			return new WP_REST_Response( $events, 200 );
+			// Prepare events for response to include calendar data
+			$events_data     = $events->toArray();
+			$prepared_events = array();
+			foreach ( $events->items() as $event ) {
+				$prepared_events[] = $this->prepare_event_for_response( $event );
+			}
+			$events_data['data'] = $prepared_events;
+
+			return new WP_REST_Response( $events_data, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
 		}

@@ -14,6 +14,7 @@ interface QuestionsComponentsProps {
 	onSubmit: (values: any) => void;
 	baseColor: string;
 	darkColor: string;
+	prefilledData?: { name?: string; email?: string };
 }
 
 const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
@@ -22,6 +23,7 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 	onSubmit,
 	baseColor,
 	darkColor,
+	prefilledData,
 }) => {
 	const [form] = Form.useForm();
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,6 +71,19 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 	useEffect(() => {
 		fetchCountryCode();
 	}, []);
+
+	// Set initial form values from prefilled data
+	useEffect(() => {
+		if (prefilledData) {
+			const initialValues: Record<string, any> = {};
+			if (prefilledData.name) initialValues.name = prefilledData.name;
+			if (prefilledData.email) initialValues.email = prefilledData.email;
+
+			if (Object.keys(initialValues).length > 0) {
+				form.setFieldsValue(initialValues);
+			}
+		}
+	}, [prefilledData, form]);
 
 	return (
 		<div className="questions-container">

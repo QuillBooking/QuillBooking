@@ -112,7 +112,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 
 	useEffect(() => {
 		const searchParams = new URLSearchParams(window.location.search);
-		const prefilledName = searchParams.get('name');
+		const prefilledName = searchParams.get('username');
 		const prefilledEmail = searchParams.get('email');
 
 		if (prefilledName || prefilledEmail) {
@@ -185,7 +185,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 			const currentUrlParams = new URLSearchParams(
 				window.location.search
 			);
-			const prefilledName = currentUrlParams.get('name');
+			const prefilledName = currentUrlParams.get('username');
 			const prefilledEmail = currentUrlParams.get('email');
 
 			// Use prefilled data if available, otherwise use form values

@@ -14,7 +14,7 @@ interface QuestionsComponentsProps {
 	onSubmit: (values: any) => void;
 	baseColor: string;
 	darkColor: string;
-	prefilledData?: { name?: string; email?: string };
+	prefilledData?: { name?: string; email?: string }; // name comes from username parameter
 }
 
 const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({

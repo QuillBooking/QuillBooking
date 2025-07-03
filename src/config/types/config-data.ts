@@ -1,4 +1,4 @@
-import type { Availability } from '@quillbooking/client';
+import type { Availability } from '../../types';
 
 export type ConfigData = Record<string, unknown> & {
 	blogName: string;

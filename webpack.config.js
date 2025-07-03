@@ -16,16 +16,16 @@ module.exports = {
         ...defaultConfig.resolve,
         extensions: ['.tsx', '.ts', '.js'],
         alias: {
-            '@quillbooking/navigation': path.resolve(__dirname, 'src/navigation'),
+            // '@quillbooking/navigation': path.resolve(__dirname, 'src/navigation'),
             '@quillbooking/stores': path.resolve(__dirname, 'src/stores'),
             '@quillbooking/config': path.resolve(__dirname, 'src/config'),
-            '@quillbooking/client': path.resolve(__dirname, 'src/client/index.tsx'),
-            '@quillbooking/components': path.resolve(__dirname, 'src/components'),
+            '@quillbooking/shared-hooks': path.resolve(__dirname, 'src/shared-hooks'),
+            // '@quillbooking/client': path.resolve(__dirname, 'src/client/index.tsx'),
+            // '@quillbooking/components': path.resolve(__dirname, 'src/components'),
             "@quillbooking/constants": path.resolve(__dirname, 'src/constants'),
             "@quillbooking/utils": path.resolve(__dirname, 'src/utils'),
             "@quillbooking/hooks": path.resolve(__dirname, 'src/hooks'),
             "@quillbooking/assets": path.resolve(__dirname, 'assets')
-
         },
     },
     plugins: [

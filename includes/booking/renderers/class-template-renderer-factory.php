@@ -36,7 +36,8 @@ class Template_Renderer_Factory {
 		string $type, 
 		string $eventModelClass, 
 		string $bookingValidatorClass, 
-		string $globalSettingsClass 
+		string $globalSettingsClass,
+		string $calendarModelClass
 	) {
 		switch ( $type ) {
 			case 'cancel':
@@ -47,7 +48,8 @@ class Template_Renderer_Factory {
 				return new Reschedule_Page_Renderer( 
 					$eventModelClass, 
 					$bookingValidatorClass, 
-					$globalSettingsClass 
+					$globalSettingsClass, 
+					$calendarModelClass
 				);
 			default:
 				throw new \InvalidArgumentException( "Unknown page type: {$type}" );

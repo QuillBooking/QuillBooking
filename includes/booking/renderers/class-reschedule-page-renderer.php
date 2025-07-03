@@ -13,16 +13,19 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 	private string $eventModelClass;
 	private string $bookingValidatorClass;
 	private string $globalSettingsClass;
+	private string $calendarModelClass;
 
 	public function __construct( 
 		string $eventModelClass, 
 		string $bookingValidatorClass, 
-		string $globalSettingsClass 
+		string $globalSettingsClass,
+		string $calendarModelClass
 	) {
 		parent::__construct();
 		$this->eventModelClass       = $eventModelClass;
 		$this->bookingValidatorClass = $bookingValidatorClass;
 		$this->globalSettingsClass   = $globalSettingsClass;
+		$this->calendarModelClass = $calendarModelClass;
 	}
 
 	public function render( $booking ) {

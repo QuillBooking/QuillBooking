@@ -1,6 +1,6 @@
 
 // Add these to your imports
-import type { Availability } from '@quillbooking/client';
+import type { Availability } from '../types';
 import type {
     Capabilities,
     ConfigData,

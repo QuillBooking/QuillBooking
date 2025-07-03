@@ -28,6 +28,15 @@
 .profile-picture img {
 	width: 50px;
 	height: 50px;
+	margin: auto;
+}
+
+.icons {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 20px;
+	margin-bottom: 10px;
 }
 
 .icon {
@@ -220,10 +229,11 @@
 	text-decoration: underline;
 	overflow: hidden;
 }
+
 .link:hover {
 	text-decoration: none;
 }
 
-.icons > a {
+.icons>a {
 	text-decoration: none !important;
 }

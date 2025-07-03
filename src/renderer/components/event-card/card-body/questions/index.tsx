@@ -5,7 +5,7 @@ import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import { Form, Spin } from 'antd';
 import FormField from '../../../inputs';
 import { useEffect, useState } from 'react';
-import { useApi } from '@quillbooking/hooks';
+import { useApi } from '@quillbooking/shared-hooks';
 import { css } from '@emotion/css';
 
 interface QuestionsComponentsProps {

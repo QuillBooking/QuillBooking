@@ -141,12 +141,23 @@ file_put_contents($ics_path, $ics_content);
 			</p>
 		</div>
 
-		<div class="cancellation-policy">
-			<h3><?php esc_html_e('Cancellation policy:', 'quillbooking'); ?></h3>
-			<p><?php esc_html_e('You can cancel or reschedule anytime before the appointment time.', 'quillbooking'); ?></p>
+		<!-- <div class="cancellation-policy">
+			<h3><?php 
+			// esc_html_e('Cancellation policy:', 'quillbooking'); 
+			?></h3> 
+			<p>
+				<?php 
+				// esc_html_e('You can cancel or reschedule anytime before the appointment time.', 'quillbooking'); 
+				?></p>
 
-			<h3><?php esc_html_e('Additional information:', 'quillbooking'); ?></h3>
-			<p><?php esc_html_e('You may receive appointment-specific communication from Quill Booking. This includes confirmations, receipts and reminders via email and SMS.', 'quillbooking'); ?></p>
-		</div>
+			<h3><?php 
+			// esc_html_e('Additional information:', 'quillbooking'); 
+			?></h3>
+			<p>
+				<?php 
+				// esc_html_e('You may receive appointment-specific communication from Quill Booking. This includes confirmations, receipts and reminders via email and SMS.', 'quillbooking'); 
+				?>
+				</p>
+		</div> -->
 	</div>
 </div>

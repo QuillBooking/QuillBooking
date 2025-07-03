@@ -112,6 +112,26 @@ class Booking_Frontend_Handler {
 		add_action( 'template_redirect', array( $this, 'route_frontend' ) );
 	}
 
+    /**
+	 * Set renderer config
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return void
+	 */
+	public  function set_renderer() {
+        // Check if Pro plugin is active
+       $pro_active = defined( 'QUILLBOOKING_PRO_VERSION' ) ? 'true' : 'false';
+
+       wp_add_inline_script(
+           'quillbooking-renderer',
+           'if (window.quillbooking === undefined) { window.quillbooking = {}; }' .
+           'window.quillbooking.pro_active = ' . $pro_active . ';' .
+           'quillbooking.config.setLocations( ' . json_encode( Locations_Manager::instance()->get_options() ) . ' );' .
+           'quillbooking.config.setTimezones( ' . json_encode( Utils::get_timezones() ) . ' );' . 'quillbooking.config.setAjaxUrl( ' . json_encode( admin_url( 'admin-ajax.php' ) ) . ' );'
+       );
+   }
+
 	/**
 	 * Main routing method - delegates to appropriate renderers
 	 */
@@ -172,7 +192,8 @@ class Booking_Frontend_Handler {
 				$type,
 				$this->eventModelClass,
 				$this->bookingValidatorClass,
-				$this->globalSettingsClass
+				$this->globalSettingsClass,
+                $this->calendarModelClass
 			);
 			
 			return $renderer->render( $booking );

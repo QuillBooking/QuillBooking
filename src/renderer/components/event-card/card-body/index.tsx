@@ -104,6 +104,25 @@ const CardBody: React.FC<CardBodyProps> = ({
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [totalPrice, setTotalPrice] = useState<number>(0);
 
+	// Get prefilled data from URL parameters
+	const [prefilledData, setPrefilledData] = useState<{
+		name?: string;
+		email?: string;
+	}>({});
+
+	useEffect(() => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const prefilledName = searchParams.get('username');
+		const prefilledEmail = searchParams.get('email');
+
+		if (prefilledName || prefilledEmail) {
+			setPrefilledData({
+				name: prefilledName || undefined,
+				email: prefilledEmail || undefined,
+			});
+		}
+	}, []);
+
 	// Calculate price based on whether it's multi-duration or not
 	const calculatePrice = () => {
 		const isMultiDurations =
@@ -161,6 +180,17 @@ const CardBody: React.FC<CardBodyProps> = ({
 
 		try {
 			console.log('Submitting booking form', { values, event });
+
+			// Get prefilled data from URL parameters
+			const currentUrlParams = new URLSearchParams(
+				window.location.search
+			);
+			const prefilledName = currentUrlParams.get('username');
+			const prefilledEmail = currentUrlParams.get('email');
+
+			// Use prefilled data if available, otherwise use form values
+			const finalName = prefilledName || values['name'];
+			const finalEmail = prefilledEmail || values['email'];
 
 			const formData = new FormData();
 			formData.append('action', 'quillbooking_booking');
@@ -224,8 +254,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 				'invitees',
 				JSON.stringify([
 					{
-						name: values['name'],
-						email: values['email'],
+						name: finalName,
+						email: finalEmail,
 					},
 				])
 			);
@@ -277,27 +307,71 @@ const CardBody: React.FC<CardBodyProps> = ({
 				throw new Error(data.data?.message || 'Unknown error occurred');
 			}
 
+			// Check if we're in inline embed mode first
+			const embedUrlParams = new URLSearchParams(window.location.search);
+			const isInlineEmbedMode =
+				embedUrlParams.get('embed_type') === 'Inline';
+
 			// Check for WooCommerce URL response first (it has different format)
 			if (data.data.url) {
-				console.log(
-					'WooCommerce payment, redirecting to checkout:',
-					data.data.url
-				);
-				(window.top || window).location.href = data.data.url;
-				return;
+				if (isInlineEmbedMode) {
+					console.log(
+						'WooCommerce payment in inline embed mode - sending postMessage to parent'
+					);
+					const paymentData = {
+						type: 'quillbooking_payment_redirect',
+						blockId: embedUrlParams.get('blockId') || 'unknown',
+						url: data.data.url,
+						paymentType: 'woocommerce',
+					};
+					if (window.parent && window.parent !== window) {
+						window.parent.postMessage(
+							JSON.stringify(paymentData),
+							'*'
+						);
+					}
+					return;
+				} else {
+					console.log(
+						'WooCommerce payment, redirecting to checkout:',
+						data.data.url
+					);
+					(window.top || window).location.href = data.data.url;
+					return;
+				}
 			}
 
 			// Handle different payment flows based on payment type and response
 			if (data.data.booking && data.data.booking.hash_id) {
 				// If it's a PayPal redirect, handle it directly
 				if (data.data.redirect_url) {
-					console.log(
-						'PayPal payment, redirecting to:',
-						data.data.redirect_url
-					);
-					(window.top || window).location.href =
-						data.data.redirect_url;
-					return;
+					if (isInlineEmbedMode) {
+						console.log(
+							'PayPal payment in inline embed mode - sending postMessage to parent'
+						);
+						const paymentData = {
+							type: 'quillbooking_payment_redirect',
+							blockId: embedUrlParams.get('blockId') || 'unknown',
+							url: data.data.redirect_url,
+							paymentType: 'paypal',
+							bookingId: data.data.booking.hash_id,
+						};
+						if (window.parent && window.parent !== window) {
+							window.parent.postMessage(
+								JSON.stringify(paymentData),
+								'*'
+							);
+						}
+						return;
+					} else {
+						console.log(
+							'PayPal payment, redirecting to:',
+							data.data.redirect_url
+						);
+						(window.top || window).location.href =
+							data.data.redirect_url;
+						return;
+					}
 				}
 
 				// For Stripe payments, go to payment step only if Stripe is enabled
@@ -319,10 +393,59 @@ const CardBody: React.FC<CardBodyProps> = ({
 					setBookingData(data?.data?.booking);
 					setStep(3); // Payment step
 				} else {
-					// For non-payment or WooCommerce/PayPal that didn't return a direct URL, redirect to confirmation
-					const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
-					console.log('Redirect URL:', redirectUrl);
-					(window.top || window).location.href = redirectUrl;
+					// Handle confirmation based on embed mode (already checked above)
+					if (isInlineEmbedMode) {
+						// Send postMessage instead of redirecting
+						console.log(
+							'Inline embed mode detected, sending postMessage instead of redirect'
+						);
+						const confirmationData = {
+							type: 'quillbooking_confirmation',
+							blockId: embedUrlParams.get('blockId') || 'unknown',
+							bookingId: data.data.booking.hash_id,
+							eventId: event.id || 'unknown',
+							bookingDate: selectedDate,
+							bookingTime: selectedTime,
+							status: 'confirmed',
+							bookingData: data.data.booking,
+						};
+
+						// Send to parent window
+						if (window.parent && window.parent !== window) {
+							window.parent.postMessage(
+								JSON.stringify(confirmationData),
+								'*'
+							);
+						}
+
+						// Also dispatch a global event for same-window integration
+						window.dispatchEvent(
+							new CustomEvent('quillbooking_confirmation', {
+								detail: confirmationData,
+							})
+						);
+
+						// Show success message in iframe instead of redirect
+						document.body.innerHTML = `
+							<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#28a745;text-align:center;background:#f8f9fa;">
+								<div style="padding: 40px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px;">
+									<div style="font-size:48px;margin-bottom:16px;">✅</div>
+									<h2 style="margin: 0 0 16px 0; color: #28a745;">Booking Confirmed!</h2>
+									<p style="margin: 0; color: #6c757d;">Your appointment has been successfully scheduled.</p>
+									<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; font-size: 14px; color: #495057;">
+										<strong>Booking ID:</strong> ${data.data.booking.hash_id}<br/>
+										<strong>Date:</strong> ${selectedDate}<br/>
+										<strong>Time:</strong> ${selectedTime}
+									</div>
+								</div>
+							</div>
+						`;
+					} else {
+						// Normal redirect for non-embed mode
+						const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
+						console.log('Redirect URL:', redirectUrl);
+						(window.top || window).location.href = redirectUrl;
+					}
 				}
 			} else {
 				console.error(
@@ -385,6 +508,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 							darkColor={tinycolor(event.color)
 								.darken(20)
 								.toString()}
+							prefilledData={prefilledData}
 						/>
 					)
 				) : step === 3 &&

@@ -1,4 +1,4 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const RescheduleIcon: React.FC<IconProps> = ({ width = 16, height = 16 }) => {
 	return (

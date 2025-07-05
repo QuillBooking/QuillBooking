@@ -9,7 +9,7 @@ import { Card, Flex, Typography } from 'antd';
 /**
  * Internal dependencies
  */
-import { NotificationType } from '@quillbooking/client';
+import { NotificationType } from '@quillbooking/types';
 
 interface NotificationRowProps {
 	noticationKey: string;

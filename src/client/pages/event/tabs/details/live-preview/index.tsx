@@ -14,7 +14,7 @@ import { LuClock5 } from 'react-icons/lu';
 /**
  * Internal dependencies
  */
-import type { Location } from '@quillbooking/client';
+import type { Location } from '@quillbooking/types';
 import user from '../../../../../../components/icons/user.png';
 
 interface LivePreviewProps {

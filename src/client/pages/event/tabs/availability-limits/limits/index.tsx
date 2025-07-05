@@ -17,7 +17,7 @@ import type {
 	LimitUnit,
 	UnitOption as UnitOptionType,
 	UnitOptions as UnitOptionsType,
-} from '@quillbooking/client';
+} from '@quillbooking/types';
 import { CardHeader, OutlinedClockIcon } from '@quillbooking/components';
 import TimezoneSection from './limit-timezone';
 import BookingFrequency from './booking-frequency';

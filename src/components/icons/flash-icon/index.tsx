@@ -1,4 +1,4 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const FlashIcon: React.FC<IconProps> = ({ width = 24, height = 24 }) => {
 	return (

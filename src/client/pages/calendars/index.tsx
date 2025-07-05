@@ -17,7 +17,7 @@ import { SlOptions } from 'react-icons/sl';
  * Internal dependencies
  */
 import './style.scss';
-import type { CalendarResponse, Calendar } from '@quillbooking/client';
+import type { CalendarResponse, Calendar } from '@quillbooking/types';
 import CalendarEvents from './calendar-events';
 import AddCalendarModal from './add-calendar-modal';
 import CalendarSkeleton from './shimmer/calendar-skeleton';
@@ -507,13 +507,13 @@ const Calendars: React.FC = () => {
 								<span className="text-[20px] font-medium text-black">
 									{search
 										? __(
-												'No matching events found',
-												'quillbooking'
-											)
+											'No matching events found',
+											'quillbooking'
+										)
 										: __(
-												'No Calendars available',
-												'quillbooking'
-											)}
+											'No Calendars available',
+											'quillbooking'
+										)}
 								</span>
 								{filters.type === 'team' && (
 									<Button

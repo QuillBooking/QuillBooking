@@ -1,4 +1,4 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const OutlinedClockIcon: React.FC<IconProps> = ({ width = 20, height = 21 }) => {
 	return (

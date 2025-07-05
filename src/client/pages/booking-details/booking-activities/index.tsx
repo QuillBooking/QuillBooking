@@ -11,7 +11,7 @@ import { Typography } from 'antd';
 /**
  * Internal dependencies
  */
-import type { Booking } from '@quillbooking/client';
+import type { Booking } from '@quillbooking/types';
 import { convertTimezone, getCurrentTimezone } from '@quillbooking/utils';
 import { CardHeader } from '@quillbooking/components';
 import { CompassIcon, FailIcon, SuccesIcon } from '@quillbooking/components';

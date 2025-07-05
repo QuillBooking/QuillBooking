@@ -3,7 +3,7 @@ import { Flex, Button, Typography, Card, TimePicker, DatePicker } from 'antd';
 import { isEmpty } from 'lodash';
 import dayjs from 'dayjs';
 
-import type { DateOverrides, TimeSlot } from '@quillbooking/client';
+import type { DateOverrides, TimeSlot } from '@quillbooking/types';
 import { LimitsAddIcon, TrashIcon } from '@quillbooking/components';
 import './style.scss';
 

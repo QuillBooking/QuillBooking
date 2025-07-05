@@ -1,7 +1,7 @@
 /**
  * Internal Dependencies.
  */
-import type { Event } from '@quillbooking/client';
+import type { Event } from '@quillbooking/types';
 import { SET_EVENT, CLEAR_EVENT, SET_EVENT_LOADING, SET_EVENT_ERROR } from './constants';
 import { EventActionTypes } from './types';
 

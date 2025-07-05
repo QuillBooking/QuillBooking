@@ -1,8 +1,8 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const AllCalendarIcon: React.FC<IconProps> = ({
-  width = 18,
-  height = 18,
+	width = 18,
+	height = 18,
 }) => {
 	return (
 		<svg

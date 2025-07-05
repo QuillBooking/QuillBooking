@@ -1,8 +1,8 @@
 import { __ } from '@wordpress/i18n';
 import { Flex, Select } from 'antd';
-import { LimitBaseProps } from '@quillbooking/client';
+import { LimitBaseProps } from '@quillbooking/types';
 
-interface TimeSlotIntervalsProps extends LimitBaseProps {}
+interface TimeSlotIntervalsProps extends LimitBaseProps { }
 
 const timeOptions = [
 	{ value: 0, label: __('No buffer time', 'quillbooking') },

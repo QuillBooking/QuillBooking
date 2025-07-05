@@ -1,4 +1,4 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const CopyWhiteIcon: React.FC<IconProps> = ({ width = 25, height = 24 }) => {
 	return (

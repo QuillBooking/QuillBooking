@@ -7,7 +7,7 @@ import { IoClose } from 'react-icons/io5';
 /**
  * Internal dependencies
  */
-import { NoticeMessage } from '@quillbooking/client';
+import { NoticeMessage } from '@quillbooking/types';
 
 interface NoticeBannerProps {
 	notice: NoticeMessage;
@@ -19,11 +19,10 @@ const NoticeBanner: React.FC<NoticeBannerProps> = ({ closeNotice, notice }) => {
 
 	return (
 		<Flex
-			className={`justify-between items-start border py-3 px-5 mb-4 rounded-lg ${
-				isSuccess
+			className={`justify-between items-start border py-3 px-5 mb-4 rounded-lg ${isSuccess
 					? 'bg-[#0EA4731A] border-[#0EA473]'
 					: 'bg-[#FF4D4F1A] border-[#FF4D4F]'
-			}`}
+				}`}
 		>
 			<Flex vertical>
 				<Flex className="items-baseline gap-2">
@@ -33,9 +32,8 @@ const NoticeBanner: React.FC<NoticeBannerProps> = ({ closeNotice, notice }) => {
 						<FaTimesCircle className="text-[#FF4D4F] text-[14px]" />
 					)}
 					<span
-						className={`text-[16px] font-semibold ${
-							isSuccess ? 'text-[#0EA473]' : 'text-[#FF4D4F]'
-						}`}
+						className={`text-[16px] font-semibold ${isSuccess ? 'text-[#0EA473]' : 'text-[#FF4D4F]'
+							}`}
 					>
 						{notice.title}
 					</span>
@@ -48,9 +46,8 @@ const NoticeBanner: React.FC<NoticeBannerProps> = ({ closeNotice, notice }) => {
 			</Flex>
 			<IoClose
 				onClick={closeNotice}
-				className={`text-[18px] cursor-pointer pt-1 ${
-					isSuccess ? 'text-[#0F5032]' : 'text-[#A8071A]'
-				}`}
+				className={`text-[18px] cursor-pointer pt-1 ${isSuccess ? 'text-[#0F5032]' : 'text-[#A8071A]'
+					}`}
 			/>
 		</Flex>
 	);

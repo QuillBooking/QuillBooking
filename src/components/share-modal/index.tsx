@@ -31,7 +31,7 @@ import DirectLink from './direct-link';
 import ShortCode from './short-code';
 import EmbedCode from './embed-code';
 import QrCode from './qr-code';
-import { Event } from '@quillbooking/client';
+import { Event } from '@quillbooking/types';
 
 const Shimmer: React.FC = () => {
 	return (
@@ -194,13 +194,13 @@ const ShareModal: React.FC<{
 													</span>
 													{(key === 'popUp' ||
 														key === 'qrCode') && (
-														<span className="bg-color-primary text-white rounded-lg text-[11px] pt-[3px] px-2 h-[22px]">
-															{__(
-																'NEW',
-																'quillbooking'
-															)}
-														</span>
-													)}
+															<span className="bg-color-primary text-white rounded-lg text-[11px] pt-[3px] px-2 h-[22px]">
+																{__(
+																	'NEW',
+																	'quillbooking'
+																)}
+															</span>
+														)}
 												</div>
 												<span
 													className={`text-[12px] font-[400] ${selectedKey === key ? 'text-[#505255]' : 'text-[#9197A4]'}`}

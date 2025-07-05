@@ -1,4 +1,4 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const TimezoneIcon: React.FC<IconProps> = ({ width = 32, height = 32 }) => {
 	return (

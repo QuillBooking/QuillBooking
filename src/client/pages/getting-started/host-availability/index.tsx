@@ -11,11 +11,11 @@ import React from 'react';
  * Internal dependencies
  */
 import { Schedule } from '@quillbooking/components';
-import { GettingStartedComponentProps } from '@quillbooking/client';
+import { GettingStartedComponentProps } from '@quillbooking/types';
 
 const HostAvailability: React.FC<GettingStartedComponentProps> = ({
 	event,
-	onAvailabilityChange = () => {},
+	onAvailabilityChange = () => { },
 }) => {
 	return (
 		<Card className="bg-white">

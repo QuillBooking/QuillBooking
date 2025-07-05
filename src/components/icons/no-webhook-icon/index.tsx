@@ -1,4 +1,4 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const NoWebhookIcon: React.FC<IconProps> = ({ width = 362, height = 362 }) => {
 	return (

@@ -13,7 +13,7 @@ const { TextArea } = Input;
 /**
  * External dependencies
  */
-import { NotificationType } from '@quillbooking/client';
+import { NotificationType } from '@quillbooking/types';
 import { Header, MergeTagModal, UrlIcon } from '@quillbooking/components';
 
 type SmsNotificationCardProps = {

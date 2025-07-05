@@ -12,7 +12,7 @@ import { Slider } from '@mui/material';
 /**
  * Internal dependencies
  */
-import type { LimitBaseProps } from '@quillbooking/client';
+import type { LimitBaseProps } from '@quillbooking/types';
 
 interface EventBufferProps extends LimitBaseProps {
 	type: 'buffer_before' | 'buffer_after';

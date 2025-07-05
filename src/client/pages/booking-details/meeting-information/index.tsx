@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import type { Booking } from '@quillbooking/client';
+import type { Booking } from '@quillbooking/types';
 import {
 	CardHeader,
 	EventUrl,

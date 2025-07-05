@@ -1,4 +1,4 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const CompassIcon: React.FC<IconProps> = ({ width = 28, height = 28 }) => {
 	return (

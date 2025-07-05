@@ -11,7 +11,7 @@ import type { Reducer } from 'redux';
 /**
  * Internal dependencies
  */
-import type { Calendar } from '@quillbooking/client';
+import type { Calendar } from '@quillbooking/types';
 import { SET_CALENDAR } from './constants';
 import type { CalendarActionTypes } from './types';
 

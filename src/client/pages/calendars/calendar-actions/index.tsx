@@ -17,7 +17,7 @@ import {
 	CalendarDeleteIcon,
 	CloneIcon,
 } from '@quillbooking/components';
-import type { Calendar } from '@quillbooking/client';
+import type { Calendar } from '@quillbooking/types';
 import ConfigAPI from '@quillbooking/config';
 import { useApi, useCopyToClipboard } from '@quillbooking/hooks';
 import CloneEventModal from '../clone-event-modal'; // Import the CloneEventModal component

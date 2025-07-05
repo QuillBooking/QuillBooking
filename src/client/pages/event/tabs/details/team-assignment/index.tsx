@@ -1,7 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import React from 'react';
 import { EventInfoIcon, ProTab } from '@quillbooking/components';
-import { Host } from '@quillbooking/client';
+import { Host } from '@quillbooking/types';
 import { applyFilters } from '@wordpress/hooks';
 
 interface TeamAssignmentProps {

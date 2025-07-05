@@ -14,7 +14,7 @@ import { isObject, map, debounce } from 'lodash';
 /**
  * Internal dependencies
  */
-import type { CalendarResponse } from '@quillbooking/client';
+import type { CalendarResponse } from '@quillbooking/types';
 import { useApi, useCurrentUser } from '@quillbooking/hooks';
 
 interface HostSelectProps {

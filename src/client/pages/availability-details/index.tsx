@@ -20,7 +20,7 @@ import type {
 	Availability,
 	DateOverrides,
 	NoticeMessage,
-} from '@quillbooking/client';
+} from '@quillbooking/types';
 import {
 	NoticeBanner,
 	Schedule,
@@ -269,11 +269,10 @@ const AvailabilityDetails: React.FC = () => {
 							onClick={handleAvailabilitySave}
 							loading={savingChanges}
 							disabled={isSaveBtnDisabled}
-							className={`rounded-lg font-[500] text-white ${
-								isSaveBtnDisabled
+							className={`rounded-lg font-[500] text-white ${isSaveBtnDisabled
 									? 'bg-gray-400 cursor-not-allowed'
 									: 'bg-color-primary '
-							}`}
+								}`}
 						>
 							{__('Save Changes', 'quillbooking')}
 						</Button>
@@ -315,13 +314,13 @@ const AvailabilityDetails: React.FC = () => {
 							<Flex gap={20} vertical>
 								{(availabilityDetails.events_count ?? 0) >
 									0 && (
-									<InfoComponent
-										eventsNumber={
-											availabilityDetails.events_count ??
-											0
-										}
-									/>
-								)}
+										<InfoComponent
+											eventsNumber={
+												availabilityDetails.events_count ??
+												0
+											}
+										/>
+									)}
 								<Card>
 									<label className="font-normal text-sm">
 										<div className="pb-1">

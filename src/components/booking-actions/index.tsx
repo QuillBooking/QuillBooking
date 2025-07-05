@@ -12,7 +12,7 @@ import { Button, Flex, Input, Modal, Popover } from 'antd';
  * Internal dependencies
  */
 import { useApi } from '@quillbooking/hooks';
-import type { Booking, NoticeMessage } from '@quillbooking/client';
+import type { Booking, NoticeMessage } from '@quillbooking/types';
 import { useState } from '@wordpress/element';
 import AddBookingModal from '../../client/pages/bookings/add-booking-modal';
 import {

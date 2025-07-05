@@ -12,7 +12,7 @@ import IntegrateCard from './integrate-card';
 import PaymentGatewayCard from './method-card';
 import { useApi } from '@quillbooking/hooks';
 import { NoticeBanner } from '@quillbooking/components';
-import type { NoticeMessage } from '@quillbooking/client';
+import type { NoticeMessage } from '@quillbooking/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const PaymentsTab: React.FC = () => {

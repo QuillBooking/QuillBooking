@@ -1,7 +1,7 @@
 /**
  * Internal Dependencies
  */
-import type { Event } from '@quillbooking/client';
+import type { Event } from '@quillbooking/types';
 import { State } from './reducer';
 
 /**

@@ -15,7 +15,7 @@ import { Box, Dialog, DialogActions, DialogTitle } from '@mui/material';
  * Internal dependencies
  */
 import './style.scss';
-import type { Calendar as CalendarType } from '@quillbooking/client';
+import type { Calendar as CalendarType } from '@quillbooking/types';
 import {
 	useApi,
 	useNotice,

@@ -21,7 +21,7 @@ import EventDetails from './event-details';
 import LocationTimezone from './event-location-timezone';
 import HostAvailability from './host-availability';
 import { getCurrentTimezone } from '@quillbooking/utils';
-import { Event } from '@quillbooking/client';
+import { Event } from '@quillbooking/types';
 
 interface FormErrors {
 	name?: string;
@@ -445,10 +445,10 @@ const GettingStarted: React.FC = () => {
 								onError: (error) => {
 									message.error(
 										error ||
-											__(
-												'Failed to create event',
-												'quillbooking'
-											)
+										__(
+											'Failed to create event',
+											'quillbooking'
+										)
 									);
 									console.error(
 										'Error creating event:',
@@ -464,7 +464,7 @@ const GettingStarted: React.FC = () => {
 					onError: (error) => {
 						message.error(
 							error ||
-								__('Failed to create calendar', 'quillbooking')
+							__('Failed to create calendar', 'quillbooking')
 						);
 						console.error('Error creating calendar:', error);
 						reject(error);

@@ -20,7 +20,7 @@ import dayjs from 'dayjs';
 /**
  * Internal dependencies
  */
-import type { TimeSlot } from '@quillbooking/client';
+import type { TimeSlot } from '@quillbooking/types';
 
 const { Text } = Typography;
 

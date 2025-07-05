@@ -20,7 +20,7 @@ import { Button, Card, Flex, Switch } from 'antd';
 import { useApi, useNavigate, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
 import SmsNotificationCard from './sms-notification-card';
-import { NotificationType } from '@quillbooking/client';
+import { NotificationType } from '@quillbooking/types';
 import {
 	CardHeader,
 	EditNotificationIcon,
@@ -204,8 +204,8 @@ const SmsNotificationTab = forwardRef<
 	return (
 		<div className="w-full px-9">
 			{!event?.connected_integrations.twilio.has_settings &&
-			!event?.connected_integrations.twilio.connected &&
-			!event?.connected_integrations.twilio.has_accounts ? (
+				!event?.connected_integrations.twilio.connected &&
+				!event?.connected_integrations.twilio.has_accounts ? (
 				<Card>
 					<CardHeader
 						title={__('Sms Notification', 'quillbooking')}

@@ -11,7 +11,7 @@ import { Card, Flex, Input, Select } from 'antd';
  * Internal dependencies
  */
 import { ColorSelector } from '@quillbooking/components';
-import { GettingStartedComponentProps } from '@quillbooking/client';
+import { GettingStartedComponentProps } from '@quillbooking/types';
 
 interface FormErrors {
 	name?: string;
@@ -43,7 +43,7 @@ const durations = [
 
 const EventDetails: React.FC<ExtendedGettingStartedProps> = ({
 	event,
-	onEventChange = () => {},
+	onEventChange = () => { },
 	errors = {},
 }) => {
 	return (

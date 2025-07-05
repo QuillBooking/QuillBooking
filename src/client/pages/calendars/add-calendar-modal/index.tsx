@@ -7,7 +7,7 @@ import { useEffect, useState } from '@wordpress/element';
 /**
  * Internal dependencies
  */
-import type { Availability, Calendar } from '@quillbooking/client';
+import type { Availability, Calendar } from '@quillbooking/types';
 import { useApi } from '@quillbooking/hooks';
 import { getCurrentTimezone } from '@quillbooking/utils';
 import HostCalendar from './host-calendar';

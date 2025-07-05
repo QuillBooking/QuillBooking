@@ -23,7 +23,7 @@ import { useLocation } from 'react-router-dom';
  * Internal dependencies
  */
 import './style.scss';
-import type { Event as EventType } from '@quillbooking/client';
+import type { Event as EventType } from '@quillbooking/types';
 import ConfigAPI from '@quillbooking/config';
 import {
 	useApi,
@@ -268,9 +268,9 @@ const Event: React.FC = () => {
 				error instanceof Error
 					? error.message
 					: __(
-							'Failed to update event status. Please try again.',
-							'quillbooking'
-						);
+						'Failed to update event status. Please try again.',
+						'quillbooking'
+					);
 
 			// Use existing useNotice hook
 			errorNotice(errorMsg);
@@ -317,9 +317,9 @@ const Event: React.FC = () => {
 				error instanceof Error
 					? error.message
 					: __(
-							'Failed to save changes. Please try again.',
-							'quillbooking'
-						);
+						'Failed to save changes. Please try again.',
+						'quillbooking'
+					);
 
 			// Use existing useNotice hook
 			errorNotice(errorMsg);
@@ -560,11 +560,10 @@ const Event: React.FC = () => {
 							onClick={handleSave}
 							loading={isSaving}
 							disabled={saveDisabled || isSaving}
-							className={`rounded-lg font-[500] text-white ${
-								saveDisabled || isSaving
+							className={`rounded-lg font-[500] text-white ${saveDisabled || isSaving
 									? 'bg-gray-400 cursor-not-allowed'
 									: 'bg-color-primary '
-							}`}
+								}`}
 						>
 							{__('Save Changes', 'quillbooking')}
 						</Button>

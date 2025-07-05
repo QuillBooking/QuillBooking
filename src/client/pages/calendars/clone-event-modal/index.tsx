@@ -18,7 +18,7 @@ import {
 	EventSelect,
 	UpcomingCalendarOutlinedIcon,
 } from '@quillbooking/components';
-import type { Calendar } from '@quillbooking/client';
+import type { Calendar } from '@quillbooking/types';
 
 interface CloneEventModalProps {
 	open: boolean;
@@ -47,7 +47,7 @@ const CloneEventModal: React.FC<CloneEventModalProps> = ({
 
 	const saveCalendar = async () => {
 		if (!validate() || loading) return;
-	
+
 		try {
 			callApi({
 				path: `calendars/${calendar.id}/clone`,
@@ -72,7 +72,7 @@ const CloneEventModal: React.FC<CloneEventModalProps> = ({
 			}
 		}
 	};
-	
+
 
 	const validate = () => {
 		if (!event) {

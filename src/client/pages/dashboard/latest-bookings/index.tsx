@@ -16,7 +16,7 @@ import { PlusOutlined } from '@ant-design/icons';
  */
 import { BookingIcon, LocationDisplay } from '@quillbooking/components';
 import MonthSelector from '../../../pages/bookings/month-selector';
-import { Booking } from '@quillbooking/client';
+import { Booking } from '@quillbooking/types';
 import {
 	useApi,
 	useNotice,
@@ -136,11 +136,10 @@ const LatestBookings: React.FC = () => {
 									<div className="flex gap-4" key={dateLabel}>
 										<div className="flex-shrink-0">
 											<div
-												className={`flex flex-col justify-center items-center rounded-xl size-14 ${
-													isTodayDate
+												className={`flex flex-col justify-center items-center rounded-xl size-14 ${isTodayDate
 														? 'bg-color-primary'
 														: 'bg-purple-100'
-												}`}
+													}`}
 											>
 												<span
 													className={`text-xs font-medium capitalize ${isTodayDate ? 'text-white' : 'text-color-primary'}`}
@@ -193,22 +192,22 @@ const LatestBookings: React.FC = () => {
 																		?.location
 																		?.length >
 																		0 && (
-																		<>
-																			<span>
-																				•
-																			</span>
-																			<div className="text-xs">
-																				<LocationDisplay
-																					location={
-																						booking.location
-																					}
-																				/>
-																			</div>
-																			<span>
-																				•
-																			</span>
-																		</>
-																	)}
+																			<>
+																				<span>
+																					•
+																				</span>
+																				<div className="text-xs">
+																					<LocationDisplay
+																						location={
+																							booking.location
+																						}
+																					/>
+																				</div>
+																				<span>
+																					•
+																				</span>
+																			</>
+																		)}
 																	<p>
 																		{__(
 																			'1 person',

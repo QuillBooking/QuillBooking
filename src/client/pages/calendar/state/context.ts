@@ -6,7 +6,7 @@ import { createContext, useContext } from 'react';
 /**
  * Internal dependencies
  */
-import type { Calendar } from '@quillbooking/client';
+import type { Calendar } from '@quillbooking/types';
 
 export const CalendarContext = createContext<{
 	state: Calendar | null;

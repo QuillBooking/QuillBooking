@@ -37,7 +37,7 @@ import type {
 	Host,
 	NoticeMessage,
 	GroupSettings as GroupSettingsType,
-} from '@quillbooking/client';
+} from '@quillbooking/types';
 import GroupSettings from '../event/tabs/details/group-settings';
 import './style.scss';
 
@@ -425,11 +425,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								onClick={() =>
 									setEvent({ ...event, type: 'round-robin' })
 								}
-								className={`cursor-pointer rounded-xl border-2 pl-2 ${
-									event.type === 'round-robin'
+								className={`cursor-pointer rounded-xl border-2 pl-2 ${event.type === 'round-robin'
 										? 'border-color-primary'
 										: ''
-								}`}
+									}`}
 							>
 								<Flex gap={15} align="center">
 									<RoundRobinIcon />
@@ -494,11 +493,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								onClick={() =>
 									setEvent({ ...event, type: 'one-to-one' })
 								}
-								className={`cursor-pointer rounded-xl border-2 pl-2 ${
-									event.type === 'one-to-one'
+								className={`cursor-pointer rounded-xl border-2 pl-2 ${event.type === 'one-to-one'
 										? 'border-color-primary'
 										: ''
-								}`}
+									}`}
 							>
 								<Flex gap={15} align="center">
 									<SingleIcon />
@@ -535,11 +533,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								onClick={() =>
 									setEvent({ ...event, type: 'group' })
 								}
-								className={`cursor-pointer rounded-xl border-2 pl-2 ${
-									event.type === 'group'
+								className={`cursor-pointer rounded-xl border-2 pl-2 ${event.type === 'group'
 										? 'border-color-primary'
 										: ''
-								}`}
+									}`}
 							>
 								<Flex gap={15} align="center">
 									<GroupIcon />
@@ -835,11 +832,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								(current === 1 && !event.name) ||
 								(current === 2 && !event.location)
 							}
-							className={`rounded-lg px-12 font-semibold text-[16px] text-white bg-color-primary border-none transition ${
-								current === 0
+							className={`rounded-lg px-12 font-semibold text-[16px] text-white bg-color-primary border-none transition ${current === 0
 									? 'w-full' // custom style for step 0
 									: '' // other steps
-							}`}
+								}`}
 						>
 							{__('Continue', 'quillbooking')}
 						</Button>

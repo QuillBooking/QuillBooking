@@ -6,7 +6,7 @@ import { Flex, Switch } from 'antd';
 /**
  * Internal dependencies
  */
-import type { LimitBaseProps } from '@quillbooking/client';
+import type { LimitBaseProps } from '@quillbooking/types';
 
 interface LimitCardProps extends LimitBaseProps {
 	title: string;

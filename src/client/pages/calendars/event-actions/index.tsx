@@ -18,7 +18,7 @@ import {
 	CalendarDeleteIcon,
 	CalendarDisableIcon,
 } from '@quillbooking/components';
-import type { Event } from '@quillbooking/client';
+import type { Event } from '@quillbooking/types';
 import { useApi } from '@quillbooking/hooks';
 
 // Define the props type
@@ -291,24 +291,24 @@ const EventActions: React.FC<EventActionsProps> = ({
 					<p className="text-[#09090B] text-[20px] font-[700] mt-5">
 						{isDisabled
 							? __(
-									'Do you really you want to enable this event?',
-									'quillbooking'
-								)
+								'Do you really you want to enable this event?',
+								'quillbooking'
+							)
 							: __(
-									'Do you really you want to disable this event?',
-									'quillbooking'
-								)}
+								'Do you really you want to disable this event?',
+								'quillbooking'
+							)}
 					</p>
 					<span className="text-[#71717A] text-center">
 						{isDisabled
 							? __(
-									'Enabling this event will make it available for booking',
-									'quillbooking'
-								)
+								'Enabling this event will make it available for booking',
+								'quillbooking'
+							)
 							: __(
-									'by Disable this event you will not be able to Share or edit event untiled you Enable it again!',
-									'quillbooking'
-								)}
+								'by Disable this event you will not be able to Share or edit event untiled you Enable it again!',
+								'quillbooking'
+							)}
 					</span>
 				</Flex>
 			</Modal>

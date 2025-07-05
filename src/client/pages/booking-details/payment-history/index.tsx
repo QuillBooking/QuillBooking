@@ -11,7 +11,7 @@ import { Flex } from 'antd';
 /**
  * Internal dependencies
  */
-import type { Booking } from '@quillbooking/client';
+import type { Booking } from '@quillbooking/types';
 import { CardHeader, PaymentHistoryIcon } from '@quillbooking/components';
 
 /*

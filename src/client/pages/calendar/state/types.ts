@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import type { Calendar } from '@quillbooking/client';
+import type { Calendar } from '@quillbooking/types';
 import { SET_CALENDAR } from './constants';
 
 export type setCalendar = {

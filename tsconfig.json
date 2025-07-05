@@ -7,44 +7,69 @@
 		"jsx": "react-jsx",
 		"target": "es2018",
 		"module": "esnext",
-		"lib": ["dom", "esnext"],
+		"lib": [
+			"dom",
+			"esnext"
+		],
 		"declaration": true,
 		"declarationMap": true,
 		"composite": true,
 		"emitDeclarationOnly": true,
 		"isolatedModules": true,
-
 		/* Strict Type-Checking Options */
 		"strict": true,
-
 		/* Additional Checks */
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-
 		/* Module Resolution Options */
 		"moduleResolution": "node",
-
 		/* This needs to be false so our types are possible to consume without setting this */
 		"esModuleInterop": false,
 		"resolveJsonModule": true,
 		"noImplicitAny": false,
-		"typeRoots": ["./node_modules/@types"],
+		"typeRoots": [
+			"./node_modules/@types"
+		],
 		"baseUrl": "src",
 		"skipLibCheck": true,
 		"strictNullChecks": true,
-		"types": ["jest", "@testing-library/jest-dom"],
+		"types": [
+			"jest",
+			"@testing-library/jest-dom"
+		],
 		"paths": {
-			"@quillbooking/navigation": ["navigation"],
-			"@quillbooking/config": ["config"],
-			"@quillbooking/store": ["store/index.ts"],
-			"@quillbooking/client": ["client"],
-			"@quillbooking/components": ["components"],
-			"@quillbooking/constants": ["constants"],
-			"@quillbooking/utils": ["utils"],
-			"@quillbooking/hooks": ["hooks"],
+			"@quillbooking/navigation": [
+				"navigation"
+			],
+			"@quillbooking/config": [
+				"config"
+			],
+			"@quillbooking/store": [
+				"store/index.ts"
+			],
+			"@quillbooking/client": [
+				"client"
+			],
+			"@quillbooking/components": [
+				"components"
+			],
+			"@quillbooking/constants": [
+				"constants"
+			],
+			"@quillbooking/utils": [
+				"utils"
+			],
+			"@quillbooking/hooks": [
+				"hooks"
+			],
+			"@quillbooking/types": [
+				"types"
+			],
 		}
 	},
-	"include": ["src"]
+	"include": [
+		"src"
+	]
 }

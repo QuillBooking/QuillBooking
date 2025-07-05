@@ -1,4 +1,4 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const ImgIcon: React.FC<IconProps> = ({ width = 48, height = 48 }) => {
 	return (

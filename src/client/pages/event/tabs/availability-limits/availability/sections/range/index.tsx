@@ -14,7 +14,7 @@ import timezone from 'dayjs/plugin/timezone';
 /**
  * Internal dependencies
  */
-import type { AvailabilityRange } from '@quillbooking/client';
+import type { AvailabilityRange } from '@quillbooking/types';
 
 // Extend dayjs with plugins
 dayjs.extend(utc);
@@ -69,31 +69,28 @@ const RangeSection: React.FC<RangeSectionProps> = ({
 			>
 				<Radio
 					value="days"
-					className={`border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${
-						range.type === 'days'
+					className={`border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${range.type === 'days'
 							? 'border-color-primary bg-color-secondary'
 							: ''
-					}`}
+						}`}
 				>
 					{__('Within Future Days', 'quillbooking')}
 				</Radio>
 				<Radio
 					value="date_range"
-					className={`border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${
-						range.type === 'date_range'
+					className={`border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${range.type === 'date_range'
 							? 'border-color-primary bg-color-secondary'
 							: ''
-					}`}
+						}`}
 				>
 					{__('Within a Date Range', 'quillbooking')}
 				</Radio>
 				<Radio
 					value="infinity"
-					className={`border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${
-						range.type === 'infinity'
+					className={`border rounded-lg py-4 px-3 text-[#3F4254] font-semibold custom-radio ${range.type === 'infinity'
 							? 'border-color-primary bg-color-secondary'
 							: ''
-					}`}
+						}`}
 				>
 					{__('Indefinitely into the future', 'quillbooking')}
 				</Radio>

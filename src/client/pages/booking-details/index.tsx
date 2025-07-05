@@ -16,7 +16,7 @@ import { Dialog } from '@mui/material';
  */
 import { useParams } from '@quillbooking/navigation';
 import { useApi } from '@quillbooking/hooks';
-import type { Booking, NoticeMessage } from '@quillbooking/client';
+import type { Booking, NoticeMessage } from '@quillbooking/types';
 import {
 	convertTimezone,
 	getCurrentTimezone,
@@ -253,13 +253,13 @@ const BookingDetails: React.FC = () => {
 	const endTime =
 		booking && booking.start_time && booking.slot_time
 			? (() => {
-					const [hours, minutes] = time.split(':').map(Number);
-					const totalMinutes =
-						hours * 60 + minutes + Number(booking.slot_time);
-					const endHours = Math.floor(totalMinutes / 60);
-					const endMinutes = totalMinutes % 60;
-					return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-				})()
+				const [hours, minutes] = time.split(':').map(Number);
+				const totalMinutes =
+					hours * 60 + minutes + Number(booking.slot_time);
+				const endHours = Math.floor(totalMinutes / 60);
+				const endMinutes = totalMinutes % 60;
+				return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+			})()
 			: '';
 
 	return (
@@ -279,7 +279,7 @@ const BookingDetails: React.FC = () => {
 					>
 						<div>
 							<Flex gap={10} align="center">
-								<div 
+								<div
 									className="text-color-primary-text cursor-pointer pr-2"
 									onClick={handleClose}
 								>

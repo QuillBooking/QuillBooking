@@ -2,7 +2,7 @@
  * External Dependencies.
  */
 import type { FunctionKeys } from 'utility-types';
-import type { Event } from '@quillbooking/client';
+import type { Event } from '@quillbooking/types';
 
 /**
  * Internal Dependencies.

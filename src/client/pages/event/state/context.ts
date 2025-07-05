@@ -6,7 +6,7 @@ import { createContext, useContext } from 'react';
 /**
  * Internal dependencies
  */
-import type { Event } from '@quillbooking/client';
+import type { Event } from '@quillbooking/types';
 
 export const EventContext = createContext<{
 	state: Event | null;

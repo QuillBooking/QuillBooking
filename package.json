@@ -58,7 +58,7 @@
     "dev-config": "wp-scripts start src/config/index.ts --output-path=build/config",
     "build-config": "wp-scripts build src/config/index.ts --output-path=build/config",
     "dev-renderer": "wp-scripts start src/renderer/index.tsx --output-path=build/renderer",
-    "build-renderer": "wp-scripts build src/renderer/index.tsx --output-path=build/renderer --webpack-bundle-analyzer",
+    "build-renderer": "wp-scripts build src/renderer/index.tsx --output-path=build/renderer",
     "test": "jest",
     "test:watch": "jest --watch"
   },

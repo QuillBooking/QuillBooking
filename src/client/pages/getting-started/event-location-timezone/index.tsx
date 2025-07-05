@@ -11,7 +11,7 @@ import React from 'react';
  * Internal dependencies
  */
 import { Locations, SelectTimezone } from '@quillbooking/components';
-import { GettingStartedComponentProps } from '@quillbooking/client';
+import { GettingStartedComponentProps } from '@quillbooking/types';
 
 interface FormErrors {
 	name?: string;
@@ -26,9 +26,9 @@ interface ExtendedGettingStartedProps extends GettingStartedComponentProps {
 
 const LocationTimezone: React.FC<ExtendedGettingStartedProps> = ({
 	event,
-	onEventChange = () => {},
+	onEventChange = () => { },
 	errors = {},
-	handleSubmit = async (redirect: boolean) => {},
+	handleSubmit = async (redirect: boolean) => { },
 }) => {
 	return (
 		<Flex vertical gap={20} className="">

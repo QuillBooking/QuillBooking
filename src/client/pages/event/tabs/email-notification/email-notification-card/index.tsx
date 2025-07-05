@@ -13,7 +13,7 @@ import 'react-multi-email/dist/style.css';
 /**
  * Interanl dependencies
  */
-import { NotificationType } from '@quillbooking/client';
+import { NotificationType } from '@quillbooking/types';
 import {
 	Header,
 	LimitsAddIcon,

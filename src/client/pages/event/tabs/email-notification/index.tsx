@@ -19,7 +19,7 @@ import { Card, Flex, Switch } from 'antd';
  */
 import { useApi, useEvent, useNotice } from '@quillbooking/hooks';
 import { useEventContext } from '../../state/context';
-import { NotificationType } from '@quillbooking/client';
+import { NotificationType } from '@quillbooking/types';
 import { CardHeader, EditNotificationIcon } from '@quillbooking/components';
 import EmailNotificationCard from './email-notification-card';
 import EmailTabs from './email-tabs';

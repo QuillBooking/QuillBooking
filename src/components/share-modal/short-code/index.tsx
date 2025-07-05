@@ -14,7 +14,7 @@ import React, { useState } from 'react';
  */
 import { CopyWhiteIcon } from '@quillbooking/components';
 import { useCopyToClipboard, useApi } from '@quillbooking/hooks';
-import { Event } from '@quillbooking/client';
+import type { Event } from '@quillbooking/types';
 
 const ShortCode: React.FC<{
 	event: Event;

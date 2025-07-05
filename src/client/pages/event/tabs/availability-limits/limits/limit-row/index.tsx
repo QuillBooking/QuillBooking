@@ -5,7 +5,7 @@ import type {
 	LimitBaseProps,
 	LimitUnit,
 	UnitOptions,
-} from '@quillbooking/client';
+} from '@quillbooking/types';
 
 interface LimitRowProps extends LimitBaseProps {
 	addLimit: (section: 'frequency' | 'duration') => void;

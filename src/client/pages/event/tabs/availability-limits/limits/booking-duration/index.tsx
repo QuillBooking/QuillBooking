@@ -11,7 +11,7 @@ import { Card, Flex } from 'antd';
 /**
  * Internal dependencies
  */
-import type { LimitBaseProps, UnitOptions } from '@quillbooking/client';
+import type { LimitBaseProps, UnitOptions } from '@quillbooking/types';
 import LimitCard from '../limit-card';
 import LimitRow from '../limit-row';
 

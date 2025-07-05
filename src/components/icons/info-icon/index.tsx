@@ -1,4 +1,4 @@
-import { IconProps } from '@quillbooking/client';
+import { IconProps } from '@quillbooking/types';
 
 const InfoIcon: React.FC<IconProps> = ({ width = 22, height = 22 }) => {
 	return (

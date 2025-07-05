@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import ConfigAPI from '@quillbooking/config';
 import ConnectionCard from './connection-card';
 import { NoticeBanner, SelectionCard } from '@quillbooking/components';
-import type { NoticeMessage } from '@quillbooking/client';
+import type { NoticeMessage } from '@quillbooking/types';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
 
 const ConferencingCalendars: React.FC = () => {

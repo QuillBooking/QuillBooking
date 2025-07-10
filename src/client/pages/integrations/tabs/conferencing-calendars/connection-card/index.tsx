@@ -20,6 +20,7 @@ import OutlookFields from './fields/OutlookFields';
 import AppleFields from './fields/AppleFields';
 import { addQueryArgs } from '@wordpress/url';
 import { applyFilters } from '@wordpress/hooks';
+import ZapierFields from './fields/ZapierFields';
 
 const { Text } = Typography;
 
@@ -244,6 +245,15 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						handleNavigation={handleNavigation}
 					/>
 				);
+			case 'zapier':
+				return (
+					<ZapierFields
+						fields={integration.fields}
+						calendar={calendar}
+						form={form}
+						handleNavigation={handleNavigation}
+					/>
+				);
 			default:
 				return null;
 		}
@@ -253,6 +263,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 		switch (slug) {
 			case 'zoom':
 				return 'Save & Validate Credentials';
+			case 'zapier':
+				return null;
 			case 'google':
 			case 'outlook':
 			case 'apple':
@@ -301,27 +313,31 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 								preserve={false}
 							>
 								{renderFields()}
-								<Form.Item className="mt-6 flex justify-end">
-									<Button
-										type="primary"
-										htmlType="submit"
-										loading={saving || loading}
-										className={`${slug}-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
-										icon={
-											saving || loading ? (
-												<Spin
-													size="small"
-													className="mr-2"
-													style={{ color: 'white' }}
-												/>
-											) : null
-										}
-									>
-										{saving || loading
-											? 'Processing...'
-											: getSubmitButtonText()}
-									</Button>
-								</Form.Item>
+								{getSubmitButtonText() && (
+									<Form.Item className="mt-6 flex justify-end">
+										<Button
+											type="primary"
+											htmlType="submit"
+											loading={saving || loading}
+											className={`${slug}-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
+											icon={
+												saving || loading ? (
+													<Spin
+														size="small"
+														className="mr-2"
+														style={{
+															color: 'white',
+														}}
+													/>
+												) : null
+											}
+										>
+											{saving || loading
+												? 'Processing...'
+												: getSubmitButtonText()}
+										</Button>
+									</Form.Item>
+								)}
 							</Form>
 						)}
 

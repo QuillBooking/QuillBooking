@@ -18,8 +18,14 @@ import {
 	SmsNotiIcon,
 	TabButtons,
 	UpcomingCalendarIcon,
+	AutomationIcon,
 } from '@quillbooking/components';
-import { ConferencingCalendars, Payments, SMSIntegration } from './tabs';
+import {
+	ConferencingCalendars,
+	Payments,
+	SMSIntegration,
+	Automation,
+} from './tabs';
 import { useCurrentUser, useNavigate, useNotice } from '@quillbooking/hooks';
 
 /**
@@ -55,9 +61,12 @@ const Integrations: React.FC = () => {
 		const tab = searchParams.get('tab');
 		if (
 			tab &&
-			['conferencing-calendars', 'sms-integration', 'payments'].includes(
-				tab
-			)
+			[
+				'conferencing-calendars',
+				'sms-integration',
+				'payments',
+				'automation',
+			].includes(tab)
 		) {
 			setActiveTab(tab);
 		}
@@ -84,6 +93,8 @@ const Integrations: React.FC = () => {
 				return <SMSIntegration />;
 			case 'payments':
 				return <Payments />;
+			case 'automation':
+				return <Automation />;
 			default:
 				return <ConferencingCalendars />;
 		}
@@ -108,6 +119,11 @@ const Integrations: React.FC = () => {
 				key: 'payments',
 				label: __('Payments', 'quillbooking'),
 				icon: <SettingsPaymentIcon width={20} height={20} />,
+			},
+			{
+				key: 'automation',
+				label: __('Automation', 'quillbooking'),
+				icon: <AutomationIcon width={20} height={20} />,
 			}
 		);
 	}

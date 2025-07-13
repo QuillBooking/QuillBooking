@@ -13,25 +13,28 @@ import { useNavigate } from 'react-router-dom';
  * Internal dependencies
  */
 import ConfigAPI from '@quillbooking/config';
-import ConnectionCard from './connection-card';
+import ConnectionCard from './connection-card/index';
 import { NoticeBanner, SelectionCard } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/types';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
 
-const ConferencingCalendars: React.FC = () => {
+const Automation: React.FC = () => {
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<string | null>(null);
 	const [integrations, setIntegrations] = useState(() => {
 		const availableIntegrations = Object.entries(
 			ConfigAPI.getIntegrations() || {}
 		)
-			.filter(([key]) => key !== 'twilio' && key !== 'zapier')
+			.filter(([key]) => key === 'zapier')
 			.map(([key, integration]) => ({
 				id: key,
 				...integration,
 			}));
 
-		console.log('Available Integrations:', availableIntegrations);
+		console.log(
+			'Available Automation Integrations:',
+			availableIntegrations
+		);
 
 		return availableIntegrations;
 	});
@@ -55,10 +58,10 @@ const ConferencingCalendars: React.FC = () => {
 			const tabParam = urlParams.get('tab');
 			const subtabParam = urlParams.get('subtab');
 
-			// If we're in the conferencing-calendars tab and have a subtab, set it as active
+			// If we're in the automation tab and have a subtab, set it as active
 			// Only update activeTab if it's different from the current subtab to prevent infinite loops
 			if (
-				tabParam === 'conferencing-calendars' &&
+				tabParam === 'automation' &&
 				subtabParam &&
 				activeTab !== subtabParam &&
 				lastActiveTabRef.current !== subtabParam
@@ -72,11 +75,7 @@ const ConferencingCalendars: React.FC = () => {
 				setActiveTab(defaultTab);
 
 				// Initialize URL parameters if they don't exist
-				if (
-					tabParam === 'conferencing-calendars' &&
-					!subtabParam &&
-					defaultTab
-				) {
+				if (tabParam === 'automation' && !subtabParam && defaultTab) {
 					try {
 						isUpdatingUrl.current = true;
 						const newUrlParams = new URLSearchParams(
@@ -128,9 +127,9 @@ const ConferencingCalendars: React.FC = () => {
 			// Make sure we have the tab parameter set properly first
 			if (
 				!urlParams.has('tab') ||
-				urlParams.get('tab') !== 'conferencing-calendars'
+				urlParams.get('tab') !== 'automation'
 			) {
-				urlParams.set('tab', 'conferencing-calendars');
+				urlParams.set('tab', 'automation');
 			}
 
 			// Now set the subtab parameter
@@ -151,9 +150,9 @@ const ConferencingCalendars: React.FC = () => {
 			window.dispatchEvent(
 				new CustomEvent('quillbooking-tab-changed', {
 					detail: {
-						tab: 'conferencing-calendars',
+						tab: 'automation',
 						subtab: newTab,
-						source: 'conferencing-calendars-component',
+						source: 'automation-component',
 					},
 				})
 			);
@@ -172,11 +171,11 @@ const ConferencingCalendars: React.FC = () => {
 	// Handle case when no integrations are available
 	if (integrations.length === 0) {
 		return (
-			<div className="quillbooking-conferencing-calendars w-full">
+			<div className="quillbooking-automation w-full">
 				<div className="text-center py-8">
 					<p className="text-gray-600">
 						{__(
-							'No integrations available. Please contact your administrator.',
+							'No automation integrations available. Please contact your administrator.',
 							'quillbooking'
 						)}
 					</p>
@@ -186,7 +185,7 @@ const ConferencingCalendars: React.FC = () => {
 	}
 
 	return (
-		<div className="quillbooking-conferencing-calendars grid grid-cols-2 gap-5 w-full">
+		<div className="quillbooking-automation grid grid-cols-2 gap-5 w-full">
 			{notice && (
 				<div className="col-span-2">
 					<NoticeBanner
@@ -214,4 +213,4 @@ const ConferencingCalendars: React.FC = () => {
 	);
 };
 
-export default ConferencingCalendars;
+export default Automation;

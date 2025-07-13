@@ -25,7 +25,10 @@ const ConferencingCalendars: React.FC = () => {
 		const availableIntegrations = Object.entries(
 			ConfigAPI.getIntegrations() || {}
 		)
-			.filter(([key]) => key !== 'twilio' && key !== 'zapier')
+			.filter(
+				([key]) =>
+					key !== 'twilio' && key !== 'zapier' && key !== 'make'
+			)
 			.map(([key, integration]) => ({
 				id: key,
 				...integration,

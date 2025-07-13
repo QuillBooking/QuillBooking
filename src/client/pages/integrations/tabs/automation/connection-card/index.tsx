@@ -14,6 +14,7 @@ import { Card, Button, Form, Skeleton, Spin } from 'antd';
 import type { Integration } from '@quillbooking/config';
 import { useNavigate } from '@quillbooking/hooks';
 import ZapierFields from './fields/ZapierFields';
+import MakeFields from './fields/MakeFields';
 
 export interface ConnectionCardProps {
 	slug: string | null;
@@ -57,6 +58,15 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						handleNavigation={handleNavigation}
 					/>
 				);
+			case 'make':
+				return (
+					<MakeFields
+						fields={integration.fields}
+						calendar={calendar}
+						form={form}
+						handleNavigation={handleNavigation}
+					/>
+				);
 			default:
 				return null;
 		}
@@ -65,6 +75,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	const getSubmitButtonText = () => {
 		switch (slug) {
 			case 'zapier':
+				return null;
+			case 'make':
 				return null;
 			default:
 				return 'Save Settings';

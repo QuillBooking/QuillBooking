@@ -25,7 +25,7 @@ const Automation: React.FC = () => {
 		const availableIntegrations = Object.entries(
 			ConfigAPI.getIntegrations() || {}
 		)
-			.filter(([key]) => key === 'zapier')
+			.filter(([key]) => key === 'zapier' || key === 'make')
 			.map(([key, integration]) => ({
 				id: key,
 				...integration,

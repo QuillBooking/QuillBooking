@@ -21,15 +21,6 @@ use Illuminate\Support\Arr;
 class User_Model extends Model {
 
 	/**
-	 * Table name
-	 *
-	 * @var string
-	 *
-	 * @since 1.0.0
-	 */
-	protected $table = 'users';
-
-	/**
 	 * Primary key
 	 *
 	 * @var string
@@ -77,6 +68,32 @@ class User_Model extends Model {
 	protected $casts = array(
 		'ID' => 'integer',
 	);
+
+	/**
+	 * Constructor - Set the correct table name for WordPress multisite
+	 *
+	 * @since 1.0.0
+	 */
+	public function __construct(array $attributes = []) {
+		global $wpdb;
+		
+		// Use WordPress's users table (shared across multisite)
+		$this->table = $wpdb->users;
+		
+		parent::__construct($attributes);
+	}
+
+	/**
+	 * Get the table associated with the model.
+	 *
+	 * @return string
+	 */
+	public function getTable() {
+		global $wpdb;
+		
+		// Always return the WordPress users table
+		return $wpdb->users;
+	}
 
 	/**
 	 * Relationship with user meta

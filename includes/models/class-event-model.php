@@ -986,6 +986,11 @@ class Event_Model extends Model {
 	 * @return array List of available slots.
 	 */
 	public function get_available_slots( $start_date, $timezone, $duration, $calendar_id ) {
+		error_log( 'Start Date', $start_date );
+		error_log( 'Timezone', $timezone );
+		error_log( 'Duration', $duration );
+		error_log( 'Calendar ID', $calendar_id );
+
 		$this->validate_availability();
 
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
@@ -1019,12 +1024,25 @@ class Event_Model extends Model {
 	private function validate_availability() {
 		$availability = $this->availability;
 		if ( ! $availability ) {
-			throw new \Exception( __( 'Availability not set', 'quillbooking' ) );
+			// Try to get a system default availability as fallback
+			$default_availability = Availabilities::get_system_availability();
+			if ( $default_availability ) {
+				$this->availability = $default_availability;
+				$availability       = $default_availability;
+			} else {
+				throw new \Exception( __( 'Availability not set', 'quillbooking' ) );
+			}
 		}
 
 		$weekly_hours = $availability['weekly_hours'] ?? array();
 		if ( empty( $weekly_hours ) ) {
-			throw new \Exception( __( 'Weekly hours are not set', 'quillbooking' ) );
+			// Try to get system default availability as fallback
+			$default_availability = Availabilities::get_system_availability();
+			if ( $default_availability && ! empty( $default_availability['weekly_hours'] ) ) {
+				$this->availability = $default_availability;
+			} else {
+				throw new \Exception( __( 'Weekly hours are not set', 'quillbooking' ) );
+			}
 		}
 	}
 

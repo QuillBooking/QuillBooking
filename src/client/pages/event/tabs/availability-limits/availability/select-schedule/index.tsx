@@ -33,7 +33,7 @@ const SelectSchedule: React.FC<SelectScheduleProps> = ({
 				<span className="text-red-500">*</span>
 			</Text>
 			<Select
-				value={availability.id}
+				value={availability?.id}
 				onChange={onAvailabilityChange}
 				options={hosts.map((host) => ({
 					label: host.name,

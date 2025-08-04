@@ -52,7 +52,9 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 		});
 		const [dateOverrides, setDateOverrides] = useState<DateOverrides>({});
 		const [commonSchedule, setCommonSchedule] = useState<boolean>(false);
-		const [teamAvailability, setTeamAvailability] = useState();
+		const [teamAvailability, setTeamAvailability] = useState<
+			Record<number, Availability | CustomAvailability>
+		>({});
 
 		// Limits state
 		const [bookingDurationOptions, setBookingDurationOptions] =

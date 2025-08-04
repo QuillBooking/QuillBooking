@@ -271,6 +271,11 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 
 	const onAvailabilityTypeChange = (value) => {
 		setAvailabilityType(value);
+
+		// First reset to empty state to clear any previous selections
+		setAvailability(customAvailability);
+		setDateOverrides({});
+
 		if (value === 'custom') {
 			const source =
 				event?.availability_data?.type === 'custom'
@@ -284,12 +289,8 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 			setAvailability(source);
 			setDateOverrides(override);
 		} else {
-			const existing = event?.hosts?.[0]?.availabilities
-				? Object.values(event.hosts[0].availabilities)[0]
-				: lastAvailability;
-
-			setAvailability(existing);
-			setDateOverrides(existing.override);
+			// For existing type, let user select from dropdown - don't auto-select
+			// The SelectSchedule component will show empty until user makes a selection
 		}
 		setDisabled(false);
 	};

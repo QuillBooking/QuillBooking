@@ -273,19 +273,11 @@ class Calendar_Model extends Model {
 	 * @return array
 	 */
 	public function getTeamMembers() {
-		$teamMembers = array();
-
-		error_log( 'DEBUG: getTeamMembers() called for calendar ID: ' . $this->id );
+		$teamMembers     = array();
 		$teamMembersMeta = $this->meta()->where( 'meta_key', 'team_members' )->first();
-
 		if ( $teamMembersMeta ) {
 			$teamMembers = maybe_unserialize( $teamMembersMeta->meta_value );
-			error_log( 'DEBUG: Raw team members meta value: ' . $teamMembersMeta->meta_value );
-			error_log( 'DEBUG: Unserialized team members: ' . print_r( $teamMembers, true ) );
-		} else {
-			error_log( 'DEBUG: No team_members meta found for calendar ID: ' . $this->id );
 		}
-
 		return $teamMembers;
 	}
 
@@ -293,39 +285,16 @@ class Calendar_Model extends Model {
 		$teamMembers = $this->getTeamMembers();
 		$calendarIds = array();
 
-		error_log( 'DEBUG: getTeamMembersCalendarIds() called for calendar ID: ' . $this->id );
-		error_log( 'DEBUG: Team members found: ' . print_r( $teamMembers, true ) );
-
 		if ( empty( $teamMembers ) || ! is_array( $teamMembers ) ) {
-			error_log( 'DEBUG: No team members found or invalid team members data' );
 			return $calendarIds;
 		}
 
 		foreach ( $teamMembers as $member_id ) {
-			error_log( 'DEBUG: Processing member ID: ' . $member_id );
-
-			// First, check if this is already a calendar ID
-			$calendar_by_id = Calendar_Model::find( $member_id );
-			if ( $calendar_by_id && $calendar_by_id->type === 'host' ) {
-				$calendarIds[] = $member_id;
-				error_log( 'DEBUG: Member ID ' . $member_id . ' is a calendar ID, added directly' );
-				continue;
-			}
-
-			// If not a calendar ID, treat as user ID and look for host calendars
-			error_log( 'DEBUG: Looking for host calendars for user ID: ' . $member_id );
-			$calendar = Calendar_Model::where( 'user_id', $member_id )->where( 'type', 'host' )->get();
-			if ( $calendar && $calendar->count() > 0 ) {
-				// Flatten the array of calendar IDs
-				$memberCalendarIds = $calendar->pluck( 'id' )->toArray();
-				$calendarIds       = array_merge( $calendarIds, $memberCalendarIds );
-				error_log( 'DEBUG: Found calendars for user ' . $member_id . ': ' . print_r( $memberCalendarIds, true ) );
-			} else {
-				error_log( 'DEBUG: No host calendar found for user ' . $member_id );
+			$calendar = Calendar_Model::where( 'user_id', $member_id )->get();
+			foreach ( $calendar as $cal ) {
+					$calendarIds[] = $cal->id;
 			}
 		}
-
-		error_log( 'DEBUG: Final team calendar IDs: ' . print_r( $calendarIds, true ) );
 		return $calendarIds;
 	}
 

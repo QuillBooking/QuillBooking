@@ -2008,10 +2008,19 @@ class Event_Model extends Model {
 				return $event_spots > $slots ? $event_spots - $slots : 0;
 
 			case 'round-robin':
+				error_log( 'DEBUG: Checking availability for round-robin event' );
+
 				$team_calendar_ids = $this->calendar->getTeamMembersCalendarIds();
+
+				error_log( 'team_calendar_ids => ' . print_r( $team_calendar_ids, true ) );
+
+				// print day_start and day_end for debugging
+				error_log( 'DEBUG: day_start => ' . $day_start->format( 'Y-m-d H:i:s' ) );
+				error_log( 'DEBUG: day_end => ' . $day_end->format( 'Y-m-d H:i:s' ) );
 
 				// For round-robin, only one team member needs to be available
 				$available_members = 0;
+				$total_members     = count( $team_calendar_ids );
 				foreach ( $team_calendar_ids as $team_calendar_id ) {
 					$member_slots_query = Booking_Model::query()
 						->where( 'calendar_id', $team_calendar_id )
@@ -2042,7 +2051,9 @@ class Event_Model extends Model {
 					}
 				}
 
-				return $available_members;
+				error_log( 'DEBUG: Available members for round-robin => ' . $available_members );
+
+				return ( $available_members === $total_members ) ? 1 : 0;
 
 			case 'collective':
 				$team_calendar_ids = $this->calendar->getTeamMembersCalendarIds();

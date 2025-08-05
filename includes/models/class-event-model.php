@@ -986,11 +986,6 @@ class Event_Model extends Model {
 	 * @return array List of available slots.
 	 */
 	public function get_available_slots( $start_date, $timezone, $duration, $calendar_id ) {
-		error_log( 'Start Date', $start_date );
-		error_log( 'Timezone', $timezone );
-		error_log( 'Duration', $duration );
-		error_log( 'Calendar ID', $calendar_id );
-
 		$this->validate_availability();
 
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );

@@ -1043,10 +1043,18 @@ class Event_Model extends Model {
 
 
 	private function getTeamAvailability( $availability ) {
-		$type      = $availability['type'];
-		$is_common = $availability['is_common'];
-		if ( $type === 'existing' && $is_common == false ) {
-			$availabilities     = array();
+		xdebug_break();
+		$type           = $availability['type'];
+		$is_common      = $availability['is_common'];
+		$availabilities = array();
+
+		if ( empty( $availability['weekly_hours'] ) ) {
+			$availabilities = $availability['users_availability'];
+		} else {
+			$availabilities[] = $availability; // push into array
+		}
+
+		if ( $type === 'existing' && $is_common == false && $this->type === 'round-robin' ) {
 			$users_availability = $availability['users_availability'];
 
 			// Collect all user availabilities
@@ -1073,7 +1081,8 @@ class Event_Model extends Model {
 				$availability['override'] = $merged_availability['override'] ?? array();
 			}
 		}
-		$this->availability = $availability;
+		$availability['users_availability'] = $availabilities;
+		$this->availability                 = $availability;
 		return $availability;
 	}
 
@@ -1685,7 +1694,7 @@ class Event_Model extends Model {
 			// Check availability of the slot
 			$available_slots = $this->check_available_slots( $slot_start, $slot_end, $calendar_id );
 
-			if ( $available_slots === 0 ) {
+			if ( $available_slots['slots'] === 0 ) {
 				// Move to the next interval
 				$current_slot_start->modify( "+{$slot_step} minutes" );
 				continue;
@@ -1695,7 +1704,8 @@ class Event_Model extends Model {
 			$slot_data = array(
 				'start'     => $slot_start->format( 'Y-m-d H:i:s' ),
 				'end'       => $slot_end->format( 'Y-m-d H:i:s' ),
-				'remaining' => $available_slots,
+				'remaining' => $available_slots['slots'],
+				'hosts_ids' => $available_slots['hosts_ids'],
 			);
 
 			// Store in original slots array for reference
@@ -1767,12 +1777,13 @@ class Event_Model extends Model {
 						// Check if this synthetic slot is available
 						$available_slots = $this->check_available_slots( $synthetic_slot_start, $synthetic_slot_end, $calendar_id );
 
-						if ( $available_slots > 0 ) {
+						if ( $available_slots['slots'] > 0 ) {
 							// Mark this as a synthetic slot
 							$synthetic_slot = array(
 								'start'     => $synthetic_slot_start->format( 'Y-m-d H:i:s' ),
 								'end'       => $synthetic_slot_end->format( 'Y-m-d H:i:s' ),
 								'remaining' => $reference_slot['remaining'],
+								'hosts_ids' => $available_slots['hosts_ids'],
 								'synthetic' => true, // Flag to identify synthetic slots in frontend
 							);
 
@@ -2005,55 +2016,82 @@ class Event_Model extends Model {
 					);
 				$event_spots = 'one-to-one' === $this->type ? 1 : Arr::get( $this->group_settings, 'max_invites', 2 );
 				$slots       = $slots_query->count();
-				return $event_spots > $slots ? $event_spots - $slots : 0;
+				return array(
+					'slots'     => $event_spots > $slots ? $event_spots - $slots : 0,
+					'hosts_ids' => array(),
+				);
 
 			case 'round-robin':
-				error_log( 'DEBUG: Checking availability for round-robin event' );
+				$team_members   = $this->calendar->getTeamMembers();
+				$availabilities = $this->availability['users_availability'];
 
-				$team_calendar_ids = $this->calendar->getTeamMembersCalendarIds();
+				// For round-robin, check if ANY team member is available
+				$available_members   = 0;
+				$available_hosts_ids = array();
+				foreach ( $team_members as $team_member_id ) {
+					$is_member_available = false;
 
-				error_log( 'team_calendar_ids => ' . print_r( $team_calendar_ids, true ) );
-
-				// print day_start and day_end for debugging
-				error_log( 'DEBUG: day_start => ' . $day_start->format( 'Y-m-d H:i:s' ) );
-				error_log( 'DEBUG: day_end => ' . $day_end->format( 'Y-m-d H:i:s' ) );
-
-				// For round-robin, only one team member needs to be available
-				$available_members = 0;
-				$total_members     = count( $team_calendar_ids );
-				foreach ( $team_calendar_ids as $team_calendar_id ) {
-					$member_slots_query = Booking_Model::query()
-						->where( 'calendar_id', $team_calendar_id )
-						->where( 'status', '!=', 'cancelled' )
-						->where(
-							function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-								$query->where(
-									function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-										$q->where(
-											function ( $subq ) use ( $day_start, $buffer_after ) {
-												$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
-											}
-										)
-											->where(
-												function ( $subq ) use ( $day_end, $buffer_before ) {
-													$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
-												}
-											);
-									}
-								);
+					// First, check team member's individual availability schedule
+					if ( ! empty( $availabilities ) ) {
+						// Find this team member's availability from the collected availabilities
+						$member_availability = null;
+						foreach ( $availabilities as $avail ) {
+							if ( isset( $avail['user_id'] ) && $avail['user_id'] == $team_member_id ) {
+								$member_availability = $avail;
+								break;
 							}
-						);
-					$member_slots       = $member_slots_query->count();
+						}
 
-					// If this member has no conflicting bookings, they are available
-					if ( $member_slots === 0 ) {
-						$available_members++;
+						// If we found the member's availability, check if they're available during this time
+						if ( $member_availability ) {
+							$is_member_available = $this->checkMemberAvailabilitySchedule( $member_availability, $day_start, $day_end );
+						}
+					} else {
+						// Fallback: get team member's default availability
+						$member_default_availability = Availabilities::get_user_default_availability( $team_member_id );
+						if ( $member_default_availability ) {
+							$is_member_available = $this->checkMemberAvailabilitySchedule( $member_default_availability, $day_start, $day_end );
+						}
+					}
+
+					// If member is available according to their schedule, check for booking conflicts
+					if ( $is_member_available ) {
+						$member_slots_query = Booking_Model::query()
+							->where( 'user_id', $team_member_id )
+							->where( 'status', '!=', 'cancelled' )
+							->where(
+								function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+									$query->where(
+										function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+											$q->where(
+												function ( $subq ) use ( $day_start, $buffer_after ) {
+													$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
+												}
+											)
+												->where(
+													function ( $subq ) use ( $day_end, $buffer_before ) {
+														$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
+													}
+												);
+										}
+									);
+								}
+							);
+						$member_slots       = $member_slots_query->count();
+
+						// If this member has no conflicting bookings and is available according to schedule
+						if ( $member_slots === 0 ) {
+							$available_members++;
+							$available_hosts_ids[] = $team_member_id;
+						}
 					}
 				}
 
-				error_log( 'DEBUG: Available members for round-robin => ' . $available_members );
-
-				return ( $available_members === $total_members ) ? 1 : 0;
+				// For round-robin, return 1 if ANY team member is available
+				return array(
+					'slots'     => $available_members,
+					'hosts_ids' => $available_hosts_ids,
+				);
 
 			case 'collective':
 				$team_calendar_ids = $this->calendar->getTeamMembersCalendarIds();
@@ -2089,10 +2127,16 @@ class Event_Model extends Model {
 						$available_members++;
 					}
 				}
-				return ( $available_members === $total_members ) ? 1 : 0;
+				return array(
+					'slots'     => $available_members,
+					'hosts_ids' => array(),
+				);
 			default:
 				error_log( 'DEBUG: Unknown event type: ' . $this->type );
-				return 0;
+				return array(
+					'slots'     => 0,
+					'hosts_ids' => array(),
+				);
 		}
 	}
 
@@ -2132,7 +2176,7 @@ class Event_Model extends Model {
 
 				if ( $start_time >= $day_start && $end_time <= $day_end ) {
 					$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
-					return $slots;
+					return $slots['slots'];
 				}
 			}
 		} else {
@@ -2147,13 +2191,65 @@ class Event_Model extends Model {
 
 					if ( $start_time >= $day_start && $end_time <= $day_end ) {
 						$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
-						return $slots;
+						return $slots['slots'];
 					}
 				}
 			}
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Check if a team member is available according to their availability schedule
+	 *
+	 * @param array     $member_availability The team member's availability data
+	 * @param \DateTime $day_start           Start time to check
+	 * @param \DateTime $day_end             End time to check
+	 *
+	 * @return bool True if member is available during the specified time
+	 */
+	private function checkMemberAvailabilitySchedule( $member_availability, $day_start, $day_end ) {
+		$start_date_formatted = $day_start->format( 'Y-m-d' );
+		$member_timezone      = $member_availability['timezone'] ?? 'UTC';
+
+		// Check for date-specific override first
+		if ( isset( $member_availability['override'][ $start_date_formatted ] ) ) {
+			foreach ( $member_availability['override'][ $start_date_formatted ] as $time_block ) {
+				$block_start = new \DateTime( $start_date_formatted . ' ' . $time_block['start'], new \DateTimeZone( $member_timezone ) );
+				$block_end   = new \DateTime( $start_date_formatted . ' ' . $time_block['end'], new \DateTimeZone( $member_timezone ) );
+
+				// Convert to UTC for comparison
+				$block_start->setTimezone( new \DateTimeZone( 'UTC' ) );
+				$block_end->setTimezone( new \DateTimeZone( 'UTC' ) );
+
+				if ( $day_start >= $block_start && $day_end <= $block_end ) {
+					return true;
+				}
+			}
+			return false; // If override exists but no matching time block found
+		}
+
+		// Fall back to regular weekly hours
+		$weekly_hours = $member_availability['weekly_hours'] ?? array();
+		$day_of_week  = strtolower( date( 'l', $day_start->getTimestamp() ) );
+
+		if ( isset( $weekly_hours[ $day_of_week ] ) && ! $weekly_hours[ $day_of_week ]['off'] ) {
+			foreach ( $weekly_hours[ $day_of_week ]['times'] as $time_block ) {
+				$block_start = new \DateTime( date( 'Y-m-d', $day_start->getTimestamp() ) . ' ' . $time_block['start'], new \DateTimeZone( $member_timezone ) );
+				$block_end   = new \DateTime( date( 'Y-m-d', $day_start->getTimestamp() ) . ' ' . $time_block['end'], new \DateTimeZone( $member_timezone ) );
+
+				// Convert to UTC for comparison
+				$block_start->setTimezone( new \DateTimeZone( 'UTC' ) );
+				$block_end->setTimezone( new \DateTimeZone( 'UTC' ) );
+
+				if ( $day_start >= $block_start && $day_end <= $block_end ) {
+					return true;
+				}
+			}
+		}
+
+		return false; // Member is not available during this time
 	}
 
 	/**

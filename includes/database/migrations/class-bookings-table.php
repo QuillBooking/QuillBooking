@@ -43,6 +43,7 @@ class Bookings_Table extends Migration {
 		 * event_id: int(11) NOT NULL
 		 * calendar_id: int(11) NOT NULL
 		 * guest_id: int(11) NOT NULL
+		 * user_id: int(11) NULL
 		 * start_time: datetime NOT NULL
 		 * end_time: datetime NOT NULL
 		 * slot_time: int(11) NOT NULL
@@ -58,6 +59,7 @@ class Bookings_Table extends Migration {
 		event_id int(11) NOT NULL,
 		calendar_id int(11) NOT NULL,
 		guest_id int(11) NOT NULL,
+		user_id int(11) NULL,
 		start_time datetime NOT NULL,
 		end_time datetime NOT NULL,
 		slot_time int(11) NOT NULL,

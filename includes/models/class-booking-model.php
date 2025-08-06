@@ -51,6 +51,7 @@ class Booking_Model extends Model {
 		'hash_id',
 		'event_id',
 		'calendar_id',
+		'user_id',
 		'guest_id',
 		'start_time',
 		'end_time',
@@ -78,6 +79,7 @@ class Booking_Model extends Model {
 		'guest_id'     => 'integer',
 		'slot_time'    => 'integer',
 		'calendar_id'  => 'integer',
+		'user_id'      => 'integer',
 		'cancelled_by' => 'array',
 	);
 
@@ -90,6 +92,7 @@ class Booking_Model extends Model {
 		'event_id'    => 'required|integer',
 		'calendar_id' => 'required|integer',
 		'guest_id'    => 'required|integer',
+		'user_id'     => 'required|integer',
 		'start_time'  => 'required|date_format:Y-m-d H:i:s',
 		'end_time'    => 'required|date_format:Y-m-d H:i:s',
 		'slot_time'   => 'required|integer',
@@ -129,6 +132,15 @@ class Booking_Model extends Model {
 	 */
 	public function event() {
 		return $this->belongsTo( Event_Model::class, 'event_id', 'id' );
+	}
+
+	/**
+	 * Relationship with user
+	 *
+	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 */
+	public function user() {
+		return $this->belongsTo( User_Model::class, 'user_id', 'id' );
 	}
 
 	/**

@@ -21,11 +21,14 @@ class Booking_Service {
 	 * @param string      $timezone The timezone of the booking.
 	 * @param array       $invitees The invitees for the booking.
 	 * @param string      $location The location of the booking.
+	 * @param string      $status The status of the booking.
+	 * @param array       $fields Additional fields for the booking.
+	 * @param int|null    $user_id The user ID for the booking (optional).
 	 *
 	 * @return Booking_Model
 	 * @throws \Exception If booking fails.
 	 */
-	public function book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $invitees, $location, $status = 'scheduled', $fields = array() ) {
+	public function book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $invitees, $location, $status = 'scheduled', $fields = array(), $user_id = null ) {
 		$end_date = clone $start_date;
 		$end_date->modify( "+{$duration} minutes" );
 		$pending_type = null;
@@ -58,6 +61,8 @@ class Booking_Service {
 			$booking->source      = 'event-page';
 			$booking->slot_time   = $duration;
 			$booking->guest_id    = $guest->id;
+			// i need update user_id in here in case type of calendar is team
+			$booking->user_id = $user_id ?? $event->user_id ?? get_current_user_id();
 
 			if ( ! $booking->save() ) {
 				$guest->delete();

@@ -50,7 +50,6 @@ class Booking_Ajax {
 	 */
 	public function booking() {
 		 // check_ajax_referer( 'quillbooking', 'nonce' );
-
 		try {
 			$id    = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
 			$event = $this->bookingValidatorClass::validate_event( $id );
@@ -118,8 +117,18 @@ class Booking_Ajax {
 				$fields = json_decode( wp_unslash( $_POST['fields'] ), true );
 			}
 
+			$host_ids = isset( $_POST['host_ids'] ) ? intval( $_POST['host_ids'] ) : null;
+			if ( $host_ids ) {
+				$host_ids = explode( ',', $host_ids );
+				if ( $event->type === 'round-robin' ) {
+					$host_id = $host_ids[0];
+				} else {
+					$host_id = $host_ids;
+				}
+			}
+
 			$calendar_id = $event->calendar_id;
-			$booking     = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields );
+			$booking     = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields, $host_id );
 
 			do_action(
 				'quillbooking_after_booking_created',

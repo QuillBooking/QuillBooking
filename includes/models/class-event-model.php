@@ -1043,46 +1043,42 @@ class Event_Model extends Model {
 
 
 	private function getTeamAvailability( $availability ) {
-		xdebug_break();
-		$type           = $availability['type'];
-		$is_common      = $availability['is_common'];
-		$availabilities = array();
 
-		if ( empty( $availability['weekly_hours'] ) ) {
-			$availabilities = $availability['users_availability'];
-		} else {
-			$availabilities[] = $availability; // push into array
-		}
+		if ( $this->type === 'round-robin' || $this->type === 'collective' ) {
+			$type             = $availability['type'];
+			$is_common        = $availability['is_common'];
+			$availabilities[] = $availability;
+			if ( $type === 'existing' && $is_common == false && $this->type === 'round-robin' ) {
+				$availabilities     = array();
+				$users_availability = $availability['users_availability'];
 
-		if ( $type === 'existing' && $is_common == false && $this->type === 'round-robin' ) {
-			$users_availability = $availability['users_availability'];
+				// Collect all user availabilities
+				foreach ( $users_availability as $user_availability ) {
+					$availability_id = $user_availability['id'];
+					$user_avail      = Availabilities::get_availability( $availability_id );
+					if ( $user_avail ) {
+						$availabilities[] = $user_avail;
+					} else {
+						// If availability ID not found, use the direct data from users_availability
+						$availabilities[] = $user_availability;
+					}
+				}
 
-			// Collect all user availabilities
-			foreach ( $users_availability as $user_availability ) {
-				$availability_id = $user_availability['id'];
-				$user_avail      = Availabilities::get_availability( $availability_id );
-				if ( $user_avail ) {
-					$availabilities[] = $user_avail;
-				} else {
-					// If availability ID not found, use the direct data from users_availability
-					$availabilities[] = $user_availability;
+				// If we have multiple availabilities, merge them to find common slots
+				if ( count( $availabilities ) > 0 ) {
+					$merged_availability = $this->findCommonTeamAvailability( $availabilities );
+					// Preserve the original structure but use merged data
+					$availability['weekly_hours'] = $merged_availability['weekly_hours'];
+					// IMPORTANT: Keep the original timezone to avoid validation errors
+					if ( ! empty( $merged_availability['timezone'] ) ) {
+						$availability['timezone'] = $merged_availability['timezone'];
+					}
+					$availability['override'] = $merged_availability['override'] ?? array();
 				}
 			}
-
-			// If we have multiple availabilities, merge them to find common slots
-			if ( count( $availabilities ) > 0 ) {
-				$merged_availability = $this->findCommonTeamAvailability( $availabilities );
-				// Preserve the original structure but use merged data
-				$availability['weekly_hours'] = $merged_availability['weekly_hours'];
-				// IMPORTANT: Keep the original timezone to avoid validation errors
-				if ( ! empty( $merged_availability['timezone'] ) ) {
-					$availability['timezone'] = $merged_availability['timezone'];
-				}
-				$availability['override'] = $merged_availability['override'] ?? array();
-			}
+			$availability['users_availability'] = $availabilities;
+			$this->availability                 = $availability;
 		}
-		$availability['users_availability'] = $availabilities;
-		$this->availability                 = $availability;
 		return $availability;
 	}
 
@@ -1994,7 +1990,7 @@ class Event_Model extends Model {
 			case 'one-to-one':
 			case 'group':
 				$slots_query = Booking_Model::query()
-					->where( 'calendar_id', $this->calendar_id )
+					->where( 'user_id', $this->user_id )
 					->where( 'status', '!=', 'cancelled' )
 					->where(
 						function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {

@@ -1962,6 +1962,7 @@ class Event_Model extends Model {
 	 * @return int
 	 */
 	public function check_available_slots( $day_start, $day_end, $calendar_id ) {
+		xdebug_break();
 		$day_start = clone $day_start;
 		$day_end   = clone $day_end;
 
@@ -2015,7 +2016,7 @@ class Event_Model extends Model {
 				$available_members   = 0;
 				$available_hosts_ids = array();
 				foreach ( $team_members as $team_member_id ) {
-					if ( $availabilities['is_common'] ) {
+					if ( $this->availability['is_common'] ) {
 						$is_member_available = true;
 					} else {
 						$is_member_available = false;
@@ -2098,7 +2099,7 @@ class Event_Model extends Model {
 				$available_hosts_ids = array();
 
 				foreach ( $team_members as $team_member_id ) {
-					if ( $availabilities['is_common'] ) {
+					if ( $this->availability['is_common'] ) {
 						$is_member_available = true;
 					} else {
 

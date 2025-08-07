@@ -238,13 +238,14 @@ export type BookingsTabsTypes =
     | 'no-show'
     | 'all';
 
-export type EventTypes = 'one-to-one' | 'group' | 'round-robin';
+export type EventTypes = 'one-to-one' | 'group' | 'round-robin' | 'collective';
 
 export type EventTypesOptions =
     | 'All Event Types'
     | 'One to One'
     | 'Group'
-    | 'Round Robin';
+    | 'Round Robin'
+    | 'Collective';
 
 export type GeneralOptions = { value: string; label: string };
 

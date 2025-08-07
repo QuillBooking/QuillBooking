@@ -30,6 +30,7 @@ import {
 	Locations,
 	ColorSelector,
 	NoticeBanner,
+	CollectiveIcon,
 } from '@quillbooking/components';
 import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import type {
@@ -240,30 +241,43 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 	const handleSubmit = async () => {
 		try {
 			// Validation check
-			if (!event.name || !event.location || event.location.length === 0) {
+			const hostsRequired =
+				calendarType === 'team' &&
+				(event.type === 'collective' || event.type === 'round-robin');
+			const isHostsEmpty = !event.hosts || event.hosts.length === 0;
+			if (
+				!event.name ||
+				!event.location ||
+				event.location.length === 0 ||
+				(hostsRequired && isHostsEmpty)
+			) {
 				setValidationErrors({
 					name: !event.name,
 					location: !event.location || event.location.length === 0,
-					members: !event.hosts,
+					members: hostsRequired && isHostsEmpty,
 				});
-
+				let errorMessage = __(
+					'Please fill in all required fields',
+					'quillbooking'
+				);
+				if (hostsRequired && isHostsEmpty) {
+					errorMessage = __(
+						'Please select at least one team member for collective events',
+						'quillbooking'
+					);
+				}
 				setErrorBanner({
 					type: 'error',
 					title: __('Validation Error', 'quillbooking'),
-					message: __(
-						'Please fill in all required fields',
-						'quillbooking'
-					),
+					message: errorMessage,
 				});
 				return;
 			}
-
 			// Transform event.hosts to an array of ids
 			const transformedEvent = {
 				...event,
 				hosts: event.hosts?.map((host) => host.id) || [],
 			};
-
 			try {
 				await callApi({
 					path: 'events',
@@ -425,10 +439,11 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								onClick={() =>
 									setEvent({ ...event, type: 'round-robin' })
 								}
-								className={`cursor-pointer rounded-xl border-2 pl-2 ${event.type === 'round-robin'
+								className={`cursor-pointer rounded-xl border-2 pl-2 ${
+									event.type === 'round-robin'
 										? 'border-color-primary'
 										: ''
-									}`}
+								}`}
 							>
 								<Flex gap={15} align="center">
 									<RoundRobinIcon />
@@ -461,29 +476,47 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 									</Flex>
 								</Flex>
 							</Card>
-							{/* <Card
-                                onClick={() =>
-                                    setEvent({ ...event, type: 'round-robin' })
-                                }
-                                className={`cursor-pointer rounded-xl border-2 pl-2 ${event.type === 'round-robin'
-                                    ? 'border-color-primary'
-                                    : ''
-                                    }`}
-                            >
-                             <Flex gap={15} align='center'>
-                                    <CollectiveIcon />
-                                    <Flex vertical>
-                                        <h3 className="text-[#2E2C2F] text-[18px] font-bold">{__('Collective', 'quillbooking')}</h3>
-                                        <span className="text-[14px] text-[#979797]">
-                                            <span className='font-semibold mr-1'>{__('Multi Hosts', 'quillbooking')}</span>
-                                            {__('with', 'quillbooking')}
-                                            <span className='font-semibold ml-1'>{__('One Invitee', 'quillbooking')}</span>
-                                        </span>
-                                        <span className="text-[12px] text-[#979797]"> {__('Good for Panel Interviews, Group Sales Calls, etc.', 'quillbooking')}</span>
-
-                                    </Flex>
-                                </Flex> 
-                            </Card> */}
+							<Card
+								onClick={() =>
+									setEvent({ ...event, type: 'collective' })
+								}
+								className={`cursor-pointer rounded-xl border-2 pl-2 ${
+									event.type === 'collective'
+										? 'border-color-primary'
+										: ''
+								}`}
+							>
+								<Flex gap={15} align="center">
+									<CollectiveIcon />
+									<Flex vertical>
+										<h3 className="text-[#2E2C2F] text-[18px] font-bold">
+											{__('Collective', 'quillbooking')}
+										</h3>
+										<span className="text-[14px] text-[#979797]">
+											<span className="font-semibold mr-1">
+												{__(
+													'Multi Hosts',
+													'quillbooking'
+												)}
+											</span>
+											{__('with', 'quillbooking')}
+											<span className="font-semibold ml-1">
+												{__(
+													'One Invitee',
+													'quillbooking'
+												)}
+											</span>
+										</span>
+										<span className="text-[12px] text-[#979797]">
+											{' '}
+											{__(
+												'Good for Panel Interviews, Group Sales Calls, etc.',
+												'quillbooking'
+											)}
+										</span>
+									</Flex>
+								</Flex>
+							</Card>
 						</Flex>
 					)}
 
@@ -493,10 +526,11 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								onClick={() =>
 									setEvent({ ...event, type: 'one-to-one' })
 								}
-								className={`cursor-pointer rounded-xl border-2 pl-2 ${event.type === 'one-to-one'
+								className={`cursor-pointer rounded-xl border-2 pl-2 ${
+									event.type === 'one-to-one'
 										? 'border-color-primary'
 										: ''
-									}`}
+								}`}
 							>
 								<Flex gap={15} align="center">
 									<SingleIcon />
@@ -533,10 +567,11 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								onClick={() =>
 									setEvent({ ...event, type: 'group' })
 								}
-								className={`cursor-pointer rounded-xl border-2 pl-2 ${event.type === 'group'
+								className={`cursor-pointer rounded-xl border-2 pl-2 ${
+									event.type === 'group'
 										? 'border-color-primary'
 										: ''
-									}`}
+								}`}
 							>
 								<Flex gap={15} align="center">
 									<GroupIcon />
@@ -832,10 +867,11 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								(current === 1 && !event.name) ||
 								(current === 2 && !event.location)
 							}
-							className={`rounded-lg px-12 font-semibold text-[16px] text-white bg-color-primary border-none transition ${current === 0
+							className={`rounded-lg px-12 font-semibold text-[16px] text-white bg-color-primary border-none transition ${
+								current === 0
 									? 'w-full' // custom style for step 0
 									: '' // other steps
-								}`}
+							}`}
 						>
 							{__('Continue', 'quillbooking')}
 						</Button>

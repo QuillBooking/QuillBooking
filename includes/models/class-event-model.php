@@ -1068,12 +1068,12 @@ class Event_Model extends Model {
 		return $availability;
 	}
 
-		/**
-		 * Merge team member availabilities using union logic (combine all available slots).
-		 *
-		 * @param array $availabilities Array of user availabilities to merge
-		 * @return array Merged availability structure
-		 */
+	/**
+	 * Merge team member availabilities using union logic (combine all available slots).
+	 *
+	 * @param array $availabilities Array of user availabilities to merge
+	 * @return array Merged availability structure
+	 */
 	private function findCommonTeamAvailability( $availabilities ) {
 		if ( empty( $availabilities ) ) {
 			return array();
@@ -1145,12 +1145,12 @@ class Event_Model extends Model {
 		return $merged;
 	}
 
-		/**
-		 * Find common time blocks where ALL users are available (intersection).
-		 *
-		 * @param array $user_time_blocks Array of arrays, each containing time blocks for a user
-		 * @return array Common time blocks
-		 */
+	/**
+	 * Find common time blocks where ALL users are available (intersection).
+	 *
+	 * @param array $user_time_blocks Array of arrays, each containing time blocks for a user
+	 * @return array Common time blocks
+	 */
 	private function findCommonTimeBlocks( $user_time_blocks ) {
 		if ( empty( $user_time_blocks ) ) {
 			return array();
@@ -1237,7 +1237,7 @@ class Event_Model extends Model {
 		// Sort blocks by start time
 		usort(
 			$time_blocks,
-			function( $a, $b ) {
+			function ( $a, $b ) {
 				return strcmp( $a['start'], $b['start'] );
 			}
 		);
@@ -1962,7 +1962,6 @@ class Event_Model extends Model {
 	 * @return int
 	 */
 	public function check_available_slots( $day_start, $day_end, $calendar_id ) {
-		xdebug_break();
 		$day_start = clone $day_start;
 		$day_end   = clone $day_end;
 
@@ -1978,7 +1977,7 @@ class Event_Model extends Model {
 				$slots_query = Booking_Model::query()
 					->whereHas(
 						'hosts',
-						function( $q ) {
+						function ( $q ) {
 							$q->where( 'user_id', $this->user_id );
 						}
 					)
@@ -2050,7 +2049,7 @@ class Event_Model extends Model {
 						$member_slots_query = Booking_Model::query()
 							->whereHas(
 								'hosts',
-								function( $q ) use ( $team_member_id ) {
+								function ( $q ) use ( $team_member_id ) {
 									$q->where( 'user_id', $team_member_id );
 								}
 							)
@@ -2132,7 +2131,7 @@ class Event_Model extends Model {
 						$member_slots_query = Booking_Model::query()
 							->whereHas(
 								'hosts',
-								function( $q ) use ( $team_member_id ) {
+								function ( $q ) use ( $team_member_id ) {
 									$q->where( 'user_id', $team_member_id );
 								}
 							)

@@ -76,11 +76,14 @@ file_put_contents( $ics_path, $ics_content );
 <div class="quillbooking-meeting">
 	<div class="details-container">
 		<div class="profile-picture">
-			<img src="<?php echo esc_url( $icons_url . 'confirm.svg' ); ?>" alt="<?php esc_attr_e( 'confirmation', 'quillbooking' ); ?>" />
+			<img src="<?php echo esc_url( $icons_url . 'confirm.svg' ); ?>"
+				alt="<?php esc_attr_e( 'confirmation', 'quillbooking' ); ?>" />
 		</div>
 
 		<h1 class="title"><?php esc_html_e( 'Your meeting has been Scheduled', 'quillbooking' ); ?></h1>
-		<p class="calendar-info"><?php esc_html_e( 'A calendar invitation has been sent to your email address.', 'quillbooking' ); ?></p>
+		<p class="calendar-info">
+			<?php esc_html_e( 'A calendar invitation has been sent to your email address.', 'quillbooking' ); ?>
+		</p>
 
 		<div class="booking-card">
 			<h2 class="event-title">
@@ -90,11 +93,15 @@ file_put_contents( $ics_path, $ics_content );
 			<p>
 				<span><img src="<?php echo esc_url( $icons_url . 'profile.svg' ); ?>" alt="Host" /></span>
 				<?php if ( ! empty( $booking_array['hosts'] ) && is_array( $booking_array['hosts'] ) ) : ?>
-					<?php foreach ( $booking_array['hosts'] as $host ) : ?>
-						<?php if ( ! empty( $host['name'] ) ) : ?>
-							<span><?php echo esc_html( $host['name'] ); ?></span>
-						<?php endif; ?>
-					<?php endforeach; ?>
+					<?php
+					$host_names = array();
+					foreach ( $booking_array['hosts'] as $host ) :
+						if ( ! empty( $host['name'] ) ) :
+							$host_names[] = esc_html( $host['name'] );
+						endif;
+					endforeach;
+					?>
+					<span><?php echo implode( ' - ', $host_names ); ?></span>
 				<?php endif; ?>
 			</p>
 			<p>
@@ -133,34 +140,41 @@ file_put_contents( $ics_path, $ics_content );
 	</div>
 
 	<?php if ( ! isset( $_GET['embed_type'] ) || $_GET['embed_type'] !== 'Inline' ) : ?>
-	<div class="confirmation-footer">
-		<div class="change-options">
-			<p><?php esc_html_e( 'Need to make a change?', 'quillbooking' ); ?>
-				<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=cancel" class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
-				<?php esc_html_e( 'or', 'quillbooking' ); ?>
-				<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=reschedule" class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
-			</p>
-		</div>
+		<div class="confirmation-footer">
+			<div class="change-options">
+				<p><?php esc_html_e( 'Need to make a change?', 'quillbooking' ); ?>
+					<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=cancel"
+						class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
+					<?php esc_html_e( 'or', 'quillbooking' ); ?>
+					<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=reschedule"
+						class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
+				</p>
+			</div>
 
-		<!-- <div class="cancellation-policy">
-			<h3><?php 
-			// esc_html_e('Cancellation policy:', 'quillbooking'); 
-			?></h3> 
+			<!-- <div class="cancellation-policy">
+			<h3>
+			<?php
+			// esc_html_e('Cancellation policy:', 'quillbooking');
+			?>
+			</h3> 
 			<p>
-				<?php 
-				// esc_html_e('You can cancel or reschedule anytime before the appointment time.', 'quillbooking'); 
-				?></p>
+				<?php
+				// esc_html_e('You can cancel or reschedule anytime before the appointment time.', 'quillbooking');
+				?>
+				</p>
 
-			<h3><?php 
-			// esc_html_e('Additional information:', 'quillbooking'); 
-			?></h3>
+			<h3>
+			<?php
+			// esc_html_e('Additional information:', 'quillbooking');
+			?>
+			</h3>
 			<p>
-				<?php 
-				// esc_html_e('You may receive appointment-specific communication from Quill Booking. This includes confirmations, receipts and reminders via email and SMS.', 'quillbooking'); 
+				<?php
+				// esc_html_e('You may receive appointment-specific communication from Quill Booking. This includes confirmations, receipts and reminders via email and SMS.', 'quillbooking');
 				?>
 				</p>
 		</div> -->
 
-	</div>
+		</div>
 	<?php endif; ?>
 </div>

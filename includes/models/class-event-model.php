@@ -2015,28 +2015,32 @@ class Event_Model extends Model {
 				$available_members   = 0;
 				$available_hosts_ids = array();
 				foreach ( $team_members as $team_member_id ) {
-					$is_member_available = false;
-
-					// First, check team member's individual availability schedule
-					if ( ! empty( $availabilities ) ) {
-						// Find this team member's availability from the collected availabilities
-						$member_availability = null;
-						foreach ( $availabilities as $avail ) {
-							if ( isset( $avail['user_id'] ) && $avail['user_id'] == $team_member_id ) {
-								$member_availability = $avail;
-								break;
-							}
-						}
-
-						// If we found the member's availability, check if they're available during this time
-						if ( $member_availability ) {
-							$is_member_available = $this->checkMemberAvailabilitySchedule( $member_availability, $day_start, $day_end );
-						}
+					if ( $availabilities['is_common'] ) {
+						$is_member_available = true;
 					} else {
-						// Fallback: get team member's default availability
-						$member_default_availability = Availabilities::get_user_default_availability( $team_member_id );
-						if ( $member_default_availability ) {
-							$is_member_available = $this->checkMemberAvailabilitySchedule( $member_default_availability, $day_start, $day_end );
+						$is_member_available = false;
+
+						// First, check team member's individual availability schedule
+						if ( ! empty( $availabilities ) ) {
+							// Find this team member's availability from the collected availabilities
+							$member_availability = null;
+							foreach ( $availabilities as $avail ) {
+								if ( isset( $avail['user_id'] ) && $avail['user_id'] == $team_member_id ) {
+									$member_availability = $avail;
+									break;
+								}
+							}
+
+							// If we found the member's availability, check if they're available during this time
+							if ( $member_availability ) {
+								$is_member_available = $this->checkMemberAvailabilitySchedule( $member_availability, $day_start, $day_end );
+							}
+						} else {
+							// Fallback: get team member's default availability
+							$member_default_availability = Availabilities::get_user_default_availability( $team_member_id );
+							if ( $member_default_availability ) {
+								$is_member_available = $this->checkMemberAvailabilitySchedule( $member_default_availability, $day_start, $day_end );
+							}
 						}
 					}
 
@@ -2094,28 +2098,31 @@ class Event_Model extends Model {
 				$available_hosts_ids = array();
 
 				foreach ( $team_members as $team_member_id ) {
-					$is_member_available = false;
-
-					// First, check team member's individual availability schedule
-					if ( ! empty( $availabilities ) ) {
-						// Find this team member's availability from the collected availabilities
-						$member_availability = null;
-						foreach ( $availabilities as $avail ) {
-							if ( isset( $avail['user_id'] ) && $avail['user_id'] == $team_member_id ) {
-								$member_availability = $avail;
-								break;
-							}
-						}
-
-						// If we found the member's availability, check if they're available during this time
-						if ( $member_availability ) {
-							$is_member_available = $this->checkMemberAvailabilitySchedule( $member_availability, $day_start, $day_end );
-						}
+					if ( $availabilities['is_common'] ) {
+						$is_member_available = true;
 					} else {
-						// Fallback: get team member's default availability
-						$member_default_availability = Availabilities::get_user_default_availability( $team_member_id );
-						if ( $member_default_availability ) {
-							$is_member_available = $this->checkMemberAvailabilitySchedule( $member_default_availability, $day_start, $day_end );
+
+						// First, check team member's individual availability schedule
+						if ( ! empty( $availabilities ) ) {
+							// Find this team member's availability from the collected availabilities
+							$member_availability = null;
+							foreach ( $availabilities as $avail ) {
+								if ( isset( $avail['user_id'] ) && $avail['user_id'] == $team_member_id ) {
+									$member_availability = $avail;
+									break;
+								}
+							}
+
+							// If we found the member's availability, check if they're available during this time
+							if ( $member_availability ) {
+								$is_member_available = $this->checkMemberAvailabilitySchedule( $member_availability, $day_start, $day_end );
+							}
+						} else {
+							// Fallback: get team member's default availability
+							$member_default_availability = Availabilities::get_user_default_availability( $team_member_id );
+							if ( $member_default_availability ) {
+								$is_member_available = $this->checkMemberAvailabilitySchedule( $member_default_availability, $day_start, $day_end );
+							}
 						}
 					}
 

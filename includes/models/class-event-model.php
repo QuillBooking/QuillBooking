@@ -68,7 +68,6 @@ class Event_Model extends Model {
 	protected $fillable = array(
 		'hash_id',
 		'calendar_id',
-		'user_id',
 		'name',
 		'description',
 		'slug',
@@ -88,7 +87,6 @@ class Event_Model extends Model {
 	 * @var array
 	 */
 	protected $casts = array(
-		'user_id'     => 'integer',
 		'calendar_id' => 'integer',
 		'is_disabled' => 'boolean',
 		'reserve'     => 'boolean',
@@ -101,7 +99,6 @@ class Event_Model extends Model {
 	 */
 	protected $rules = array(
 		'calendar_id' => 'required|integer',
-		'user_id'     => 'integer',
 		'name'        => 'required',
 		'type'        => 'required',
 		'duration'    => 'required',
@@ -117,7 +114,6 @@ class Event_Model extends Model {
 		'calendar_id.required'       => 'Calendar ID is required',
 		'calendar_id.integer'        => 'Calendar ID must be an integer',
 		'calendar_id.exists'         => 'Calendar ID does not exist',
-		'user_id.integer'            => 'User ID must be an integer',
 		'name.required'              => 'Event name is required',
 		'type.required'              => 'Event type is required',
 		'duration.required'          => 'Event duration is required',
@@ -174,16 +170,6 @@ class Event_Model extends Model {
 		return $this->hasMany( Booking_Model::class, 'event_id' );
 	}
 
-	/**
-	 * Relationship with user
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-	 */
-	public function user() {
-		return $this->belongsTo( User_Model::class, 'user_id' );
-	}
 
 	/**
 	 * Get the fields meta value.
@@ -1048,7 +1034,7 @@ class Event_Model extends Model {
 			$type             = $availability['type'];
 			$is_common        = $availability['is_common'];
 			$availabilities[] = $availability;
-			if ( $type === 'existing' && $is_common == false && $this->type === 'round-robin' ) {
+			if ( $type === 'existing' && $is_common == false ) {
 				$availabilities     = array();
 				$users_availability = $availability['users_availability'];
 
@@ -1989,7 +1975,12 @@ class Event_Model extends Model {
 			case 'one-to-one':
 			case 'group':
 				$slots_query = Booking_Model::query()
-					->where( 'user_id', $this->user_id )
+					->whereHas(
+						'hosts',
+						function( $q ) {
+							$q->where( 'user_id', $this->user_id );
+						}
+					)
 					->where( 'status', '!=', 'cancelled' )
 					->where(
 						function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
@@ -2052,7 +2043,12 @@ class Event_Model extends Model {
 					// If member is available according to their schedule, check for booking conflicts
 					if ( $is_member_available ) {
 						$member_slots_query = Booking_Model::query()
-							->where( 'user_id', $team_member_id )
+							->whereHas(
+								'hosts',
+								function( $q ) use ( $team_member_id ) {
+									$q->where( 'user_id', $team_member_id );
+								}
+							)
 							->where( 'status', '!=', 'cancelled' )
 							->where(
 								function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
@@ -2089,42 +2085,83 @@ class Event_Model extends Model {
 				);
 
 			case 'collective':
-				$team_calendar_ids = $this->calendar->getTeamMembersCalendarIds();
+				$team_members   = $this->calendar->getTeamMembers();
+				$availabilities = $this->availability['users_availability'];
 
 				// For collective, ALL team members must be available
-				$total_members     = count( $team_calendar_ids );
-				$available_members = 0;
+				$total_members       = count( $team_members );
+				$available_members   = 0;
+				$available_hosts_ids = array();
 
-				foreach ( $team_calendar_ids as $team_calendar_id ) {
-					$member_slots_query = Booking_Model::query()
-						->where( 'calendar_id', $team_calendar_id )
-						->where( 'status', '!=', 'cancelled' )
-						->where(
-							function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-								$query->where(
-									function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
-										$q->where(
-											function ( $subq ) use ( $day_start, $buffer_after ) {
-												$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
-											}
-										)
-											->where(
-												function ( $subq ) use ( $day_end, $buffer_before ) {
-													$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
-												}
-											);
-									}
-								);
+				foreach ( $team_members as $team_member_id ) {
+					$is_member_available = false;
+
+					// First, check team member's individual availability schedule
+					if ( ! empty( $availabilities ) ) {
+						// Find this team member's availability from the collected availabilities
+						$member_availability = null;
+						foreach ( $availabilities as $avail ) {
+							if ( isset( $avail['user_id'] ) && $avail['user_id'] == $team_member_id ) {
+								$member_availability = $avail;
+								break;
 							}
-						);
-					$member_slots       = $member_slots_query->count();
-					if ( $member_slots === 0 ) {
-						$available_members++;
+						}
+
+						// If we found the member's availability, check if they're available during this time
+						if ( $member_availability ) {
+							$is_member_available = $this->checkMemberAvailabilitySchedule( $member_availability, $day_start, $day_end );
+						}
+					} else {
+						// Fallback: get team member's default availability
+						$member_default_availability = Availabilities::get_user_default_availability( $team_member_id );
+						if ( $member_default_availability ) {
+							$is_member_available = $this->checkMemberAvailabilitySchedule( $member_default_availability, $day_start, $day_end );
+						}
+					}
+
+					// If member is available according to their schedule, check for booking conflicts
+					if ( $is_member_available ) {
+						$member_slots_query = Booking_Model::query()
+							->whereHas(
+								'hosts',
+								function( $q ) use ( $team_member_id ) {
+									$q->where( 'user_id', $team_member_id );
+								}
+							)
+							->where( 'status', '!=', 'cancelled' )
+							->where(
+								function ( $query ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+									$query->where(
+										function ( $q ) use ( $day_start, $day_end, $buffer_before, $buffer_after ) {
+											$q->where(
+												function ( $subq ) use ( $day_start, $buffer_after ) {
+													$subq->whereRaw( 'DATE_ADD(end_time, INTERVAL ? MINUTE) > ?', array( $buffer_after, $day_start->format( 'Y-m-d H:i:s' ) ) );
+												}
+											)
+												->where(
+													function ( $subq ) use ( $day_end, $buffer_before ) {
+														$subq->whereRaw( 'DATE_SUB(start_time, INTERVAL ? MINUTE) < ?', array( $buffer_before, $day_end->format( 'Y-m-d H:i:s' ) ) );
+													}
+												);
+										}
+									);
+								}
+							);
+						$member_slots       = $member_slots_query->count();
+
+						// If this member has no conflicting bookings and is available according to schedule
+						if ( $member_slots === 0 ) {
+							$available_members++;
+							$available_hosts_ids[] = $team_member_id;
+						}
 					}
 				}
+
+				// For collective, return 1 only if ALL team members are available
+				$slots_available = ( $available_members === $total_members ) ? 1 : 0;
 				return array(
-					'slots'     => $available_members,
-					'hosts_ids' => array(),
+					'slots'     => $slots_available,
+					'hosts_ids' => $slots_available ? $available_hosts_ids : array(),
 				);
 			default:
 				error_log( 'DEBUG: Unknown event type: ' . $this->type );

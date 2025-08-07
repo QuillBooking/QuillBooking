@@ -49,6 +49,7 @@ class Booking_Ajax {
 	 * @return void
 	 */
 	public function booking() {
+		xdebug_break();
 		 // check_ajax_referer( 'quillbooking', 'nonce' );
 		try {
 			$id    = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
@@ -117,7 +118,7 @@ class Booking_Ajax {
 				$fields = json_decode( wp_unslash( $_POST['fields'] ), true );
 			}
 
-			$host_ids = isset( $_POST['host_ids'] ) ? intval( $_POST['host_ids'] ) : null;
+			$host_ids = isset( $_POST['host_ids'] ) ? $_POST['host_ids'] : null;
 			if ( $host_ids ) {
 				$host_ids = explode( ',', $host_ids );
 				if ( $event->type === 'round-robin' ) {

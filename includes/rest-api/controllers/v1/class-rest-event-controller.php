@@ -359,7 +359,7 @@ class REST_Event_Controller extends REST_Controller {
 					 'arg_options' => array(
 						 'sanitize_callback' => 'sanitize_text_field',
 					 ),
-					 'enum'        => array( 'one-to-one', 'group', 'round-robin' ),
+					 'enum'        => array( 'one-to-one', 'group', 'round-robin', 'collective' ),
 				 ),
 				 'duration'      => array(
 					 'description' => __( 'Event duration.', 'quillbooking' ),
@@ -479,6 +479,7 @@ class REST_Event_Controller extends REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
+		xdebug_break();
 		try {
 			global $wpdb;
 			$wpdb->query( 'START TRANSACTION' );
@@ -513,6 +514,14 @@ class REST_Event_Controller extends REST_Controller {
 			if ( ( 'host' === $calendar->type && ! in_array( $type, $host_events ) ) || ( 'team' === $calendar->type && ! in_array( $type, $team_events ) ) ) {
 				$wpdb->query( 'ROLLBACK' );
 				return new WP_Error( 'rest_event_error', __( 'Invalid event type.', 'quillbooking' ), array( 'status' => 400 ) );
+			}
+
+			// Validate hosts for team calendar events
+			if ( 'team' === $calendar->type && in_array( $type, $team_events ) ) {
+				if ( empty( $hosts ) || ! is_array( $hosts ) || count( $hosts ) === 0 ) {
+					$wpdb->query( 'ROLLBACK' );
+					return new WP_Error( 'rest_event_error', __( 'Team events require at least one host to be selected.', 'quillbooking' ), array( 'status' => 400 ) );
+				}
 			}
 
 			// Validate payment settings if provided

@@ -474,21 +474,6 @@ class REST_Booking_Controller extends REST_Controller {
 			$bookings   = array();
 			$bookings[] = $booking;
 
-			// if ( get_current_user_id() ) {
-			// $guest_data['user_id'] = get_current_user_id();
-			// }
-
-			// if ( 'collective' === $event->type ) {
-			// $teamMembers = $event->calendar->teamMembers;
-			// foreach ( $teamMembers as $teamMember ) {
-			// $booking    = $this->book_event_slot( $event, $teamMember, $start_time, $slot_time, $timezone, $guest_data, $additional_guests, $location, $status );
-			// $bookings[] = $booking;
-			// }
-			// } else {
-			// $booking    = $this->book_event_slot( $event, $event->calendar_id, $start_time, $slot_time, $timezone, $guest_data, $additional_guests, $location, $status );
-			// $bookings[] = $booking;
-			// }
-
 			return new WP_REST_Response( $bookings, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
@@ -528,7 +513,7 @@ class REST_Booking_Controller extends REST_Controller {
 				return new WP_Error( 'rest_booking_error', __( 'Booking not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			$booking->load( 'guest', 'event', 'calendar.user', 'logs', 'event.calendar' );
+			$booking->load( 'guest', 'event', 'calendar.user', 'logs', 'event.calendar', 'hosts' );
 			$booking->fields = $booking->get_meta( 'fields' );
 
 			return new WP_REST_Response( $booking, 200 );
@@ -810,7 +795,7 @@ class REST_Booking_Controller extends REST_Controller {
 	 */
 	protected function validate_year( $year ) {
 		$year = absint( $year );
-		return  $year >= 2000 ? $year : date( 'Y' );
+		return $year >= 2000 ? $year : date( 'Y' );
 	}
 
 	/**

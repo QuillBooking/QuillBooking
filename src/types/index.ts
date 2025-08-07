@@ -303,6 +303,7 @@ export interface Booking extends BookingResponse {
     guest?: Guest | Guest[];
     calendar?: Calendar;
     logs?: BookingLog[];
+    hosts: User[];
     order: {
         booking_id: number;
         created_at: string;

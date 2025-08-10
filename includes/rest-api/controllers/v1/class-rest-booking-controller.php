@@ -431,6 +431,7 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
+		xdebug_break();
 		try {
 			$event_id            = $request->get_param( 'event_id' );
 			$start_date          = $request->get_param( 'start_date' );
@@ -443,13 +444,23 @@ class REST_Booking_Controller extends REST_Controller {
 			$current_url         = $request->get_param( 'current_url' );
 			$fields              = $request->get_param( 'fields' );
 			$ignore_availability = $request->get_param( 'ignore_availability' );
+			$host_ids            = $request->get_param( 'hosts_ids' ) ?? null;
 
 			$event    = Booking_Validator::validate_event( $event_id );
 			$duration = Booking_Validator::validate_duration( $duration, $event->duration );
 
+			$host_id = null;
+			if ( $host_ids ) {
+				if ( $event->type === 'round-robin' ) {
+					$host_id = $host_ids[0];
+				} else {
+					$host_id = $host_ids;
+				}
+			}
+
 			if ( ! $ignore_availability ) {
 				$start_date      = Booking_Validator::validate_start_date( $start_date, $timezone );
-				$available_slots = $event->get_booking_available_slots( $start_date, $duration, $timezone );
+				$available_slots = $event->get_booking_available_slots( $start_date, $duration, $timezone, $host_id );
 				if ( ! $available_slots ) {
 					throw new \Exception( __( 'Sorry, This booking is not available', 'quillbooking' ) );
 				}
@@ -468,8 +479,9 @@ class REST_Booking_Controller extends REST_Controller {
 			$booking_service = apply_filters( 'quillbooking_booking_service_instance', new Booking_Service() );
 
 			$validate_invitee = $booking_service->validate_invitee( $event, $invitee );
-			$calendar_id      = $event->calendar_id;
-			$booking          = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields );
+
+			$calendar_id = $event->calendar_id;
+			$booking     = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields, $host_id );
 
 			$bookings   = array();
 			$bookings[] = $booking;

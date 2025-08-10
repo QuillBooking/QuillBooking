@@ -479,7 +479,6 @@ class REST_Event_Controller extends REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
-		xdebug_break();
 		try {
 			global $wpdb;
 			$wpdb->query( 'START TRANSACTION' );

@@ -29,15 +29,12 @@ use QuillBooking\Helpers\Integrations_Helper;
  */
 class Event_Model extends Model {
 
-
-
-
-
-
-
-
-
-
+	/**
+	 * Cached processed availability to avoid database updates during computation
+	 *
+	 * @var array|null
+	 */
+	private $processed_availability = null;
 
 	/**
 	 * Table name
@@ -194,16 +191,6 @@ class Event_Model extends Model {
 
 		$availability = Availabilities::get_availability( $value );
 		return $availability;
-	}
-
-	/**
-	 * Set the event availability
-	 *
-	 * @param array $value
-	 * @return void
-	 */
-	public function setAvailabilityAttribute( $value ) {
-		$this->update_meta( 'availability', $value );
 	}
 
 	/**
@@ -971,8 +958,8 @@ class Event_Model extends Model {
 	 * @param int    $time_slot  Optional. Time slot interval in minutes. Default 0.
 	 * @return array List of available slots.
 	 */
-	public function get_available_slots( $start_date, $timezone, $duration, $calendar_id ) {
-		$this->validate_availability();
+	public function get_available_slots( $start_date, $timezone, $duration, $user_id = null ) {
+		$this->validate_availability( $user_id );
 
 		$start_date = $this->adjust_start_date( $start_date, $timezone, $duration );
 		$end_date   = $this->calculate_end_date( $start_date, $timezone );
@@ -994,7 +981,7 @@ class Event_Model extends Model {
 			}
 		}
 
-		$slots = $this->generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id );
+		$slots = $this->generate_daily_slots( $start_date, $end_date, $timezone, $duration, $user_id );
 
 		return \apply_filters( 'quillbooking_get_available_slots', $slots, $this, $start_date, $end_date, $timezone );
 	}
@@ -1002,14 +989,24 @@ class Event_Model extends Model {
 	/**
 	 * Validate availability data and weekly hours.
 	 */
-	private function validate_availability() {
-		$availability = $this->getTeamAvailability( $this->availability );
+	private function validate_availability( $user_id = null ) {
+		// Use cached processed availability if available
+		if ( $this->processed_availability !== null ) {
+			$availability = $this->processed_availability;
+		} else {
+			$availability = $this->getTeamAvailability( $this->availability, $user_id );
+			// Cache the processed availability to avoid repeated processing
+			$this->processed_availability = $availability;
+		}
+
 		if ( ! $availability ) {
 			// Try to get a system default availability as fallback
 			$default_availability = Availabilities::get_system_availability();
 			if ( $default_availability ) {
-				$this->availability = $default_availability;
-				$availability       = $default_availability;
+				// Only save to database if we're in a context where this is appropriate
+				// For now, we'll just use it without saving to avoid unintended database updates
+				$this->processed_availability = $default_availability;
+				$availability                 = $default_availability;
 			} else {
 				throw new \Exception( __( 'Availability not set', 'quillbooking' ) );
 			}
@@ -1020,20 +1017,52 @@ class Event_Model extends Model {
 			// Try to get system default availability as fallback
 			$default_availability = Availabilities::get_system_availability();
 			if ( $default_availability && ! empty( $default_availability['weekly_hours'] ) ) {
-				$this->availability = $default_availability;
+				// Only save to database if we're in a context where this is appropriate
+				// For now, we'll just use it without saving to avoid unintended database updates
+				$this->processed_availability = $default_availability;
 			} else {
 				throw new \Exception( __( 'Weekly hours are not set', 'quillbooking' ) );
 			}
 		}
 	}
 
+	/**
+	 * Get the effective availability (processed if available, otherwise original)
+	 *
+	 * @return array The availability array to use
+	 */
+	private function get_effective_availability() {
+		return $this->processed_availability !== null ? $this->processed_availability : $this->availability;
+	}
 
-	private function getTeamAvailability( $availability ) {
+	/**
+	 * Clear the processed availability cache
+	 * This should be called when the availability data changes
+	 *
+	 * @return void
+	 */
+	public function clear_availability_cache() {
+		$this->processed_availability = null;
+	}
 
+	/**
+	 * Set the event availability and clear cache
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setAvailabilityAttribute( $value ) {
+		$this->clear_availability_cache();
+		$this->update_meta( 'availability', $value );
+	}
+
+	private function getTeamAvailability( $availability, $user_id = null ) {
+		xdebug_break();
 		if ( $this->type === 'round-robin' || $this->type === 'collective' ) {
 			$type             = $availability['type'];
 			$is_common        = $availability['is_common'];
 			$availabilities[] = $availability;
+
 			if ( $type === 'existing' && $is_common == false ) {
 				$availabilities     = array();
 				$users_availability = $availability['users_availability'];
@@ -1050,8 +1079,21 @@ class Event_Model extends Model {
 					}
 				}
 
+				if ( $user_id && $this->type === 'round-robin' ) {
+					$availabilities = array_filter(
+						$availabilities,
+						function( $availability ) use ( $user_id ) {
+							return isset( $availability['user_id'] ) && $availability['user_id'] == $user_id;
+						}
+					);
+					// get first availability from availabilities
+					$first_availability           = array_values( $availabilities )[0];
+					$availability['weekly_hours'] = $first_availability['weekly_hours'];
+					$availability['override']     = $first_availability['override'];
+					$availability['timezone']     = $first_availability['timezone'];
+				}
 				// If we have multiple availabilities, merge them to find common slots
-				if ( count( $availabilities ) > 0 ) {
+				elseif ( count( $availabilities ) > 0 ) {
 					$merged_availability = $this->findCommonTeamAvailability( $availabilities );
 					// Preserve the original structure but use merged data
 					$availability['weekly_hours'] = $merged_availability['weekly_hours'];
@@ -1063,7 +1105,6 @@ class Event_Model extends Model {
 				}
 			}
 			$availability['users_availability'] = $availabilities;
-			$this->availability                 = $availability;
 		}
 		return $availability;
 	}
@@ -1538,7 +1579,7 @@ class Event_Model extends Model {
 	 * @param int    $duration   Slot duration in minutes.
 	 * @return array Generated slots.
 	 */
-	private function generate_daily_slots( $start_date, $end_date, $timezone, $duration, $calendar_id ) {
+	private function generate_daily_slots( $start_date, $end_date, $timezone, $duration, $user_id = null ) {
 		$slots = array();
 		for ( $current_date = $start_date; $current_date <= $end_date; $current_date = strtotime( '+1 day', $current_date ) ) {
 			$current_date_formatted = date( 'Y-m-d', $current_date );
@@ -1548,20 +1589,22 @@ class Event_Model extends Model {
 			$has_override = false;
 			$time_blocks  = array();
 
-			if ( isset( $this->availability['override'][ $current_date_formatted ] ) ) {
+			$effective_availability = $this->get_effective_availability();
+
+			if ( isset( $effective_availability['override'][ $current_date_formatted ] ) ) {
 				// We have a date-specific override for this day
 				$has_override = true;
-				$time_blocks  = $this->availability['override'][ $current_date_formatted ];
-			} elseif ( empty( $this->availability['weekly_hours'][ $day_of_week ]['off'] ) ) {
+				$time_blocks  = $effective_availability['override'][ $current_date_formatted ];
+			} elseif ( empty( $effective_availability['weekly_hours'][ $day_of_week ]['off'] ) ) {
 				// Fall back to regular weekly hours if no override exists
-				$time_blocks = $this->availability['weekly_hours'][ $day_of_week ]['times'];
+				$time_blocks = $effective_availability['weekly_hours'][ $day_of_week ]['times'];
 			}
 
 			// If we have time blocks (either from override or weekly hours), process them
 			if ( ! empty( $time_blocks ) ) {
 				foreach ( $time_blocks as $time_block ) {
-					$day_start = new \DateTime( $current_date_formatted . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
-					$day_end   = new \DateTime( $current_date_formatted . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+					$day_start = new \DateTime( $current_date_formatted . ' ' . $time_block['start'], new \DateTimeZone( $effective_availability['timezone'] ) );
+					$day_end   = new \DateTime( $current_date_formatted . ' ' . $time_block['end'], new \DateTimeZone( $effective_availability['timezone'] ) );
 					try {
 						$this->apply_frequency_limits( $day_start );
 						$this->apply_duration_limits( $day_start );
@@ -1571,7 +1614,7 @@ class Event_Model extends Model {
 					$day_start->setTimezone( new \DateTimeZone( $timezone ) );
 					$day_end->setTimezone( new \DateTimeZone( $timezone ) );
 
-					$slots = $this->generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id );
+					$slots = $this->generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $user_id );
 				}
 			}
 		}
@@ -1591,9 +1634,9 @@ class Event_Model extends Model {
 	 * @param int       $calendar_id The calendar ID.
 	 * @return array Updated slots with new time block slots.
 	 */
-	private function generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $calendar_id ) {
+	private function generate_slots_for_time_block( $day_start, $day_end, $duration, $timezone, $current_date, $slots, $user_id = null ) {
 		// Get current time in user timezone
-		$current_time = new \DateTime( 'now', new \DateTimeZone( $this->availability['timezone'] ) );
+		$current_time = new \DateTime( 'now', new \DateTimeZone( $this->get_effective_availability()['timezone'] ) );
 		$current_time->setTimezone( new \DateTimeZone( $timezone ) );
 
 		// Get minimum notice settings
@@ -1674,7 +1717,7 @@ class Event_Model extends Model {
 			}
 
 			// Check availability of the slot
-			$available_slots = $this->check_available_slots( $slot_start, $slot_end, $calendar_id );
+			$available_slots = $this->check_available_slots( $slot_start, $slot_end, $user_id );
 
 			if ( $available_slots['slots'] === 0 ) {
 				// Move to the next interval
@@ -1757,7 +1800,7 @@ class Event_Model extends Model {
 					// Only create the synthetic slot if it ends before the day_end
 					if ( $synthetic_slot_end <= $day_end ) {
 						// Check if this synthetic slot is available
-						$available_slots = $this->check_available_slots( $synthetic_slot_start, $synthetic_slot_end, $calendar_id );
+						$available_slots = $this->check_available_slots( $synthetic_slot_start, $synthetic_slot_end, $user_id );
 
 						if ( $available_slots['slots'] > 0 ) {
 							// Mark this as a synthetic slot
@@ -1805,13 +1848,13 @@ class Event_Model extends Model {
 	 */
 	public function get_end_date( $timezone ) {
 		// Validate required data
-		if ( empty( $this->created_at ) || empty( $this->availability['timezone'] ) ) {
+		if ( empty( $this->created_at ) || empty( $this->get_effective_availability()['timezone'] ) ) {
 			throw new \Exception( __( 'Invalid event data: missing created_at or timezone', 'quillbooking' ) );
 		}
 
 		// Validate timezone strings
 		try {
-			$original_tz = new \DateTimeZone( $this->availability['timezone'] );
+			$original_tz = new \DateTimeZone( $this->get_effective_availability()['timezone'] );
 			$target_tz   = new \DateTimeZone( $timezone );
 		} catch ( \Exception $e ) {
 			throw new \Exception( __( 'Invalid timezone provided', 'quillbooking' ) );
@@ -1895,13 +1938,13 @@ class Event_Model extends Model {
 	 */
 	public function get_start_date( $timezone ) {
 		// Validate required data
-		if ( empty( $this->created_at ) || empty( $this->availability['timezone'] ) ) {
+		if ( empty( $this->created_at ) || empty( $this->get_effective_availability()['timezone'] ) ) {
 			throw new \Exception( __( 'Invalid event data: missing created_at or timezone', 'quillbooking' ) );
 		}
 
 		// Validate timezone strings
 		try {
-			$original_tz = new \DateTimeZone( $this->availability['timezone'] );
+			$original_tz = new \DateTimeZone( $this->get_effective_availability()['timezone'] );
 			$target_tz   = new \DateTimeZone( $timezone );
 		} catch ( \Exception $e ) {
 			throw new \Exception( __( 'Invalid timezone provided', 'quillbooking' ) );
@@ -1961,7 +2004,7 @@ class Event_Model extends Model {
 	 *
 	 * @return int
 	 */
-	public function check_available_slots( $day_start, $day_end, $calendar_id ) {
+	public function check_available_slots( $day_start, $day_end, $user_id = null ) {
 		$day_start = clone $day_start;
 		$day_end   = clone $day_end;
 
@@ -2009,13 +2052,13 @@ class Event_Model extends Model {
 
 			case 'round-robin':
 				$team_members   = $this->calendar->getTeamMembers();
-				$availabilities = $this->availability['users_availability'];
+				$availabilities = $this->get_effective_availability()['users_availability'];
 
 				// For round-robin, check if ANY team member is available
 				$available_members   = 0;
 				$available_hosts_ids = array();
 				foreach ( $team_members as $team_member_id ) {
-					if ( $this->availability['is_common'] ) {
+					if ( $this->get_effective_availability()['is_common'] ) {
 						$is_member_available = true;
 					} else {
 						$is_member_available = false;
@@ -2090,7 +2133,7 @@ class Event_Model extends Model {
 
 			case 'collective':
 				$team_members   = $this->calendar->getTeamMembers();
-				$availabilities = $this->availability['users_availability'];
+				$availabilities = $this->get_effective_availability()['users_availability'];
 
 				// For collective, ALL team members must be available
 				$total_members       = count( $team_members );
@@ -2098,7 +2141,7 @@ class Event_Model extends Model {
 				$available_hosts_ids = array();
 
 				foreach ( $team_members as $team_member_id ) {
-					if ( $this->availability['is_common'] ) {
+					if ( $this->get_effective_availability()['is_common'] ) {
 						$is_member_available = true;
 					} else {
 
@@ -2187,11 +2230,12 @@ class Event_Model extends Model {
 	 *
 	 * @return int
 	 */
-	public function get_booking_available_slots( $start_time, $duration, $calendar_id ) {
+	public function get_booking_available_slots( $start_time, $duration, $timezone, $user_id = null ) {
+		xdebug_break();
 		$end_time = clone $start_time;
 		$end_time->modify( "+{$duration} minutes" );
 
-		return $this->get_slot_availability_count( $start_time, $end_time, $calendar_id );
+		return $this->get_slot_availability_count( $start_time, $end_time, $timezone, $user_id );
 	}
 
 	/**
@@ -2202,19 +2246,20 @@ class Event_Model extends Model {
 	 *
 	 * @return bool
 	 */
-	public function get_slot_availability_count( $start_time, $end_time, $calendar_id ) {
-		$availability         = $this->availability;
+	public function get_slot_availability_count( $start_time, $end_time, $timezone, $user_id = null ) {
+		xdebug_break();
+		$availability         = $this->getTeamAvailability( $this->get_effective_availability(), $user_id );
 		$start_date_formatted = $start_time->format( 'Y-m-d' );
 
 		// Check for date-specific override first
 		if ( isset( $availability['override'][ $start_date_formatted ] ) ) {
 			// We have a date-specific override for this day
 			foreach ( $availability['override'][ $start_date_formatted ] as $time_block ) {
-				$day_start = new \DateTime( $start_date_formatted . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
+				$day_start = new \DateTime( $start_date_formatted . ' ' . $time_block['start'], new \DateTimeZone( $availability['timezone'] ) );
 				$day_end   = new \DateTime( $start_date_formatted . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
 
 				if ( $start_time >= $day_start && $end_time <= $day_end ) {
-					$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
+					$slots = $this->check_available_slots( $start_time, $end_time, $user_id );
 					return $slots['slots'];
 				}
 			}
@@ -2225,11 +2270,11 @@ class Event_Model extends Model {
 
 			if ( ! $weekly_hours[ $day_of_week ]['off'] ) {
 				foreach ( $weekly_hours[ $day_of_week ]['times'] as $time_block ) {
-					$day_start = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['start'], new \DateTimeZone( $this->availability['timezone'] ) );
-					$day_end   = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['end'], new \DateTimeZone( $this->availability['timezone'] ) );
+					$day_start = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['start'], new \DateTimeZone( $availability['timezone'] ) );
+					$day_end   = new \DateTime( date( 'Y-m-d', $start_time->getTimestamp() ) . ' ' . $time_block['end'], new \DateTimeZone( $availability['timezone'] ) );
 
 					if ( $start_time >= $day_start && $end_time <= $day_end ) {
-						$slots = $this->check_available_slots( $start_time, $end_time, $calendar_id );
+						$slots = $this->check_available_slots( $start_time, $end_time, $user_id );
 						return $slots['slots'];
 					}
 				}

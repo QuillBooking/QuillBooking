@@ -431,7 +431,6 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
-		xdebug_break();
 		try {
 			$event_id            = $request->get_param( 'event_id' );
 			$start_date          = $request->get_param( 'start_date' );

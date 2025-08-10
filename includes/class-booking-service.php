@@ -30,7 +30,6 @@ class Booking_Service {
 	 * @throws \Exception If booking fails.
 	 */
 	public function book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $invitees, $location, $status = 'scheduled', $fields = array(), $user_id = null ) {
-		xdebug_break();
 		global $wpdb;
 
 		$end_date = clone $start_date;

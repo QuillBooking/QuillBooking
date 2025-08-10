@@ -1057,7 +1057,6 @@ class Event_Model extends Model {
 	}
 
 	private function getTeamAvailability( $availability, $user_id = null ) {
-		xdebug_break();
 		if ( $this->type === 'round-robin' || $this->type === 'collective' ) {
 			$type             = $availability['type'];
 			$is_common        = $availability['is_common'];
@@ -2231,7 +2230,6 @@ class Event_Model extends Model {
 	 * @return int
 	 */
 	public function get_booking_available_slots( $start_time, $duration, $timezone, $user_id = null ) {
-		xdebug_break();
 		$end_time = clone $start_time;
 		$end_time->modify( "+{$duration} minutes" );
 
@@ -2247,7 +2245,6 @@ class Event_Model extends Model {
 	 * @return bool
 	 */
 	public function get_slot_availability_count( $start_time, $end_time, $timezone, $user_id = null ) {
-		xdebug_break();
 		$availability         = $this->getTeamAvailability( $this->get_effective_availability(), $user_id );
 		$start_date_formatted = $start_time->format( 'Y-m-d' );
 

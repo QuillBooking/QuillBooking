@@ -88,7 +88,7 @@ class Integrations_Helper {
 					'has_accounts' => false,
 					'is_global'    => true,
 				),
-				'make'  => array(
+				'make'    => array(
 					'name'         => 'Make',
 					'description'  => 'Make Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'make' . '/icon.svg',
@@ -150,7 +150,7 @@ class Integrations_Helper {
 					'has_get_started' => false,
 					'has_pro_version' => false,
 				),
-				'make'  => array(
+				'make'    => array(
 					'name'            => 'Make',
 					'connected'       => false,
 					'has_accounts'    => false,

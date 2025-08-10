@@ -51,7 +51,9 @@ const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 			<div className="grid grid-cols-2 gap-4">
 				<InfoItem
 					title={__('Event Host', 'quillbooking')}
-					content={booking.calendar?.user?.display_name}
+					content={booking.hosts
+						.map((host) => host.display_name)
+						.join('- ')}
 					icon={<HostIcon width={24} height={24} />}
 				/>
 				<InfoItem

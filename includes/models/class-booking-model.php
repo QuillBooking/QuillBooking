@@ -21,6 +21,8 @@ use Illuminate\Support\Arr;
  */
 class Booking_Model extends Model {
 
+
+
 	/**
 	 * Table name
 	 *
@@ -129,6 +131,22 @@ class Booking_Model extends Model {
 	 */
 	public function event() {
 		return $this->belongsTo( Event_Model::class, 'event_id', 'id' );
+	}
+
+	/**
+	 * Relationship with booking hosts - returns user data
+	 *
+	 * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+	 */
+	public function hosts() {
+		return $this->hasManyThrough(
+			User_Model::class,           // Final model we want
+			Booking_Hosts_Model::class,  // Intermediate model (pivot table)
+			'booking_id',                // Foreign key on intermediate model
+			'ID',                        // Foreign key on final model (User_Model primary key)
+			'id',                        // Local key on this model (Booking_Model)
+			'user_id'                    // Local key on intermediate model
+		);
 	}
 
 	/**

@@ -160,7 +160,9 @@ const Calendar: React.FC = () => {
 			}
 
 			if (!calendar.timezone) {
-				setErrorMessage(__('Please select a timezone.', 'quillbooking'));
+				setErrorMessage(
+					__('Please select a timezone.', 'quillbooking')
+				);
 				setShowErrorBanner(true);
 				setTimeout(() => setShowErrorBanner(false), 5000);
 				return;
@@ -181,7 +183,7 @@ const Calendar: React.FC = () => {
 					onError: (error) => {
 						setErrorMessage(
 							error.message ||
-							__('Failed to save settings.', 'quillbooking')
+								__('Failed to save settings.', 'quillbooking')
 						);
 						setShowErrorBanner(true);
 						setTimeout(() => setShowErrorBanner(false), 5000);
@@ -191,7 +193,10 @@ const Calendar: React.FC = () => {
 			} catch (apiError) {
 				console.error('API call failed:', apiError);
 				setErrorMessage(
-					__('An unexpected error occurred during the API call.', 'quillbooking')
+					__(
+						'An unexpected error occurred during the API call.',
+						'quillbooking'
+					)
 				);
 				setShowErrorBanner(true);
 				setTimeout(() => setShowErrorBanner(false), 5000);
@@ -200,7 +205,10 @@ const Calendar: React.FC = () => {
 		} catch (error) {
 			console.error('Unexpected error in saveSettings:', error);
 			setErrorMessage(
-				__('An unexpected error occurred while saving settings.', 'quillbooking')
+				__(
+					'An unexpected error occurred while saving settings.',
+					'quillbooking'
+				)
 			);
 			setShowErrorBanner(true);
 			setTimeout(() => setShowErrorBanner(false), 5000);
@@ -323,20 +331,26 @@ const Calendar: React.FC = () => {
 					<Box className="px-20 py-5">
 						<Card className="mb-5">
 							<Flex gap={15} align="center" justify="flex-start">
-								{tabItems.map(({ key, label, icon }) => (
-									<Button
-										key={key}
-										type="text"
-										onClick={() => handleTabClick(key)}
-										className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
-									>
-										<TabButtons
-											label={label}
-											icon={icon}
-											isActive={activeTab === key}
-										/>
-									</Button>
-								))}
+								{tabItems.map(({ key, label, icon }) => {
+									return (
+										calendar?.type !== 'team' && (
+											<Button
+												key={key}
+												type="text"
+												onClick={() =>
+													handleTabClick(key)
+												}
+												className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
+											>
+												<TabButtons
+													label={label}
+													icon={icon}
+													isActive={activeTab === key}
+												/>
+											</Button>
+										)
+									);
+								})}
 							</Flex>
 						</Card>
 						{isLoading ? (

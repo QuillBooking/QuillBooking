@@ -1,6 +1,6 @@
 <?php
 /**
- * Class User_Meta_Model
+ * Class UserMeta_Model
  *
  * This class is responsible for handling the user meta model
  *
@@ -14,18 +14,9 @@ namespace QuillBooking\Models;
 use WPEloquent\Eloquent\Model;
 
 /**
- * User_Meta_Model class
+ * UserMeta_Model class
  */
 class UserMeta_Model extends Model {
-
-	/**
-	 * Table name
-	 *
-	 * @var string
-	 *
-	 * @since 1.0.0
-	 */
-	protected $table = 'usermeta';
 
 	/**
 	 * Primary key
@@ -48,6 +39,32 @@ class UserMeta_Model extends Model {
 		'meta_key',
 		'meta_value',
 	);
+
+	/**
+	 * Constructor - Set the correct table name for WordPress multisite
+	 *
+	 * @since 1.0.0
+	 */
+	public function __construct(array $attributes = []) {
+		global $wpdb;
+		
+		// Use WordPress's usermeta table (shared across multisite)
+		$this->table = $wpdb->usermeta;
+		
+		parent::__construct($attributes);
+	}
+
+	/**
+	 * Get the table associated with the model.
+	 *
+	 * @return string
+	 */
+	public function getTable() {
+		global $wpdb;
+		
+		// Always return the WordPress usermeta table
+		return $wpdb->usermeta;
+	}
 
 	/**
 	 * Relationship with user

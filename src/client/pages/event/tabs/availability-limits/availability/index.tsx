@@ -28,8 +28,12 @@ import {
 	CustomAvailability,
 	DateOverrides,
 	Host,
-	TimeSlot,
 } from 'client/types';
+
+// Team availability extends the base availability with users_availability
+interface TeamAvailability extends Availability {
+	users_availability: Record<number, Availability | CustomAvailability>;
+}
 import AvailabilityType from './availability-type';
 import SelectSchedule from './select-schedule';
 
@@ -48,6 +52,10 @@ interface AvailabilitySectionProps {
 	setDisabled: (value: boolean) => void;
 	setCommonSchedule: (value: boolean) => void;
 	commonSchedule: boolean;
+	teamAvailability: Record<number, Availability | CustomAvailability>;
+	setTeamAvailability: React.Dispatch<
+		React.SetStateAction<Record<number, Availability | CustomAvailability>>
+	>;
 }
 const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 	availabilityType,
@@ -70,7 +78,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 	const [lastAvailability, setLastAvailability] = useState<
 		Availability | CustomAvailability
 	>(customAvailability);
-	const storedAvailabilities = ConfigAPI.getAvailabilities();
+	const storedAvailabilities: Availability[] = ConfigAPI.getAvailabilities();
 	const { currentEvent: event, loading: eventLoading } = useEvent();
 
 	const { callApi, loading } = useApi();
@@ -100,7 +108,10 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 			path: `events/${event.id}/availability`,
 			method: 'GET',
 			onSuccess(response: {
-				availability: Availability | CustomAvailability;
+				availability:
+					| Availability
+					| CustomAvailability
+					| TeamAvailability;
 				range: AvailabilityRange;
 			}) {
 				setCommonSchedule(
@@ -119,11 +130,14 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 					event?.calendar.type === 'team' &&
 					response.availability.is_common
 				) {
-					const teamAvailabilityMap = {};
+					const teamAvailabilityMap: Record<
+						number,
+						Availability | CustomAvailability
+					> = {};
 					event.hosts?.forEach((host) => {
-						const defaultAvailability = Object.values(
-							storedAvailabilities
-						).find((a) => a.user_id === host.id && a.is_default);
+						const defaultAvailability = storedAvailabilities.find(
+							(a) => a.user_id === host.id && a.is_default
+						);
 						if (defaultAvailability) {
 							teamAvailabilityMap[host.id] = defaultAvailability;
 						}
@@ -138,15 +152,29 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 				) {
 					setSelectedCard(event.hosts?.[0]?.id ?? null);
 
-					setAvailability(
-						response.availability.users_availability[1]
-					);
-					setLastAvailability(
-						response.availability.users_availability[1]
-					);
-					setTeamAvailability(
-						response.availability.users_availability
-					);
+					// Type guard to check if this is a TeamAvailability
+					const teamAvailability =
+						response.availability as TeamAvailability;
+					if (teamAvailability.users_availability) {
+						const firstUserId = Object.keys(
+							teamAvailability.users_availability
+						)[0];
+						if (firstUserId) {
+							setAvailability(
+								teamAvailability.users_availability[
+									parseInt(firstUserId)
+								]
+							);
+							setLastAvailability(
+								teamAvailability.users_availability[
+									parseInt(firstUserId)
+								]
+							);
+						}
+						setTeamAvailability(
+							teamAvailability.users_availability
+						);
+					}
 				} else {
 					setAvailability(response.availability);
 					setLastAvailability(response.availability);
@@ -218,6 +246,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 		setAvailability(updatedAvailability);
 
 		setTeamAvailability((prev) => {
+			if (selectedCard === null) return prev;
 			const updatedTeamAvailability = { ...prev };
 			updatedTeamAvailability[selectedCard] = updatedAvailability;
 			return updatedTeamAvailability;
@@ -226,11 +255,9 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 		console.log('asdfasdf', teamAvailability);
 	};
 
-	const onAvailabilityChange = (id) => {
+	const onAvailabilityChange = (id: string) => {
 		setDisabled(false);
-		const selected = Object.values(storedAvailabilities).find(
-			(a) => a.id === id
-		);
+		const selected = storedAvailabilities.find((a) => a.id === id);
 		if (selected) {
 			setAvailability(selected);
 			setDateOverrides(selected.override);
@@ -244,6 +271,11 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 
 	const onAvailabilityTypeChange = (value) => {
 		setAvailabilityType(value);
+
+		// First reset to empty state to clear any previous selections
+		setAvailability(customAvailability);
+		setDateOverrides({});
+
 		if (value === 'custom') {
 			const source =
 				event?.availability_data?.type === 'custom'
@@ -257,29 +289,37 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 			setAvailability(source);
 			setDateOverrides(override);
 		} else {
-			const existing = event?.hosts?.[0]?.availabilities
-				? Object.values(event.hosts[0].availabilities)[0]
-				: lastAvailability;
-
-			setAvailability(existing);
-			setDateOverrides(existing.override);
+			// For existing type, let user select from dropdown - don't auto-select
+			// The SelectSchedule component will show empty until user makes a selection
 		}
 		setDisabled(false);
 	};
 
-	// const handleCardChange = (id: number) => {
-	// 	setDisabled(false);
-	// 	setSelectedCard(id);
-	// 	const selected = Object.values(
-	// 		event?.availability_data.users_availability
-	// 	).find((a) => a.user_id === id);
-	// 	console.log('selected', selected);
-	// 	if (selected) {
-	// 		setAvailability(selected);
-	// 		setDateOverrides(selected.override);
-	// 		setLastAvailability(selected);
-	// 	}
-	// };
+	const handleCardChange = (id: number) => {
+		setDisabled(false);
+		setSelectedCard(id);
+
+		// Reset availability to clear SelectSchedule value
+		setAvailability(customAvailability);
+		setDateOverrides({});
+
+		// Check if availability_data exists and has users_availability
+		if (
+			event?.availability_data &&
+			'users_availability' in event.availability_data
+		) {
+			const teamData = event.availability_data as TeamAvailability;
+			const selected = Object.values(teamData.users_availability).find(
+				(a) => 'user_id' in a && a.user_id === id
+			);
+			console.log('selected', selected);
+			if (selected) {
+				setAvailability(selected);
+				setDateOverrides(selected.override);
+				setLastAvailability(selected);
+			}
+		}
+	};
 
 	if (eventLoading || loading) {
 		return (
@@ -341,8 +381,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 				)}
 				icon={<CalendarTickIcon />}
 			/>
-
-			{/* {event?.calendar.type === 'team' && (
+			{event?.calendar.type === 'team' && (
 				<Flex className="items-center mt-4">
 					<Flex vertical gap={1}>
 						<div className="text-[#09090B] text-[16px] font-semibold">
@@ -360,15 +399,23 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 						onChange={(value) => {
 							setDisabled(false);
 							setCommonSchedule(value);
+
+							// Reset availability state when switching modes
+							if (!value) {
+								// Switching to individual mode - reset to custom availability
+								setAvailability(customAvailability);
+								setDateOverrides({});
+								setSelectedCard(event?.hosts?.[0]?.id ?? null);
+							}
 						}}
 						className={
 							commonSchedule ? 'bg-color-primary' : 'bg-gray-400'
 						}
 					/>
 				</Flex>
-			)} */}
+			)}
 
-			{/* {event?.calendar.type === 'team' && !commonSchedule && (
+			{event?.calendar.type === 'team' && !commonSchedule && (
 				<Flex vertical gap={10} className="mt-4">
 					<div className="text-[#09090B] text-[16px]">
 						{__('Add Availability Per Users', 'quillbooking')}
@@ -397,7 +444,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 						))}
 					</Flex>
 				</Flex>
-			)} */}
+			)}
 
 			{(commonSchedule || event?.calendar.type === 'host') && (
 				<AvailabilityType
@@ -485,7 +532,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 				/>
 			</Card>
 
-			{/* <Card className="mt-6">
+			<Card className="mt-6">
 				<Flex className="items-center">
 					<Flex vertical gap={1}>
 						<div className="text-[#09090B] text-[20px]">
@@ -506,7 +553,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 						}
 					/>
 				</Flex>
-			</Card> */}
+			</Card>
 		</Card>
 	);
 };

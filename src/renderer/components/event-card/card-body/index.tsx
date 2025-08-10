@@ -103,7 +103,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 	const [bookingData, setBookingData] = useState<any>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [totalPrice, setTotalPrice] = useState<number>(0);
-
+	const [hostIds, setHostIds] = useState<number[]>([]);
 	// Get prefilled data from URL parameters
 	const [prefilledData, setPrefilledData] = useState<{
 		name?: string;
@@ -203,6 +203,10 @@ const CardBody: React.FC<CardBodyProps> = ({
 					(selectedTime + ':00' || '')
 			);
 			formData.append('duration', selectedDuration.toString());
+
+			if (hostIds.length > 0) {
+				formData.append('host_ids', hostIds.join(','));
+			}
 
 			// Check if WooCommerce is enabled
 			const isWooCommerceEnabled =
@@ -543,6 +547,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 						event={event}
 						selectedDate={selectedDate}
 						setSelectedDate={setSelectedDate}
+						setHostIds={setHostIds}
 						timeZone={timeZone}
 						setTimeZone={setTimeZone}
 						setSelectedTime={handleSelectedTime}

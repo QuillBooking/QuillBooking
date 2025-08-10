@@ -8,10 +8,12 @@ import InfoIcon from '../../../../../icons/info-icon';
 interface TimeSlot {
 	time: string;
 	remaining: number;
+	hosts_ids: number[];
 	originalSlot: {
 		start: string;
 		end: string;
 		remaining: number;
+		hosts_ids: number[];
 	};
 }
 
@@ -20,6 +22,7 @@ interface TimePickerProps {
 	selectedDate: Dayjs;
 	selectedTime: string | null;
 	setSelectedTime: (time: string) => void;
+	setHostIds: (hostIds: number[]) => void;
 	eventType?: EventTypes;
 	showRemaining?: boolean;
 	baseColor: string;
@@ -31,6 +34,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
 	selectedDate,
 	selectedTime,
 	setSelectedTime,
+	setHostIds,
 	eventType = 'one-to-one',
 	showRemaining,
 	baseColor,
@@ -50,22 +54,31 @@ const TimePicker: React.FC<TimePickerProps> = ({
 
 		return slotsForDate
 			.filter((slot: { remaining: number }) => slot && slot.remaining > 0)
-			.map((slot: { start: string; end: string; remaining: number }) => {
-				if (!slot || !slot.start) {
-					return undefined;
+			.map(
+				(slot: {
+					start: string;
+					end: string;
+					remaining: number;
+					hosts_ids: number[];
+				}) => {
+					if (!slot || !slot.start) {
+						return undefined;
+					}
+					const timeString = slot.start.split(' ')[1];
+					const time = timeString.split(':');
+					return {
+						time: `${time[0]}:${time[1]}`,
+						remaining: slot.remaining,
+						hosts_ids: slot.hosts_ids,
+						originalSlot: slot,
+					};
 				}
-				const timeString = slot.start.split(' ')[1];
-				const time = timeString.split(':');
-				return {
-					time: `${time[0]}:${time[1]}`,
-					remaining: slot.remaining,
-					originalSlot: slot,
-				};
-			})
+			)
 			.filter((slot): slot is TimeSlot => slot !== undefined);
 	};
 
 	const timeSlots = getTimeSlots();
+	console.log('timeSlots', timeSlots);
 	const isGroupEvent = eventType === 'group';
 
 	const formatSpotsBadge = (spots: number) => {
@@ -127,7 +140,10 @@ const TimePicker: React.FC<TimePickerProps> = ({
 									border-color: ${baseColor};
 								}
 							`}`}
-							onClick={() => setSelectedTime(slot.time)}
+							onClick={() => {
+								setSelectedTime(slot.time);
+								setHostIds(slot.hosts_ids);
+							}}
 						>
 							<span className="time-slot-time">{slot.time}</span>
 							{isGroupEvent &&

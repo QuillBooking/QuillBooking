@@ -215,6 +215,11 @@ Yes, Quill Booking maintains full GDPR compliance with enterprise-grade security
 
 == Changelog ==
 
+= 1.0.3 = 
+* Fixing issues with location merge tag
+* Fixing some descriptions for the email notifications
+* Fixing the cancellation, confirmation and reschedule pages
+
 = 1.0.2 = 
 * Making the plugin compatible with php 7.4
 

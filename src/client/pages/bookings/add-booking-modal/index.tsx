@@ -71,7 +71,9 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 	const [selectedAvailability, setSelectedAvailability] =
 		useState<EventAvailability>();
-	const [timeOptions, setTimeOptions] = useState<string[]>([]);
+	const [timeOptions, setTimeOptions] = useState<
+		{ time: string; slot: any }[]
+	>([]);
 	const [showAllTimes, setShowAllTimes] = useState<boolean>(false);
 	const [ignoreAvailability, setIgnoreAvailability] =
 		useState<boolean>(false);
@@ -79,6 +81,9 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	const [isMultipleDuration, setIsMultipleDuration] =
 		useState<boolean>(false);
 	const [defaultDuration, setDefaultDuration] = useState<number | null>(null);
+	const [selectedTimeSlotHostsIds, setSelectedTimeSlotHostsIds] = useState<
+		number[]
+	>([]);
 
 	const { callApi, loading } = useApi();
 	const { errorNotice } = useNotice();
@@ -158,21 +163,22 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		});
 	};
 
-	const fetchAvailability = (value: number, calendar_id?: number) => {
+	const fetchAvailability = (value: number, user_id?: number) => {
+		console.log('fetchAvailability', value, user_id);
 		const formData = new FormData();
 		formData.append('action', 'quillbooking_booking_slots');
 		formData.append('id', value.toString());
 		formData.append('timezone', currentTimezone || '');
 		formData.append('start_date', new Date().toISOString());
 		formData.append('duration', defaultDuration?.toString() || '30');
-		if (calendar_id) {
-			formData.append('calendar_id', calendar_id.toString());
-		}
+		formData.append('user_id', user_id?.toString() ?? '');
+
 		fetchAjax('admin-ajax.php', {
 			method: 'POST',
 			body: formData,
 		})
 			.then((res) => {
+				console.log('Availability fetched:', res);
 				setSelectedAvailability(res.data.slots);
 			})
 			.catch(() => {
@@ -190,16 +196,23 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		return selectedAvailability[current.format('YYYY-MM-DD')] === undefined;
 	};
 
-	const generateTimeSlots = (date: Dayjs): string[] => {
+	const generateTimeSlots = (date: Dayjs): { time: string; slot: any }[] => {
 		if (showAllTimes) {
-			return allTimeSlots;
+			return allTimeSlots.map((time) => ({ time, slot: null }));
 		}
 		return selectedAvailability
 			? selectedAvailability[date.format('YYYY-MM-DD')].map(
-					(slot: { start: string; end: string }) => {
+					(slot: {
+						start: string;
+						end: string;
+						hosts_ids: number[];
+					}) => {
 						const timeString = slot.start.split(' ')[1];
 						const time = timeString.split(':');
-						return `${time[0]}:${time[1]}`;
+						return {
+							time: `${time[0]}:${time[1]}`,
+							slot,
+						};
 					}
 				)
 			: [];
@@ -208,11 +221,33 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	const handleDateChange = (date: Dayjs | null) => {
 		setTimeOptions(date ? generateTimeSlots(date) : []);
 		form.setFieldsValue({ selectTime: null });
+		setSelectedTimeSlotHostsIds([]);
+	};
+
+	const handleTimeChange = (selectedTime: string) => {
+		const selectedTimeOption = timeOptions.find(
+			(option) => option.time === selectedTime
+		);
+		if (selectedTimeOption && selectedTimeOption.slot) {
+			setSelectedTimeSlotHostsIds(
+				selectedTimeOption.slot.hosts_ids || []
+			);
+		} else {
+			setSelectedTimeSlotHostsIds([]);
+		}
 	};
 
 	const handleSubmit = async (values: any) => {
-		const { selectDate, selectTime, event, duration, name, email, status } =
-			values;
+		const {
+			selectDate,
+			selectTime,
+			event,
+			duration,
+			name,
+			email,
+			status,
+			hosts,
+		} = values;
 
 		const fields = getFields(values);
 		const location = form.getFieldValue('location');
@@ -224,6 +259,10 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		);
 		const startDateTime =
 			selectDate.clone().format('YYYY-MM-DD') + ` ${selectTime}:00`;
+
+		// Use selected host user_id if available, otherwise use hosts_ids from time slot
+		const hostsToSend = hosts ? [hosts] : selectedTimeSlotHostsIds;
+
 		try {
 			await form.validateFields();
 			await callApi({
@@ -240,6 +279,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					status,
 					ignore_availability: ignoreAvailability,
 					location: locationField,
+					hosts_ids: hostsToSend,
 				},
 				onSuccess: () => {
 					onSaved();
@@ -260,6 +300,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			setSelectedEvent(null);
 			setSelectedAvailability(undefined);
 			setTimeOptions([]);
+			setSelectedTimeSlotHostsIds([]);
 		}
 	}, [open, form]);
 
@@ -285,6 +326,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 		if (selectedEvent) {
 			form.resetFields(['selectDate', 'selectTime']);
 			setTimeOptions([]);
+			setSelectedTimeSlotHostsIds([]);
 			fetchAvailability(selectedEvent.id);
 		}
 	}, [currentTimezone]);
@@ -311,6 +353,7 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	useEffect(() => {
 		fetchAvailability(selectedEvent?.id || 0);
 		form.resetFields(['selectDate', 'selectTime']);
+		setSelectedTimeSlotHostsIds([]);
 	}, [defaultDuration]);
 
 	return (
@@ -408,7 +451,8 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 					</Form.Item>
 
 					{selectedEvent &&
-						selectedEvent?.calendar.type != 'host' && (
+						selectedEvent?.calendar.type != 'host' &&
+						selectedEvent?.type != 'collective' && (
 							<Form.Item
 								name="hosts"
 								label={
@@ -442,10 +486,10 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 											: ''
 										).includes(input.toLowerCase())
 									}
-									onChange={(calendar_id: number) =>
+									onChange={(user_id: number) =>
 										fetchAvailability(
 											selectedEvent.id,
-											calendar_id
+											user_id
 										)
 									}
 								>
@@ -585,10 +629,14 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 							getPopupContainer={(trigger) =>
 								trigger.parentElement
 							}
+							onChange={handleTimeChange}
 						>
-							{timeOptions.map((time) => (
-								<Select.Option key={time} value={time}>
-									{time}
+							{timeOptions.map((timeOption) => (
+								<Select.Option
+									key={timeOption.time}
+									value={timeOption.time}
+								>
+									{timeOption.time}
 								</Select.Option>
 							))}
 						</Select>

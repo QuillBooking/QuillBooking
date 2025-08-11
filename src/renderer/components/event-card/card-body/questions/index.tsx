@@ -1,5 +1,5 @@
 import { __ } from '@wordpress/i18n';
-import { Fields } from '../../../../types';
+import { AdvancedSettings, Fields } from '../../../../types';
 import './style.scss';
 import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import { Form, Spin } from 'antd';
@@ -15,6 +15,7 @@ interface QuestionsComponentsProps {
 	baseColor: string;
 	darkColor: string;
 	prefilledData?: { name?: string; email?: string }; // name comes from username parameter
+	advancedSettings?: AdvancedSettings;
 }
 
 const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
@@ -24,11 +25,17 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 	baseColor,
 	darkColor,
 	prefilledData,
+	advancedSettings,
 }) => {
 	const [form] = Form.useForm();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [countryCode, setCountryCode] = useState<string>('us');
 	const { callApi } = useApi();
+
+	const TextButtonSubmit = __(
+		advancedSettings?.submit_button_text || 'Schedule Event',
+		'@quillbooking'
+	);
 
 	const allFields = {
 		...fields.system,
@@ -135,7 +142,7 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 									{__('Scheduling...', '@quillbooking')}
 								</>
 							) : (
-								__('Schedule Event', '@quillbooking')
+								TextButtonSubmit
 							)}
 						</button>
 					</Form.Item>

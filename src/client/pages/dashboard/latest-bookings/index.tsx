@@ -136,10 +136,11 @@ const LatestBookings: React.FC = () => {
 									<div className="flex gap-4" key={dateLabel}>
 										<div className="flex-shrink-0">
 											<div
-												className={`flex flex-col justify-center items-center rounded-xl size-14 ${isTodayDate
+												className={`flex flex-col justify-center items-center rounded-xl size-14 ${
+													isTodayDate
 														? 'bg-color-primary'
 														: 'bg-purple-100'
-													}`}
+												}`}
 											>
 												<span
 													className={`text-xs font-medium capitalize ${isTodayDate ? 'text-white' : 'text-color-primary'}`}
@@ -158,40 +159,44 @@ const LatestBookings: React.FC = () => {
 											className={`w-full ${!isLastItem ? 'border-dashed border-b-2 border-[#DEE1E6]' : ''} pb-2 mb-2`}
 										>
 											<div className="space-y-4">
-												{bookings.map((booking) => (
-													<Flex
-														align="center"
-														key={booking.id}
-														className="pb-2 w-full"
-													>
+												{bookings.map((booking) => {
+													const eventTitle =
+														booking.booking_title ||
+														booking.event?.name ||
+														'';
+
+													return (
 														<Flex
-															justify="space-between"
-															align="flex-start"
-															className="w-full"
+															align="center"
+															key={booking.id}
+															className="pb-2 w-full"
 														>
-															<Flex vertical>
-																<p className="text-lg font-semibold text-color-primary-text py-1">
-																	{
-																		booking
-																			?.event
-																			?.name
-																	}
-																</p>
-																<Flex
-																	align="center"
-																	gap={8}
-																	className="text-[#A0A6B1] text-base font-medium flex-wrap"
-																>
-																	<p>
+															<Flex
+																justify="space-between"
+																align="flex-start"
+																className="w-full"
+															>
+																<Flex vertical>
+																	<p className="text-lg font-semibold text-color-primary-text py-1">
 																		{
-																			booking.time_span
+																			eventTitle
 																		}
 																	</p>
-																	{booking
-																		?.event
-																		?.location
-																		?.length >
-																		0 && (
+																	<Flex
+																		align="center"
+																		gap={8}
+																		className="text-[#A0A6B1] text-base font-medium flex-wrap"
+																	>
+																		<p>
+																			{
+																				booking.time_span
+																			}
+																		</p>
+																		{booking
+																			?.event
+																			?.location
+																			?.length >
+																			0 && (
 																			<>
 																				<span>
 																					•
@@ -208,30 +213,33 @@ const LatestBookings: React.FC = () => {
 																				</span>
 																			</>
 																		)}
-																	<p>
-																		{__(
-																			'1 person',
-																			'quillbooking'
-																		)}
-																	</p>
+																		<p>
+																			{__(
+																				'1 person',
+																				'quillbooking'
+																			)}
+																		</p>
+																	</Flex>
 																</Flex>
+																<Button
+																	onClick={() =>
+																		navigate(
+																			`bookings/${booking.id}`
+																		)
+																	}
+																	className="bg-color-secondary p-2 rounded-lg border-none shadow-none"
+																>
+																	<GoArrowRight
+																		size={
+																			16
+																		}
+																		className="text-color-primary"
+																	/>
+																</Button>
 															</Flex>
-															<Button
-																onClick={() =>
-																	navigate(
-																		`bookings/${booking.id}`
-																	)
-																}
-																className="bg-color-secondary p-2 rounded-lg border-none shadow-none"
-															>
-																<GoArrowRight
-																	size={16}
-																	className="text-color-primary"
-																/>
-															</Button>
 														</Flex>
-													</Flex>
-												))}
+													);
+												})}
 											</div>
 										</div>
 									</div>

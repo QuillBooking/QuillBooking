@@ -1,4 +1,6 @@
 <?php
+
+use QuillBooking\Models\Booking_Model;
 $icons_url = plugins_url( 'src/templates/icons/', QUILLBOOKING_PLUGIN_FILE );
 
 $event_name  = $booking_array['event']['name'] ?? '';
@@ -71,6 +73,83 @@ $ics_path     = trailingslashit( $upload_dir['path'] ) . $ics_filename;
 $ics_url      = trailingslashit( $upload_dir['url'] ) . $ics_filename;
 
 file_put_contents( $ics_path, $ics_content );
+
+// Get advanced settings from the event
+
+
+$advanced_settings = $booking_array['event']['advanced_settings'] ?? array();
+
+// Check cancellation permissions
+$can_cancel = true;
+
+$find_booking = Booking_Model::find( $booking_array['id'] );
+
+// resovle merge tags for permission_denied_message
+$cancel_denied_message     = $merge_tags_manager->process_merge_tags( $advanced_settings['permission_denied_message'], $find_booking );
+$reschedule_denied_message = $merge_tags_manager->process_merge_tags( $advanced_settings['reschedule_denied_message'], $find_booking );
+
+if ( ! empty( $advanced_settings['attendee_cannot_cancel'] ) && $advanced_settings['attendee_cannot_cancel'] && $advanced_settings['cannot_cancel_time'] === 'event_start' ) {
+	$can_cancel            = false;
+	$cancel_denied_message = $cancel_denied_message ?? __( 'You do not have permission to cancel this booking.', 'quillbooking' );
+} else {
+	// Check time-based cancellation restrictions
+	$cancel_time_restriction = $advanced_settings['cannot_cancel_time'];
+	$cancel_time_value       = $advanced_settings['cannot_cancel_time_value'] ?? 24;
+	$cancel_time_unit        = $advanced_settings['cannot_cancel_time_unit'] ?? 'hours';
+
+	if ( $cancel_time_restriction === 'less_than' ) {
+		try {
+			$current_time     = new DateTime( 'now', new DateTimeZone( $timezone ) );
+			$restriction_time = clone $start_dt;
+
+			// Calculate the restriction time based on settings
+			$time_modifier = "-{$cancel_time_value} {$cancel_time_unit}";
+			$restriction_time->modify( $time_modifier );
+
+			// If current time is past the restriction time, prevent cancellation
+			if ( $current_time >= $restriction_time ) {
+				$can_cancel            = false;
+				$cancel_denied_message = $cancel_denied_message ?? __( 'Cancellation is no longer allowed for this booking.', 'quillbooking' );
+			}
+		} catch ( Exception $e ) {
+			// If there's an error with time calculation, allow cancellation for safety
+			$can_cancel = true;
+		}
+	}
+}
+
+// Check reschedule permissions
+$can_reschedule = true;
+
+if ( ! empty( $advanced_settings['attendee_cannot_reschedule'] ) && $advanced_settings['attendee_cannot_reschedule'] && $advanced_settings['cannot_reschedule_time'] === 'event_start' ) {
+	$can_reschedule            = false;
+	$reschedule_denied_message = $reschedule_denied_message ?? __( 'You do not have permission to reschedule this booking.', 'quillbooking' );
+} else {
+	// Check time-based reschedule restrictions
+	$reschedule_time_restriction = $advanced_settings['cannot_reschedule_time'];
+	$reschedule_time_value       = $advanced_settings['cannot_reschedule_time_value'] ?? 24;
+	$reschedule_time_unit        = $advanced_settings['cannot_reschedule_time_unit'] ?? 'hours';
+
+	if ( $reschedule_time_restriction === 'event_start' || $reschedule_time_restriction === 'less_than' ) {
+		try {
+			$current_time     = new DateTime( 'now', new DateTimeZone( $timezone ) );
+			$restriction_time = clone $start_dt;
+
+			// Calculate the restriction time based on settings
+			$time_modifier = "-{$reschedule_time_value} {$reschedule_time_unit}";
+			$restriction_time->modify( $time_modifier );
+
+			// If current time is past the restriction time, prevent rescheduling
+			if ( $current_time >= $restriction_time ) {
+				$can_reschedule            = false;
+				$reschedule_denied_message = $reschedule_denied_message ?? __( 'Rescheduling is no longer allowed for this booking.', 'quillbooking' );
+			}
+		} catch ( Exception $e ) {
+			// If there's an error with time calculation, allow rescheduling for safety
+			$can_reschedule = true;
+		}
+	}
+}
 ?>
 
 <div class="quillbooking-meeting">
@@ -141,16 +220,47 @@ file_put_contents( $ics_path, $ics_content );
 
 	<?php if ( ! isset( $_GET['embed_type'] ) || $_GET['embed_type'] !== 'Inline' ) : ?>
 		<div class="confirmation-footer">
-			<div class="change-options">
-				<p><?php esc_html_e( 'Need to make a change?', 'quillbooking' ); ?>
-					<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=cancel"
-						class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
-					<?php esc_html_e( 'or', 'quillbooking' ); ?>
-					<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=reschedule"
-						class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
-				</p>
-			</div>
+			<?php if ( $can_cancel || $can_reschedule ) : ?>
+				<div class="change-options">
+					<p><?php esc_html_e( 'Need to make a change?', 'quillbooking' ); ?>
+						<?php if ( $can_cancel && $can_reschedule ) : ?>
+							<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=cancel"
+								class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
+							<?php esc_html_e( 'or', 'quillbooking' ); ?>
+							<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=reschedule"
+								class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
+						<?php elseif ( $can_cancel ) : ?>
+							<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=cancel"
+								class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
+						<?php elseif ( $can_reschedule ) : ?>
+							<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=reschedule"
+								class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
+						<?php endif; ?>
+					</p>
+				</div>
+			
+			<?php endif; ?>
 
+			<?php if ( ! $can_cancel || ! $can_reschedule ) : ?>
+				<div class="change-options">
+					<p class="permission-denied-message">
+						<?php
+						if ( ! $can_cancel ) {
+							echo '<p>';
+							echo "<span class='cancel-link'>Cancel : </span>";
+							echo esc_html( $cancel_denied_message );
+							echo '</p>';
+						}
+						if ( ! $can_reschedule ) {
+							echo '<p>';
+							echo "<span class='reschedule-link'>Reschedule : </span>";
+							echo esc_html( $reschedule_denied_message );
+							echo '</p>';
+						}
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
 			<!-- <div class="cancellation-policy">
 			<h3>
 			<?php

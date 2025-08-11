@@ -401,18 +401,18 @@ const Event: React.FC = () => {
 			),
 			icon: <SmsNotiIcon />,
 		},
-		// {
-		// 	key: 'advanced-settings',
-		// 	label: __('Advanced Settings', 'quillbooking'),
-		// 	children: (
-		// 		<AdvancedSettings
-		// 			ref={childRef}
-		// 			disabled={saveDisabled}
-		// 			setDisabled={setSaveDisabled}
-		// 		/>
-		// 	),
-		// 	icon: <SettingsIcon />,
-		// },
+		{
+			key: 'advanced-settings',
+			label: __('Advanced Settings', 'quillbooking'),
+			children: (
+				<AdvancedSettings
+					ref={childRef}
+					disabled={saveDisabled}
+					setDisabled={setSaveDisabled}
+				/>
+			),
+			icon: <SettingsIcon />,
+		},
 		{
 			key: 'payment-settings',
 			label: __('Payments', 'quillbooking'),

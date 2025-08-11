@@ -12,6 +12,8 @@ interface ReschedulePageProps {
 	booking: Booking;
 	url: string;
 	globalCurrency: string;
+	canReschedule?: boolean;
+	rescheduleDeniedMessage?: string;
 }
 
 const ReschedulePage: React.FC<ReschedulePageProps> = ({
@@ -21,7 +23,26 @@ const ReschedulePage: React.FC<ReschedulePageProps> = ({
 	booking,
 	url,
 	globalCurrency,
+	canReschedule = true,
+	rescheduleDeniedMessage = '',
 }) => {
+	// If rescheduling is not allowed, show denial message
+	if (!canReschedule) {
+		return (
+			<div className="event-card-container">
+				<div className="event-card-wrapper">
+					<Header color={event.color} />
+					<div className="reschedule-denied-container">
+						<div className="reschedule-denied-message">
+							{rescheduleDeniedMessage ||
+								'Rescheduling is not allowed for this booking.'}
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="event-card-container">
 			<div className="event-card-wrapper">

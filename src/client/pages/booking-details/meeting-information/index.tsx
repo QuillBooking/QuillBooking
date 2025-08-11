@@ -32,6 +32,7 @@ interface BookingDetailsProps {
 }
 
 const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
+	const eventTitle = booking.booking_title || booking.event?.name || '';
 	return (
 		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
 			<CardHeader
@@ -44,14 +45,16 @@ const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 			/>
 			<InfoItem
 				title={__('Event Title', 'quillbooking')}
-				content={booking.event.name}
+				content={eventTitle}
 				icon={<AllCalendarIcon width={24} height={24} />}
 			/>
 
 			<div className="grid grid-cols-2 gap-4">
 				<InfoItem
 					title={__('Event Host', 'quillbooking')}
-					content={booking.calendar?.user?.display_name}
+					content={booking.hosts
+						.map((host) => host.display_name)
+						.join('- ')}
 					icon={<HostIcon width={24} height={24} />}
 				/>
 				<InfoItem

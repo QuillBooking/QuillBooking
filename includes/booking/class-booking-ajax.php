@@ -49,8 +49,8 @@ class Booking_Ajax {
 	 * @return void
 	 */
 	public function booking() {
+		xdebug_break();
 		 // check_ajax_referer( 'quillbooking', 'nonce' );
-
 		try {
 			$id    = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
 			$event = $this->bookingValidatorClass::validate_event( $id );
@@ -118,8 +118,18 @@ class Booking_Ajax {
 				$fields = json_decode( wp_unslash( $_POST['fields'] ), true );
 			}
 
+			$host_ids = isset( $_POST['host_ids'] ) ? $_POST['host_ids'] : null;
+			if ( $host_ids ) {
+				$host_ids = explode( ',', $host_ids );
+				if ( $event->type === 'round-robin' ) {
+					$host_id = $host_ids[0];
+				} else {
+					$host_id = $host_ids;
+				}
+			}
+
 			$calendar_id = $event->calendar_id;
-			$booking     = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields );
+			$booking     = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields, $host_id );
 
 			do_action(
 				'quillbooking_after_booking_created',
@@ -134,6 +144,25 @@ class Booking_Ajax {
 				throw new \Exception( __( 'Payment processing requires the Pro plugin to be active', 'quillbooking' ) );
 			}
 
+			// resolve
+			/*
+				redirect_query_string
+				:
+				"{{booking:additional_guests}}{{guest:email}}"
+				redirect_url
+				:
+				"https://www.google.com/"
+			*/
+			$redirect_query_string = isset( $booking->event->advanced_settings['redirect_query_string'] ) ? $booking->event->advanced_settings['redirect_query_string'] : null;
+			// Merge tags
+			$merge_tags_manager    = \QuillBooking\Managers\Merge_Tags_Manager::instance();
+			$result                = $merge_tags_manager->process_merge_tags( $redirect_query_string, $booking );
+			$redirect_query_string = $result;
+
+			$redirect_url = isset( $booking->event->advanced_settings['redirect_url'] ) ? $booking->event->advanced_settings['redirect_url'] : null;
+			// add query string to redirect url
+			$redirect_url                  = $redirect_url . '?' . $redirect_query_string;
+			$booking->booking_redirect_url = $redirect_url;
 			wp_send_json_success( array( 'booking' => $booking ) );
 		} catch ( \Exception $e ) {
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
@@ -147,10 +176,9 @@ class Booking_Ajax {
 	 */
 	public function booking_details() {
 		 // check_ajax_referer( 'quillbooking', 'nonce' );
-
 		try {
-			$id          = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
-			$calendar_id = isset( $_POST['calendar_id'] ) ? intval( $_POST['calendar_id'] ) : null;
+			$id      = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
+			$user_id = isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : null;
 
 			if ( ! $id ) {
 				throw new \Exception( __( 'Invalid event', 'quillbooking' ) );
@@ -171,7 +199,7 @@ class Booking_Ajax {
 			$duration = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : $event->duration;
 			$duration = $this->bookingValidatorClass::validate_duration( $duration, $event->duration );
 
-			$available_slots = $event->get_available_slots( $start_date, $timezone, $duration, $calendar_id );
+			$available_slots = $event->get_available_slots( $start_date, $timezone, $duration, $user_id );
 
 			wp_send_json_success( array( 'slots' => $available_slots ) );
 		} catch ( \Exception $e ) {

@@ -88,6 +88,7 @@ export type Event = {
 	updated_at: string;
 	calendar: Calendar;
 	additional_settings: AdditionalSettings;
+	advanced_settings: AdvancedSettings;
 	group_settings?: GroupSettings;
 	hosts?: Host[];
 	fields?: EventMetaData[];
@@ -110,6 +111,30 @@ export type AdditionalSettings = {
 	allow_additional_guests: boolean;
 	max_invitees?: number;
 	show_remaining?: boolean;
+};
+
+export type AdvancedSettings = {
+	submit_button_text: string;
+	redirect_after_submit: boolean;
+	redirect_url: string;
+	require_confirmation: boolean;
+	confirmation_time: 'always' | 'less_than';
+	confirmation_time_value: number;
+	confirmation_time_unit: UnitOptions;
+	allow_multiple_bookings: boolean;
+	maximum_bookings: number;
+	attendee_cannot_cancel: boolean;
+	cannot_cancel_time: 'event_start' | 'less_than';
+	cannot_cancel_time_value: number;
+	cannot_cancel_time_unit: UnitOptions;
+	permission_denied_message: string;
+	attendee_cannot_reschedule: boolean;
+	cannot_reschedule_time: 'event_start' | 'less_than';
+	cannot_reschedule_time_value: number;
+	cannot_reschedule_time_unit: UnitOptions;
+	reschedule_denied_message: string;
+	event_title: string;
+	redirect_query_string: string;
 };
 
 export type GroupSettings = {
@@ -238,13 +263,14 @@ export type BookingsTabsTypes =
 	| 'no-show'
 	| 'all';
 
-export type EventTypes = 'one-to-one' | 'group' | 'round-robin';
+export type EventTypes = 'one-to-one' | 'group' | 'round-robin' | 'collective';
 
 export type EventTypesOptions =
 	| 'All Event Types'
 	| 'One to One'
 	| 'Group'
-	| 'Round Robin';
+	| 'Round Robin'
+	| 'Collective';
 
 export type GeneralOptions = { value: string; label: string };
 
@@ -302,6 +328,7 @@ export interface Booking extends BookingResponse {
 	guest?: Guest | Guest[];
 	calendar?: Calendar;
 	logs?: BookingLog[];
+	booking_title?: string;
 	order: {
 		booking_id: number;
 		created_at: string;

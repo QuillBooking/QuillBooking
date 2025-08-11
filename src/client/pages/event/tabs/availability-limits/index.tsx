@@ -52,7 +52,9 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 		});
 		const [dateOverrides, setDateOverrides] = useState<DateOverrides>({});
 		const [commonSchedule, setCommonSchedule] = useState<boolean>(false);
-		const [teamAvailability, setTeamAvailability] = useState();
+		const [teamAvailability, setTeamAvailability] = useState<
+			Record<number, Availability | CustomAvailability>
+		>({});
 
 		// Limits state
 		const [bookingDurationOptions, setBookingDurationOptions] =
@@ -129,6 +131,15 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 		}));
 		const saveEventDetails = async () => {
 			try {
+				// First, update the original availability if availability_id exists and type is 'existing'
+				if (
+					availabilityType === 'existing' &&
+					'id' in availability &&
+					availability?.id
+				) {
+					await updateOriginalAvailability();
+				}
+
 				const eventHostavailability = {
 					...availability,
 					type: availabilityType,
@@ -167,6 +178,55 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 
 				// Re-throw the error if you want calling code to handle it
 				throw new Error(error.message);
+			}
+		};
+
+		const updateOriginalAvailability = async () => {
+			try {
+				if (event?.calendar?.type === 'team' && !commonSchedule) {
+					// For team individual schedules, update each user's availability
+					for (const [userId, userAvailability] of Object.entries(
+						teamAvailability
+					)) {
+						if ('id' in userAvailability && userAvailability?.id) {
+							await callApi({
+								path: `availabilities/${'id' in userAvailability ? userAvailability.id : ''}`,
+								method: 'PUT',
+								data: {
+									name: userAvailability.name,
+									weekly_hours: userAvailability.weekly_hours,
+									override: userAvailability.override || {},
+									timezone: userAvailability.timezone,
+								},
+								onError(error) {
+									throw new Error(
+										`Failed to update availability for user ${userId}: ${error.message}`
+									);
+								},
+							});
+						}
+					}
+				} else if ('id' in availability && availability?.id) {
+					// For host or team common schedule, update the selected availability
+					await callApi({
+						path: `availabilities/${'id' in availability ? availability.id : ''}`,
+						method: 'PUT',
+						data: {
+							name: availability.name,
+							weekly_hours: availability.weekly_hours,
+							override: dateOverrides || {},
+							timezone: availability.timezone,
+						},
+						onError(error) {
+							throw new Error(
+								`Failed to update original availability: ${error.message}`
+							);
+						},
+					});
+				}
+			} catch (error: any) {
+				console.error('Failed to update original availability:', error);
+				throw error;
 			}
 		};
 		return (

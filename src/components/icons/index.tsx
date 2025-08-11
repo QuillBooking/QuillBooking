@@ -64,6 +64,7 @@ export { default as EmailNotiIcon } from './email-noti-icon';
 export { default as SmsNotiIcon } from './sms-noti-icon';
 export { default as WebhookIcon } from './webhook-icon';
 export { default as IntegrationsIcon } from './integrations-icon';
+export { default as AutomationIcon } from './automation-icon';
 export { default as PaymentIcon } from './payment-icon';
 export { default as EventLocIcon } from './event-location-icon';
 export { default as CalendarTickIcon } from './calendar-tick-icon';

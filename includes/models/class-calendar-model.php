@@ -273,15 +273,29 @@ class Calendar_Model extends Model {
 	 * @return array
 	 */
 	public function getTeamMembers() {
-		$teamMembers = array();
-
+		$teamMembers     = array();
 		$teamMembersMeta = $this->meta()->where( 'meta_key', 'team_members' )->first();
-
 		if ( $teamMembersMeta ) {
 			$teamMembers = maybe_unserialize( $teamMembersMeta->meta_value );
 		}
-
 		return $teamMembers;
+	}
+
+	public function getTeamMembersCalendarIds() {
+		$teamMembers = $this->getTeamMembers();
+		$calendarIds = array();
+
+		if ( empty( $teamMembers ) || ! is_array( $teamMembers ) ) {
+			return $calendarIds;
+		}
+
+		foreach ( $teamMembers as $member_id ) {
+			$calendar = Calendar_Model::where( 'user_id', $member_id )->get();
+			foreach ( $calendar as $cal ) {
+					$calendarIds[] = $cal->id;
+			}
+		}
+		return $calendarIds;
 	}
 
 	/**

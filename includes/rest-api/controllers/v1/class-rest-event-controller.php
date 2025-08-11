@@ -359,7 +359,7 @@ class REST_Event_Controller extends REST_Controller {
 					 'arg_options' => array(
 						 'sanitize_callback' => 'sanitize_text_field',
 					 ),
-					 'enum'        => array( 'one-to-one', 'group', 'round-robin' ),
+					 'enum'        => array( 'one-to-one', 'group', 'round-robin', 'collective' ),
 				 ),
 				 'duration'      => array(
 					 'description' => __( 'Event duration.', 'quillbooking' ),
@@ -515,6 +515,14 @@ class REST_Event_Controller extends REST_Controller {
 				return new WP_Error( 'rest_event_error', __( 'Invalid event type.', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
+			// Validate hosts for team calendar events
+			if ( 'team' === $calendar->type && in_array( $type, $team_events ) ) {
+				if ( empty( $hosts ) || ! is_array( $hosts ) || count( $hosts ) === 0 ) {
+					$wpdb->query( 'ROLLBACK' );
+					return new WP_Error( 'rest_event_error', __( 'Team events require at least one host to be selected.', 'quillbooking' ), array( 'status' => 400 ) );
+				}
+			}
+
 			// Validate payment settings if provided
 			if ( $payments_settings ) {
 				// Use Payment_Validator to validate payment settings
@@ -571,18 +579,6 @@ class REST_Event_Controller extends REST_Controller {
 					$availability_data   = array_merge( $availability_data, $default_user_availability );
 					$event->availability = $availability_data;
 				}
-				// will be updated later to use the following
-				// $availability_data = array(
-				// 'is_common' => false,
-				// 'type'      => 'existing',
-				// );
-				// foreach ( $hosts as $user_id ) {
-				// $default_user_availability = Availabilities::get_user_default_availability( $user_id );
-				// if ( $default_user_availability ) {
-				// $availability_data['users_availability'][ $user_id ] = $default_user_availability;
-				// }
-				// }
-				// $event->availability = $availability_data;
 			}
 
 			$event->setReserveTimesAttribute( false );
@@ -823,7 +819,7 @@ class REST_Event_Controller extends REST_Controller {
 			$fields              = $request->get_param( 'fields' );
 			$reserve_times       = $request->get_param( 'reserve_times' );
 			$hosts               = $request->get_param( 'hosts' );
-			// $slug                = $request->get_param( 'slug' );
+			$slug                = $request->get_param( 'slug' );
 
 			$event = Event_Model::with( 'calendar' )->find( $id );
 			if ( ! $event ) {
@@ -868,15 +864,15 @@ class REST_Event_Controller extends REST_Controller {
 				$event->setWebhookFeedsAttribute( $webhook_feeds );
 			}
 
-			// if ( ! empty( $slug ) ) {
-			// $exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
-			// if ( $exists ) {
-			// $wpdb->query( 'ROLLBACK' );
-			// return new WP_Error( 'rest_event_error', __( 'Event slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
-			// }
+			if ( ! empty( $slug ) ) {
+				$exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
+				if ( $exists ) {
+					$wpdb->query( 'ROLLBACK' );
+					return new WP_Error( 'rest_event_error', __( 'Event slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
+				}
 
-			// $updated['slug'] = $slug;
-			// }
+				$updated['slug'] = $slug;
+			}
 
 			if ( ! empty( $hosts ) && $event->calendar->type === 'team' ) {
 				// Normalize hosts to array of IDs if they're arrays with 'id' key

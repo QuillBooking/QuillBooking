@@ -11,6 +11,7 @@
 namespace QuillBooking\Database;
 
 use QuillBooking\Capabilities;
+use QuillBooking\Database\Migrations\Booking_Hosts_Table;
 use QuillBooking\Database\Migrations\Calendars_Table;
 use QuillBooking\Database\Migrations\Calendars_Meta_Table;
 use QuillBooking\Database\Migrations\Events_Table;
@@ -55,6 +56,7 @@ class Install {
 				Guests_Table::class,
 				Tasks_Meta_Table::class,
 				Booking_Orders_Table::class,
+				Booking_Hosts_Table::class,
 			)
 		);
 

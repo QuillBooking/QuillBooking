@@ -389,6 +389,11 @@ class REST_Booking_Controller extends REST_Controller {
 
 			$bookings = $query->with( 'event', 'event.calendar', 'guest', 'calendar.user', 'order' )->get();
 
+			// Process merge tags for each booking's event
+			foreach ( $bookings as $booking ) {
+				$booking->booking_title = $booking->processMergeTagsEvent();
+			}
+
 			$time_format = Settings::get_all();
 			// The 'bookings' array data is designed to compensate for pagination when it gets added.
 			return new WP_REST_Response(
@@ -443,13 +448,23 @@ class REST_Booking_Controller extends REST_Controller {
 			$current_url         = $request->get_param( 'current_url' );
 			$fields              = $request->get_param( 'fields' );
 			$ignore_availability = $request->get_param( 'ignore_availability' );
+			$host_ids            = $request->get_param( 'hosts_ids' ) ?? null;
 
 			$event    = Booking_Validator::validate_event( $event_id );
 			$duration = Booking_Validator::validate_duration( $duration, $event->duration );
 
+			$host_id = null;
+			if ( $host_ids ) {
+				if ( $event->type === 'round-robin' ) {
+					$host_id = $host_ids[0];
+				} else {
+					$host_id = $host_ids;
+				}
+			}
+
 			if ( ! $ignore_availability ) {
 				$start_date      = Booking_Validator::validate_start_date( $start_date, $timezone );
-				$available_slots = $event->get_booking_available_slots( $start_date, $duration, $timezone );
+				$available_slots = $event->get_booking_available_slots( $start_date, $duration, $timezone, $host_id );
 				if ( ! $available_slots ) {
 					throw new \Exception( __( 'Sorry, This booking is not available', 'quillbooking' ) );
 				}
@@ -468,26 +483,12 @@ class REST_Booking_Controller extends REST_Controller {
 			$booking_service = apply_filters( 'quillbooking_booking_service_instance', new Booking_Service() );
 
 			$validate_invitee = $booking_service->validate_invitee( $event, $invitee );
-			$calendar_id      = $event->calendar_id;
-			$booking          = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields );
+
+			$calendar_id = $event->calendar_id;
+			$booking     = $booking_service->book_event_slot( $event, $calendar_id, $start_date, $duration, $timezone, $validate_invitee, $location, $status, $fields, $host_id );
 
 			$bookings   = array();
 			$bookings[] = $booking;
-
-			// if ( get_current_user_id() ) {
-			// $guest_data['user_id'] = get_current_user_id();
-			// }
-
-			// if ( 'collective' === $event->type ) {
-			// $teamMembers = $event->calendar->teamMembers;
-			// foreach ( $teamMembers as $teamMember ) {
-			// $booking    = $this->book_event_slot( $event, $teamMember, $start_time, $slot_time, $timezone, $guest_data, $additional_guests, $location, $status );
-			// $bookings[] = $booking;
-			// }
-			// } else {
-			// $booking    = $this->book_event_slot( $event, $event->calendar_id, $start_time, $slot_time, $timezone, $guest_data, $additional_guests, $location, $status );
-			// $bookings[] = $booking;
-			// }
 
 			return new WP_REST_Response( $bookings, 200 );
 		} catch ( Exception $e ) {
@@ -528,8 +529,11 @@ class REST_Booking_Controller extends REST_Controller {
 				return new WP_Error( 'rest_booking_error', __( 'Booking not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			$booking->load( 'guest', 'event', 'calendar.user', 'logs', 'event.calendar' );
+			$booking->load( 'guest', 'event', 'calendar.user', 'logs', 'event.calendar', 'hosts' );
 			$booking->fields = $booking->get_meta( 'fields' );
+
+			// Process merge tags for the booking's event
+			$booking->booking_title = $booking->processMergeTagsEvent( $booking );
 
 			return new WP_REST_Response( $booking, 200 );
 		} catch ( Exception $e ) {
@@ -810,7 +814,7 @@ class REST_Booking_Controller extends REST_Controller {
 	 */
 	protected function validate_year( $year ) {
 		$year = absint( $year );
-		return  $year >= 2000 ? $year : date( 'Y' );
+		return $year >= 2000 ? $year : date( 'Y' );
 	}
 
 	/**

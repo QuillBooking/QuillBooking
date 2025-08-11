@@ -15,9 +15,9 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 	private string $globalSettingsClass;
 	private string $calendarModelClass;
 
-	public function __construct( 
-		string $eventModelClass, 
-		string $bookingValidatorClass, 
+	public function __construct(
+		string $eventModelClass,
+		string $bookingValidatorClass,
 		string $globalSettingsClass,
 		string $calendarModelClass
 	) {
@@ -25,7 +25,7 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 		$this->eventModelClass       = $eventModelClass;
 		$this->bookingValidatorClass = $bookingValidatorClass;
 		$this->globalSettingsClass   = $globalSettingsClass;
-		$this->calendarModelClass = $calendarModelClass;
+		$this->calendarModelClass    = $calendarModelClass;
 	}
 
 	public function render( $booking ) {
@@ -42,19 +42,28 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 			exit;
 		}
 
-		$event = $booking->event;
+		$event                    = $booking->event;
 		$event->hosts             = $this->get_event_hosts( $event );
 		$event->fields            = $event->getFieldsAttribute();
 		$event->availability_data = $event->getAvailabilityAttribute();
 		$event->reserve           = $event->getReserveTimesAttribute();
+		$event->advanced_settings = $event->getAdvancedSettingsAttribute();
+
+		// Check reschedule permissions
+		$booking_array          = $this->dataFormatter->format_booking_data( $booking );
+		$advanced_settings      = $event->advanced_settings ?? array();
+		$timezone               = $booking_array['timezone'] ?? 'UTC';
+		$reschedule_permissions = $this->check_reschedule_permissions( $advanced_settings, $booking_array, $timezone );
 
 		add_filter(
 			'quillbooking_config',
-			function ( $config ) use ( $booking, $calendar, $event, $global_settings ) {
-				$config['calendar']        = $calendar->toArray();
-				$config['event']           = $event->toArray();
-				$config['booking']         = $booking->toArray();
-				$config['global_settings'] = $global_settings;
+			function ( $config ) use ( $booking, $calendar, $event, $global_settings, $reschedule_permissions ) {
+				$config['calendar']                  = $calendar->toArray();
+				$config['event']                     = $event->toArray();
+				$config['booking']                   = $booking->toArray();
+				$config['global_settings']           = $global_settings;
+				$config['can_reschedule']            = $reschedule_permissions['can_reschedule'];
+				$config['reschedule_denied_message'] = $reschedule_permissions['message'];
 				return $config;
 			}
 		);

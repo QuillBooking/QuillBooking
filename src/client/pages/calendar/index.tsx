@@ -78,9 +78,32 @@ const Calendar: React.FC = () => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const tabParam = urlParams.get('tab');
 		if (tabParam === 'integrations') {
-			setActiveTab('integrations');
+			// Check if calendar is loaded and is team type
+			if (calendar?.type === 'team') {
+				// Remove integrations tab from URL and set general tab
+				urlParams.delete('tab');
+				urlParams.delete('subtab');
+				const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+				window.history.replaceState({}, '', newUrl);
+				setActiveTab('general');
+			} else {
+				setActiveTab('integrations');
+			}
 		}
-	}, []);
+	}, [calendar]);
+
+	// Prevent team calendars from accessing integrations tab
+	useEffect(() => {
+		if (calendar?.type === 'team' && activeTab === 'integrations') {
+			// Redirect to general tab immediately
+			const urlParams = new URLSearchParams(window.location.search);
+			urlParams.delete('tab');
+			urlParams.delete('subtab');
+			const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+			window.history.replaceState({}, '', newUrl);
+			setActiveTab('general');
+		}
+	}, [calendar, activeTab]);
 
 	if (!id) {
 		return null;
@@ -220,6 +243,10 @@ const Calendar: React.FC = () => {
 			case 'general':
 				return <GeneralSettings />;
 			case 'integrations':
+				// Don't render integrations for team calendars
+				if (calendar?.type === 'team') {
+					return <GeneralSettings />;
+				}
 				return (
 					<Integrations
 						hasSelectedCalendar={hasSelectedCalendar}
@@ -233,7 +260,7 @@ const Calendar: React.FC = () => {
 		}
 	};
 
-	const tabItems = [
+	const generalTabItems = [
 		{
 			key: 'general',
 			label: __('General Host Settings', 'quillbooking'),
@@ -245,6 +272,15 @@ const Calendar: React.FC = () => {
 			icon: <UpcomingCalendarIcon width={20} height={20} />,
 		},
 	];
+
+	const teamTabItems = [
+		{
+			key: 'general',
+			label: __('General Host Settings', 'quillbooking'),
+			icon: <SettingsIcon width={20} height={20} />,
+		},
+	];
+	const tabItems = calendar?.type === 'team' ? teamTabItems : generalTabItems;
 
 	const handleTabClick = (key: string) => {
 		// Check if we're trying to change tabs while in integrations with accounts but no calendar
@@ -333,22 +369,18 @@ const Calendar: React.FC = () => {
 							<Flex gap={15} align="center" justify="flex-start">
 								{tabItems.map(({ key, label, icon }) => {
 									return (
-										calendar?.type !== 'team' && (
-											<Button
-												key={key}
-												type="text"
-												onClick={() =>
-													handleTabClick(key)
-												}
-												className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
-											>
-												<TabButtons
-													label={label}
-													icon={icon}
-													isActive={activeTab === key}
-												/>
-											</Button>
-										)
+										<Button
+											key={key}
+											type="text"
+											onClick={() => handleTabClick(key)}
+											className={`${activeTab === key ? 'bg-color-tertiary' : ''}`}
+										>
+											<TabButtons
+												label={label}
+												icon={icon}
+												isActive={activeTab === key}
+											/>
+										</Button>
 									);
 								})}
 							</Flex>

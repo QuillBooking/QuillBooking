@@ -10,14 +10,19 @@
 namespace QuillBooking;
 
 use Illuminate\Support\Arr;
+use QuillBooking\Models\Availability_Model;
 
 /**
- * Availabilities class
+ * Availabilities class - Backward compatibility wrapper
+ * 
+ * This class now acts as a wrapper around the Availability_Model
+ * to maintain backward compatibility while transitioning to the model-based approach.
  */
-class Availabilities {
+class Availabilities
+{
 
 	/**
-	 * Option Name
+	 * Option Name - kept for legacy compatibility
 	 *
 	 * @var string
 	 */
@@ -28,10 +33,16 @@ class Availabilities {
 	 *
 	 * @return array
 	 */
-	public static function get_availabilities() {
-		$availabilities = get_option( self::$option_name, array() );
+	public static function get_availabilities()
+	{
+		$availabilities = Availability_Model::all();
+		$result = array();
 
-		return $availabilities;
+		foreach ($availabilities as $availability) {
+			$result[] = $availability->toCompatibleArray();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -39,17 +50,13 @@ class Availabilities {
 	 *
 	 * @param string $id
 	 *
-	 * @return array
+	 * @return array|null
 	 */
-	public static function get_availability( $id ) {
-		$availabilities = self::get_availabilities();
+	public static function get_availability($id)
+	{
+		$availability = Availability_Model::find($id);
 
-		return Arr::first(
-			$availabilities,
-			function( $availability ) use ( $id ) {
-				return $id === $availability['id'];
-			}
-		);
+		return $availability ? $availability->toCompatibleArray() : null;
 	}
 
 	/**
@@ -59,15 +66,16 @@ class Availabilities {
 	 *
 	 * @return array
 	 */
-	public static function get_user_availabilities( $id ) {
-		$availabilities = self::get_availabilities();
+	public static function get_user_availabilities($id)
+	{
+		$availabilities = Availability_Model::getUserAvailabilities($id);
+		$result = array();
 
-		return array_filter(
-			$availabilities,
-			function( $availability ) use ( $id ) {
-				return $id === $availability['user_id'];
-			}
-		);
+		foreach ($availabilities as $availability) {
+			$result[] = $availability->toCompatibleArray();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -77,15 +85,11 @@ class Availabilities {
 	 *
 	 * @return array|null
 	 */
-	public static function get_user_default_availability( $id ) {
-		$availabilities = self::get_availabilities();
+	public static function get_user_default_availability($id)
+	{
+		$availability = Availability_Model::getUserDefault($id);
 
-		return Arr::first(
-			$availabilities,
-			function( $availability ) use ( $id ) {
-				return $id === $availability['user_id'] && $availability['is_default'] === true;
-			}
-		);
+		return $availability ? $availability->toCompatibleArray() : null;
 	}
 
 	/**
@@ -93,16 +97,34 @@ class Availabilities {
 	 *
 	 * @param array $availability
 	 *
-	 * @return boolean
+	 * @return array
 	 */
-	public static function add_availability( $availability ) {
-		$availabilities = self::get_availabilities();
+	public static function add_availability($availability)
+	{
+		// Prepare data for model
+		$value_data = array(
+			'weekly_hours' => Arr::get($availability, 'weekly_hours', array()),
+			'override' => Arr::get($availability, 'override', array()),
+		);
 
-		$availabilities[] = $availability;
+		$model_data = array(
+			'user_id' => Arr::get($availability, 'user_id'),
+			'name' => Arr::get($availability, 'name'),
+			'value' => wp_json_encode($value_data),
+			'timezone' => Arr::get($availability, 'timezone', 'UTC'),
+			'is_default' => Arr::get($availability, 'is_default', false),
+		);
 
-		update_option( self::$option_name, $availabilities );
+		// If setting as default, unset other defaults for this user
+		if ($model_data['is_default']) {
+			Availability_Model::where('user_id', $model_data['user_id'])
+				->where('is_default', true)
+				->update(array('is_default' => false));
+		}
 
-		return $availability;
+		$model = Availability_Model::create($model_data);
+
+		return $model->toCompatibleArray();
 	}
 
 	/**
@@ -112,16 +134,36 @@ class Availabilities {
 	 *
 	 * @return boolean
 	 */
-	public static function update_availability( $availability ) {
-		$availabilities         = self::get_availabilities();
-		$updated_availabilities = array_map(
-			function( $item ) use ( $availability ) {
-				return $item['id'] === $availability['id'] ? $availability : $item;
-			},
-			$availabilities
+	public static function update_availability($availability)
+	{
+		$id = Arr::get($availability, 'id');
+		$model = Availability_Model::find($id);
+
+		if (!$model) {
+			return false;
+		}
+
+		// Prepare value data
+		$value_data = array(
+			'weekly_hours' => Arr::get($availability, 'weekly_hours', array()),
+			'override' => Arr::get($availability, 'override', array()),
 		);
 
-		return update_option( self::$option_name, $updated_availabilities );
+		$update_data = array(
+			'name' => Arr::get($availability, 'name', $model->name),
+			'value' => wp_json_encode($value_data),
+			'timezone' => Arr::get($availability, 'timezone', $model->timezone),
+			'is_default' => Arr::get($availability, 'is_default', $model->is_default),
+		);
+
+		// If setting as default, unset other defaults for this user
+		if ($update_data['is_default'] && !$model->is_default) {
+			Availability_Model::where('user_id', $model->user_id)
+				->where('is_default', true)
+				->update(array('is_default' => false));
+		}
+
+		return $model->update($update_data);
 	}
 
 	/**
@@ -131,16 +173,15 @@ class Availabilities {
 	 *
 	 * @return boolean
 	 */
-	public static function delete_availability( $id ) {
-		$availabilities         = self::get_availabilities();
-		$updated_availabilities = array_filter(
-			$availabilities,
-			function( $availability ) use ( $id ) {
-				return $id !== $availability['id'];
-			}
-		);
+	public static function delete_availability($id)
+	{
+		$model = Availability_Model::find($id);
 
-		return update_option( self::$option_name, $updated_availabilities );
+		if (!$model) {
+			return false;
+		}
+
+		return $model->delete();
 	}
 
 	/**
@@ -148,97 +189,34 @@ class Availabilities {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return array
+	 * @return array|null
 	 */
-	public static function get_default_availability() {
-		return Arr::first(
-			self::get_availabilities(),
-			function( $availability ) {
-				return Arr::get( $availability, 'is_default', false ) === true;
-			}
-		);
+	public static function get_default_availability()
+	{
+		$availability = Availability_Model::where('is_default', true)->first();
+
+		return $availability ? $availability->toCompatibleArray() : null;
 	}
 
 	/**
-	 * Get default availability
+	 * Get system availability structure
 	 *
 	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
-	public static function get_system_availability() {
+	public static function get_system_availability()
+	{
+		$default_data = Availability_Model::getDefaultAvailability();
+
 		return array(
-			'id'           => 'default',
-			'is_default'   => true,
-			'user_id'      => 'system',
-			'name'         => __( 'Default', 'quill-booking' ),
-			'weekly_hours' => array(
-				'monday'    => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
-						),
-					),
-					'off'   => false,
-				),
-				'tuesday'   => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
-						),
-					),
-					'off'   => false,
-				),
-				'wednesday' => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
-						),
-					),
-					'off'   => false,
-				),
-				'thursday'  => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
-						),
-					),
-					'off'   => false,
-				),
-				'friday'    => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
-						),
-					),
-					'off'   => false,
-				),
-				'saturday'  => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
-						),
-					),
-					'off'   => true,
-				),
-				'sunday'    => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
-						),
-					),
-					'off'   => true,
-				),
-			),
-			'override'     => array(),
-			'timezone'     => 'Africa/Cairo',
+			'id' => 'default',
+			'is_default' => true,
+			'user_id' => 'system',
+			'name' => $default_data['name'],
+			'weekly_hours' => $default_data['weekly_hours'],
+			'override' => $default_data['override'],
+			'timezone' => 'Africa/Cairo',
 		);
 	}
 
@@ -249,13 +227,15 @@ class Availabilities {
 	 *
 	 * @return void
 	 */
-	public static function add_default_availability() {
-		$availabilities = self::get_availabilities();
+	public static function add_default_availability()
+	{
+		$availabilities = Availability_Model::all();
 
-		if ( empty( $availabilities ) ) {
+		if ($availabilities->isEmpty()) {
 			$default_availability = self::get_system_availability();
-
-			self::add_availability( $default_availability );
+			// Remove the 'id' field as it will be auto-generated
+			unset($default_availability['id']);
+			self::add_availability($default_availability);
 		}
 	}
 }

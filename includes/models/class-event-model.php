@@ -76,6 +76,9 @@ class Event_Model extends Model {
 		'created_at',
 		'updated_at',
 		'is_disabled',
+		'availability_id',
+		'availability_meta',
+		'availability_type',
 	);
 
 	/**
@@ -84,9 +87,12 @@ class Event_Model extends Model {
 	 * @var array
 	 */
 	protected $casts = array(
-		'calendar_id' => 'integer',
-		'is_disabled' => 'boolean',
-		'reserve'     => 'boolean',
+		'calendar_id'       => 'integer',
+		'is_disabled'       => 'boolean',
+		'reserve'           => 'boolean',
+		'availability_id'   => 'integer',
+		'availability_meta' => 'array',
+		'availability_type' => 'string',
 	);
 
 	/**
@@ -95,11 +101,14 @@ class Event_Model extends Model {
 	 * @var array
 	 */
 	protected $rules = array(
-		'calendar_id' => 'required|integer',
-		'name'        => 'required',
-		'type'        => 'required',
-		'duration'    => 'required',
-		'color'       => 'regex:/^#[a-fA-F0-9]{6}$/',
+		'calendar_id'       => 'required|integer',
+		'name'              => 'required',
+		'type'              => 'required',
+		'duration'          => 'required',
+		'color'             => 'regex:/^#[a-fA-F0-9]{6}$/',
+		'availability_id'   => 'required|integer',
+		'availability_meta' => 'required|array',
+		'availability_type' => 'required|string',
 	);
 
 	/**
@@ -116,6 +125,11 @@ class Event_Model extends Model {
 		'duration.required'          => 'Event duration is required',
 		'settings.location.required' => 'Event location is required',
 		'color.regex'                => 'Color must be a valid hex color',
+		'availability_id.required'   => 'Availability ID is required',
+		'availability_id.integer'    => 'Availability ID must be an integer',
+		'availability_meta.required' => 'Availability meta is required',
+		'availability_type.required' => 'Availability type is required',
+		'availability_type.string'   => 'Availability type must be a string',
 	);
 
 	/**
@@ -167,6 +181,16 @@ class Event_Model extends Model {
 		return $this->hasMany( Booking_Model::class, 'event_id' );
 	}
 
+	/**
+	 * Relationship with availability
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 */
+	public function availability() {
+		return $this->belongsTo( Availability_Model::class, 'availability_id', 'id' );
+	}
 
 	/**
 	 * Get the fields meta value.
@@ -1032,7 +1056,7 @@ class Event_Model extends Model {
 	 * @return array The availability array to use
 	 */
 	private function get_effective_availability() {
-		return $this->processed_availability !== null ? $this->processed_availability : $this->availability;
+		 return $this->processed_availability !== null ? $this->processed_availability : $this->availability;
 	}
 
 	/**
@@ -1081,7 +1105,7 @@ class Event_Model extends Model {
 				if ( $user_id && $this->type === 'round-robin' ) {
 					$availabilities = array_filter(
 						$availabilities,
-						function( $availability ) use ( $user_id ) {
+						function ( $availability ) use ( $user_id ) {
 							return isset( $availability['user_id'] ) && $availability['user_id'] == $user_id;
 						}
 					);

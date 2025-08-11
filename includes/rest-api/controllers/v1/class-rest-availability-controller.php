@@ -17,14 +17,14 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
-use QuillBooking\Availabilities;
-use QuillBooking\Availability_service;
+use QuillBooking\Models\Availability_Model;
 use QuillBooking\Models\Event_Meta_Model;
 
 /**
  * REST_Availability_Controller class
  */
-class REST_Availability_Controller extends REST_Controller {
+class REST_Availability_Controller extends REST_Controller
+{
 
 	/**
 	 * REST Base
@@ -40,26 +40,27 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @since 1.0.0
 	 */
-	public function register_routes() {
+	public function register_routes()
+	{
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
 				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_items' ),
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-					'args'                => array(
+					'methods' => WP_REST_Server::READABLE,
+					'callback' => array($this, 'get_items'),
+					'permission_callback' => array($this, 'get_items_permissions_check'),
+					'args' => array(
 						'filter' => array(
-							'description' => __( 'Filter availabilities.', 'quill-booking' ),
-							'type'        => 'object',
+							'description' => __('Filter availabilities.', 'quill-booking'),
+							'type' => 'object',
 						),
 					),
 				),
 				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'methods' => WP_REST_Server::CREATABLE,
+					'callback' => array($this, 'create_item'),
+					'permission_callback' => array($this, 'create_item_permissions_check'),
 				),
 			)
 		);
@@ -69,19 +70,19 @@ class REST_Availability_Controller extends REST_Controller {
 			'/' . $this->rest_base . '/(?P<id>[a-zA-Z0-9]+)',
 			array(
 				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'methods' => WP_REST_Server::READABLE,
+					'callback' => array($this, 'get_item'),
+					'permission_callback' => array($this, 'get_item_permissions_check'),
 				),
 				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'methods' => WP_REST_Server::EDITABLE,
+					'callback' => array($this, 'update_item'),
+					'permission_callback' => array($this, 'update_item_permissions_check'),
 				),
 				array(
-					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
+					'methods' => WP_REST_Server::DELETABLE,
+					'callback' => array($this, 'delete_item'),
+					'permission_callback' => array($this, 'delete_item_permissions_check'),
 				),
 			)
 		);
@@ -91,9 +92,9 @@ class REST_Availability_Controller extends REST_Controller {
 			'/' . $this->rest_base . '/(?P<id>[a-zA-Z0-9]+)/clone',
 			array(
 				array(
-					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'clone_item' ),
-					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'methods' => WP_REST_Server::CREATABLE,
+					'callback' => array($this, 'clone_item'),
+					'permission_callback' => array($this, 'create_item_permissions_check'),
 				),
 			)
 		);
@@ -103,9 +104,9 @@ class REST_Availability_Controller extends REST_Controller {
 			'/' . $this->rest_base . '/(?P<id>[a-zA-Z0-9]+)/set-default',
 			array(
 				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'set_default' ),
-					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'methods' => WP_REST_Server::EDITABLE,
+					'callback' => array($this, 'set_default'),
+					'permission_callback' => array($this, 'create_item_permissions_check'),
 				),
 			)
 		);
@@ -118,173 +119,174 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return array
 	 */
-	public function get_item_schema() {
-		 return array(
-			 '$schema'    => 'http://json-schema.org/draft-04/schema#',
-			 'title'      => 'availability',
-			 'type'       => 'object',
-			 'properties' => array(
-				 'id'           => array(
-					 'description' => __( 'Unique identifier for the object.', 'quill-booking' ),
-					 'type'        => 'integer',
-					 'context'     => array( 'view', 'edit' ),
-					 'readonly'    => true,
-				 ),
-				 'user_id'      => array(
-					 'description' => __( 'User ID.', 'quill-booking' ),
-					 'type'        => 'integer',
-					 'context'     => array( 'view', 'edit' ),
-					 'required'    => true,
-				 ),
-				 'name'         => array(
-					 'description' => __( 'Name.', 'quill-booking' ),
-					 'type'        => 'string',
-					 'context'     => array( 'view', 'edit' ),
-					 'required'    => true,
-				 ),
-				 'weekly_hours' => array(
-					 'description' => __( 'Weekly hours.', 'quill-booking' ),
-					 'type'        => 'object',
-					 'properties'  => array(
-						 'monday'    => array(
-							 'type'       => 'object',
-							 'properties' => array(
-								 'start' => array(
-									 'type' => 'string',
-								 ),
-								 'end'   => array(
-									 'type' => 'string',
-								 ),
-								 'off'   => array(
-									 'type' => 'boolean',
-								 ),
-							 ),
-						 ),
-						 'tuesday'   => array(
-							 'type'       => 'object',
-							 'properties' => array(
-								 'start' => array(
-									 'type' => 'string',
-								 ),
-								 'end'   => array(
-									 'type' => 'string',
-								 ),
-								 'off'   => array(
-									 'type' => 'boolean',
-								 ),
-							 ),
-						 ),
-						 'wednesday' => array(
-							 'type'       => 'object',
-							 'properties' => array(
-								 'start' => array(
-									 'type' => 'string',
-								 ),
-								 'end'   => array(
-									 'type' => 'string',
-								 ),
-								 'off'   => array(
-									 'type' => 'boolean',
-								 ),
-							 ),
-						 ),
-						 'thursday'  => array(
-							 'type'       => 'object',
-							 'properties' => array(
-								 'start' => array(
-									 'type' => 'string',
-								 ),
-								 'end'   => array(
-									 'type' => 'string',
-								 ),
-								 'off'   => array(
-									 'type' => 'boolean',
-								 ),
-							 ),
-						 ),
-						 'friday'    => array(
-							 'type'       => 'object',
-							 'properties' => array(
-								 'start' => array(
-									 'type' => 'string',
-								 ),
-								 'end'   => array(
-									 'type' => 'string',
-								 ),
-								 'off'   => array(
-									 'type' => 'boolean',
-								 ),
-							 ),
-						 ),
-						 'saturday'  => array(
-							 'type'       => 'object',
-							 'properties' => array(
-								 'start' => array(
-									 'type' => 'string',
-								 ),
-								 'end'   => array(
-									 'type' => 'string',
-								 ),
-								 'off'   => array(
-									 'type' => 'boolean',
-								 ),
-							 ),
-						 ),
-						 'sunday'    => array(
-							 'type'       => 'object',
-							 'properties' => array(
-								 'start' => array(
-									 'type' => 'string',
-								 ),
-								 'end'   => array(
-									 'type' => 'string',
-								 ),
-								 'off'   => array(
-									 'type' => 'boolean',
-								 ),
-							 ),
-						 ),
-					 ),
-					 'context'     => array( 'view', 'edit' ),
-					 'required'    => true,
-				 ),
-				 'override'     => array(
-					 'description' => __( 'Override.', 'quill-booking' ),
-					 'type'        => 'object',
-					 'properties'  => array(
-						 'days'  => array(
-							 'type'  => 'array',
-							 'items' => array(
-								 'type' => 'string',
-							 ),
-						 ),
-						 'hours' => array(
-							 'type'  => 'array',
-							 'items' => array(
-								 'type'       => 'object',
-								 'properties' => array(
-									 'start' => array(
-										 'type' => 'string',
-									 ),
-									 'end'   => array(
-										 'type' => 'string',
-									 ),
-								 ),
-							 ),
-						 ),
-					 ),
-					 'context'     => array( 'view', 'edit' ),
-					 'required'    => false,
-				 ),
-				 'is_default'   => array(
-					 'description' => __( 'Is default.', 'quill-booking' ),
-					 'type'        => 'boolean',
-					 'context'     => array( 'view', 'edit' ),
-					 'required'    => false,
-					 'default'     => false,
-				 ),
-			 ),
-		 );
+	public function get_item_schema()
+	{
+		return array(
+			'$schema' => 'http://json-schema.org/draft-04/schema#',
+			'title' => 'availability',
+			'type' => 'object',
+			'properties' => array(
+				'id' => array(
+					'description' => __('Unique identifier for the object.', 'quill-booking'),
+					'type' => 'integer',
+					'context' => array('view', 'edit'),
+					'readonly' => true,
+				),
+				'user_id' => array(
+					'description' => __('User ID.', 'quill-booking'),
+					'type' => 'integer',
+					'context' => array('view', 'edit'),
+					'required' => true,
+				),
+				'name' => array(
+					'description' => __('Name.', 'quill-booking'),
+					'type' => 'string',
+					'context' => array('view', 'edit'),
+					'required' => true,
+				),
+				'weekly_hours' => array(
+					'description' => __('Weekly hours.', 'quill-booking'),
+					'type' => 'object',
+					'properties' => array(
+						'monday' => array(
+							'type' => 'object',
+							'properties' => array(
+								'start' => array(
+									'type' => 'string',
+								),
+								'end' => array(
+									'type' => 'string',
+								),
+								'off' => array(
+									'type' => 'boolean',
+								),
+							),
+						),
+						'tuesday' => array(
+							'type' => 'object',
+							'properties' => array(
+								'start' => array(
+									'type' => 'string',
+								),
+								'end' => array(
+									'type' => 'string',
+								),
+								'off' => array(
+									'type' => 'boolean',
+								),
+							),
+						),
+						'wednesday' => array(
+							'type' => 'object',
+							'properties' => array(
+								'start' => array(
+									'type' => 'string',
+								),
+								'end' => array(
+									'type' => 'string',
+								),
+								'off' => array(
+									'type' => 'boolean',
+								),
+							),
+						),
+						'thursday' => array(
+							'type' => 'object',
+							'properties' => array(
+								'start' => array(
+									'type' => 'string',
+								),
+								'end' => array(
+									'type' => 'string',
+								),
+								'off' => array(
+									'type' => 'boolean',
+								),
+							),
+						),
+						'friday' => array(
+							'type' => 'object',
+							'properties' => array(
+								'start' => array(
+									'type' => 'string',
+								),
+								'end' => array(
+									'type' => 'string',
+								),
+								'off' => array(
+									'type' => 'boolean',
+								),
+							),
+						),
+						'saturday' => array(
+							'type' => 'object',
+							'properties' => array(
+								'start' => array(
+									'type' => 'string',
+								),
+								'end' => array(
+									'type' => 'string',
+								),
+								'off' => array(
+									'type' => 'boolean',
+								),
+							),
+						),
+						'sunday' => array(
+							'type' => 'object',
+							'properties' => array(
+								'start' => array(
+									'type' => 'string',
+								),
+								'end' => array(
+									'type' => 'string',
+								),
+								'off' => array(
+									'type' => 'boolean',
+								),
+							),
+						),
+					),
+					'context' => array('view', 'edit'),
+					'required' => true,
+				),
+				'override' => array(
+					'description' => __('Override.', 'quill-booking'),
+					'type' => 'object',
+					'properties' => array(
+						'days' => array(
+							'type' => 'array',
+							'items' => array(
+								'type' => 'string',
+							),
+						),
+						'hours' => array(
+							'type' => 'array',
+							'items' => array(
+								'type' => 'object',
+								'properties' => array(
+									'start' => array(
+										'type' => 'string',
+									),
+									'end' => array(
+										'type' => 'string',
+									),
+								),
+							),
+						),
+					),
+					'context' => array('view', 'edit'),
+					'required' => false,
+				),
+				'is_default' => array(
+					'description' => __('Is default.', 'quill-booking'),
+					'type' => 'boolean',
+					'context' => array('view', 'edit'),
+					'required' => false,
+					'default' => false,
+				),
+			),
+		);
 	}
 
 	/**
@@ -296,33 +298,32 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function get_items( $request ) {
-		$filter         = $request->get_param( 'filter' ) ? $request->get_param( 'filter' ) : array();
-		$user           = Arr::get( $filter, 'user' ) ? Arr::get( $filter, 'user' ) : 'own';
-		$availabilities = Availabilities::get_availabilities();
+	public function get_items($request)
+	{
+		$filter = $request->get_param('filter') ? $request->get_param('filter') : array();
+		$user = Arr::get($filter, 'user') ? Arr::get($filter, 'user') : 'own';
 
-		if ( 'all' === $user && ! current_user_can( 'quillbooking_read_all_availability' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to read all availabilities.', 'quill-booking' ), array( 'status' => 403 ) );
+		if ('all' === $user && !current_user_can('quillbooking_read_all_availability')) {
+			return new WP_Error('rest_forbidden', __('You do not have permission to read all availabilities.', 'quill-booking'), array('status' => 403));
 		}
 
-		if ( 'own' === $user ) {
-			$availabilities = array_filter(
-				$availabilities,
-				function ( $availability ) {
-					return get_current_user_id() === $availability['user_id'];
-				}
-			);
+		$query = Availability_Model::query();
+
+		if ('own' === $user) {
+			$query->where('user_id', get_current_user_id());
 		}
 
-		// Add number of calendars and calenders to each availability
-		$availabilities = array_map(
-			function ( $availability ) {
-				return $this->events_details_for_availability( $availability );
-			},
-			$availabilities
-		);
+		$availabilities = $query->get();
 
-		return new WP_REST_Response( $availabilities, 200 );
+		// Convert to array format and add events details
+		$availabilities_array = array();
+		foreach ($availabilities as $availability) {
+			$availability_data = $this->prepare_availability_for_response($availability);
+			$availability_data = $this->events_details_for_availability($availability_data);
+			$availabilities_array[] = $availability_data;
+		}
+
+		return new WP_REST_Response($availabilities_array, 200);
 	}
 
 	/**
@@ -334,8 +335,9 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return bool|WP_Error
 	 */
-	public function get_items_permissions_check( $request ) {
-		return current_user_can( 'quillbooking_read_all_availability' ) || current_user_can( 'quillbooking_read_own_availability' );
+	public function get_items_permissions_check($request)
+	{
+		return current_user_can('quillbooking_read_all_availability') || current_user_can('quillbooking_read_own_availability');
 	}
 
 	/**
@@ -347,21 +349,23 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function get_item( $request ) {
-		$id           = $request->get_param( 'id' );
-		$availability = Availabilities::get_availability( $id );
+	public function get_item($request)
+	{
+		$id = $request->get_param('id');
+		$availability = Availability_Model::find($id);
 
-		if ( ! $availability ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 404 ) );
+		if (!$availability) {
+			return new WP_Error('rest_availability_invalid_id', __('Invalid availability ID.', 'quill-booking'), array('status' => 404));
 		}
 
-		if ( ! current_user_can( 'quillbooking_read_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to read this availability.', 'quill-booking' ), array( 'status' => 403 ) );
+		if (!current_user_can('quillbooking_read_all_availability') && get_current_user_id() !== $availability->user_id) {
+			return new WP_Error('rest_forbidden', __('You do not have permission to read this availability.', 'quill-booking'), array('status' => 403));
 		}
 
-		$availability = $this->events_details_for_availability( $availability );
+		$availability_data = $this->prepare_availability_for_response($availability);
+		$availability_data = $this->events_details_for_availability($availability_data);
 
-		return new WP_REST_Response( $availability, 200 );
+		return new WP_REST_Response($availability_data, 200);
 	}
 
 	/**
@@ -373,8 +377,9 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return bool|WP_Error
 	 */
-	public function get_item_permissions_check( $request ) {
-		return current_user_can( 'quillbooking_read_all_availability' ) || current_user_can( 'quillbooking_read_own_availability' );
+	public function get_item_permissions_check($request)
+	{
+		return current_user_can('quillbooking_read_all_availability') || current_user_can('quillbooking_read_own_availability');
 	}
 
 	/**
@@ -386,28 +391,47 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function create_item( $request ) {
-		$weekly_hours = $request->get_param( 'weekly_hours' );
-		$override     = $request->get_param( 'override' );
-		$user_id      = $request->get_param( 'user_id' ) ? $request->get_param( 'user_id' ) : get_current_user_id();
-		$name         = $request->get_param( 'name' );
-		$timezone     = $request->get_param( 'timezone' );
+	public function create_item($request)
+	{
+		$weekly_hours = $request->get_param('weekly_hours');
+		$override = $request->get_param('override') ?: array();
+		$user_id = $request->get_param('user_id') ? $request->get_param('user_id') : get_current_user_id();
+		$name = $request->get_param('name');
+		$timezone = $request->get_param('timezone');
 
-		$availability_service = new Availability_service();
-
-		$availability = $availability_service->create_availability(
-			$user_id,
-			$name,
-			$weekly_hours,
-			$override,
-			$timezone
-		);
-
-		if ( ! $availability ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 400 ) );
+		if (!$name) {
+			return new WP_Error('rest_availability_invalid_name', __('Invalid availability name.', 'quill-booking'), array('status' => 400));
 		}
 
-		return new WP_REST_Response( $availability, 201 );
+		if (empty($weekly_hours)) {
+			return new WP_Error('rest_availability_invalid_weekly_hours', __('Invalid weekly hours.', 'quill-booking'), array('status' => 400));
+		}
+
+		if (empty($timezone)) {
+			return new WP_Error('rest_availability_invalid_timezone', __('Invalid timezone.', 'quill-booking'), array('status' => 400));
+		}
+
+		// Prepare value data
+		$value_data = array(
+			'weekly_hours' => $weekly_hours,
+			'override' => $override,
+		);
+
+		$availability_data = array(
+			'user_id' => $user_id,
+			'name' => $name,
+			'value' => wp_json_encode($value_data),
+			'timezone' => $timezone,
+			'is_default' => false,
+		);
+
+		try {
+			$availability = Availability_Model::create($availability_data);
+			$response_data = $this->prepare_availability_for_response($availability);
+			return new WP_REST_Response($response_data, 201);
+		} catch (Exception $e) {
+			return new WP_Error('rest_availability_create_failed', $e->getMessage(), array('status' => 400));
+		}
 	}
 
 	/**
@@ -419,8 +443,9 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return bool|WP_Error
 	 */
-	public function create_item_permissions_check( $request ) {
-		return current_user_can( 'quillbooking_manage_all_availability' );
+	public function create_item_permissions_check($request)
+	{
+		return current_user_can('quillbooking_manage_all_availability');
 	}
 
 	/**
@@ -432,43 +457,61 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function update_item( $request ) {
-		$id           = $request->get_param( 'id' );
-		$weekly_hours = $request->get_param( 'weekly_hours' );
-		$override     = $request->get_param( 'override' );
-		$name         = $request->get_param( 'name' );
-		$timezone     = $request->get_param( 'timezone' );
-		$availability = Availabilities::get_availability( $id );
+	public function update_item($request)
+	{
+		$id = $request->get_param('id');
+		$weekly_hours = $request->get_param('weekly_hours');
+		$override = $request->get_param('override');
+		$name = $request->get_param('name');
+		$timezone = $request->get_param('timezone');
 
-		if ( ! $availability ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 404 ) );
+		$availability = Availability_Model::find($id);
+
+		if (!$availability) {
+			return new WP_Error('rest_availability_invalid_id', __('Invalid availability ID.', 'quill-booking'), array('status' => 404));
 		}
 
-		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to update this availability.', 'quill-booking' ), array( 'status' => 403 ) );
+		if (!current_user_can('quillbooking_manage_all_availability') && get_current_user_id() !== $availability->user_id) {
+			return new WP_Error('rest_forbidden', __('You do not have permission to update this availability.', 'quill-booking'), array('status' => 403));
 		}
-		$update = array_filter(
-			array(
-				'name'         => $name,
-				'weekly_hours' => $weekly_hours,
-				'override'     => $override,
-				'timezone'     => $timezone,
-			),
-			function ( $value, $key ) {
-					// Always include override even if empty
-				if ( $key === 'override' ) {
-					return true;
-				}
-					return ! empty( $value );
-			},
-			ARRAY_FILTER_USE_BOTH
-		);
 
-		$availability = array_merge( $availability, $update );
+		// Get current value data
+		$current_value = json_decode($availability->value, true) ?: array();
 
-		Availabilities::update_availability( $availability );
+		// Prepare update data
+		$update_data = array();
 
-		return new WP_REST_Response( $availability, 200 );
+		if ($name) {
+			$update_data['name'] = $name;
+		}
+
+		if ($timezone) {
+			$update_data['timezone'] = $timezone;
+		}
+
+		// Update value if weekly_hours or override are provided
+		if ($weekly_hours || isset($override)) {
+			$value_data = $current_value;
+
+			if ($weekly_hours) {
+				$value_data['weekly_hours'] = $weekly_hours;
+			}
+
+			// Always include override even if empty
+			if (isset($override)) {
+				$value_data['override'] = $override;
+			}
+
+			$update_data['value'] = wp_json_encode($value_data);
+		}
+
+		try {
+			$availability->update($update_data);
+			$response_data = $this->prepare_availability_for_response($availability);
+			return new WP_REST_Response($response_data, 200);
+		} catch (Exception $e) {
+			return new WP_Error('rest_availability_update_failed', $e->getMessage(), array('status' => 400));
+		}
 	}
 
 	/**
@@ -480,8 +523,9 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return bool|WP_Error
 	 */
-	public function update_item_permissions_check( $request ) {
-		return current_user_can( 'quillbooking_manage_all_availability' ) || current_user_can( 'quillbooking_manage_own_availability' );
+	public function update_item_permissions_check($request)
+	{
+		return current_user_can('quillbooking_manage_all_availability') || current_user_can('quillbooking_manage_own_availability');
 	}
 
 	/**
@@ -493,33 +537,37 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function delete_item( $request ) {
-		$id = $request->get_param( 'id' );
+	public function delete_item($request)
+	{
+		$id = $request->get_param('id');
 
-		$availability = Availabilities::get_availability( $id );
+		$availability = Availability_Model::find($id);
 
-		if ( ! $availability ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 404 ) );
+		if (!$availability) {
+			return new WP_Error('rest_availability_invalid_id', __('Invalid availability ID.', 'quill-booking'), array('status' => 404));
 		}
 
-		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to delete this availability.', 'quill-booking' ), array( 'status' => 403 ) );
+		if (!current_user_can('quillbooking_manage_all_availability') && get_current_user_id() !== $availability->user_id) {
+			return new WP_Error('rest_forbidden', __('You do not have permission to delete this availability.', 'quill-booking'), array('status' => 403));
 		}
 
-		if ( true === $availability['is_default'] ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete the default availability.', 'quill-booking' ), array( 'status' => 400 ) );
+		if ($availability->is_default) {
+			return new WP_Error('rest_availability_invalid_id', __('Sorry, you cannot delete the default availability.', 'quill-booking'), array('status' => 400));
 		}
 
-		// Get the availability with events count added
-		$availability = $this->events_details_for_availability( $availability );
+		// Check if availability has associated events
+		$events_count = $availability->events()->count();
 
-		if ( 0 > $availability['events_count'] ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete an availability with events.', 'quill-booking' ), array( 'status' => 400 ) );
+		if ($events_count > 0) {
+			return new WP_Error('rest_availability_invalid_id', __('Sorry, you cannot delete an availability with events.', 'quill-booking'), array('status' => 400));
 		}
 
-		Availabilities::delete_availability( $id );
-
-		return new WP_REST_Response( null, 204 );
+		try {
+			$availability->delete();
+			return new WP_REST_Response(null, 204);
+		} catch (Exception $e) {
+			return new WP_Error('rest_availability_delete_failed', $e->getMessage(), array('status' => 400));
+		}
 	}
 
 	/**
@@ -531,8 +579,9 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return bool|WP_Error
 	 */
-	public function delete_item_permissions_check( $request ) {
-		return current_user_can( 'quillbooking_manage_all_availability' ) || current_user_can( 'quillbooking_manage_own_availability' );
+	public function delete_item_permissions_check($request)
+	{
+		return current_user_can('quillbooking_manage_all_availability') || current_user_can('quillbooking_manage_own_availability');
 	}
 
 	/**
@@ -542,27 +591,35 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function clone_item( $request ) {
-		$availability_id = $request->get_param( 'id' );
+	public function clone_item($request)
+	{
+		$availability_id = $request->get_param('id');
 
-		if ( ! $availability_id ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 400 ) );
+		if (!$availability_id) {
+			return new WP_Error('rest_availability_invalid_id', __('Invalid availability ID.', 'quill-booking'), array('status' => 400));
 		}
 
-		$availability = Availabilities::get_availability( $availability_id );
+		$availability = Availability_Model::find($availability_id);
 
-		if ( ! $availability ) {
-			return new WP_Error( 'rest_availability_not_found', __( 'Availability not found.', 'quill-booking' ), array( 'status' => 404 ) );
+		if (!$availability) {
+			return new WP_Error('rest_availability_not_found', __('Availability not found.', 'quill-booking'), array('status' => 404));
 		}
 
-		$new_id                     = substr( md5( uniqid( rand(), true ) ), 0, 8 );
-		$availability['id']         = $new_id;
-		$availability['name']      .= ' (clone)';
-		$availability['is_default'] = false;
+		$clone_data = array(
+			'user_id' => $availability->user_id,
+			'name' => $availability->name . ' (clone)',
+			'value' => $availability->value,
+			'timezone' => $availability->timezone,
+			'is_default' => false,
+		);
 
-		$cloned_availability = Availabilities::add_availability( $availability );
-
-		return new WP_REST_Response( $cloned_availability, 201 );
+		try {
+			$cloned_availability = Availability_Model::create($clone_data);
+			$response_data = $this->prepare_availability_for_response($cloned_availability);
+			return new WP_REST_Response($response_data, 201);
+		} catch (Exception $e) {
+			return new WP_Error('rest_availability_clone_failed', $e->getMessage(), array('status' => 400));
+		}
 	}
 
 	/**
@@ -570,33 +627,60 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @param WP_REST_Request
 	 */
-	public function set_default( $request ) {
-		$availability_id = $request->get_param( 'id' );
+	public function set_default($request)
+	{
+		$availability_id = $request->get_param('id');
 
-		if ( ! $availability_id ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 400 ) );
+		if (!$availability_id) {
+			return new WP_Error('rest_availability_invalid_id', __('Invalid availability ID.', 'quill-booking'), array('status' => 400));
 		}
 
-		$availability = Availabilities::get_availability( $availability_id );
+		$availability = Availability_Model::find($availability_id);
 
-		if ( ! $availability ) {
-			return new WP_Error( 'rest_availability_not_found', __( 'Availability not found.', 'quill-booking' ), array( 'status' => 404 ) );
+		if (!$availability) {
+			return new WP_Error('rest_availability_not_found', __('Availability not found.', 'quill-booking'), array('status' => 404));
 		}
 
-		$user_id            = $availability['user_id'];
-		$all_availabilities = Availabilities::get_availabilities();
+		$user_id = $availability->user_id;
 
-		foreach ( $all_availabilities as &$availability_data ) {
-			if ( $availability_data['user_id'] == $user_id && isset( $availability_data['is_default'] ) && $availability_data['is_default'] ) {
-				$availability_data['is_default'] = false;
-				Availabilities::update_availability( $availability_data );
-			}
+		try {
+			// Set all other availabilities for this user to not default
+			Availability_Model::where('user_id', $user_id)
+				->where('is_default', true)
+				->update(array('is_default' => false));
+
+			// Set this availability as default
+			$availability->update(array('is_default' => true));
+
+			$response_data = $this->prepare_availability_for_response($availability);
+			return new WP_REST_Response($response_data, 200);
+		} catch (Exception $e) {
+			return new WP_Error('rest_availability_set_default_failed', $e->getMessage(), array('status' => 400));
 		}
+	}
 
-		$availability['is_default'] = true;
-		Availabilities::update_availability( $availability );
+	/**
+	 * Prepare availability for response
+	 *
+	 * @param Availability_Model $availability
+	 *
+	 * @return array
+	 */
+	private function prepare_availability_for_response($availability)
+	{
+		$value_data = json_decode($availability->value, true) ?: array();
 
-		return new WP_REST_Response( $availability, 200 );
+		return array(
+			'id' => $availability->id,
+			'user_id' => $availability->user_id,
+			'name' => $availability->name,
+			'weekly_hours' => Arr::get($value_data, 'weekly_hours', array()),
+			'override' => Arr::get($value_data, 'override', array()),
+			'timezone' => $availability->timezone,
+			'is_default' => $availability->is_default,
+			'created_at' => $availability->created_at,
+			'updated_at' => $availability->updated_at,
+		);
 	}
 
 	/**
@@ -606,10 +690,11 @@ class REST_Availability_Controller extends REST_Controller {
 	 *
 	 * @return array
 	 */
-	private function events_details_for_availability( $availability ) {
-		$events                       = Event_Meta_Model::where( 'meta_key', 'availability' )->where( 'meta_value', $availability['id'] )->with( 'event' )->get();
+	private function events_details_for_availability($availability)
+	{
+		$events = Event_Meta_Model::where('meta_key', 'availability')->where('meta_value', $availability['id'])->with('event')->get();
 		$availability['events_count'] = $events->count();
-		$availability['events']       = $events;
+		$availability['events'] = $events;
 		return $availability;
 	}
 }

@@ -74,13 +74,13 @@ class User_Model extends Model {
 	 *
 	 * @since 1.0.0
 	 */
-	public function __construct(array $attributes = []) {
+	public function __construct( array $attributes = array() ) {
 		global $wpdb;
-		
+
 		// Use WordPress's users table (shared across multisite)
 		$this->table = $wpdb->users;
-		
-		parent::__construct($attributes);
+
+		parent::__construct( $attributes );
 	}
 
 	/**
@@ -90,7 +90,7 @@ class User_Model extends Model {
 	 */
 	public function getTable() {
 		global $wpdb;
-		
+
 		// Always return the WordPress users table
 		return $wpdb->users;
 	}
@@ -104,5 +104,16 @@ class User_Model extends Model {
 	 */
 	public function meta() {
 		return $this->hasMany( UserMeta_Model::class, 'user_id', 'ID' );
+	}
+
+	/**
+	 * Relationship with availability
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 */
+	public function availability() {
+		return $this->hasMany( Availability_Model::class, 'user_id', 'ID' );
 	}
 }

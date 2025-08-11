@@ -160,7 +160,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 				setLoadingAccount(false);
 				errorNotice(
 					error.message ||
-					__('Failed to fetch calendars', 'quillbooking')
+						__('Failed to fetch calendars', 'quillbooking')
 				);
 			},
 		});
@@ -193,10 +193,10 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 			onError(error) {
 				errorNotice(
 					error.message ||
-					__(
-						'Failed to save integration settings',
-						'quillbooking'
-					)
+						__(
+							'Failed to save integration settings',
+							'quillbooking'
+						)
 				);
 				setSaving(false);
 			},
@@ -263,8 +263,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 		switch (slug) {
 			case 'zoom':
 				return 'Save & Validate Credentials';
-			case 'zapier':
-				return null;
+
 			case 'google':
 			case 'outlook':
 			case 'apple':

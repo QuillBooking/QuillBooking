@@ -35,6 +35,8 @@ if (reschedule) {
 			booking={config.booking}
 			url={config.url}
 			globalCurrency={config.global_settings.payments.currency}
+			canReschedule={config.can_reschedule}
+			rescheduleDeniedMessage={config.reschedule_denied_message}
 		/>
 	);
 }

@@ -1,4 +1,5 @@
 <?php
+
 $icons_url = plugins_url( 'src/templates/icons/', QUILLBOOKING_PLUGIN_FILE );
 
 $event_name  = $booking_array['event']['name'] ?? '';
@@ -71,6 +72,9 @@ $ics_path     = trailingslashit( $upload_dir['path'] ) . $ics_filename;
 $ics_url      = trailingslashit( $upload_dir['url'] ) . $ics_filename;
 
 file_put_contents( $ics_path, $ics_content );
+
+// Permission variables are now passed from the renderer:
+// $can_cancel, $cancel_denied_message, $can_reschedule, $reschedule_denied_message
 ?>
 
 <div class="quillbooking-meeting">
@@ -139,17 +143,38 @@ file_put_contents( $ics_path, $ics_content );
 		</div>
 	</div>
 
-	<?php if ( ! isset( $_GET['embed_type'] ) || $_GET['embed_type'] !== 'Inline' ) : ?>
+	<?php
+	if ( ! isset( $_GET['embed_type'] ) || $_GET['embed_type'] !== 'Inline' ) :
+		;
+		?>
+		<?php if ( ! $can_cancel && ! $can_reschedule ) : ?>
+		<div></div>
+	
+
+		<?php else : ?>
 		<div class="confirmation-footer">
-			<div class="change-options">
-				<p><?php esc_html_e( 'Need to make a change?', 'quillbooking' ); ?>
-					<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=cancel"
-						class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
-					<?php esc_html_e( 'or', 'quillbooking' ); ?>
-					<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=reschedule"
-						class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
-				</p>
+			<?php if ( $can_cancel || $can_reschedule ) : ?>
+				<div class="change-options">
+					<p><?php esc_html_e( 'Need to make a change?', 'quillbooking' ); ?>
+						<?php if ( $can_cancel && $can_reschedule ) : ?>
+							<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=cancel"
+								class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
+							<?php esc_html_e( 'or', 'quillbooking' ); ?>
+							<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=reschedule"
+								class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
+						<?php elseif ( $can_cancel ) : ?>
+							<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=cancel"
+								class="cancel-link"><?php esc_html_e( 'Cancel', 'quillbooking' ); ?></a>
+						<?php elseif ( $can_reschedule ) : ?>
+							<a href="?quillbooking=booking&id=<?php echo esc_attr( $booking_array['hash_id'] ); ?>&type=reschedule"
+								class="reschedule-link"><?php esc_html_e( 'Reschedule', 'quillbooking' ); ?></a>
+						<?php endif; ?>
+					</p>
+				</div>
+				<?php endif; ?>
 			</div>
+			<?php endif; ?>
+
 
 			<!-- <div class="cancellation-policy">
 			<h3>

@@ -146,6 +146,7 @@ class Event_Model extends Model {
 		'connected_integrations',
 		'price',
 		'payments_settings',
+		'advanced_settings',
 	);
 
 	/**

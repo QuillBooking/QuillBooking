@@ -79,15 +79,24 @@ class Integrations_Helper {
 					'has_accounts' => false,
 					'is_global'    => true,
 				),
-				// 'zapier'  => array(
-				// 	'name'         => 'Zapier',
-				// 	'description'  => 'Zapier Integration',
-				// 	'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'zapier' . '/icon.svg',
-				// 	'is_calendar'  => false,
-				// 	'auth_type'    => 'api_key',
-				// 	'has_accounts' => false,
-				// 	'is_global'    => true,
-				// ),
+				'zapier'  => array(
+					'name'         => 'Zapier',
+					'description'  => 'Zapier Integration',
+					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'zapier' . '/icon.svg',
+					'is_calendar'  => false,
+					'auth_type'    => 'api_key',
+					'has_accounts' => false,
+					'is_global'    => true,
+				),
+				'make'    => array(
+					'name'         => 'Make',
+					'description'  => 'Make Integration',
+					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'make' . '/icon.svg',
+					'is_calendar'  => false,
+					'auth_type'    => 'api_key',
+					'has_accounts' => false,
+					'is_global'    => true,
+				),
 			);
 		} else {
 			// For event context or default
@@ -135,6 +144,14 @@ class Integrations_Helper {
 				),
 				'zapier'  => array(
 					'name'            => 'Zapier',
+					'connected'       => false,
+					'has_accounts'    => false,
+					'has_settings'    => false,
+					'has_get_started' => false,
+					'has_pro_version' => false,
+				),
+				'make'    => array(
+					'name'            => 'Make',
 					'connected'       => false,
 					'has_accounts'    => false,
 					'has_settings'    => false,

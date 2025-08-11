@@ -15,10 +15,10 @@ class Booking_Page_Renderer extends Base_Template_Renderer {
 	private string $eventModelClass;
 	private string $globalSettingsClass;
 
-	public function __construct( 
-		string $calendarModelClass, 
-		string $eventModelClass, 
-		string $globalSettingsClass 
+	public function __construct(
+		string $calendarModelClass,
+		string $eventModelClass,
+		string $globalSettingsClass
 	) {
 		parent::__construct();
 		$this->calendarModelClass  = $calendarModelClass;
@@ -27,7 +27,7 @@ class Booking_Page_Renderer extends Base_Template_Renderer {
 	}
 
 	public function render( $calendar_slug, $event_slug ) {
-		$calendar = Arr::get( $_GET, 'quillbooking_calendar', null );
+		$calendar        = Arr::get( $_GET, 'quillbooking_calendar', null );
 		$global_settings = $this->globalSettingsClass::get_all();
 
 		if ( ! $calendar ) {
@@ -40,7 +40,7 @@ class Booking_Page_Renderer extends Base_Template_Renderer {
 		}
 
 		$event_slug = Arr::get( $_GET, 'event', null );
-		$event = $this->eventModelClass::where( 'slug', $event_slug )
+		$event      = $this->eventModelClass::where( 'slug', $event_slug )
 			->where( 'calendar_id', $calendar->id )
 			->first();
 
@@ -55,6 +55,7 @@ class Booking_Page_Renderer extends Base_Template_Renderer {
 		$event->availability_data = $event->getAvailabilityAttribute();
 		$event->reserve           = $event->getReserveTimesAttribute();
 		$event->limits_data       = $event->getLimitsAttribute();
+		$event->advanced_settings = $event->getAdvancedSettingsAttribute();
 
 		// Add config filter
 		add_filter(

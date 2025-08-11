@@ -25,12 +25,13 @@ interface CardDetailsProps {
 }
 
 const CardDetails: React.FC<CardDetailsProps> = ({ booking, period }) => {
+	const eventTitle = booking.booking_title || booking.event?.name || '';
 	return (
 		<Flex gap={12} wrap="wrap" className="flex-1 min-w-0">
 			<div className="flex-1 min-w-[200px] max-w-[400px]">
 				<Link to={`bookings/${booking.id}/${period}`}>
 					<p className="text-lg font-bold text-color-primary-text py-1 break-words">
-						{booking.event.name}
+						{eventTitle}
 					</p>
 				</Link>
 				<Flex gap={3} align="center" className="my-1">

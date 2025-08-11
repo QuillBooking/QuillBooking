@@ -87,6 +87,8 @@ const CardBody: React.FC<CardBodyProps> = ({
 	url,
 	globalCurrency,
 }) => {
+	console.log('event', event);
+	console.log('booking', booking);
 	const baseColor = tinycolor(event.color);
 	const lightColor = baseColor.lighten(40).toString();
 	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
@@ -305,7 +307,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 			}
 
 			const data = await response.json();
-			console.log('Booking response:', data);
+			console.log('Booking response:', data.data);
 
 			if (!data.success) {
 				throw new Error(data.data?.message || 'Unknown error occurred');
@@ -446,9 +448,22 @@ const CardBody: React.FC<CardBodyProps> = ({
 						`;
 					} else {
 						// Normal redirect for non-embed mode
-						const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
-						console.log('Redirect URL:', redirectUrl);
-						(window.top || window).location.href = redirectUrl;
+						const booking_redirect_url =
+							data.data?.booking?.booking_redirect_url;
+						const eventRedirectAfterSubmit =
+							event.advanced_settings?.redirect_after_submit;
+						if (
+							booking_redirect_url &&
+							!isInlineEmbedMode &&
+							eventRedirectAfterSubmit
+						) {
+							(window.top || window).location.href =
+								booking_redirect_url;
+						} else {
+							const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
+							console.log('Redirect URL:', redirectUrl);
+							(window.top || window).location.href = redirectUrl;
+						}
 					}
 				}
 			} else {
@@ -513,6 +528,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 								.darken(20)
 								.toString()}
 							prefilledData={prefilledData}
+							advancedSettings={event.advanced_settings}
 						/>
 					)
 				) : step === 3 &&

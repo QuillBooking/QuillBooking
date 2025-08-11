@@ -61,35 +61,39 @@ const BookingList: React.FC<BookingListProps> = ({
 
 			<div>
 				{bookings.length > 0 &&
-					bookings.map((booking) => (
-						<div className="flex justify-between items-center my-4">
-							<div className="flex gap-2 font-semibold">
-								<div className="border-2 'border-[#A5E0B5]' rounded-3xl"></div>
-								<div>
-									<p>{booking.time_span}</p>
-									<p className="text-[#3F4254]">
-										{booking.event.name}
-									</p>
-									<p>
-										{__('Hosted by')}{' '}
-										<span className="text-color-primary">
-											{
-												booking.calendar?.user
-													?.display_name
-											}{' '}
-										</span>
-									</p>
+					bookings.map((booking) => {
+						const eventTitle =
+							booking.booking_title || booking.event?.name || '';
+						return (
+							<div className="flex justify-between items-center my-4">
+								<div className="flex gap-2 font-semibold">
+									<div className="border-2 'border-[#A5E0B5]' rounded-3xl"></div>
+									<div>
+										<p>{booking.time_span}</p>
+										<p className="text-[#3F4254]">
+											{eventTitle}
+										</p>
+										<p>
+											{__('Hosted by')}{' '}
+											<span className="text-color-primary">
+												{
+													booking.calendar?.user
+														?.display_name
+												}{' '}
+											</span>
+										</p>
+									</div>
+								</div>
+
+								<div
+									className="px-4 py-2 bg-[#F1F1F2] rounded-md text-[#5E6278] cursor-pointer"
+									onClick={() => setBookingId(booking.id)}
+								>
+									{__('View', 'quillbooking')}
 								</div>
 							</div>
-
-							<div
-								className="px-4 py-2 bg-[#F1F1F2] rounded-md text-[#5E6278] cursor-pointer"
-								onClick={() => setBookingId(booking.id)}
-							>
-								{__('View', 'quillbooking')}
-							</div>
-						</div>
-					))}
+						);
+					})}
 			</div>
 		</div>
 	);

@@ -269,6 +269,14 @@ class Booking_Model extends Model {
 		return $value ? maybe_unserialize( $value ) : null;
 	}
 
+	public function processMergeTagsEvent() {
+		$event                    = $this->event;
+		$event->advanced_settings = $event->getAdvancedSettingsAttribute();
+		$merge_tags_manager       = \QuillBooking\Managers\Merge_Tags_Manager::instance();
+		$result                   = $merge_tags_manager->process_merge_tags( $event->advanced_settings['event_title'], $this );
+		return $result;
+	}
+
 	/**
 	 * Get Event timezone attribute
 	 *

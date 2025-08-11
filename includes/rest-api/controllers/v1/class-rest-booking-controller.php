@@ -389,6 +389,11 @@ class REST_Booking_Controller extends REST_Controller {
 
 			$bookings = $query->with( 'event', 'event.calendar', 'guest', 'calendar.user', 'order' )->get();
 
+			// Process merge tags for each booking's event
+			foreach ( $bookings as $booking ) {
+				$booking->booking_title = $booking->processMergeTagsEvent();
+			}
+
 			$time_format = Settings::get_all();
 			// The 'bookings' array data is designed to compensate for pagination when it gets added.
 			return new WP_REST_Response(
@@ -526,6 +531,9 @@ class REST_Booking_Controller extends REST_Controller {
 
 			$booking->load( 'guest', 'event', 'calendar.user', 'logs', 'event.calendar', 'hosts' );
 			$booking->fields = $booking->get_meta( 'fields' );
+
+			// Process merge tags for the booking's event
+			$booking->booking_title = $booking->processMergeTagsEvent( $booking );
 
 			return new WP_REST_Response( $booking, 200 );
 		} catch ( Exception $e ) {

@@ -49,6 +49,7 @@ class Booking_Ajax {
 	 * @return void
 	 */
 	public function booking() {
+		xdebug_break();
 		 // check_ajax_referer( 'quillbooking', 'nonce' );
 		try {
 			$id    = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;
@@ -143,6 +144,25 @@ class Booking_Ajax {
 				throw new \Exception( __( 'Payment processing requires the Pro plugin to be active', 'quillbooking' ) );
 			}
 
+			// resolve
+			/*
+				redirect_query_string
+				:
+				"{{booking:additional_guests}}{{guest:email}}"
+				redirect_url
+				:
+				"https://www.google.com/"
+			*/
+			$redirect_query_string = isset( $booking->event->advanced_settings['redirect_query_string'] ) ? $booking->event->advanced_settings['redirect_query_string'] : null;
+			// Merge tags
+			$merge_tags_manager    = \QuillBooking\Managers\Merge_Tags_Manager::instance();
+			$result                = $merge_tags_manager->process_merge_tags( $redirect_query_string, $booking );
+			$redirect_query_string = $result;
+
+			$redirect_url = isset( $booking->event->advanced_settings['redirect_url'] ) ? $booking->event->advanced_settings['redirect_url'] : null;
+			// add query string to redirect url
+			$redirect_url                  = $redirect_url . '?' . $redirect_query_string;
+			$booking->booking_redirect_url = $redirect_url;
 			wp_send_json_success( array( 'booking' => $booking ) );
 		} catch ( \Exception $e ) {
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );

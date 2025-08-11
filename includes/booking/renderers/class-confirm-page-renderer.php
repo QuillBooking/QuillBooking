@@ -32,8 +32,9 @@ class Confirm_Page_Renderer extends Base_Template_Renderer {
 		return $this->render_template_page(
 			$template_path,
 			array(
-				'booking_array' => $booking_array,
-				'title'         => $booking->event->name ?? __( 'Booking Confirmation', 'quillbooking' ),
+				'booking_array'      => $booking_array,
+				'title'              => $booking->event->name ?? __( 'Booking Confirmation', 'quillbooking' ),
+				'merge_tags_manager' => \QuillBooking\Managers\Merge_Tags_Manager::instance(),
 			)
 		);
 	}

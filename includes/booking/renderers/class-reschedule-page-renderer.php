@@ -15,9 +15,9 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 	private string $globalSettingsClass;
 	private string $calendarModelClass;
 
-	public function __construct( 
-		string $eventModelClass, 
-		string $bookingValidatorClass, 
+	public function __construct(
+		string $eventModelClass,
+		string $bookingValidatorClass,
 		string $globalSettingsClass,
 		string $calendarModelClass
 	) {
@@ -25,7 +25,7 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 		$this->eventModelClass       = $eventModelClass;
 		$this->bookingValidatorClass = $bookingValidatorClass;
 		$this->globalSettingsClass   = $globalSettingsClass;
-		$this->calendarModelClass = $calendarModelClass;
+		$this->calendarModelClass    = $calendarModelClass;
 	}
 
 	public function render( $booking ) {
@@ -42,12 +42,12 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 			exit;
 		}
 
-		$event = $booking->event;
+		$event                    = $booking->event;
 		$event->hosts             = $this->get_event_hosts( $event );
 		$event->fields            = $event->getFieldsAttribute();
 		$event->availability_data = $event->getAvailabilityAttribute();
 		$event->reserve           = $event->getReserveTimesAttribute();
-
+		$event->advanced_settings = $event->getAdvancedSettingsAttribute();
 		add_filter(
 			'quillbooking_config',
 			function ( $config ) use ( $booking, $calendar, $event, $global_settings ) {

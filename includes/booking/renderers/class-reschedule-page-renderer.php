@@ -53,8 +53,7 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 		$booking_array          = $this->dataFormatter->format_booking_data( $booking );
 		$advanced_settings      = $event->advanced_settings ?? array();
 		$timezone               = $booking_array['timezone'] ?? 'UTC';
-		$merge_tags_manager     = \QuillBooking\Managers\Merge_Tags_Manager::instance();
-		$reschedule_permissions = $this->check_reschedule_permissions( $advanced_settings, $booking_array, $timezone, $merge_tags_manager );
+		$reschedule_permissions = $this->check_reschedule_permissions( $advanced_settings, $booking_array, $timezone );
 
 		add_filter(
 			'quillbooking_config',

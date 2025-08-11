@@ -11,6 +11,7 @@ namespace QuillBooking\Booking\Renderers;
 use QuillBooking\Booking\Data\Booking_Data_Formatter;
 use QuillBooking\Models\User_Model;
 use QuillBooking\Models\Booking_Model;
+use QuillBooking\Managers\Merge_Tags_Manager;
 
 abstract class Base_Template_Renderer {
 
@@ -129,10 +130,9 @@ abstract class Base_Template_Renderer {
 	 * @param array  $advanced_settings Event advanced settings
 	 * @param array  $booking_array Booking data array
 	 * @param string $timezone Timezone for calculations
-	 * @param object $merge_tags_manager Merge tags manager instance
 	 * @return array Returns array with 'can_cancel' boolean and 'message' string
 	 */
-	protected function check_cancellation_permissions( $advanced_settings, $booking_array, $timezone, $merge_tags_manager ) {
+	protected function check_cancellation_permissions( $advanced_settings, $booking_array, $timezone ) {
 		$can_cancel            = true;
 		$cancel_denied_message = '';
 
@@ -140,45 +140,45 @@ abstract class Base_Template_Renderer {
 		$find_booking = Booking_Model::find( $booking_array['id'] );
 
 		// Process merge tags for permission denied message
-		$cancel_denied_message = $merge_tags_manager->process_merge_tags(
+		$cancel_denied_message = Merge_Tags_Manager::instance()->process_merge_tags(
 			$advanced_settings['permission_denied_message'] ?? '',
 			$find_booking
 		);
 
 		// Check if attendee cannot cancel at event start
-		if ( ! empty( $advanced_settings['attendee_cannot_cancel'] ) &&
-			 $advanced_settings['attendee_cannot_cancel'] &&
-			 $advanced_settings['cannot_cancel_time'] === 'event_start' ) {
+		if ( ! empty( $advanced_settings['attendee_cannot_cancel'] ) && $advanced_settings['attendee_cannot_cancel'] ) {
+			if ( $advanced_settings['cannot_cancel_time'] === 'event_start' ) {
 
-			$can_cancel            = false;
-			$cancel_denied_message = $cancel_denied_message ?: __( 'You do not have permission to cancel this booking.', 'quillbooking' );
-		} else {
-			// Check time-based cancellation restrictions
-			$cancel_time_restriction = $advanced_settings['cannot_cancel_time'] ?? '';
-			$cancel_time_value       = $advanced_settings['cannot_cancel_time_value'] ?? 24;
-			$cancel_time_unit        = $advanced_settings['cannot_cancel_time_unit'] ?? 'hours';
+				$can_cancel            = false;
+				$cancel_denied_message = $cancel_denied_message ?: __( 'You do not have permission to cancel this booking.', 'quillbooking' );
+			} else {
+				// Check time-based cancellation restrictions
+				$cancel_time_restriction = $advanced_settings['cannot_cancel_time'] ?? '';
+				$cancel_time_value       = $advanced_settings['cannot_cancel_time_value'] ?? 24;
+				$cancel_time_unit        = $advanced_settings['cannot_cancel_time_unit'] ?? 'hours';
 
-			if ( $cancel_time_restriction === 'less_than' ) {
-				try {
-					$start_time = $booking_array['start_time'] ?? '';
-					$start_dt   = new \DateTime( $start_time, new \DateTimeZone( 'UTC' ) );
-					$start_dt->setTimezone( new \DateTimeZone( $timezone ) );
+				if ( $cancel_time_restriction === 'less_than' ) {
+					try {
+						$start_time = $booking_array['start_time'] ?? '';
+						$start_dt   = new \DateTime( $start_time, new \DateTimeZone( 'UTC' ) );
+						$start_dt->setTimezone( new \DateTimeZone( $timezone ) );
 
-					$current_time     = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
-					$restriction_time = clone $start_dt;
+						$current_time     = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
+						$restriction_time = clone $start_dt;
 
-					// Calculate the restriction time based on settings
-					$time_modifier = "-{$cancel_time_value} {$cancel_time_unit}";
-					$restriction_time->modify( $time_modifier );
+						// Calculate the restriction time based on settings
+						$time_modifier = "-{$cancel_time_value} {$cancel_time_unit}";
+						$restriction_time->modify( $time_modifier );
 
-					// If current time is past the restriction time, prevent cancellation
-					if ( $current_time >= $restriction_time ) {
-						$can_cancel            = false;
-						$cancel_denied_message = $cancel_denied_message ?: __( 'Cancellation is no longer allowed for this booking.', 'quillbooking' );
+						// If current time is past the restriction time, prevent cancellation
+						if ( $current_time >= $restriction_time ) {
+							$can_cancel            = false;
+							$cancel_denied_message = $cancel_denied_message ?: __( 'Cancellation is no longer allowed for this booking.', 'quillbooking' );
+						}
+					} catch ( \Exception $e ) {
+						// If there's an error with time calculation, allow cancellation for safety
+						$can_cancel = true;
 					}
-				} catch ( \Exception $e ) {
-					// If there's an error with time calculation, allow cancellation for safety
-					$can_cancel = true;
 				}
 			}
 		}
@@ -195,10 +195,9 @@ abstract class Base_Template_Renderer {
 	 * @param array  $advanced_settings Event advanced settings
 	 * @param array  $booking_array Booking data array
 	 * @param string $timezone Timezone for calculations
-	 * @param object $merge_tags_manager Merge tags manager instance
 	 * @return array Returns array with 'can_reschedule' boolean and 'message' string
 	 */
-	protected function check_reschedule_permissions( $advanced_settings, $booking_array, $timezone, $merge_tags_manager ) {
+	protected function check_reschedule_permissions( $advanced_settings, $booking_array, $timezone ) {
 		$can_reschedule            = true;
 		$reschedule_denied_message = '';
 
@@ -206,45 +205,46 @@ abstract class Base_Template_Renderer {
 		$find_booking = Booking_Model::find( $booking_array['id'] );
 
 		// Process merge tags for permission denied message
-		$reschedule_denied_message = $merge_tags_manager->process_merge_tags(
+		$reschedule_denied_message = Merge_Tags_Manager::instance()->process_merge_tags(
 			$advanced_settings['reschedule_denied_message'] ?? '',
 			$find_booking
 		);
 
-		// Check if attendee cannot reschedule at event start
-		if ( ! empty( $advanced_settings['attendee_cannot_reschedule'] ) &&
-			 $advanced_settings['attendee_cannot_reschedule'] &&
-			 $advanced_settings['cannot_reschedule_time'] === 'event_start' ) {
+		if ( ! empty( $advanced_settings['attendee_cannot_reschedule'] ) && $advanced_settings['attendee_cannot_reschedule'] ) {
 
-			$can_reschedule            = false;
-			$reschedule_denied_message = $reschedule_denied_message ?: __( 'You do not have permission to reschedule this booking.', 'quillbooking' );
-		} else {
-			// Check time-based reschedule restrictions
-			$reschedule_time_restriction = $advanced_settings['cannot_reschedule_time'] ?? '';
-			$reschedule_time_value       = $advanced_settings['cannot_reschedule_time_value'] ?? 24;
-			$reschedule_time_unit        = $advanced_settings['cannot_reschedule_time_unit'] ?? 'hours';
+			// Check if attendee cannot reschedule at event start
+			if ( $advanced_settings['cannot_reschedule_time'] === 'event_start' ) {
 
-			if ( $reschedule_time_restriction === 'event_start' || $reschedule_time_restriction === 'less_than' ) {
-				try {
-					$start_time = $booking_array['start_time'] ?? '';
-					$start_dt   = new \DateTime( $start_time, new \DateTimeZone( 'UTC' ) );
-					$start_dt->setTimezone( new \DateTimeZone( $timezone ) );
+				$can_reschedule            = false;
+				$reschedule_denied_message = $reschedule_denied_message ?: __( 'You do not have permission to reschedule this booking.', 'quillbooking' );
+			} else {
+				// Check time-based reschedule restrictions
+				$reschedule_time_restriction = $advanced_settings['cannot_reschedule_time'] ?? '';
+				$reschedule_time_value       = $advanced_settings['cannot_reschedule_time_value'] ?? 24;
+				$reschedule_time_unit        = $advanced_settings['cannot_reschedule_time_unit'] ?? 'hours';
 
-					$current_time     = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
-					$restriction_time = clone $start_dt;
+				if ( $reschedule_time_restriction === 'event_start' || $reschedule_time_restriction === 'less_than' ) {
+					try {
+						$start_time = $booking_array['start_time'] ?? '';
+						$start_dt   = new \DateTime( $start_time, new \DateTimeZone( 'UTC' ) );
+						$start_dt->setTimezone( new \DateTimeZone( $timezone ) );
 
-					// Calculate the restriction time based on settings
-					$time_modifier = "-{$reschedule_time_value} {$reschedule_time_unit}";
-					$restriction_time->modify( $time_modifier );
+						$current_time     = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
+						$restriction_time = clone $start_dt;
 
-					// If current time is past the restriction time, prevent rescheduling
-					if ( $current_time >= $restriction_time ) {
-						$can_reschedule            = false;
-						$reschedule_denied_message = $reschedule_denied_message ?: __( 'Rescheduling is no longer allowed for this booking.', 'quillbooking' );
+						// Calculate the restriction time based on settings
+						$time_modifier = "-{$reschedule_time_value} {$reschedule_time_unit}";
+						$restriction_time->modify( $time_modifier );
+
+						// If current time is past the restriction time, prevent rescheduling
+						if ( $current_time >= $restriction_time ) {
+							$can_reschedule            = false;
+							$reschedule_denied_message = $reschedule_denied_message ?: __( 'Rescheduling is no longer allowed for this booking.', 'quillbooking' );
+						}
+					} catch ( \Exception $e ) {
+						// If there's an error with time calculation, allow rescheduling for safety
+						$can_reschedule = true;
 					}
-				} catch ( \Exception $e ) {
-					// If there's an error with time calculation, allow rescheduling for safety
-					$can_reschedule = true;
 				}
 			}
 		}

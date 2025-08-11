@@ -1,17 +1,32 @@
 .event-card-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  border-radius: 10px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 20px;
+	border-radius: 10px;
 }
 
 .event-card-wrapper {
-  width: 100%;
-  max-width: 856px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 16px;
-  overflow: hidden;
+	width: 100%;
+	max-width: 856px;
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	border-radius: 16px;
+	overflow: hidden;
+}
+
+.reschedule-denied-container {
+	padding: 40px;
+	text-align: center;
+}
+
+.reschedule-denied-message {
+	background-color: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #dc2626;
+	padding: 20px;
+	border-radius: 8px;
+	font-size: 16px;
+	line-height: 1.5;
 }

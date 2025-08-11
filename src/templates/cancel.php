@@ -20,6 +20,16 @@ $status              = $booking_array['status'] ?? '';
 	display: inline-flex;
 	align-items: center;
 }
+
+.cancellation-denied-message {
+	background-color: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #dc2626;
+	padding: 15px;
+	border-radius: 6px;
+	margin: 20px 0;
+	text-align: center;
+}
 </style>
 
 <div class="quillbooking-meeting">
@@ -50,6 +60,10 @@ $status              = $booking_array['status'] ?? '';
 		<?php if ( strtolower( $status ) == 'cancelled' ) : ?>
 			<div class="already-cancelled-message">
 				<?php esc_html_e( 'This booking has already been cancelled.', 'quillbooking' ); ?>
+			</div>
+		<?php elseif ( ! $can_cancel ) : ?>
+			<div class="cancellation-denied-message">
+				<?php echo wp_kses_post( $cancel_denied_message ); ?>
 			</div>
 		<?php else : ?>
 			<div class="cancellation-container">
@@ -96,6 +110,12 @@ $status              = $booking_array['status'] ?? '';
 <script>
 	document.getElementById('cancel_booking_button')?.addEventListener('click', function(event) {
 		event.preventDefault();
+		
+		// Check if cancellation is allowed
+		if (!<?php echo json_encode( $can_cancel ); ?>) {
+			return;
+		}
+		
 		const textarea = document.getElementById('cancellation_reason');
 		const validation = document.getElementById('validation_message');
 		const button = document.getElementById('cancel_booking_button');

@@ -7,6 +7,8 @@ export type Config = {
 	event: Event;
 	booking: Booking;
 	global_settings: GlobalSettings;
+	can_reschedule?: boolean;
+	reschedule_denied_message?: string;
 };
 
 export type Event = {

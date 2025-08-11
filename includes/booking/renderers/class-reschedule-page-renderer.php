@@ -48,13 +48,23 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 		$event->availability_data = $event->getAvailabilityAttribute();
 		$event->reserve           = $event->getReserveTimesAttribute();
 		$event->advanced_settings = $event->getAdvancedSettingsAttribute();
+
+		// Check reschedule permissions
+		$booking_array          = $this->dataFormatter->format_booking_data( $booking );
+		$advanced_settings      = $event->advanced_settings ?? array();
+		$timezone               = $booking_array['timezone'] ?? 'UTC';
+		$merge_tags_manager     = \QuillBooking\Managers\Merge_Tags_Manager::instance();
+		$reschedule_permissions = $this->check_reschedule_permissions( $advanced_settings, $booking_array, $timezone, $merge_tags_manager );
+
 		add_filter(
 			'quillbooking_config',
-			function ( $config ) use ( $booking, $calendar, $event, $global_settings ) {
-				$config['calendar']        = $calendar->toArray();
-				$config['event']           = $event->toArray();
-				$config['booking']         = $booking->toArray();
-				$config['global_settings'] = $global_settings;
+			function ( $config ) use ( $booking, $calendar, $event, $global_settings, $reschedule_permissions ) {
+				$config['calendar']                  = $calendar->toArray();
+				$config['event']                     = $event->toArray();
+				$config['booking']                   = $booking->toArray();
+				$config['global_settings']           = $global_settings;
+				$config['can_reschedule']            = $reschedule_permissions['can_reschedule'];
+				$config['reschedule_denied_message'] = $reschedule_permissions['message'];
 				return $config;
 			}
 		);

@@ -171,6 +171,16 @@ const ConferencingSection: React.FC<ConferencingSectionProps> = ({
 			};
 		}
 
+		if (integrationHelper.hasAccounts(type)) {
+			return {
+				message: __(
+					`You are connected now by your account.`,
+					'quillbooking'
+				),
+				className: 'text-green-500 text-[12px] italic',
+			};
+		}
+
 		return { message: '' };
 	};
 

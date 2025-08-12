@@ -76,14 +76,20 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 					setNotice({
 						type: 'success',
 						title: __('Success', 'quillbooking'),
-						message: __('Calendar deleted', 'quillbooking'),
+						message: __(
+							'Availability deleted successfully',
+							'quillbooking'
+						),
 					});
 				},
 				onError: () => {
 					setNotice({
 						type: 'error',
 						title: __('Error', 'quillbooking'),
-						message: __('Failed to delete calendar', 'quillbooking'),
+						message: __(
+							'Failed to delete availability',
+							'quillbooking'
+						),
 					});
 				},
 			});
@@ -92,12 +98,15 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 			setNotice({
 				type: 'error',
 				title: __('Error', 'quillbooking'),
-				message: __('An unexpected error occurred while deleting the calendar', 'quillbooking'),
+				message: __(
+					'An unexpected error occurred while deleting the availability',
+					'quillbooking'
+				),
 			});
 		}
 	};
 
-	const setCloneCalendar = async (availabilityId: string) => {
+	const setCloneAvailability = async (availabilityId: string) => {
 		try {
 			await callApi({
 				path: `availabilities/${availabilityId}/clone`,
@@ -107,23 +116,32 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 					setNotice({
 						type: 'success',
 						title: __('Success', 'quillbooking'),
-						message: __('Calendar duplicated', 'quillbooking'),
+						message: __(
+							'Availability duplicated successfully',
+							'quillbooking'
+						),
 					});
 				},
 				onError: () => {
 					setNotice({
 						type: 'error',
 						title: __('Error', 'quillbooking'),
-						message: __('Failed to duplicate calendar', 'quillbooking'),
+						message: __(
+							'Failed to duplicate availability',
+							'quillbooking'
+						),
 					});
 				},
 			});
 		} catch (error) {
-			console.error('Error in setCloneCalendar:', error);
+			console.error('Error in setCloneAvailability:', error);
 			setNotice({
 				type: 'error',
 				title: __('Error', 'quillbooking'),
-				message: __('An unexpected error occurred while duplicating the calendar', 'quillbooking'),
+				message: __(
+					'An unexpected error occurred while duplicating the availability',
+					'quillbooking'
+				),
 			});
 		}
 	};
@@ -170,7 +188,7 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 
 			<div
 				className="border border-[#EDEBEB] p-2 rounded-lg cursor-pointer"
-				onClick={() => setCloneCalendar(availabilityId)}
+				onClick={() => setCloneAvailability(availabilityId)}
 			>
 				<CopyWhiteIcon width={21} height={21} />
 			</div>

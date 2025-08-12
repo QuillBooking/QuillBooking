@@ -137,7 +137,7 @@ const AvailabilityDetails: React.FC = () => {
 				method: 'POST',
 			});
 		} catch (error) {
-			console.log('Error setting default availability:', error);
+			throw error;
 		}
 	};
 
@@ -170,7 +170,15 @@ const AvailabilityDetails: React.FC = () => {
 		setSavingChanges(true);
 		try {
 			if (isDefault) {
-				await setDefault(availabilityDetails as Availability);
+				try {
+					await setDefault(availabilityDetails as Availability);
+				} catch (error) {
+					setNoticeMessage({
+						type: 'error',
+						title: __('Error', 'quillbooking'),
+						message: (error as Error).message,
+					});
+				}
 			}
 
 			await callApi({
@@ -269,10 +277,11 @@ const AvailabilityDetails: React.FC = () => {
 							onClick={handleAvailabilitySave}
 							loading={savingChanges}
 							disabled={isSaveBtnDisabled}
-							className={`rounded-lg font-[500] text-white ${isSaveBtnDisabled
+							className={`rounded-lg font-[500] text-white ${
+								isSaveBtnDisabled
 									? 'bg-gray-400 cursor-not-allowed'
 									: 'bg-color-primary '
-								}`}
+							}`}
 						>
 							{__('Save Changes', 'quillbooking')}
 						</Button>
@@ -314,13 +323,13 @@ const AvailabilityDetails: React.FC = () => {
 							<Flex gap={20} vertical>
 								{(availabilityDetails.events_count ?? 0) >
 									0 && (
-										<InfoComponent
-											eventsNumber={
-												availabilityDetails.events_count ??
-												0
-											}
-										/>
-									)}
+									<InfoComponent
+										eventsNumber={
+											availabilityDetails.events_count ??
+											0
+										}
+									/>
+								)}
 								<Card>
 									<label className="font-normal text-sm">
 										<div className="pb-1">

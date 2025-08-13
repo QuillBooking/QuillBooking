@@ -119,7 +119,7 @@ class REST_Event_Controller extends REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/availability',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/range',
 			array(
 				'id' => array(
 					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
@@ -127,7 +127,7 @@ class REST_Event_Controller extends REST_Controller {
 				),
 				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_item_availability' ),
+					'callback'            => array( $this, 'get_item_range' ),
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 				),
 				array(
@@ -548,7 +548,6 @@ class REST_Event_Controller extends REST_Controller {
 				'is_disabled' => false,
 				'color'       => $color,
 			);
-			xdebug_break();
 			$event_data['availability_meta']['custom_availability'] = Availability_Model::getDefaultAvailability();
 
 			if ( 'host' === $calendar->type ) {
@@ -680,7 +679,7 @@ class REST_Event_Controller extends REST_Controller {
 	public function get_item( $request ) {
 		try {
 			$id    = $request->get_param( 'id' );
-			$event = Event_Model::with( 'calendar' )->find( $id );
+			$event = Event_Model::with( 'calendar', 'availability' )->where( 'id', $id )->first();
 
 			if ( ! $event ) {
 				return new WP_Error(
@@ -690,7 +689,7 @@ class REST_Event_Controller extends REST_Controller {
 				);
 			}
 
-			$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
+			$usersId = $event->getTeamMembersAttribute() ?: $event->user_id;
 			$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
 
 			$users = array();
@@ -710,9 +709,8 @@ class REST_Event_Controller extends REST_Controller {
 				}
 			}
 
-			$event->hosts             = $users;
-			$event->availability_data = $event->getAvailabilityAttribute();
-			$event->reserve           = $event->getReserveTimesAttribute();
+			$event->hosts   = $users;
+			$event->reserve = $event->getReserveTimesAttribute();
 
 			return new WP_REST_Response( $event, 200 );
 		} catch ( \Throwable $e ) { // Catch Throwable
@@ -728,7 +726,7 @@ class REST_Event_Controller extends REST_Controller {
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function get_item_availability( $request ) {
+	public function get_item_range( $request ) {
 		try {
 			$id    = $request->get_param( 'id' );
 			$event = Event_Model::find( $id );
@@ -738,8 +736,7 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			$data = array(
-				'availability' => $event->getAvailabilityAttribute(),
-				'range'        => $event->getEventRangeAttribute(),
+				'range' => $event->getEventRangeAttribute(),
 			);
 
 			return new WP_REST_Response( $data, 200 );

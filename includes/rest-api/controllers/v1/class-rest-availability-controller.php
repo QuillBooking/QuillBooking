@@ -467,7 +467,7 @@ class REST_Availability_Controller extends REST_Controller {
 		}
 
 		// Get current value data
-		$current_value = json_decode( $availability->value, true ) ?: array();
+		$current_value = $availability->value ?: array();
 
 		// Prepare update data
 		$update_data = array();
@@ -653,7 +653,7 @@ class REST_Availability_Controller extends REST_Controller {
 	 * @return array
 	 */
 	private function prepare_availability_for_response( $availability ) {
-		$value_data = json_decode( $availability->value, true ) ?: array();
+		$value_data = $availability->value ?: array();
 
 		return array(
 			'id'           => $availability->id,

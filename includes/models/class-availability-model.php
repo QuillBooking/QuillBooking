@@ -168,75 +168,78 @@ class Availability_Model extends Model {
 	 */
 	public static function getDefaultAvailability() {
 		return array(
-			'name'         => __( 'Default', 'quill-booking' ),
-			'weekly_hours' => array(
-				'monday'    => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
+			'name'  => __( 'Default', 'quill-booking' ),
+			'value' => array(
+				'weekly_hours' => array(
+					'monday'    => array(
+						'times' => array(
+							array(
+								'start' => '09:00',
+								'end'   => '17:00',
+							),
 						),
+						'off'   => false,
 					),
-					'off'   => false,
-				),
-				'tuesday'   => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
+					'tuesday'   => array(
+						'times' => array(
+							array(
+								'start' => '09:00',
+								'end'   => '17:00',
+							),
 						),
+						'off'   => false,
 					),
-					'off'   => false,
-				),
-				'wednesday' => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
+					'wednesday' => array(
+						'times' => array(
+							array(
+								'start' => '09:00',
+								'end'   => '17:00',
+							),
 						),
+						'off'   => false,
 					),
-					'off'   => false,
-				),
-				'thursday'  => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
+					'thursday'  => array(
+						'times' => array(
+							array(
+								'start' => '09:00',
+								'end'   => '17:00',
+							),
 						),
+						'off'   => false,
 					),
-					'off'   => false,
-				),
-				'friday'    => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
+					'friday'    => array(
+						'times' => array(
+							array(
+								'start' => '09:00',
+								'end'   => '17:00',
+							),
 						),
+						'off'   => false,
 					),
-					'off'   => false,
-				),
-				'saturday'  => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
+					'saturday'  => array(
+						'times' => array(
+							array(
+								'start' => '09:00',
+								'end'   => '17:00',
+							),
 						),
+						'off'   => true,
 					),
-					'off'   => true,
-				),
-				'sunday'    => array(
-					'times' => array(
-						array(
-							'start' => '09:00',
-							'end'   => '17:00',
+					'sunday'    => array(
+						'times' => array(
+							array(
+								'start' => '09:00',
+								'end'   => '17:00',
+							),
 						),
+						'off'   => true,
 					),
-					'off'   => true,
 				),
+				'override'     => array(),
 			),
-			'override'     => array(),
 		);
 	}
+
 
 	/**
 	 * Create default availability for a user

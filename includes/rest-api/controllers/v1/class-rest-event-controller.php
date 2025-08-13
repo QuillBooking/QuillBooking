@@ -546,7 +546,6 @@ class REST_Event_Controller extends REST_Controller {
 				'color'       => $color,
 				'visibility'  => $visibility,
 				'is_disabled' => false,
-				'color'       => $color,
 			);
 			$event_data['availability_meta']['custom_availability'] = Availability_Model::getDefaultAvailability();
 
@@ -698,7 +697,7 @@ class REST_Event_Controller extends REST_Controller {
 
 				if ( $user ) {
 					$user_avatar_url = get_avatar_url( $user->ID );
-					$availabilities  = Availabilities::get_user_availabilities( $user->ID );
+					$availabilities  = Availability_Model::where( 'user_id', $user->ID )->get();
 
 					$users[] = array(
 						'id'             => $user->ID,

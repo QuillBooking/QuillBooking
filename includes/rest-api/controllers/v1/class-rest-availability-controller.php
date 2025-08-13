@@ -413,7 +413,7 @@ class REST_Availability_Controller extends REST_Controller {
 		$availability_data = array(
 			'user_id'    => $user_id,
 			'name'       => $name,
-			'value'      => wp_json_encode( $value_data ),
+			'value'      => $value_data,
 			'timezone'   => $timezone,
 			'is_default' => false,
 		);

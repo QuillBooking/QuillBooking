@@ -27,7 +27,7 @@ import MinimunmNotice from './minimum-notice';
 import TimeSlotIntervals from './intervals';
 
 interface EventLimitsProps {
-	limits: EventLimitsType | null;
+	limits: EventLimitsType;
 	setLimits: (limits: SetStateAction<EventLimitsType | null>) => void;
 	bookingDurationOptions: UnitOptionsType;
 	setBookingDurationOptions: (
@@ -166,82 +166,6 @@ const EventLimits: React.FC<EventLimitsProps> = ({
 			}
 		}
 	};
-
-	if (!limits) {
-		return (
-			<Card className="rounded-lg">
-				<Space
-					direction="vertical"
-					style={{ width: '100%' }}
-					size="large"
-				>
-					<Skeleton.Input active block style={{ height: 48 }} />
-					{/* Buffer sections */}
-					<div>
-						<Skeleton.Input
-							active
-							block
-							style={{ width: '40%', marginBottom: 16 }}
-						/>
-						<Skeleton.Input active block style={{ height: 80 }} />
-					</div>
-					<div>
-						<Skeleton.Input
-							active
-							block
-							style={{ width: '40%', marginBottom: 16 }}
-						/>
-						<Skeleton.Input active block style={{ height: 80 }} />
-					</div>
-					{/* Minimum Notice */}
-					<div>
-						<Skeleton.Input
-							active
-							block
-							style={{ width: '40%', marginBottom: 16 }}
-						/>
-						<Skeleton.Input active block style={{ height: 80 }} />
-					</div>
-					{/* Time Slots */}
-					<div>
-						<Skeleton.Input
-							active
-							block
-							style={{ width: '40%', marginBottom: 16 }}
-						/>
-						<Skeleton.Input active block style={{ height: 80 }} />
-					</div>
-					{/* Booking Frequency */}
-					<div>
-						<Skeleton.Input
-							active
-							block
-							style={{ width: '40%', marginBottom: 16 }}
-						/>
-						<Skeleton.Input active block style={{ height: 120 }} />
-					</div>
-					{/* Booking Duration */}
-					<div>
-						<Skeleton.Input
-							active
-							block
-							style={{ width: '40%', marginBottom: 16 }}
-						/>
-						<Skeleton.Input active block style={{ height: 120 }} />
-					</div>
-					{/* Timezone */}
-					<div>
-						<Skeleton.Input
-							active
-							block
-							style={{ width: '40%', marginBottom: 16 }}
-						/>
-						<Skeleton.Input active block style={{ height: 60 }} />
-					</div>
-				</Space>
-			</Card>
-		);
-	}
 
 	return (
 		<Card className="rounded-lg">

@@ -28,33 +28,25 @@ import {
 import { getCurrentTimezone } from '@quillbooking/utils';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
 import { useApi, useEvent } from '@quillbooking/hooks';
+import Shimmer from './shimmer';
 
 const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 	(props, ref) => {
-		const customAvailability = {
-			name: __('Custom', 'quillbooking'),
-			timezone: getCurrentTimezone(),
-			weekly_hours: DEFAULT_WEEKLY_HOURS,
-			override: {},
-		};
-
-		// Availability state
-		const [availabilityType, setAvailabilityType] = useState<
-			'existing' | 'custom'
-		>('existing');
+		// Event state
+		const [availabilityType, setAvailabilityType] =
+			useState<string>('existing');
+		const [availability, setAvailability] = useState(null);
+		const [availabilityMeta, setAvailabilityMeta] = useState(null);
+		const [eventAvailability, setEventAvailability] = useState(null);
 		const [reservetimes, setReservetimes] = useState<boolean>(false);
-		const [availability, setAvailability] = useState<
-			Availability | CustomAvailability
-		>(customAvailability);
 		const [range, setRange] = useState<AvailabilityRange>({
 			type: 'days',
 			days: 5,
 		});
-		const [dateOverrides, setDateOverrides] = useState<DateOverrides>({});
-		const [commonSchedule, setCommonSchedule] = useState<boolean>(false);
-		const [teamAvailability, setTeamAvailability] = useState<
-			Record<number, Availability | CustomAvailability>
-		>({});
+		const [override, setDateOverrides] = useState<DateOverrides>({});
+		// Global settings state
+		const [startDay, setStartDay] = useState<string>('monday');
+		const [timeFormat, setTimeFormat] = useState<string>('12');
 
 		// Limits state
 		const [bookingDurationOptions, setBookingDurationOptions] =
@@ -71,8 +63,23 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 			});
 		const [limits, setLimits] = useState<EventLimitsType | null>(null);
 
-		const { currentEvent: event } = useEvent();
-		const { callApi } = useApi();
+		const { currentEvent: event, loading: eventLoading } = useEvent();
+		const { callApi, loading } = useApi();
+
+		const fetchRange = () => {
+			if (!event) return;
+
+			callApi({
+				path: `events/${event.id}/range`,
+				method: 'GET',
+				onSuccess(response: { range: AvailabilityRange }) {
+					setRange(response.range);
+				},
+				onError(error) {
+					console.error('Error fetching range:', error);
+				},
+			});
+		};
 
 		const fetchLimits = () => {
 			if (!event) return;
@@ -112,142 +119,59 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 			});
 		};
 
+		const fetchGlobalSettings = () => {
+			callApi({
+				path: 'settings',
+				method: 'GET',
+				onSuccess: (data) => {
+					setStartDay(data.general?.start_from || 'monday');
+					setTimeFormat(data.general?.time_format || '12');
+				},
+				onError: (error) => {
+					console.error('Error fetching start day:', error);
+				},
+			});
+		};
+
 		useEffect(() => {
 			if (!event) {
 				return;
 			}
-
 			fetchLimits();
-			setReservetimes(event.reserve);
+			fetchRange();
+			fetchGlobalSettings();
+			setAvailability(event.availability);
+			setEventAvailability(event.availability);
+			setAvailabilityMeta(event.availability_meta);
+			setAvailabilityType(event.availability_type);
+			setDateOverrides(event.availability.value.override);
 		}, [event]);
 
-		useImperativeHandle(ref, () => ({
-			saveSettings: async () => {
-				if (event) {
-					return saveEventDetails();
-				}
-				return Promise.resolve();
-			},
-		}));
-		const saveEventDetails = async () => {
-			try {
-				// First, update the original availability if availability_id exists and type is 'existing'
-				if (
-					availabilityType === 'existing' &&
-					'id' in availability &&
-					availability?.id
-				) {
-					await updateOriginalAvailability();
-				}
+		if (!limits || loading || eventLoading) {
+			return <Shimmer />;
+		}
 
-				const eventHostavailability = {
-					...availability,
-					type: availabilityType,
-					override: dateOverrides,
-					...(commonSchedule ? { is_common: commonSchedule } : {}),
-				};
-
-				const eventTeamAvailability = {
-					users_availability: teamAvailability,
-					type: availabilityType,
-					is_common: commonSchedule,
-				};
-
-				await callApi({
-					path: `events/${event?.id}`,
-					method: 'PUT',
-					data: {
-						availability:
-							event?.calendar?.type === 'team' && !commonSchedule
-								? { ...eventTeamAvailability }
-								: { ...eventHostavailability },
-						limits,
-						event_range: range,
-						reserve_times: reservetimes,
-					},
-					onSuccess() {
-						props.setDisabled(true);
-					},
-					onError(error) {
-						// Re-throw the error to be caught by the outer try-catch
-						throw new Error(error.message);
-					},
-				});
-			} catch (error: any) {
-				console.error('Failed to save event details:', error);
-
-				// Re-throw the error if you want calling code to handle it
-				throw new Error(error.message);
-			}
-		};
-
-		const updateOriginalAvailability = async () => {
-			try {
-				if (event?.calendar?.type === 'team' && !commonSchedule) {
-					// For team individual schedules, update each user's availability
-					for (const [userId, userAvailability] of Object.entries(
-						teamAvailability
-					)) {
-						if ('id' in userAvailability && userAvailability?.id) {
-							await callApi({
-								path: `availabilities/${'id' in userAvailability ? userAvailability.id : ''}`,
-								method: 'PUT',
-								data: {
-									name: userAvailability.name,
-									weekly_hours: userAvailability.weekly_hours,
-									override: userAvailability.override || {},
-									timezone: userAvailability.timezone,
-								},
-								onError(error) {
-									throw new Error(
-										`Failed to update availability for user ${userId}: ${error.message}`
-									);
-								},
-							});
-						}
-					}
-				} else if ('id' in availability && availability?.id) {
-					// For host or team common schedule, update the selected availability
-					await callApi({
-						path: `availabilities/${'id' in availability ? availability.id : ''}`,
-						method: 'PUT',
-						data: {
-							name: availability.name,
-							weekly_hours: availability.weekly_hours,
-							override: dateOverrides || {},
-							timezone: availability.timezone,
-						},
-						onError(error) {
-							throw new Error(
-								`Failed to update original availability: ${error.message}`
-							);
-						},
-					});
-				}
-			} catch (error: any) {
-				console.error('Failed to update original availability:', error);
-				throw error;
-			}
-		};
 		return (
 			<div className="grid grid-cols-2 gap-5 px-9">
 				<AvailabilitySection
+					event={event}
+					eventAvailability={eventAvailability}
 					availability={availability}
+					availabilityMeta={availabilityMeta}
 					availabilityType={availabilityType}
-					customAvailability={customAvailability}
-					dateOverrides={dateOverrides}
-					range={range}
 					setAvailability={setAvailability}
+					setEventAvailability={setEventAvailability}
+					setAvailabilityMeta={setAvailabilityMeta}
 					setAvailabilityType={setAvailabilityType}
-					setDateOverrides={setDateOverrides}
-					setRange={setRange}
 					setReservetimes={setReservetimes}
 					reservetimes={reservetimes}
 					setDisabled={props.setDisabled}
-					setCommonSchedule={setCommonSchedule}
-					commonSchedule={commonSchedule}
-					teamAvailability={teamAvailability}
-					setTeamAvailability={setTeamAvailability}
+					setRange={setRange}
+					range={range}
+					dateOverrides={override}
+					setDateOverrides={setDateOverrides}
+					timeFormat={timeFormat}
+					startDay={startDay}
 				/>
 				<EventLimits
 					bookingDurationOptions={bookingDurationOptions}

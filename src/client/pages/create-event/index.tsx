@@ -789,7 +789,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 								connected_integrations={
 									event.connected_integrations!
 								}
-								calendar={{ id: calendarId }}
+								calendar={{
+									id: calendarId,
+									type: calendarType,
+								}}
 							/>
 						</div>
 						{validationErrors.location && (

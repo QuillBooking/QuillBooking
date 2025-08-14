@@ -24,6 +24,7 @@ import {
 } from '@quillbooking/components';
 import { NoticeMessage } from '@quillbooking/types';
 import { SelectionCard } from '@quillbooking/components';
+import { useCalendarContext } from '../../state/context';
 
 const IntegrationCards: React.FC<{
 	hasSelectedCalendar: boolean;
@@ -40,6 +41,27 @@ const IntegrationCards: React.FC<{
 		id: string;
 	}>();
 	const navigate = useNavigate();
+	const { state: calendar } = useCalendarContext();
+
+	// Prevent access to integrations page for team calendars
+	useEffect(() => {
+		if (calendar?.type === 'team') {
+			// Redirect back to general tab
+			const urlParams = new URLSearchParams(window.location.search);
+			urlParams.delete('tab');
+			urlParams.delete('subtab');
+			const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+			window.history.replaceState({}, '', newUrl);
+			// Navigate away from integrations tab
+			navigate(`calendars/${id}`);
+		}
+	}, [calendar, navigate, id]);
+
+	// Don't render anything for team calendars
+	if (calendar?.type === 'team') {
+		return null;
+	}
+
 	const [activeTab, setActiveTab] = useState<string | null>(null);
 	const integrations = Object.entries(ConfigAPI.getIntegrations() || {})
 		.filter(([key]) => key !== 'twilio' && key !== 'zapier')

@@ -7,11 +7,13 @@ const ZoomFields = ({
 	form,
 	calendar,
 	handleNavigation = () => {}, // Default to a no-op function if not provided
+	onAccountsChange = () => {},
 }: {
 	fields: any;
 	form: any;
 	calendar?: any;
 	handleNavigation?: (path: string) => void;
+	onAccountsChange?: (hasAccounts: boolean) => void;
 }) => {
 	const zoomList = {
 		[__('Features that save you time:', 'quillbooking')]: [
@@ -39,7 +41,7 @@ const ZoomFields = ({
 		'quillbooking.zoomFields',
 		<ProGlobalIntegrations list={zoomList} />,
 		// convert to object instead of array
-		{ fields, form, calendar, handleNavigation } // Pass the additional props
+		{ fields, form, calendar, handleNavigation, onAccountsChange } // Pass the additional props
 	) as React.ReactNode;
 };
 

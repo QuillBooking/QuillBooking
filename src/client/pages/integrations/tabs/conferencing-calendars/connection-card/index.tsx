@@ -53,6 +53,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	const [previousSlug, setPreviousSlug] = useState<string | null>(slug);
 	const [loadingAccount, setLoadingAccount] = useState(true);
 	const [isProVersion, setIsProVersion] = useState<boolean>(false);
+	const [hasConnectedZoomAccounts, setHasConnectedZoomAccounts] =
+		useState<boolean>(false);
 
 	// Use a ref to track the last processed slug to prevent redundant updates
 	const lastProcessedSlugRef = useRef<string | null>(slug);
@@ -216,6 +218,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						calendar={calendar}
 						form={form}
 						handleNavigation={handleNavigation}
+						onAccountsChange={setHasConnectedZoomAccounts}
 					/>
 				);
 			case 'google':
@@ -262,7 +265,10 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	const getSubmitButtonText = () => {
 		switch (slug) {
 			case 'zoom':
-				return 'Save & Validate Credentials';
+				// Hide button when there are connected Zoom accounts
+				return hasConnectedZoomAccounts
+					? null
+					: 'Save & Validate Credentials';
 
 			case 'google':
 			case 'outlook':

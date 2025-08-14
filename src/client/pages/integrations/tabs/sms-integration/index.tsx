@@ -227,9 +227,17 @@ const SMSIntegration: React.FC = () => {
 									'Please read the step-by-step documentation to setup Account SID and Auth Token and get the Sender Numbers for your app.',
 									'quillbooking'
 								)}
-								<span className="cursor-pointer font-semibold underline ml-1">
+								<span
+									className="cursor-pointer font-semibold underline ml-1"
+									onClick={() =>
+										window.open(
+											'https://quillbooking.com/docs/twilio/',
+											'_blank'
+										)
+									}
+								>
 									{__(
-										'Go to the documentation article',
+										'Read the documentation',
 										'quillbooking'
 									)}
 								</span>

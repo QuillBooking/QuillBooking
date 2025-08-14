@@ -568,7 +568,7 @@ class Event_Model extends Model {
 		$integrations = Integrations_Manager::instance()->get_integrations();
 
 		$calendar_ids = array( $this->calendar_id );
-		if ( in_array( $this->type, array( 'round-robin', 'collective' ) ) ) {
+		if ( in_array( $this->calendar->type, array( 'team' ) ) ) {
 			$team_members = $this->calendar->getTeamMembers();
 			$calendar_ids = $team_members;
 		}
@@ -586,6 +586,7 @@ class Event_Model extends Model {
 			$teams_enabled       = false;
 			$has_get_started     = false;
 			$has_pro_version     = true;
+			$team_members_setup  = true;
 
 			if ( $slug == 'zoom' ) {
 				$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
@@ -611,42 +612,105 @@ class Event_Model extends Model {
 			}
 
 			foreach ( $calendar_ids as $calendar_id ) {
-				$integration->set_host( $calendar_id );
+				$is_host_calendar = false;
+				if ( $this->calendar->type === 'team' ) {
+					$calendar = Calendar_Model::where( 'user_id', $calendar_id )->where( 'type', 'host' )->first();
+					if ( $calendar->user_id == $this->calendar->user_id ) {
+						$is_host_calendar = true;
+					}
+				} else {
+					$is_host_calendar = true;
+					$calendar         = Calendar_Model::find( $calendar_id );
+				}
 
-				// Check if host was successfully set before trying to access accounts
-				if ( $integration->host ) {
+				if ( $calendar ) {
+					$integration->set_host( $calendar );
+
 					$accounts = $integration->accounts->get_accounts();
 
 					if ( empty( $accounts ) ) {
 						$all_connected = false;
+						// For team calendars, if any member doesn't have integration setup, mark as not setup
+						if ( in_array( $this->calendar->type, array( 'team' ) ) && $slug !== 'zoom' ) {
+							$team_members_setup = false;
+						}
+
+						if ( $slug === 'zoom' ) {
+							if ( $is_host_calendar ) {
+								$has_default_calendar = false;
+								foreach ( $accounts as $account ) {
+									if ( isset( $account['app_credentials']['account_id'] ) && isset( $account['app_credentials']['client_id'] ) && isset( $account['app_credentials']['client_secret'] ) ) {
+										$has_default_calendar = true;
+										break;
+									}
+								}
+							}
+							if ( ! $has_default_calendar && $is_host_calendar ) {
+								$team_members_setup = false;
+							}
+						}
 					} else {
 						$has_accounts = true;
 						// Check if this is the default account and has Teams enabled
-						if ( $slug === 'outlook' ) {
+						if ( $slug === 'outlook' && ! in_array( $this->calendar->type, array( 'team' ) ) ) {
 							foreach ( $accounts as $account ) {
 								if ( isset( $account['config']['default_calendar'] ) ) {
 									// Check if Teams is explicitly enabled in the account settings
 									$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
-										$account['config']['settings']['enable_teams'] === true;
+									$account['config']['settings']['enable_teams'] === true;
 									break;
+								}
+							}
+						}
+
+						// For Google integration, check if member has proper configuration
+						if ( in_array( $this->calendar->type, array( 'team' ) ) ) {
+							if ( $slug === 'zoom' ) {
+								if ( $is_host_calendar ) {
+									$has_default_calendar = false;
+									foreach ( $accounts as $account ) {
+										if ( isset( $account['app_credentials']['account_id'] ) && isset( $account['app_credentials']['client_id'] ) && isset( $account['app_credentials']['client_secret'] ) ) {
+											$has_default_calendar = true;
+											break;
+										}
+									}
+								}
+								if ( ! $has_default_calendar && $is_host_calendar ) {
+									$team_members_setup = false;
+								}
+							} else {
+								$has_default_calendar = false;
+								foreach ( $accounts as $account ) {
+									if ( isset( $account['config']['default_calendar'] ) &&
+									 ! empty( $account['config']['default_calendar']['calendar_id'] ) ) {
+										$has_default_calendar = true;
+										break;
+									}
+								}
+								if ( ! $has_default_calendar ) {
+									$team_members_setup = false;
 								}
 							}
 						}
 					}
 				} else {
-					// If host is null, mark as not connected
 					$all_connected = false;
 				}
 			}
 
+			if ( $this->calendar->type === 'team' ) {
+					$teams_enabled = true;
+			}
+
 			$connected_integrations[ $slug ] = array(
-				'name'            => $name,
-				'connected'       => $all_connected,
-				'has_accounts'    => $has_accounts,
-				'has_settings'    => $set_global_settings,
-				'teams_enabled'   => $teams_enabled,
-				'has_get_started' => $has_get_started,
-				'has_pro_version' => $has_pro_version,
+				'name'               => $name,
+				'connected'          => $all_connected,
+				'has_accounts'       => $has_accounts,
+				'has_settings'       => $set_global_settings,
+				'teams_enabled'      => $teams_enabled,
+				'has_get_started'    => $has_get_started,
+				'has_pro_version'    => $has_pro_version,
+				'team_members_setup' => $team_members_setup,
 			);
 		}
 

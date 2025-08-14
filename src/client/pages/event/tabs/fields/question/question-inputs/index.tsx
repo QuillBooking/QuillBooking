@@ -40,8 +40,6 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 			formInstance
 				.validateFields()
 				.then((values) => {
-					console.log('values', values);
-
 					const updatedSettings = {
 						...allFields[fieldKey].settings,
 						...(values.settings || {}),
@@ -77,7 +75,7 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 				});
 		},
 		300
-	); 
+	);
 
 	const onChange = () => {
 		debouncedValidateAndUpdate(form, fieldKey, allFields, onUpdate);
@@ -529,7 +527,8 @@ const QuestionInputs: React.FC<QuestionInputsProps> = ({
 							{/* update the message  */}
 							<EmailEditor
 								message={
-									allFields[fieldKey].settings?.termsText ?? ''
+									allFields[fieldKey].settings?.termsText ??
+									''
 								}
 								onChange={(html: string) => {
 									form.setFieldsValue({

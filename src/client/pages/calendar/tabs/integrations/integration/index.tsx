@@ -359,7 +359,6 @@ const IntegrationDetailsPage: React.FC<Props> = ({
 					setSelectedCalendar('');
 				},
 				onError(error) {
-					console.log('Delete error:', error);
 					setNotice({
 						type: 'error',
 						title: __('Error', 'quillbooking'),

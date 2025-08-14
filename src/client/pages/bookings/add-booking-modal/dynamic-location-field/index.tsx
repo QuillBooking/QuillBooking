@@ -21,12 +21,10 @@ interface DynamicLocationFieldsProps {
 }
 
 const DynamicLocationFields = ({ locations }: DynamicLocationFieldsProps) => {
-	console.log(locations);
 	return (
 		<Form.Item noStyle shouldUpdate>
 			{({ getFieldValue }) => {
 				const selectedType = getFieldValue('location');
-				console.log(selectedType);
 				if (
 					selectedType !== 'attendee_address' &&
 					selectedType !== 'attendee_phone'

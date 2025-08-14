@@ -87,8 +87,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 	url,
 	globalCurrency,
 }) => {
-	console.log('event', event);
-	console.log('booking', booking);
 	const baseColor = tinycolor(event.color);
 	const lightColor = baseColor.lighten(40).toString();
 	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
@@ -178,11 +176,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 	};
 
 	const handleSave = async (values: any) => {
-		console.log('Submitting booking form', { values, event });
-
 		try {
-			console.log('Submitting booking form', { values, event });
-
 			// Get prefilled data from URL parameters
 			const currentUrlParams = new URLSearchParams(
 				window.location.search
@@ -220,9 +214,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 
 				// If WooCommerce is enabled, always use it directly
 				if (isWooCommerceEnabled) {
-					console.log(
-						'WooCommerce payment method selected automatically'
-					);
 					formData.append('payment_method', 'woocommerce');
 				}
 				// For PayPal only, use it directly without showing payment selection screen
@@ -230,7 +221,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 					event.payments_settings?.enable_paypal &&
 					!event.payments_settings?.enable_stripe
 				) {
-					console.log('PayPal payment method selected automatically');
 					formData.append('payment_method', 'paypal');
 				}
 				// For Stripe only, use it directly without showing payment selection screen
@@ -238,7 +228,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 					event.payments_settings?.enable_stripe &&
 					!event.payments_settings?.enable_paypal
 				) {
-					console.log('Stripe payment method selected automatically');
 					formData.append('payment_method', 'stripe');
 				}
 				// For multiple payment methods, default to Stripe if available
@@ -294,9 +283,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 
 			formData.append('fields', JSON.stringify(filteredValues));
 
-			console.log('AJAX URL:', ajax_url);
-			console.log('Booking formData prepared');
-
 			const response = await fetch(ajax_url, {
 				method: 'POST',
 				body: formData,
@@ -307,7 +293,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 			}
 
 			const data = await response.json();
-			console.log('Booking response:', data.data);
 
 			if (!data.success) {
 				throw new Error(data.data?.message || 'Unknown error occurred');
@@ -321,9 +306,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 			// Check for WooCommerce URL response first (it has different format)
 			if (data.data.url) {
 				if (isInlineEmbedMode) {
-					console.log(
-						'WooCommerce payment in inline embed mode - sending postMessage to parent'
-					);
 					const paymentData = {
 						type: 'quillbooking_payment_redirect',
 						blockId: embedUrlParams.get('blockId') || 'unknown',
@@ -338,10 +320,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 					}
 					return;
 				} else {
-					console.log(
-						'WooCommerce payment, redirecting to checkout:',
-						data.data.url
-					);
 					(window.top || window).location.href = data.data.url;
 					return;
 				}
@@ -352,9 +330,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 				// If it's a PayPal redirect, handle it directly
 				if (data.data.redirect_url) {
 					if (isInlineEmbedMode) {
-						console.log(
-							'PayPal payment in inline embed mode - sending postMessage to parent'
-						);
 						const paymentData = {
 							type: 'quillbooking_payment_redirect',
 							blockId: embedUrlParams.get('blockId') || 'unknown',
@@ -370,10 +345,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 						}
 						return;
 					} else {
-						console.log(
-							'PayPal payment, redirecting to:',
-							data.data.redirect_url
-						);
 						(window.top || window).location.href =
 							data.data.redirect_url;
 						return;
@@ -389,22 +360,13 @@ const CardBody: React.FC<CardBodyProps> = ({
 					formData.get('payment_method') === 'stripe' &&
 					(window as any).quillbooking?.pro_active === true
 				) {
-					console.log(
-						'Stripe payment required, transitioning to payment step',
-						{
-							requiresPayment,
-							bookingData: data.data.booking,
-						}
-					);
 					setBookingData(data?.data?.booking);
 					setStep(3); // Payment step
 				} else {
 					// Handle confirmation based on embed mode (already checked above)
 					if (isInlineEmbedMode) {
 						// Send postMessage instead of redirecting
-						console.log(
-							'Inline embed mode detected, sending postMessage instead of redirect'
-						);
+
 						const confirmationData = {
 							type: 'quillbooking_confirmation',
 							blockId: embedUrlParams.get('blockId') || 'unknown',
@@ -461,7 +423,6 @@ const CardBody: React.FC<CardBodyProps> = ({
 								booking_redirect_url;
 						} else {
 							const redirectUrl = `${url}/?quillbooking=booking&id=${data.data.booking.hash_id}&type=confirm`;
-							console.log('Redirect URL:', redirectUrl);
 							(window.top || window).location.href = redirectUrl;
 						}
 					}

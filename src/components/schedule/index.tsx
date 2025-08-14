@@ -28,8 +28,6 @@ const ScheduleComponent: React.FC<ScheduleComponentProps> = ({
 	timeFormat,
 	onCustomAvailabilityChange,
 }) => {
-	console.log('availabilityttttt', availability);
-	// Define the standard week order
 	const weekOrder = [
 		'monday',
 		'tuesday',

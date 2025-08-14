@@ -22,9 +22,6 @@ const BookingQuestion: React.FC<BookingQuestionProps> = ({ booking }) => {
 	const { callApi } = useApi();
 	const [eventFields, setEventFields] = useState<FieldItem>({});
 
-	console.log(Object.entries(fields));
-	console.log(booking);
-
 	const getEventFields = (eventId: number) => {
 		callApi({
 			path: `events/${eventId}/fields`,
@@ -64,8 +61,11 @@ const BookingQuestion: React.FC<BookingQuestionProps> = ({ booking }) => {
 						<div className="flex gap-3 items-center pb-2">
 							<QuestionIcon />
 							<p className="text-xl text-color-primary-text font-medium">
-								{typeof eventFields[key] === 'object' && eventFields[key] !== null && 'label' in eventFields[key]
-									? (eventFields[key] as { label: string }).label
+								{typeof eventFields[key] === 'object' &&
+								eventFields[key] !== null &&
+								'label' in eventFields[key]
+									? (eventFields[key] as { label: string })
+											.label
 									: key}
 							</p>
 						</div>

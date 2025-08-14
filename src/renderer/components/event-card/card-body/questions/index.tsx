@@ -66,7 +66,6 @@ const QuestionsComponents: React.FC<QuestionsComponentsProps> = ({
 			path: 'settings',
 			method: 'GET',
 			onSuccess: (data) => {
-				console.log('Country code fetched:', data);
 				setCountryCode(data.general.default_country_code.toLowerCase());
 			},
 			onError: (error) => {

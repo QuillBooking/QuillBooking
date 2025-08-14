@@ -25,7 +25,6 @@ interface LocationsProps {
 }
 
 const Locations = ({ locationFields }: LocationsProps) => {
-	console.log('Locations', locationFields);
 	return (
 		<>
 			{locationFields.options.length > 1 ? (

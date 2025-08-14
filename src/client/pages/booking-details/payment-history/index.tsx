@@ -25,7 +25,6 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({ booking }) => {
 	if (booking.order === undefined || booking.order === null) {
 		return;
 	}
-	console.log(booking);
 	return (
 		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
 			<CardHeader

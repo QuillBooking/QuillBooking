@@ -1209,15 +1209,20 @@ class REST_Event_Controller extends REST_Controller {
 
 	// Update event availability
 	private function update_event_team_availability( $event, $team_availability ) {
-		foreach ( $team_availability as $user_id => $availability ) {
-			$availability = Availability_Model::find( $availability['id'] );
-			if ( ! $availability ) {
-				return new WP_Error( 'rest_event_error', __( 'Availability not found', 'quillbooking' ), array( 'status' => 404 ) );
+		foreach ( $team_availability as $user_id => $availabilityData ) {
+			$model = Availability_Model::find( $availabilityData['id'] );
+			if ( ! $model ) {
+				return new WP_Error(
+					'rest_event_error',
+					__( 'Availability not found', 'quillbooking' ),
+					array( 'status' => 404 )
+				);
 			}
-			$availability->value = $availability['value'];
-			$availability->save();
+			$model->value = $availabilityData['value'];
+			$model->save();
 		}
 	}
+
 
 	// Handle availability updates based on calendar type and settings
 	private function handle_availability_update( $event, $availability_type, $availability_meta, $event_availability, $team_availability ) {

@@ -163,7 +163,6 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 				}, {});
 
 				setTeamAvailability(availabilityObj);
-				console.log('availabilityObj', availabilityObj);
 				const firstHostAvailability =
 					availabilityObj[event.hosts[0].id];
 				if (event.availability_meta.isCommon === false) {

@@ -172,8 +172,6 @@ const Event: React.FC = () => {
 		}
 	}, [eventError, errorNotice]);
 
-	console.log(event);
-
 	useEffect(() => {
 		const handleTabClose = (event: BeforeUnloadEvent) => {
 			if (saveDisabled) {
@@ -441,7 +439,6 @@ const Event: React.FC = () => {
 
 	useEffect(() => {
 		if (tab) {
-			console.log('URL tab changed to:', tab); // Debugging log
 			setActiveTab(tab);
 		}
 	}, [tab]);
@@ -466,8 +463,6 @@ const Event: React.FC = () => {
 	};
 
 	const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-		console.log('Switching to tab:', newValue);
-
 		if (!calendarId || !id) {
 			console.error('Missing calendar ID or event ID');
 			return;

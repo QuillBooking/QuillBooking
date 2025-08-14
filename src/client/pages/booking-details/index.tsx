@@ -137,8 +137,6 @@ const BookingDetails: React.FC = () => {
 	const [timeFormat, setTimeFormat] = useState<string>('12'); // Default to 24-hour format
 
 	const handleStatusUpdated = (action?: string) => {
-		console.log('Action received:', action); // Add logging to debug
-
 		switch (action) {
 			case 'delete':
 				handleClose();
@@ -253,13 +251,13 @@ const BookingDetails: React.FC = () => {
 	const endTime =
 		booking && booking.start_time && booking.slot_time
 			? (() => {
-				const [hours, minutes] = time.split(':').map(Number);
-				const totalMinutes =
-					hours * 60 + minutes + Number(booking.slot_time);
-				const endHours = Math.floor(totalMinutes / 60);
-				const endMinutes = totalMinutes % 60;
-				return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-			})()
+					const [hours, minutes] = time.split(':').map(Number);
+					const totalMinutes =
+						hours * 60 + minutes + Number(booking.slot_time);
+					const endHours = Math.floor(totalMinutes / 60);
+					const endMinutes = totalMinutes % 60;
+					return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+				})()
 			: '';
 
 	return (

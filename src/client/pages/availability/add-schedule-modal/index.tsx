@@ -71,7 +71,6 @@ const AddAvailabilityScheduleModal: React.FC<AddAvailabilityModalProps> = ({
 					navigate(`availability/${response.id}`);
 				},
 				onError: (error) => {
-					console.log(error);
 					errorNotice(
 						__(
 							'Failed to save availability schedule.',

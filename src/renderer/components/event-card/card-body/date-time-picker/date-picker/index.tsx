@@ -85,7 +85,6 @@ const DatePicker: React.FC<DatePickerProps> = ({
 						date.format('YYYY-MM'),
 					]);
 					setIsLoading(false);
-					console.log('hey');
 					setReachedEndDate(false);
 				} else {
 					if (

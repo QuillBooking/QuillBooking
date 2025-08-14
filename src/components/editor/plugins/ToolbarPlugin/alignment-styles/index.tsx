@@ -75,9 +75,6 @@ export default function AlignmentStyles({
 					} else {
 						setAlignment('left'); // Default or explicitly 'left'
 					}
-
-					console.log('Element style:', elementDOM.style.textAlign);
-					console.log('Setting alignment to:', textAlign || 'left');
 				}
 			}
 		});

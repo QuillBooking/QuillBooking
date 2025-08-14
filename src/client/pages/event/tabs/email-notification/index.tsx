@@ -136,8 +136,6 @@ const EmailNotificationTab = forwardRef<
 	};
 
 	const handleSwitchChange = (checked, key) => {
-		console.log('Toggle switch changed:', checked, key);
-
 		setNotificationSettings((prev) => {
 			if (!prev) return prev;
 
@@ -149,10 +147,6 @@ const EmailNotificationTab = forwardRef<
 				...updated[key],
 				default: checked,
 			};
-
-			console.log('Updated notification settings:', updated);
-
-			setDisabled(false);
 
 			return updated;
 		});
@@ -169,7 +163,6 @@ const EmailNotificationTab = forwardRef<
 		if (!event || !notificationSettings) return;
 
 		try {
-			console.log('before save method', notificationSettings);
 			return await callApi({
 				path: `events/${event.id}`,
 				method: 'POST',
@@ -177,7 +170,6 @@ const EmailNotificationTab = forwardRef<
 					[`email_notifications`]: notificationSettings,
 				},
 				onSuccess() {
-					console.log('before success message', notificationSettings);
 					successNotice(
 						__(
 							'Notification settings saved successfully',
@@ -186,10 +178,6 @@ const EmailNotificationTab = forwardRef<
 					);
 					setDisabled(true);
 					setNotificationSettings(notificationSettings);
-					console.log(
-						'Notification settings saved successfully',
-						notificationSettings
-					);
 				},
 				onError(error) {
 					// This will be caught by the outer try-catch

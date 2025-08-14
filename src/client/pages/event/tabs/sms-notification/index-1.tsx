@@ -87,8 +87,6 @@ const SmsNotificationTab = forwardRef<
 	const [isNoticeVisible, setNoticeVisible] = useState(true);
 	const [notificationsLoaded, setNotificationsLoaded] = useState(false);
 
-	console.log(event?.connected_integrations.twilio.connected);
-
 	useEffect(() => {
 		fetchNotificationSettings();
 	}, [event]);
@@ -204,8 +202,8 @@ const SmsNotificationTab = forwardRef<
 	return (
 		<div className="w-full px-9">
 			{!event?.connected_integrations.twilio.has_settings &&
-				!event?.connected_integrations.twilio.connected &&
-				!event?.connected_integrations.twilio.has_accounts ? (
+			!event?.connected_integrations.twilio.connected &&
+			!event?.connected_integrations.twilio.has_accounts ? (
 				<Card>
 					<CardHeader
 						title={__('Sms Notification', 'quillbooking')}

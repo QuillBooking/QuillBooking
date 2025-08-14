@@ -144,8 +144,6 @@ const DashboardWrapper = () => {
 		return <ShimmerLoader />;
 	}
 
-	console.log('asdfasdfasdf', hasAvailability);
-
 	// If no calendars, show getting started page
 	if (!hasCalendars && !hasAvailability) {
 		return <GettingStarted />;

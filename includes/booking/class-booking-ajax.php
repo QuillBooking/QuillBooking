@@ -49,7 +49,6 @@ class Booking_Ajax {
 	 * @return void
 	 */
 	public function booking() {
-		xdebug_break();
 		 // check_ajax_referer( 'quillbooking', 'nonce' );
 		try {
 			$id    = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : null;

@@ -110,7 +110,7 @@ class Availabilities
 		$model_data = array(
 			'user_id' => Arr::get($availability, 'user_id'),
 			'name' => Arr::get($availability, 'name'),
-			'value' => wp_json_encode($value_data),
+			'value' => $value_data,
 			'timezone' => Arr::get($availability, 'timezone', 'UTC'),
 			'is_default' => Arr::get($availability, 'is_default', false),
 		);
@@ -151,7 +151,7 @@ class Availabilities
 
 		$update_data = array(
 			'name' => Arr::get($availability, 'name', $model->name),
-			'value' => wp_json_encode($value_data),
+			'value' => $value_data,
 			'timezone' => Arr::get($availability, 'timezone', $model->timezone),
 			'is_default' => Arr::get($availability, 'is_default', $model->is_default),
 		);

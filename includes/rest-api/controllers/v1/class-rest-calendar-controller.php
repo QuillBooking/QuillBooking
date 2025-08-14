@@ -879,7 +879,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			array(
 				'user_id'    => $user_id,
 				'name'       => $availability_name,
-				'value'      => wp_json_encode( $value_data ),
+				'value'      => $value_data,
 				'timezone'   => $timezone,
 				'is_default' => $is_default,
 			)

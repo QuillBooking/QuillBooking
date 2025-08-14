@@ -46,7 +46,7 @@ class Availability_service
 		$availability_data = array(
 			'user_id' => $user_id,
 			'name' => $name,
-			'value' => wp_json_encode($value_data),
+			'value' => $value_data,
 			'timezone' => $timezone,
 			'is_default' => $default,
 		);
@@ -62,7 +62,7 @@ class Availability_service
 			$availability = Availability_Model::create($availability_data);
 
 			// Prepare response data
-			$value_data = json_decode($availability->value, true) ?: array();
+			$value_data = $availability->value ?: array();
 
 			$response_data = array(
 				'id' => $availability->id,

@@ -147,7 +147,7 @@ class Availability_Model extends Model {
 	public function setWeeklyHours( $weekly_hours ) {
 		$value_data                 = $this->getValueDataAttribute();
 		$value_data['weekly_hours'] = $weekly_hours;
-		$this->value                = wp_json_encode( $value_data );
+		$this->value                = $value_data ;
 	}
 
 	/**
@@ -158,7 +158,7 @@ class Availability_Model extends Model {
 	public function setOverride( $override ) {
 		$value_data             = $this->getValueDataAttribute();
 		$value_data['override'] = $override;
-		$this->value            = wp_json_encode( $value_data );
+		$this->value            = $value_data;
 	}
 
 	/**

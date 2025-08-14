@@ -894,7 +894,6 @@ class REST_Calendar_Controller extends REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_item_integrations( $request ) {
-		xdebug_break();
 		try {
 			$calendar_id = $request->get_param( 'id' );
 			$calendar    = Calendar_Model::find( $calendar_id );
@@ -961,11 +960,25 @@ class REST_Calendar_Controller extends REST_Controller {
 					$integration->set_host( $host_calendar );
 					$accounts = $integration->accounts->get_accounts();
 
-					if ( empty( $accounts ) && $slug !== 'zoom' ) {
+					if ( empty( $accounts ) ) {
 						$all_connected = false;
 						// For team calendars, if any member doesn't have integration setup, mark as not setup
-						if ( in_array( $calendar->type, array( 'team' ) ) ) {
+						if ( in_array( $calendar->type, array( 'team' ) ) && $slug !== 'zoom' ) {
 							$team_members_setup = false;
+						}
+						if ( $slug === 'zoom' ) {
+							if ( $is_host_calendar ) {
+								$has_default_calendar = false;
+								foreach ( $accounts as $account ) {
+									if ( isset( $account['app_credentials']['account_id'] ) && isset( $account['app_credentials']['client_id'] ) && isset( $account['app_credentials']['client_secret'] ) ) {
+										$has_default_calendar = true;
+										break;
+									}
+								}
+							}
+							if ( ! $has_default_calendar && $is_host_calendar ) {
+								$team_members_setup = false;
+							}
 						}
 					} else {
 						$has_accounts = true;

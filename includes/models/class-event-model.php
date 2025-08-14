@@ -520,7 +520,6 @@ class Event_Model extends Model {
 	 * @return array
 	 */
 	public function getConnectedIntegrationsAttribute() {
-		xdebug_break();
 		$connected_integrations = array();
 
 		if ( ! Integrations_Helper::has_integrations() ) {
@@ -590,11 +589,26 @@ class Event_Model extends Model {
 
 					$accounts = $integration->accounts->get_accounts();
 
-					if ( empty( $accounts ) && $slug !== 'zoom' ) {
+					if ( empty( $accounts ) ) {
 						$all_connected = false;
 						// For team calendars, if any member doesn't have integration setup, mark as not setup
-						if ( in_array( $this->calendar->type, array( 'team' ) ) ) {
+						if ( in_array( $this->calendar->type, array( 'team' ) ) && $slug !== 'zoom' ) {
 							$team_members_setup = false;
+						}
+
+						if ( $slug === 'zoom' ) {
+							if ( $is_host_calendar ) {
+								$has_default_calendar = false;
+								foreach ( $accounts as $account ) {
+									if ( isset( $account['app_credentials']['account_id'] ) && isset( $account['app_credentials']['client_id'] ) && isset( $account['app_credentials']['client_secret'] ) ) {
+										$has_default_calendar = true;
+										break;
+									}
+								}
+							}
+							if ( ! $has_default_calendar && $is_host_calendar ) {
+								$team_members_setup = false;
+							}
 						}
 					} else {
 						$has_accounts = true;

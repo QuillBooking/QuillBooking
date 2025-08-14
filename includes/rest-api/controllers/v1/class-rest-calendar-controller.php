@@ -894,6 +894,7 @@ class REST_Calendar_Controller extends REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_item_integrations( $request ) {
+		xdebug_break();
 		try {
 			$calendar_id = $request->get_param( 'id' );
 			$calendar    = Calendar_Model::find( $calendar_id );
@@ -912,7 +913,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			$integrations = Integrations_Manager::instance()->get_integrations();
 
 			$calendar_ids = array( $calendar_id );
-			if ( in_array( $calendar->type, array( 'round-robin', 'collective' ) ) ) {
+			if ( in_array( $calendar->type, array( 'team' ) ) ) {
 				$team_members = $calendar->getTeamMembers();
 				$calendar_ids = $team_members;
 			}
@@ -926,8 +927,10 @@ class REST_Calendar_Controller extends REST_Controller {
 				$teams_enabled       = false;
 				$has_get_started     = false;
 				$has_pro_version     = true;
+				$team_members_setup  = true;
+				$slug                = $integration->slug;
 
-				if ( $integration->slug == 'zoom' ) {
+				if ( $slug == 'zoom' ) {
 					$app_credentials = Arr::get( $global_settings, 'app_credentials', null );
 					if ( $app_credentials && is_array( $app_credentials ) && ! empty( $app_credentials['client_id'] ) && ! empty( $app_credentials['client_secret'] ) ) {
 						$set_global_settings = true;
@@ -944,35 +947,85 @@ class REST_Calendar_Controller extends REST_Controller {
 				}
 
 				foreach ( $calendar_ids as $calendar_id ) {
-					$integration->set_host( $calendar_id );
+					$is_host_calendar = false;
+					if ( $calendar->type === 'team' ) {
+						$host_calendar = Calendar_Model::where( 'user_id', $calendar_id )->where( 'type', 'host' )->first();
+						if ( $host_calendar->user_id == $calendar->user_id ) {
+							$is_host_calendar = true;
+						}
+					} else {
+						$host_calendar    = Calendar_Model::find( $calendar_id );
+						$is_host_calendar = true;
+					}
+
+					$integration->set_host( $host_calendar );
 					$accounts = $integration->accounts->get_accounts();
 
-					if ( empty( $accounts ) ) {
+					if ( empty( $accounts ) && $slug !== 'zoom' ) {
 						$all_connected = false;
+						// For team calendars, if any member doesn't have integration setup, mark as not setup
+						if ( in_array( $calendar->type, array( 'team' ) ) ) {
+							$team_members_setup = false;
+						}
 					} else {
 						$has_accounts = true;
 						// Check if this is the default account and has Teams enabled
-						if ( $integration->slug === 'outlook' ) {
+						if ( $slug === 'outlook' && ! in_array( $calendar->type, array( 'team' ) ) ) {
 							foreach ( $accounts as $account ) {
 								if ( isset( $account['config']['default_calendar'] ) ) {
 									// Check if Teams is explicitly enabled in the account settings
 									$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
-										$account['config']['settings']['enable_teams'] === true;
+									$account['config']['settings']['enable_teams'] === true;
 									break;
+								}
+							}
+						}
+
+						// For Google integration, check if member has proper configuration
+						if ( in_array( $calendar->type, array( 'team' ) ) ) {
+							if ( $slug === 'zoom' ) {
+								if ( $is_host_calendar ) {
+									$has_default_calendar = false;
+									foreach ( $accounts as $account ) {
+										if ( isset( $account['app_credentials']['account_id'] ) && isset( $account['app_credentials']['client_id'] ) && isset( $account['app_credentials']['client_secret'] ) ) {
+											$has_default_calendar = true;
+											break;
+										}
+									}
+								}
+								if ( ! $has_default_calendar && $is_host_calendar ) {
+									$team_members_setup = false;
+								}
+							} else {
+								$has_default_calendar = false;
+								foreach ( $accounts as $account ) {
+									if ( isset( $account['config']['default_calendar'] ) &&
+									 ! empty( $account['config']['default_calendar']['calendar_id'] ) ) {
+										$has_default_calendar = true;
+										break;
+									}
+								}
+								if ( ! $has_default_calendar ) {
+									$team_members_setup = false;
 								}
 							}
 						}
 					}
 				}
 
-				$connected_integrations[ $integration->slug ] = array(
-					'name'            => $integration->name,
-					'connected'       => $all_connected,
-					'has_accounts'    => $has_accounts,
-					'has_settings'    => $set_global_settings,
-					'teams_enabled'   => $teams_enabled,
-					'has_get_started' => $has_get_started,
-					'has_pro_version' => $has_pro_version,
+				if ( $calendar->type === 'team' ) {
+					$teams_enabled = true;
+				}
+
+				$connected_integrations[ $slug ] = array(
+					'name'               => $integration->name,
+					'connected'          => $all_connected,
+					'has_accounts'       => $has_accounts,
+					'has_settings'       => $set_global_settings,
+					'teams_enabled'      => $teams_enabled,
+					'has_get_started'    => $has_get_started,
+					'has_pro_version'    => $has_pro_version,
+					'team_members_setup' => $team_members_setup,
 				);
 			}
 

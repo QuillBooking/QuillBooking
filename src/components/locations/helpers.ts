@@ -84,6 +84,23 @@ export class IntegrationHelper {
         return this.connected_integrations.outlook.teams_enabled;
     }
 
+    /**
+     * Check if team members have the specific integration configured
+     * For team calendars, each member needs individual integration setup
+     */
+    hasTeamMembersIntegrationSetup(type: IntegrationType): boolean {
+        switch (type) {
+            case 'google-meet':
+                return this.connected_integrations.google.team_members_setup || false;
+            case 'zoom':
+                return this.connected_integrations.zoom.team_members_setup || false;
+            case 'ms-teams':
+                return this.connected_integrations.outlook.team_members_setup || false;
+            default:
+                return false;
+        }
+    }
+
     convertToSlug(type: IntegrationType): string {
         return INTEGRATION_SLUGS[type];
     }

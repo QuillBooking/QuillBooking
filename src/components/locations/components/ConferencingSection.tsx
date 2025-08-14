@@ -40,8 +40,11 @@ const ConferencingSection: React.FC<ConferencingSectionProps> = ({
 			return true;
 		}
 
-		if (integrationHelper.isCalendarTypeTeam(calendar)) {
-			return false;
+		if (
+			integrationHelper.isCalendarTypeTeam(calendar) &&
+			!integrationHelper.hasTeamMembersIntegrationSetup(type)
+		) {
+			return true;
 		}
 
 		if (integrationHelper.hasGetStarted(type)) {
@@ -87,7 +90,24 @@ const ConferencingSection: React.FC<ConferencingSectionProps> = ({
 			};
 		}
 
-		if (integrationHelper.isCalendarTypeTeam(calendar)) {
+		if (
+			integrationHelper.isCalendarTypeTeam(calendar) &&
+			!integrationHelper.hasTeamMembersIntegrationSetup(type) &&
+			type === 'zoom'
+		) {
+			return {
+				message: __(
+					`Looks like your remote connection for this location is disabled. must the main host set the remote connection first.`,
+					'quillbooking'
+				),
+				className: 'text-red-500 text-[12px] italic',
+			};
+		}
+
+		if (
+			integrationHelper.isCalendarTypeTeam(calendar) &&
+			!integrationHelper.hasTeamMembersIntegrationSetup(type)
+		) {
 			return {
 				message: __(
 					`Looks like your remote connection for this location is disabled. All hosts need to set ${INTEGRATION_NAMES[type]} event creation first.`,

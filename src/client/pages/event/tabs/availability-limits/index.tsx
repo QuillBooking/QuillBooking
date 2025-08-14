@@ -15,7 +15,6 @@ import { __ } from '@wordpress/i18n';
 import AvailabilitySection from './availability';
 import EventLimits from './limits';
 import {
-	Availability,
 	AvailabilityRange,
 	DateOverrides,
 	EventTabHandle,
@@ -23,10 +22,7 @@ import {
 	UnitOptions as UnitOptionsType,
 	EventLimits as EventLimitsType,
 	LimitUnit,
-	CustomAvailability,
 } from 'client/types';
-import { getCurrentTimezone } from '@quillbooking/utils';
-import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
 import { useApi, useEvent } from '@quillbooking/hooks';
 import Shimmer from './shimmer';
 
@@ -44,6 +40,8 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 			days: 5,
 		});
 		const [override, setDateOverrides] = useState<DateOverrides>({});
+		const [teamAvailability, setTeamAvailability] = useState<any>(null);
+		const [selectedUser, setSelectedUser] = useState<any>(null);
 		// Global settings state
 		const [startDay, setStartDay] = useState<string>('monday');
 		const [timeFormat, setTimeFormat] = useState<string>('12');
@@ -140,12 +138,82 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 			fetchLimits();
 			fetchRange();
 			fetchGlobalSettings();
-			setAvailability(event.availability);
+			if (event.availability_type === 'existing') {
+				setAvailability(event.availability);
+				setDateOverrides(event.availability.value.override);
+			}
+			if (event.availability_type === 'custom') {
+				setAvailability(event.availability_meta.custom_availability);
+				setDateOverrides(
+					event.availability_meta.custom_availability.value.override
+				);
+			}
+
+			if (event.calendar.type === 'team') {
+				const availabilityObj = event.hosts?.reduce((acc, host) => {
+					const availabilityId =
+						event.availability_meta.hosts_schedules?.[host.id];
+
+					const foundAvailability = host.availabilities?.find(
+						(availability) => availability.id === availabilityId
+					);
+
+					acc[host.id] = foundAvailability || null;
+					return acc;
+				}, {});
+
+				setTeamAvailability(availabilityObj);
+				console.log('availabilityObj', availabilityObj);
+				const firstHostAvailability =
+					availabilityObj[event.hosts[0].id];
+				if (event.availability_meta.isCommon === false) {
+					setAvailability(firstHostAvailability);
+					setDateOverrides(
+						firstHostAvailability?.value.override || {}
+					);
+				}
+			}
+			setSelectedUser(event.hosts?.[0]);
 			setEventAvailability(event.availability);
 			setAvailabilityMeta(event.availability_meta);
 			setAvailabilityType(event.availability_type);
-			setDateOverrides(event.availability.value.override);
 		}, [event]);
+
+		useImperativeHandle(ref, () => ({
+			saveSettings: async () => {
+				if (event) {
+					return saveEventDetails();
+				}
+				return Promise.resolve();
+			},
+		}));
+		const saveEventDetails = async () => {
+			try {
+				await callApi({
+					path: `events/${event?.id}`,
+					method: 'PUT',
+					data: {
+						event_availability: eventAvailability,
+						event_availability_meta: availabilityMeta,
+						availability_type: availabilityType,
+						team_availability: teamAvailability,
+						limits,
+						event_range: range,
+						reserve_times: reservetimes,
+					},
+					onSuccess() {
+						props.setDisabled(true);
+					},
+					onError(error) {
+						// Re-throw the error to be caught by the outer try-catch
+						throw new Error(error.message);
+					},
+				});
+			} catch (error: any) {
+				// Re-throw the error if you want calling code to handle it
+				throw new Error(error.message);
+			}
+		};
 
 		if (!limits || loading || eventLoading) {
 			return <Shimmer />;
@@ -172,6 +240,10 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 					setDateOverrides={setDateOverrides}
 					timeFormat={timeFormat}
 					startDay={startDay}
+					teamAvailability={teamAvailability}
+					setTeamAvailability={setTeamAvailability}
+					selectedUser={selectedUser}
+					setSelectedUser={setSelectedUser}
 				/>
 				<EventLimits
 					bookingDurationOptions={bookingDurationOptions}

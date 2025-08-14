@@ -130,17 +130,6 @@ const AvailabilityDetails: React.FC = () => {
 	const { id: availabilityId } = useParams<{ id: string }>();
 	if (!availabilityId) return null;
 
-	const setDefault = async (availability: Availability) => {
-		try {
-			await callApi({
-				path: `availabilities/${availability.id}/set-default`,
-				method: 'POST',
-			});
-		} catch (error) {
-			throw error;
-		}
-	};
-
 	const handleAvailabilitySave = async () => {
 		if (!availabilityName) {
 			setNoticeMessage({
@@ -169,18 +158,6 @@ const AvailabilityDetails: React.FC = () => {
 		}
 		setSavingChanges(true);
 		try {
-			if (isDefault) {
-				try {
-					await setDefault(availabilityDetails as Availability);
-				} catch (error) {
-					setNoticeMessage({
-						type: 'error',
-						title: __('Error', 'quillbooking'),
-						message: (error as Error).message,
-					});
-				}
-			}
-
 			await callApi({
 				path: `availabilities/${availabilityId}`,
 				method: 'PUT',
@@ -189,6 +166,7 @@ const AvailabilityDetails: React.FC = () => {
 					weekly_hours: availabilityDetails.weekly_hours,
 					override: dateOverrides,
 					timezone: availabilityTimezone,
+					is_default: isDefault,
 				},
 				onSuccess: () => {
 					setNoticeMessage({
@@ -201,14 +179,11 @@ const AvailabilityDetails: React.FC = () => {
 					});
 					setShowNotice(true);
 				},
-				onError: () => {
+				onError: (e) => {
 					setNoticeMessage({
 						type: 'error',
 						title: __('Error', 'quillbooking'),
-						message: __(
-							'Failed to update availability',
-							'quillbooking'
-						),
+						message: e.message,
 					});
 					setShowNotice(true);
 				},

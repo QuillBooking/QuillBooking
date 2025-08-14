@@ -13,6 +13,7 @@
 namespace QuillBooking\Models;
 
 use Illuminate\Support\Arr;
+use SebastianBergmann\CodeCoverage\Driver\Xdebug;
 use WPEloquent\Eloquent\Model;
 use Illuminate\Support\Str;
 use QuillBooking\Utils;
@@ -208,14 +209,28 @@ class Event_Model extends Model {
 	 * @return string|null
 	 */
 	public function getAvailabilityAttribute() {
+		// First try meta
 		$value = $this->get_meta( 'availability' );
 
 		if ( is_array( $value ) ) {
 			return $value;
 		}
 
-		$availability = Availabilities::get_availability( $value );
-		return $availability;
+		// Try static method
+		if ( $value ) {
+			$availability = Availabilities::get_availability( $value );
+			if ( $availability ) {
+				return $availability;
+			}
+		}
+
+		// Fall back to relationship if meta doesn't work
+		$relationship_availability = $this->getRelationValue( 'availability' );
+		if ( $relationship_availability ) {
+			return $relationship_availability->toArray(); // or however you want to format it
+		}
+
+		return null;
 	}
 
 	/**

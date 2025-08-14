@@ -1,7 +1,6 @@
 /**
  * WordPress dependencies
  */
-import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -13,30 +12,16 @@ import dayjs from 'dayjs';
 /**
  * Internal dependencies
  */
-import {
-	CalendarTickIcon,
-	CardHeader,
-	OverrideSection,
-	Schedule,
-} from '@quillbooking/components';
+import { CalendarTickIcon, CardHeader } from '@quillbooking/components';
 import { RangeSection } from './sections';
-import ConfigAPI from '@quillbooking/config';
-import { useApi, useEvent, useNotice } from '@quillbooking/hooks';
-import {
-	Availability,
-	AvailabilityRange,
-	CustomAvailability,
-	DateOverrides,
-	Host,
-} from 'client/types';
+import { Availability, CustomAvailability } from 'client/types';
 
 // Team availability extends the base availability with users_availability
 interface TeamAvailability extends Availability {
 	users_availability: Record<number, Availability | CustomAvailability>;
 }
-import AvailabilityType from './availability-type';
-import SelectSchedule from './select-schedule';
 import SingleAvailability from './components/single-availability';
+import TeamAvailability from './components/team-availability';
 
 const AvailabilitySection: React.FC<any> = ({
 	event,
@@ -57,6 +42,10 @@ const AvailabilitySection: React.FC<any> = ({
 	setDateOverrides,
 	timeFormat,
 	startDay,
+	teamAvailability,
+	setTeamAvailability,
+	selectedUser,
+	setSelectedUser,
 }) => {
 	const onAvailabilityChange = (id: string) => {
 		setDisabled(false);
@@ -65,6 +54,7 @@ const AvailabilitySection: React.FC<any> = ({
 		const selected = event.hosts
 			.flatMap((host) => host.availabilities)
 			.find((availability) => availability.id === id);
+
 		if (selected) {
 			setEventAvailability(selected);
 			setAvailability(selected);
@@ -126,36 +116,101 @@ const AvailabilitySection: React.FC<any> = ({
 			<CardHeader
 				title={__('Availability', 'quillbooking')}
 				description={__(
-					'Control your availability nd Works time at different time of days',
+					'Control your availability and work time at different time of days',
 					'quillbooking'
 				)}
 				icon={<CalendarTickIcon />}
 			/>
 
-			<SingleAvailability
-				availabilityType={availabilityType}
-				onAvailabilityTypeChange={onAvailabilityTypeChange}
-				availability={availability}
-				hosts={event.hosts || []}
-				onAvailabilityChange={onAvailabilityChange}
-			/>
+			{event.calendar.type === 'team' && (
+				<Flex className="items-center mt-4">
+					<Flex vertical gap={1}>
+						<div className="text-[#09090B] text-[16px] font-semibold">
+							{__('Choose a common schedule', 'quillbooking')}
+						</div>
+						<div className="text-[#71717A]">
+							{__(
+								'Enable this if you want to use a common schedule between hosts. When disabled, each host will be booked based on their default or chosen schedule.',
+								'quillbooking'
+							)}
+						</div>
+					</Flex>
+					<Switch
+						checked={availabilityMeta.isCommon}
+						onChange={(value) => {
+							setDisabled(false);
+							setAvailabilityMeta({
+								...availabilityMeta,
+								isCommon: value,
+							});
+							if (!value) {
+								setAvailability(
+									teamAvailability[selectedUser.id]
+								);
+								setDateOverrides(
+									teamAvailability[selectedUser.id]?.value
+										.override || {}
+								);
+							}
+							if (value) {
+								setAvailability(eventAvailability);
+								setDateOverrides(
+									eventAvailability.value.override
+								);
+							}
+						}}
+						className={
+							availabilityMeta.isCommon
+								? 'bg-color-primary'
+								: 'bg-gray-400'
+						}
+					/>
+				</Flex>
+			)}
 
-			<Card className="mt-4 pt-4">
-				<Schedule
-					availability={availability.value}
-					onCustomAvailabilityChange={() => {}}
+			{(event.calendar.type === 'host' ||
+				(event.calendar.type === 'team' &&
+					availabilityMeta.isCommon)) && (
+				<SingleAvailability
+					availabilityType={availabilityType}
+					onAvailabilityTypeChange={onAvailabilityTypeChange}
+					availability={availability}
+					hosts={event.hosts || []}
+					onAvailabilityChange={onAvailabilityChange}
 					timeFormat={timeFormat}
 					startDay={startDay}
-				/>
-			</Card>
-
-			<div className="mt-4">
-				<OverrideSection
+					setDisabled={setDisabled}
+					setAvailability={setAvailability}
+					setAvailabilityMeta={setAvailabilityMeta}
+					setEventAvailability={setEventAvailability}
+					availabilityMeta={availabilityMeta}
 					dateOverrides={dateOverrides}
 					setDateOverrides={setDateOverrides}
-					setDisabled={setDisabled}
+					eventAvailability={eventAvailability}
 				/>
-			</div>
+			)}
+
+			{event.calendar.type === 'team' && !availabilityMeta.isCommon && (
+				<TeamAvailability
+					availability={availability}
+					event={event}
+					timeFormat={timeFormat}
+					startDay={startDay}
+					dateOverrides={dateOverrides}
+					availabilityType={availabilityType}
+					availabilityMeta={availabilityMeta}
+					setAvailabilityMeta={setAvailabilityMeta}
+					setEventAvailability={setEventAvailability}
+					setDisabled={setDisabled}
+					setAvailability={setAvailability}
+					setDateOverrides={setDateOverrides}
+					teamAvailability={teamAvailability}
+					setTeamAvailability={setTeamAvailability}
+					selectedUser={selectedUser}
+					setSelectedUser={setSelectedUser}
+					eventAvailability={eventAvailability}
+				/>
+			)}
 
 			<Card className="border-none">
 				<RangeSection

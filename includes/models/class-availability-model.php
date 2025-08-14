@@ -235,7 +235,7 @@ class Availability_Model extends Model {
 						'off'   => true,
 					),
 				),
-				'override'     => array(),
+				'override'     => (object) array(), // Ensures it's treated as an object/associative array
 			),
 		);
 	}
@@ -253,12 +253,11 @@ class Availability_Model extends Model {
 		$availability_data = array(
 			'user_id'    => $user_id,
 			'name'       => $default_data['name'],
-			'value'      => wp_json_encode(
+			'value'      =>
 				array(
 					'weekly_hours' => $default_data['weekly_hours'],
 					'override'     => $default_data['override'],
-				)
-			),
+				),
 			'timezone'   => 'UTC',
 			'is_default' => true,
 		);

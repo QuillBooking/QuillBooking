@@ -1,7 +1,9 @@
 import { __ } from '@wordpress/i18n';
 import SelectSchedule from '../../select-schedule';
-import { Availability } from '../../../../../../..';
 import AvailabilityType from '../../availability-type';
+import { Card } from 'antd';
+import { OverrideSection, Schedule } from '@quillbooking/components';
+import { DateOverrides } from '@quillbooking/types';
 
 const SingleAvailability = ({
 	availability,
@@ -9,7 +11,63 @@ const SingleAvailability = ({
 	onAvailabilityChange,
 	availabilityType,
 	onAvailabilityTypeChange,
+	timeFormat,
+	startDay,
+	setDisabled,
+	setAvailability,
+	setAvailabilityMeta,
+	setEventAvailability,
+	availabilityMeta,
+	dateOverrides,
+	setDateOverrides,
+	eventAvailability,
 }) => {
+	const onCustomAvailabilityChange = (day, field, value) => {
+		setDisabled(false);
+		const updatedAvailability = { ...availability };
+		if (field === 'off') {
+			updatedAvailability.value.weekly_hours[day].off = value;
+		} else {
+			updatedAvailability.value.weekly_hours[day].times = value;
+		}
+		setAvailability(updatedAvailability);
+
+		if (availabilityType === 'custom') {
+			setAvailabilityMeta({
+				...availabilityMeta,
+				custom_availability: updatedAvailability,
+			});
+		}
+
+		if (availabilityType === 'existing') {
+			setEventAvailability(updatedAvailability);
+		}
+	};
+
+	const updatedAvailabilities = (newOverrides: DateOverrides) => {
+		if (availabilityType === 'custom') {
+			setAvailabilityMeta?.({
+				...availabilityMeta,
+				custom_availability: {
+					...availabilityMeta.custom_availability,
+					value: {
+						...availabilityMeta.custom_availability.value,
+						override: newOverrides,
+					},
+				},
+			});
+		}
+
+		if (availabilityType === 'existing') {
+			setEventAvailability?.({
+				...eventAvailability,
+				value: {
+					...eventAvailability.value,
+					override: newOverrides,
+				},
+			});
+		}
+	};
 	return (
 		<>
 			<AvailabilityType
@@ -20,7 +78,7 @@ const SingleAvailability = ({
 			{availabilityType === 'existing' && (
 				<>
 					<SelectSchedule
-						availability={availability as Availability}
+						availability={availability}
 						hosts={hosts || []}
 						onAvailabilityChange={onAvailabilityChange}
 						title={__(
@@ -36,6 +94,24 @@ const SingleAvailability = ({
 					</p>
 				</>
 			)}
+
+			<Card className="mt-4 pt-4">
+				<Schedule
+					availability={availability.value}
+					onCustomAvailabilityChange={onCustomAvailabilityChange}
+					timeFormat={timeFormat}
+					startDay={startDay}
+				/>
+			</Card>
+
+			<div className="mt-4">
+				<OverrideSection
+					dateOverrides={dateOverrides}
+					setDateOverrides={setDateOverrides}
+					setDisabled={setDisabled}
+					updatedAvailabilities={updatedAvailabilities}
+				/>
+			</div>
 		</>
 	);
 };

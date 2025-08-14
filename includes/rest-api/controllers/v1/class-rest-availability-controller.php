@@ -455,6 +455,7 @@ class REST_Availability_Controller extends REST_Controller {
 		$override     = $request->get_param( 'override' );
 		$name         = $request->get_param( 'name' );
 		$timezone     = $request->get_param( 'timezone' );
+		$is_default   = $request->get_param( 'is_default' );
 
 		$availability = Availability_Model::find( $id );
 
@@ -466,42 +467,79 @@ class REST_Availability_Controller extends REST_Controller {
 			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to update this availability.', 'quill-booking' ), array( 'status' => 403 ) );
 		}
 
-		// Get current value data
-		$current_value = $availability->value ?: array();
-
-		// Prepare update data
-		$update_data = array();
-
-		if ( $name ) {
-			$update_data['name'] = $name;
-		}
-
-		if ( $timezone ) {
-			$update_data['timezone'] = $timezone;
-		}
-
-		// Update value if weekly_hours or override are provided
-		if ( $weekly_hours || isset( $override ) ) {
-			$value_data = $current_value;
-
-			if ( $weekly_hours ) {
-				$value_data['weekly_hours'] = $weekly_hours;
-			}
-
-			// Always include override even if empty
-			if ( isset( $override ) ) {
-				$value_data['override'] = $override;
-			}
-
-			$update_data['value'] = wp_json_encode( $value_data );
-		}
-
 		try {
-			$availability->update( $update_data );
+			// Handle is_default logic first (before other updates)
+			if ( isset( $is_default ) ) {
+				if ( $is_default ) {
+					// If setting this as default, remove default from all other availabilities for this user
+					Availability_Model::where( 'user_id', $availability->user_id )
+						->where( 'id', '!=', $id )
+						->update( array( 'is_default' => false ) );
+
+					$availability->is_default = true;
+				} else {
+					// If trying to unset default, we need to ensure there's always one default
+					$other_default_count = Availability_Model::where( 'user_id', $availability->user_id )
+						->where( 'id', '!=', $id )
+						->where( 'is_default', true )
+						->count();
+
+					if ( $other_default_count === 0 ) {
+						// Cannot unset default if this is the only default availability
+						return new WP_Error(
+							'rest_availability_default_required',
+							__( 'Cannot remove default status. There must be at least one default availability per user.', 'quill-booking' ),
+							array( 'status' => 400 )
+						);
+					}
+
+					$availability->is_default = false;
+				}
+			}
+
+			// Update simple fields directly
+			if ( $name ) {
+				$availability->name = $name;
+			}
+
+			if ( $timezone ) {
+				$availability->timezone = $timezone;
+			}
+
+			// Handle value field updates (weekly_hours and override)
+			if ( $weekly_hours || isset( $override ) ) {
+				// Get current value data
+				$current_value = $availability->value ?: array();
+				$value_data    = $current_value;
+
+				if ( $weekly_hours ) {
+					$value_data['weekly_hours'] = $weekly_hours;
+				}
+
+				// Always include override even if empty
+				if ( isset( $override ) ) {
+					$value_data['override'] = $override;
+				}
+
+				$availability->value = $value_data;
+			}
+
+			// Save all changes
+			$updated = $availability->save();
+
+			if ( ! $updated ) {
+				return new WP_Error(
+					'rest_availability_update_failed',
+					__( 'Failed to update availability', 'quill-booking' ),
+					array( 'status' => 500 )
+				);
+			}
+
 			$response_data = $this->prepare_availability_for_response( $availability );
 			return new WP_REST_Response( $response_data, 200 );
+
 		} catch ( Exception $e ) {
-			return new WP_Error( 'rest_availability_update_failed', $e->getMessage(), array( 'status' => 400 ) );
+			return new WP_Error( 'rest_availability_update_failed', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
 

@@ -251,8 +251,6 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 			updatedTeamAvailability[selectedCard] = updatedAvailability;
 			return updatedTeamAvailability;
 		});
-
-		console.log('asdfasdf', teamAvailability);
 	};
 
 	const onAvailabilityChange = (id: string) => {
@@ -312,7 +310,6 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 			const selected = Object.values(teamData.users_availability).find(
 				(a) => 'user_id' in a && a.user_id === id
 			);
-			console.log('selected', selected);
 			if (selected) {
 				setAvailability(selected);
 				setDateOverrides(selected.override);

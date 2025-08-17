@@ -1234,7 +1234,6 @@ class REST_Event_Controller extends REST_Controller {
 			return $this->update_event_host_availability( $event_availability );
 		}
 
-		xdebug_break();
 		if ( $event->calendar->type === 'team' && $availability_meta['is_common'] === false ) {
 			return $this->update_event_team_availability( $event, $team_availability );
 		}

@@ -1161,24 +1161,23 @@ class Event_Model extends Model {
 	}
 
 	private function getTeamAvailability( $availability, $user_id = null ) {
-		if ( $this->type === 'round-robin' || $this->type === 'collective' ) {
-			$type             = $availability['type'];
-			$is_common        = $availability['is_common'];
+		xdebug_break();
+		$type          = $this->availability_type;
+		$is_common     = $this->availability_meta['is_common'];
+		$calendar_type = $this->calendar->type;
+		if ( $calendar_type === 'team' ) {
 			$availabilities[] = $availability;
 
 			if ( $type === 'existing' && $is_common == false ) {
-				$availabilities     = array();
-				$users_availability = $availability['users_availability'];
-
-				// Collect all user availabilities
-				foreach ( $users_availability as $user_availability ) {
-					$availability_id = $user_availability['id'];
-					$user_avail      = Availabilities::get_availability( $availability_id );
+				$availabilities  = array();
+				$hosts_schedules = $this->availability_meta['hosts_schedules'];
+				// key and value
+				foreach ( $hosts_schedules as $host_schedule ) {
+					$user_avail = Availabilities::get_availability( $host_schedule );
 					if ( $user_avail ) {
 						$availabilities[] = $user_avail;
 					} else {
-						// If availability ID not found, use the direct data from users_availability
-						$availabilities[] = $user_availability;
+						continue;
 					}
 				}
 
@@ -1206,10 +1205,47 @@ class Event_Model extends Model {
 					}
 					$availability['override'] = $merged_availability['override'] ?? array();
 				}
+				$availability['users_availability'] = $availabilities;
+			} else {
+				$availabilities = array();
+				if ( $type === 'existing' ) {
+					$availability = Availabilities::get_availability( $this->availability_id );
+				} else {
+					$availability_meta                 = array();
+					$availability_meta['name']         = $this->availability_meta['custom_availability']['name'];
+					$availability_meta['weekly_hours'] = $this->availability_meta['custom_availability']['value']['weekly_hours'];
+					$availability_meta['override']     = $this->availability_meta['custom_availability']['value']['override'];
+					$availability_meta['timezone']     = $this->calendar->get_meta( 'timezone' );
+					$availability_meta['is_common']    = $this->availability_meta['is_common'];
+					$availability                      = $availability_meta;
+				}
 			}
-			$availability['users_availability'] = $availabilities;
+		} else {
+			if ( $type === 'existing' ) {
+				$availability = Availabilities::get_availability( $this->availability_id );
+			} else {
+				$availability_meta                 = array();
+				$availability_meta['name']         = $this->availability_meta['custom_availability']['name'];
+				$availability_meta['weekly_hours'] = $this->availability_meta['custom_availability']['value']['weekly_hours'];
+				$availability_meta['override']     = $this->availability_meta['custom_availability']['value']['override'];
+				$availability_meta['timezone']     = $this->calendar->get_meta( 'timezone' );
+				$availability                      = $availability_meta;
+			}
 		}
 		return $availability;
+	}
+
+	/**
+	 * Parse availability value
+	 *
+	 * @param array $value
+	 * @return array
+	 */
+	private function parseAvailabilityValue( $value ) {
+		if ( is_array( $value ) ) {
+			return $value;
+		}
+		return json_decode( $value, true );
 	}
 
 	/**

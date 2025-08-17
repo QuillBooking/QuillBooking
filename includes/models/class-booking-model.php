@@ -545,6 +545,9 @@ class Booking_Model extends Model {
 				$booking->meta()->delete();
 				$booking->logs()->delete();
 				$booking->guest()->delete();
+
+				// Delete booking hosts records from the pivot table
+				Booking_Hosts_Model::where( 'booking_id', $booking->id )->delete();
 			}
 		);
 	}

@@ -1230,11 +1230,12 @@ class REST_Event_Controller extends REST_Controller {
 			return $this->update_event_host_availability( $event_availability );
 		}
 
-		if ( $event->calendar->type === 'team' && $availability_meta['isCommon'] === true && $availability_type === 'existing' ) {
+		if ( $event->calendar->type === 'team' && $availability_meta['is_common'] === true && $availability_type === 'existing' ) {
 			return $this->update_event_host_availability( $event_availability );
 		}
 
-		if ( $event->calendar->type === 'team' && $availability_meta['isCommon'] === false ) {
+		xdebug_break();
+		if ( $event->calendar->type === 'team' && $availability_meta['is_common'] === false ) {
 			return $this->update_event_team_availability( $event, $team_availability );
 		}
 

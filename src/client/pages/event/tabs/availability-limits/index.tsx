@@ -165,7 +165,7 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 				setTeamAvailability(availabilityObj);
 				const firstHostAvailability =
 					availabilityObj[event.hosts[0].id];
-				if (event.availability_meta.isCommon === false) {
+				if (event.availability_meta.is_common === false) {
 					setAvailability(firstHostAvailability);
 					setDateOverrides(
 						firstHostAvailability?.value.override || {}

@@ -136,12 +136,12 @@ const AvailabilitySection: React.FC<any> = ({
 						</div>
 					</Flex>
 					<Switch
-						checked={availabilityMeta.isCommon}
+						checked={availabilityMeta.is_common}
 						onChange={(value) => {
 							setDisabled(false);
 							setAvailabilityMeta({
 								...availabilityMeta,
-								isCommon: value,
+								is_common: value,
 							});
 							if (!value) {
 								setAvailability(
@@ -160,7 +160,7 @@ const AvailabilitySection: React.FC<any> = ({
 							}
 						}}
 						className={
-							availabilityMeta.isCommon
+							availabilityMeta.is_common
 								? 'bg-color-primary'
 								: 'bg-gray-400'
 						}
@@ -170,7 +170,7 @@ const AvailabilitySection: React.FC<any> = ({
 
 			{(event.calendar.type === 'host' ||
 				(event.calendar.type === 'team' &&
-					availabilityMeta.isCommon)) && (
+					availabilityMeta.is_common)) && (
 				<SingleAvailability
 					availabilityType={availabilityType}
 					onAvailabilityTypeChange={onAvailabilityTypeChange}
@@ -190,7 +190,7 @@ const AvailabilitySection: React.FC<any> = ({
 				/>
 			)}
 
-			{event.calendar.type === 'team' && !availabilityMeta.isCommon && (
+			{event.calendar.type === 'team' && !availabilityMeta.is_common && (
 				<TeamAvailability
 					availability={availability}
 					event={event}

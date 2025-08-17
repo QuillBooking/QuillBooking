@@ -77,6 +77,7 @@ const TeamAvailability = ({
 	};
 
 	const onCustomAvailabilityChange = (day, field, value) => {
+		setDisabled(false);
 		const updatedAvailability = { ...availability };
 		if (field === 'off') {
 			updatedAvailability.value.weekly_hours[day].off = value;
@@ -92,7 +93,7 @@ const TeamAvailability = ({
 	};
 
 	const updatedAvailabilities = (newOverrides: DateOverrides) => {
-		if (availabilityMeta.isCommon) {
+		if (availabilityMeta.is_common) {
 			if (availabilityType === 'custom') {
 				setAvailabilityMeta?.({
 					...availabilityMeta,

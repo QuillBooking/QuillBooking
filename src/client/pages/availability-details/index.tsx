@@ -130,17 +130,6 @@ const AvailabilityDetails: React.FC = () => {
 	const { id: availabilityId } = useParams<{ id: string }>();
 	if (!availabilityId) return null;
 
-	const setDefault = async (availability: Availability) => {
-		try {
-			await callApi({
-				path: `availabilities/${availability.id}/set-default`,
-				method: 'POST',
-			});
-		} catch (error) {
-			console.log('Error setting default availability:', error);
-		}
-	};
-
 	const handleAvailabilitySave = async () => {
 		if (!availabilityName) {
 			setNoticeMessage({
@@ -169,10 +158,6 @@ const AvailabilityDetails: React.FC = () => {
 		}
 		setSavingChanges(true);
 		try {
-			if (isDefault) {
-				await setDefault(availabilityDetails as Availability);
-			}
-
 			await callApi({
 				path: `availabilities/${availabilityId}`,
 				method: 'PUT',
@@ -181,6 +166,7 @@ const AvailabilityDetails: React.FC = () => {
 					weekly_hours: availabilityDetails.weekly_hours,
 					override: dateOverrides,
 					timezone: availabilityTimezone,
+					is_default: isDefault,
 				},
 				onSuccess: () => {
 					setNoticeMessage({
@@ -193,14 +179,11 @@ const AvailabilityDetails: React.FC = () => {
 					});
 					setShowNotice(true);
 				},
-				onError: () => {
+				onError: (e) => {
 					setNoticeMessage({
 						type: 'error',
 						title: __('Error', 'quillbooking'),
-						message: __(
-							'Failed to update availability',
-							'quillbooking'
-						),
+						message: e.message,
 					});
 					setShowNotice(true);
 				},
@@ -269,10 +252,11 @@ const AvailabilityDetails: React.FC = () => {
 							onClick={handleAvailabilitySave}
 							loading={savingChanges}
 							disabled={isSaveBtnDisabled}
-							className={`rounded-lg font-[500] text-white ${isSaveBtnDisabled
+							className={`rounded-lg font-[500] text-white ${
+								isSaveBtnDisabled
 									? 'bg-gray-400 cursor-not-allowed'
 									: 'bg-color-primary '
-								}`}
+							}`}
 						>
 							{__('Save Changes', 'quillbooking')}
 						</Button>
@@ -314,13 +298,13 @@ const AvailabilityDetails: React.FC = () => {
 							<Flex gap={20} vertical>
 								{(availabilityDetails.events_count ?? 0) >
 									0 && (
-										<InfoComponent
-											eventsNumber={
-												availabilityDetails.events_count ??
-												0
-											}
-										/>
-									)}
+									<InfoComponent
+										eventsNumber={
+											availabilityDetails.events_count ??
+											0
+										}
+									/>
+								)}
 								<Card>
 									<label className="font-normal text-sm">
 										<div className="pb-1">

@@ -13,12 +13,14 @@ interface OverrideSectionProps {
 	dateOverrides: DateOverrides;
 	setDateOverrides: (overrides: DateOverrides) => void;
 	setDisabled: (value: boolean) => void;
+	updatedAvailabilities?: (newOverrides: DateOverrides) => void;
 }
 
 const OverrideSection: React.FC<OverrideSectionProps> = ({
 	dateOverrides,
 	setDateOverrides,
 	setDisabled,
+	updatedAvailabilities,
 }) => {
 	const onAddOverride = () => {
 		setDisabled(false);
@@ -30,6 +32,7 @@ const OverrideSection: React.FC<OverrideSectionProps> = ({
 			],
 		};
 		setDateOverrides(newOverrides);
+		updatedAvailabilities?.(newOverrides);
 	};
 	const onRemoveOverride = (date: string, idx: number) => {
 		setDisabled(false);
@@ -44,6 +47,7 @@ const OverrideSection: React.FC<OverrideSectionProps> = ({
 		}
 
 		setDateOverrides(newOverrides);
+		updatedAvailabilities?.(newOverrides);
 	};
 
 	const onDateChange = (
@@ -65,6 +69,7 @@ const OverrideSection: React.FC<OverrideSectionProps> = ({
 		const key = newDate || '';
 		updated[key] = [...(updated[key] || []), moved];
 		setDateOverrides(updated);
+		updatedAvailabilities?.(updated);
 	};
 
 	// Updated function to handle both start and end time changes
@@ -78,6 +83,7 @@ const OverrideSection: React.FC<OverrideSectionProps> = ({
 		const times = [...(dateOverrides[date] || [])];
 		times[idx] = { ...times[idx], start, end };
 		setDateOverrides({ ...dateOverrides, [date]: times });
+		updatedAvailabilities?.({ ...dateOverrides, [date]: times });
 	};
 
 	const entries = Object.entries(dateOverrides).flatMap(([date, times]) =>

@@ -103,8 +103,6 @@ const FormField = ({ field, id, form }) => {
 		...otherProps,
 	};
 
-	console.log('FormField', id);
-
 	if (id === 'name' || id === 'email') return null;
 	const rules = getValidationRules(field);
 

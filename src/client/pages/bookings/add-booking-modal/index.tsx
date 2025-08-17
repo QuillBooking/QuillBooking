@@ -164,7 +164,6 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 	};
 
 	const fetchAvailability = (value: number, user_id?: number) => {
-		console.log('fetchAvailability', value, user_id);
 		const formData = new FormData();
 		formData.append('action', 'quillbooking_booking_slots');
 		formData.append('id', value.toString());
@@ -178,7 +177,6 @@ const AddBookingModal: React.FC<AddBookingModalProps> = ({
 			body: formData,
 		})
 			.then((res) => {
-				console.log('Availability fetched:', res);
 				setSelectedAvailability(res.data.slots);
 			})
 			.catch(() => {

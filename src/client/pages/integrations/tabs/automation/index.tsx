@@ -31,11 +31,6 @@ const Automation: React.FC = () => {
 				...integration,
 			}));
 
-		console.log(
-			'Available Automation Integrations:',
-			availableIntegrations
-		);
-
 		return availableIntegrations;
 	});
 	const [isLoading, setIsLoading] = useState(false);

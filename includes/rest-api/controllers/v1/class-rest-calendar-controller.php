@@ -12,6 +12,7 @@
 
 namespace QuillBooking\REST_API\Controllers\V1;
 
+use QuillBooking\Models\Availability_Model;
 use WP_Error;
 use Exception;
 use Illuminate\Support\Arr;
@@ -32,6 +33,7 @@ use QuillBooking\Helpers\Integrations_Helper;
  * Calendar Controller class
  */
 class REST_Calendar_Controller extends REST_Controller {
+
 
 	/**
 	 * REST Base
@@ -856,33 +858,34 @@ class REST_Calendar_Controller extends REST_Controller {
 	 * Handle availability creation
 	 */
 	private function create_availability( $user_id, $availability_data, $timezone ) {
-		$service = new Availability_Service();
-
 		// Check if user already has a default availability
-		$existing_availability = Availabilities::get_user_default_availability( $user_id );
+		$existing_availability = Availability_Model::where( 'user_id', $user_id )->where( 'is_default', 1 )->first();
+
+		$availability_name = 'Default Availability';
+		$is_default        = 1;
 
 		if ( $existing_availability ) {
-			$existing_availability['weekly_hours'] = $availability_data['weekly_hours'];
-			$existing_availability['override']     = $availability_data['override'] ?? array();
-			$existing_availability['timezone']     = $timezone;
-			// update
-			return Availabilities::update_availability(
-				$existing_availability
-			);
+			$availability_name = 'Weekly Hours';
+			$is_default        = 0;
 		}
 
-		$result = $service->create_availability(
-			$user_id,
-			'Default Availability',
-			$availability_data['weekly_hours'],
-			$availability_data['override'] ?? array(),
-			$timezone,
-			true
+		// Prepare value data as JSON
+		$value_data = array(
+			'weekly_hours' => $availability_data['weekly_hours'] ?? array(),
+			'override'     => $availability_data['override'] ?? array(),
 		);
 
-		if ( is_wp_error( $result ) ) {
-			throw new Exception( $result->get_error_message(), 400 );
-		}
+		$new_availability = Availability_Model::create(
+			array(
+				'user_id'    => $user_id,
+				'name'       => $availability_name,
+				'value'      => $value_data,
+				'timezone'   => $timezone,
+				'is_default' => $is_default,
+			)
+		);
+
+		return $new_availability;
 	}
 
 	/**

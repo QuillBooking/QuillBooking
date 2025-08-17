@@ -29,7 +29,6 @@ interface LocationsProps {
 }
 
 const Locations = ({ locationFields, countryCode }: LocationsProps) => {
-	console.log('Locations', locationFields);
 	return (
 		<>
 			{locationFields.options.length > 1 ? (

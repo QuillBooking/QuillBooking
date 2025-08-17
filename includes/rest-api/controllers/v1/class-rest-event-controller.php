@@ -12,6 +12,7 @@
 
 namespace QuillBooking\REST_API\Controllers\V1;
 
+use QuillBooking\Models\Availability_Model;
 use WP_Error;
 use Exception;
 use Illuminate\Support\Arr;
@@ -118,7 +119,7 @@ class REST_Event_Controller extends REST_Controller {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/availability',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/range',
 			array(
 				'id' => array(
 					'description' => __( 'Unique identifier for the object.', 'quillbooking' ),
@@ -126,7 +127,7 @@ class REST_Event_Controller extends REST_Controller {
 				),
 				array(
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_item_availability' ),
+					'callback'            => array( $this, 'get_item_range' ),
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 				),
 				array(
@@ -545,8 +546,25 @@ class REST_Event_Controller extends REST_Controller {
 				'color'       => $color,
 				'visibility'  => $visibility,
 				'is_disabled' => false,
-				'color'       => $color,
 			);
+			$event_data['availability_meta']['custom_availability'] = Availability_Model::getDefaultAvailability();
+
+			if ( 'host' === $calendar->type ) {
+				$default_availability = Availability_Model::where( 'user_id', $calendar->user_id )->where( 'is_default', 1 )->first();
+				if ( ! $default_availability ) {
+					$wpdb->query( 'ROLLBACK' );
+					return new WP_Error( 'rest_event_error', __( 'Default availability not found', 'quillbooking' ), array( 'status' => 500 ) );
+				}
+				$event_data['availability_id']   = $default_availability->id;
+				$event_data['availability_type'] = 'existing';
+			} else {
+				$event_data['availability_meta']['is_common'] = false;
+				$event_data['availability_type']              = 'existing';
+				$event_data['availability_id']                = Availability_Model::where( 'user_id', $hosts[0] )->where( 'is_default', 1 )->first()->id;
+				foreach ( $hosts as $host ) {
+					$event_data['availability_meta']['hosts_schedules'][ $host ] = Availability_Model::where( 'user_id', $host )->where( 'is_default', 1 )->first()->id;
+				}
+			}
 
 			$event_data = array_filter( $event_data );
 			$event      = Event_Model::create( $event_data );
@@ -561,26 +579,6 @@ class REST_Event_Controller extends REST_Controller {
 				return new WP_Error( 'rest_event_error', __( 'Event not created', 'quillbooking' ), array( 'status' => 500 ) );
 			}
 
-			if ( 'host' === $calendar->type ) {
-				$default_availability = Availabilities::get_user_default_availability( $calendar->user_id );
-				if ( ! $default_availability ) {
-					$wpdb->query( 'ROLLBACK' );
-					return new WP_Error( 'rest_event_error', __( 'Default availability not found', 'quillbooking' ), array( 'status' => 500 ) );
-				}
-				$event->availability = $default_availability['id'];
-			} else {
-				$event->setTeamMembersAttribute( $hosts );
-				$availability_data         = array(
-					'is_common' => true,
-					'type'      => 'existing',
-				);
-				$default_user_availability = Availabilities::get_user_default_availability( $hosts[0] );
-				if ( $default_user_availability ) {
-					$availability_data   = array_merge( $availability_data, $default_user_availability );
-					$event->availability = $availability_data;
-				}
-			}
-
 			$event->setReserveTimesAttribute( false );
 			$event->location            = $location;
 			$event->limits              = Event_Fields::instance()->get_default_limit_settings();
@@ -589,6 +587,7 @@ class REST_Event_Controller extends REST_Controller {
 			$event->advanced_settings   = Event_Fields::instance()->get_default_advanced_settings();
 			$event->sms_notifications   = Event_Fields::instance()->get_default_sms_notification_settings();
 			$event->payments_settings   = $payments_settings ?? Event_Fields::instance()->get_default_payments_settings();
+			$event->team_members        = $hosts;
 			if ( 'group' === $type ) {
 				$event->group_settings = $group_settings ?? array(
 					'max_invites'    => 2,
@@ -679,7 +678,7 @@ class REST_Event_Controller extends REST_Controller {
 	public function get_item( $request ) {
 		try {
 			$id    = $request->get_param( 'id' );
-			$event = Event_Model::with( 'calendar' )->find( $id );
+			$event = Event_Model::with( 'calendar', 'availability' )->where( 'id', $id )->first();
 
 			if ( ! $event ) {
 				return new WP_Error(
@@ -689,7 +688,7 @@ class REST_Event_Controller extends REST_Controller {
 				);
 			}
 
-			$usersId = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
+			$usersId = $event->getTeamMembersAttribute() ?: $event->user_id;
 			$usersId = is_array( $usersId ) ? $usersId : array( $usersId );
 
 			$users = array();
@@ -698,7 +697,7 @@ class REST_Event_Controller extends REST_Controller {
 
 				if ( $user ) {
 					$user_avatar_url = get_avatar_url( $user->ID );
-					$availabilities  = Availabilities::get_user_availabilities( $user->ID );
+					$availabilities  = Availability_Model::where( 'user_id', $user->ID )->get();
 
 					$users[] = array(
 						'id'             => $user->ID,
@@ -709,9 +708,8 @@ class REST_Event_Controller extends REST_Controller {
 				}
 			}
 
-			$event->hosts             = $users;
-			$event->availability_data = $event->getAvailabilityAttribute();
-			$event->reserve           = $event->getReserveTimesAttribute();
+			$event->hosts   = $users;
+			$event->reserve = $event->getReserveTimesAttribute();
 
 			return new WP_REST_Response( $event, 200 );
 		} catch ( \Throwable $e ) { // Catch Throwable
@@ -727,7 +725,7 @@ class REST_Event_Controller extends REST_Controller {
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function get_item_availability( $request ) {
+	public function get_item_range( $request ) {
 		try {
 			$id    = $request->get_param( 'id' );
 			$event = Event_Model::find( $id );
@@ -737,8 +735,7 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			$data = array(
-				'availability' => $event->getAvailabilityAttribute(),
-				'range'        => $event->getEventRangeAttribute(),
+				'range' => $event->getEventRangeAttribute(),
 			);
 
 			return new WP_REST_Response( $data, 200 );
@@ -804,7 +801,10 @@ class REST_Event_Controller extends REST_Controller {
 			$dynamic_duration    = $request->get_param( 'dynamic_duration' );
 			$duration            = $request->get_param( 'duration' );
 			$color               = $request->get_param( 'color' );
-			$availability        = $request->get_param( 'availability' );
+			$event_availability  = $request->get_param( 'event_availability' );
+			$availability_meta   = $request->get_param( 'event_availability_meta' );
+			$availability_type   = $request->get_param( 'availability_type' );
+			$team_availability   = $request->get_param( 'team_availability' );
 			$visibility          = $request->get_param( 'visibility' );
 			$location            = $request->get_param( 'location' );
 			$limits              = $request->get_param( 'limits' );
@@ -857,6 +857,9 @@ class REST_Event_Controller extends REST_Controller {
 				'sms_notifications'   => $sms_notifications,
 				'payments_settings'   => $payments_settings,
 				'dynamic_duration'    => $dynamic_duration,
+				'availability_meta'   => $availability_meta,
+				'availability_type'   => $availability_type,
+				'availability_id'     => $event_availability['id'],
 			);
 
 			$event->setReserveTimesAttribute( $reserve_times );
@@ -895,20 +898,11 @@ class REST_Event_Controller extends REST_Controller {
 				$event->updateFields( $fields );
 			}
 
-			if ( $availability ) {
-				if ( $event->calendar->type === 'team' ) {
-					$result = $this->update_event_team_availability( $event, $availability );
-					if ( is_wp_error( $result ) ) {
-						$wpdb->query( 'ROLLBACK' );
-						return $result;
-					}
-				} else {
-					$result = $this->update_event_host_availability( $event, $availability );
-					if ( is_wp_error( $result ) ) {
-						$wpdb->query( 'ROLLBACK' );
-						return $result;
-					}
-				}
+			// Handle availability updates based on calendar type and settings
+			$result = $this->handle_availability_update( $event, $availability_type, $availability_meta, $event_availability, $team_availability );
+			if ( is_wp_error( $result ) ) {
+				$wpdb->query( 'ROLLBACK' );
+				return $result;
 			}
 
 			$event->save();
@@ -946,7 +940,7 @@ class REST_Event_Controller extends REST_Controller {
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
-			$result = $this->update_event_host_availability( $event, $availability );
+			$result = $this->update_event_host_availability( $availability );
 			if ( is_wp_error( $result ) ) {
 				$wpdb->query( 'ROLLBACK' );
 				return $result;
@@ -1160,67 +1154,92 @@ class REST_Event_Controller extends REST_Controller {
 	}
 
 	// Update event availability
-	private function update_event_host_availability( $event, $availability ) {
+	private function update_event_host_availability( $event_availability ) {
+		// Check if event_availability is provided and not empty
+		if ( empty( $event_availability ) ) {
+			return true; // Nothing to update
+		}
+		// Find the availability record
+		$availability = Availability_Model::where( 'id', $event_availability['id'] )->first();
 
-		if ( 'custom' === $availability['type'] ) {
-			$event->meta()->updateOrCreate(
-				array(
-					'meta_key' => 'availability',
-				),
-				array(
-					'meta_value' => maybe_serialize( $availability ),
-				)
-			);
-		} else {
-			$availability_model = Availabilities::get_availability( $availability['id'] );
-			if ( ! $availability_model ) {
-				return new WP_Error( 'rest_event_error', __( 'Availability not found', 'quillbooking' ), array( 'status' => 404 ) );
-			}
-
-			Availabilities::update_availability( $availability );
-
-			$event->meta()->updateOrCreate(
-				array(
-					'meta_key' => 'availability',
-				),
-				array(
-					'meta_value' => $availability['id'],
-				)
+		if ( ! $availability ) {
+			return new WP_Error(
+				'rest_event_error',
+				__( 'Availability record not found', 'quillbooking' ),
+				array( 'status' => 404 )
 			);
 		}
-		return $availability;
+
+		// Update the availability record using Eloquent
+		try {
+			// If event_availability contains the value data directly
+			if ( isset( $event_availability['value'] ) ) {
+				$availability->value = $event_availability['value'];
+			}
+
+			// Update other fields if provided
+			if ( isset( $event_availability['name'] ) ) {
+				$availability->name = $event_availability['name'];
+			}
+
+			if ( isset( $event_availability['timezone'] ) ) {
+				$availability->timezone = $event_availability['timezone'];
+			}
+
+			// Save the changes
+			$updated = $availability->save();
+
+			if ( ! $updated ) {
+				return new WP_Error(
+					'rest_event_error',
+					__( 'Failed to update availability', 'quillbooking' ),
+					array( 'status' => 500 )
+				);
+			}
+
+			return $availability;
+		} catch ( Exception $e ) {
+			return new WP_Error(
+				'rest_event_error',
+				$e->getMessage(),
+				array( 'status' => 500 )
+			);
+		}
 	}
 
 	// Update event availability
-	private function update_event_team_availability( $event, $availability ) {
-		$event->meta()->updateOrCreate(
-			array(
-				'meta_key' => 'availability',
-			),
-			array(
-				'meta_value' => maybe_serialize( $availability ),
-			)
-		);
-		if ( $availability['is_common'] ) {
-			if ( 'existing' === $availability['type'] ) {
-				$availability_model = Availabilities::get_availability( $availability['id'] );
-				if ( ! $availability_model ) {
-					return new WP_Error( 'rest_event_error', __( 'Availability not found', 'quillbooking' ), array( 'status' => 404 ) );
-				}
-				unset( $availability['is_common'], $availability['type'] );
-				Availabilities::update_availability( $availability );
+	private function update_event_team_availability( $event, $team_availability ) {
+		foreach ( $team_availability as $user_id => $availabilityData ) {
+			$model = Availability_Model::find( $availabilityData['id'] );
+			if ( ! $model ) {
+				return new WP_Error(
+					'rest_event_error',
+					__( 'Availability not found', 'quillbooking' ),
+					array( 'status' => 404 )
+				);
 			}
-		} else {
-			foreach ( $availability->users_availability as $user_id => $user_availability ) {
-				$availability_model = Availabilities::get_availability( $user_availability['id'] );
-				if ( ! $availability_model ) {
-					return new WP_Error( 'rest_event_error', __( 'Availability not found', 'quillbooking' ), array( 'status' => 404 ) );
-				}
-
-				Availabilities::update_availability( $user_availability );
-			}
+			$model->value = $availabilityData['value'];
+			$model->save();
 		}
-		return $availability;
+	}
+
+
+	// Handle availability updates based on calendar type and settings
+	private function handle_availability_update( $event, $availability_type, $availability_meta, $event_availability, $team_availability ) {
+		if ( $event->calendar->type === 'host' && $availability_type === 'existing' ) {
+			return $this->update_event_host_availability( $event_availability );
+		}
+
+		if ( $event->calendar->type === 'team' && $availability_meta['is_common'] === true && $availability_type === 'existing' ) {
+			return $this->update_event_host_availability( $event_availability );
+		}
+
+		xdebug_break();
+		if ( $event->calendar->type === 'team' && $availability_meta['is_common'] === false ) {
+			return $this->update_event_team_availability( $event, $team_availability );
+		}
+
+		return true; // No specific availability update needed
 	}
 
 	/**

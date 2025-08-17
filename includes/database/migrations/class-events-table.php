@@ -36,23 +36,26 @@ class Events_Table extends Migration {
 	 */
 	public function get_query() {
 		/**
-		 * Columns:
-		 *
-		 * id: int(11) NOT NULL AUTO_INCREMENT
-		 * hash_id: varchar(255) NOT NULL
-		 * calendar_id: int(11) NOT NULL
-		 * user_id: int(11) NOT NULL
-		 * name: varchar(255) NOT NULL
-		 * description: text Can be NULL
-		 * slug: varchar(255) NOT NULL
-		 * status: varchar(255) NOT NULL Default: 'active'
-		 * type: varchar(255) NOT NULL Default: 'one-to-one'
-		 * duration: int(11) NOT NULL Default: 30
-		 * color: varchar(255) NOT NULL Default: '#0099ff'
-		 * visibility: varchar(255) NOT NULL Default: 'public'
-		 * created_at: timestamp NOT NULL Default: CURRENT_TIMESTAMP
-		 * updated_at: timestamp NOT NULL Default: CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-		 */
+		  * Columns:
+		  *
+		  * id: int(11) NOT NULL AUTO_INCREMENT
+		  * hash_id: varchar(255) NOT NULL
+		  * calendar_id: int(11) NOT NULL
+		  * user_id: int(11) NOT NULL
+		  * name: varchar(255) NOT NULL
+		  * description: text Can be NULL
+		  * slug: varchar(255) NOT NULL
+		  * status: varchar(255) NOT NULL Default: 'active'
+		  * type: varchar(255) NOT NULL Default: 'one-to-one'
+		  * duration: int(11) NOT NULL Default: 30
+		  * color: varchar(255) NOT NULL Default: '#0099ff'
+		  * visibility: varchar(255) NOT NULL Default: 'public'
+		  * availability_type: enum('existing','custom') NOT NULL Default: 'existing'
+		  * availability_meta: longtext NOT NULL
+		  * availability_id: int(11) NULL
+		  * created_at: timestamp NOT NULL Default: CURRENT_TIMESTAMP
+		  * updated_at: timestamp NOT NULL Default: CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+		  */
 		$query = "id int(11) NOT NULL AUTO_INCREMENT,
         hash_id varchar(255) NOT NULL,
         calendar_id int(11) NOT NULL,
@@ -63,13 +66,17 @@ class Events_Table extends Migration {
         status varchar(255) NOT NULL Default 'active',
         type varchar(255) NOT NULL Default 'one-to-one',
 				is_disabled boolean NOT NULL Default 0,
-		duration int(11) NOT NULL Default 30,
-		color varchar(255) NOT NULL Default '#0099ff',
-		visibility varchar(255) NOT NULL Default 'public',
+				duration int(11) NOT NULL Default 30,
+				color varchar(255) NOT NULL Default '#0099ff',
+				visibility varchar(255) NOT NULL Default 'public',
+				availability_type varchar(255) NOT NULL Default 'existing',
+				availability_meta longtext,
+				availability_id int(11) NULL,
         created_at timestamp NOT NULL Default CURRENT_TIMESTAMP,
         updated_at timestamp NOT NULL Default CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         KEY calendar_id (calendar_id),
+				KEY availability_id (availability_id),
         KEY user_id (user_id),
         KEY hash_id (hash_id),
         KEY slug (slug)";

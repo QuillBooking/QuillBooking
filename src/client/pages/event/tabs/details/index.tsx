@@ -142,7 +142,6 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 			if (event) {
 				setIsInitialLoading(false);
 			}
-			console.log('Event Details Component Mounted', event);
 		}, [event]);
 
 		// Implement useImperativeHandle to expose the saveSettings method

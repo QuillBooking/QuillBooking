@@ -37,7 +37,6 @@ export default function InitialContentPlugin({
 
 				// Find all mention elements in the DOM
 				const mentionElements = dom.querySelectorAll('.mention-node');
-				console.log('Found mention elements:', mentionElements.length);
 
 				// Process the DOM to replace mention elements with placeholders
 				// This helps us track where mentions should be inserted later
@@ -74,14 +73,8 @@ export default function InitialContentPlugin({
 
 				// Generate nodes from the modified HTML
 				const newNodes = $generateNodesFromDOM(editor, dom);
-				console.log('Generated Nodes:', newNodes);
-
-				// Clear the root
-				console.log('Clearing root...');
 				root.clear();
 
-				// Process and append each node, looking for placeholders to replace with mention nodes
-				console.log('Appending nodes to root...');
 				newNodes.forEach((node) => {
 					if (node.getType() === 'text') {
 						const text = node.getTextContent();
@@ -118,11 +111,6 @@ export default function InitialContentPlugin({
 
 								// Append to the root
 								root.append(paragraph);
-								console.log(
-									'Added mention node:',
-									mentionInfo.name,
-									mentionInfo.category
-								);
 							}
 						}
 
@@ -135,17 +123,12 @@ export default function InitialContentPlugin({
 					} else {
 						// For non-text nodes, just append them directly
 						root.append(node);
-						console.log('Appending Node:', node);
 					}
 				});
 
 				if (root.getChildrenSize() === 0) {
 					const paragraph = $createParagraphNode();
 					root.append(paragraph);
-					console.log(
-						'Root was empty. Added a blank paragraph:',
-						paragraph
-					);
 				}
 			} catch (error) {
 				console.error('Error initializing content:', error);

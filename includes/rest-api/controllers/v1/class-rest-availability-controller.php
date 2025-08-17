@@ -10,6 +10,7 @@
 
 namespace QuillBooking\REST_API\Controllers\v1;
 
+use QuillBooking\Models\Calendar_Model;
 use WP_Error;
 use Exception;
 use Illuminate\Support\Arr;
@@ -17,9 +18,8 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use QuillBooking\Abstracts\REST_Controller;
-use QuillBooking\Availabilities;
-use QuillBooking\Availability_service;
-use QuillBooking\Models\Event_Meta_Model;
+use QuillBooking\Models\Availability_Model;
+use QuillBooking\Models\Event_Model;
 
 /**
  * REST_Availability_Controller class
@@ -297,32 +297,30 @@ class REST_Availability_Controller extends REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function get_items( $request ) {
-		$filter         = $request->get_param( 'filter' ) ? $request->get_param( 'filter' ) : array();
-		$user           = Arr::get( $filter, 'user' ) ? Arr::get( $filter, 'user' ) : 'own';
-		$availabilities = Availabilities::get_availabilities();
+		$filter = $request->get_param( 'filter' ) ? $request->get_param( 'filter' ) : array();
+		$user   = Arr::get( $filter, 'user' ) ? Arr::get( $filter, 'user' ) : 'own';
 
 		if ( 'all' === $user && ! current_user_can( 'quillbooking_read_all_availability' ) ) {
 			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to read all availabilities.', 'quill-booking' ), array( 'status' => 403 ) );
 		}
 
+		$query = Availability_Model::query();
+
 		if ( 'own' === $user ) {
-			$availabilities = array_filter(
-				$availabilities,
-				function ( $availability ) {
-					return get_current_user_id() === $availability['user_id'];
-				}
-			);
+			$query->where( 'user_id', get_current_user_id() );
 		}
 
-		// Add number of calendars and calenders to each availability
-		$availabilities = array_map(
-			function ( $availability ) {
-				return $this->events_details_for_availability( $availability );
-			},
-			$availabilities
-		);
+		$availabilities = $query->get();
 
-		return new WP_REST_Response( $availabilities, 200 );
+		// Convert to array format and add events details
+		$availabilities_array = array();
+		foreach ( $availabilities as $availability ) {
+			$availability_data      = $this->prepare_availability_for_response( $availability );
+			$availability_data      = $this->events_details_for_availability( $availability_data );
+			$availabilities_array[] = $availability_data;
+		}
+
+		return new WP_REST_Response( $availabilities_array, 200 );
 	}
 
 	/**
@@ -349,19 +347,20 @@ class REST_Availability_Controller extends REST_Controller {
 	 */
 	public function get_item( $request ) {
 		$id           = $request->get_param( 'id' );
-		$availability = Availabilities::get_availability( $id );
+		$availability = Availability_Model::find( $id );
 
 		if ( ! $availability ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 404 ) );
 		}
 
-		if ( ! current_user_can( 'quillbooking_read_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {
+		if ( ! current_user_can( 'quillbooking_read_all_availability' ) && get_current_user_id() !== $availability->user_id ) {
 			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to read this availability.', 'quill-booking' ), array( 'status' => 403 ) );
 		}
 
-		$availability = $this->events_details_for_availability( $availability );
+		$availability_data = $this->prepare_availability_for_response( $availability );
+		$availability_data = $this->events_details_for_availability( $availability_data );
 
-		return new WP_REST_Response( $availability, 200 );
+		return new WP_REST_Response( $availability_data, 200 );
 	}
 
 	/**
@@ -388,26 +387,44 @@ class REST_Availability_Controller extends REST_Controller {
 	 */
 	public function create_item( $request ) {
 		$weekly_hours = $request->get_param( 'weekly_hours' );
-		$override     = $request->get_param( 'override' );
+		$override     = $request->get_param( 'override' ) ?: array();
 		$user_id      = $request->get_param( 'user_id' ) ? $request->get_param( 'user_id' ) : get_current_user_id();
 		$name         = $request->get_param( 'name' );
 		$timezone     = $request->get_param( 'timezone' );
 
-		$availability_service = new Availability_service();
-
-		$availability = $availability_service->create_availability(
-			$user_id,
-			$name,
-			$weekly_hours,
-			$override,
-			$timezone
-		);
-
-		if ( ! $availability ) {
-			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 400 ) );
+		if ( ! $name ) {
+			return new WP_Error( 'rest_availability_invalid_name', __( 'Invalid availability name.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
 
-		return new WP_REST_Response( $availability, 201 );
+		if ( empty( $weekly_hours ) ) {
+			return new WP_Error( 'rest_availability_invalid_weekly_hours', __( 'Invalid weekly hours.', 'quill-booking' ), array( 'status' => 400 ) );
+		}
+
+		if ( empty( $timezone ) ) {
+			return new WP_Error( 'rest_availability_invalid_timezone', __( 'Invalid timezone.', 'quill-booking' ), array( 'status' => 400 ) );
+		}
+
+		// Prepare value data
+		$value_data = array(
+			'weekly_hours' => $weekly_hours,
+			'override'     => $override,
+		);
+
+		$availability_data = array(
+			'user_id'    => $user_id,
+			'name'       => $name,
+			'value'      => $value_data,
+			'timezone'   => $timezone,
+			'is_default' => false,
+		);
+
+		try {
+			$availability  = Availability_Model::create( $availability_data );
+			$response_data = $this->prepare_availability_for_response( $availability );
+			return new WP_REST_Response( $response_data, 201 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_availability_create_failed', $e->getMessage(), array( 'status' => 400 ) );
+		}
 	}
 
 	/**
@@ -438,37 +455,92 @@ class REST_Availability_Controller extends REST_Controller {
 		$override     = $request->get_param( 'override' );
 		$name         = $request->get_param( 'name' );
 		$timezone     = $request->get_param( 'timezone' );
-		$availability = Availabilities::get_availability( $id );
+		$is_default   = $request->get_param( 'is_default' );
+
+		$availability = Availability_Model::find( $id );
 
 		if ( ! $availability ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 404 ) );
 		}
 
-		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {
+		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability->user_id ) {
 			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to update this availability.', 'quill-booking' ), array( 'status' => 403 ) );
 		}
-		$update = array_filter(
-			array(
-				'name'         => $name,
-				'weekly_hours' => $weekly_hours,
-				'override'     => $override,
-				'timezone'     => $timezone,
-			),
-			function ( $value, $key ) {
-					// Always include override even if empty
-				if ( $key === 'override' ) {
-					return true;
+
+		try {
+			// Handle is_default logic first (before other updates)
+			if ( isset( $is_default ) ) {
+				if ( $is_default ) {
+					// If setting this as default, remove default from all other availabilities for this user
+					Availability_Model::where( 'user_id', $availability->user_id )
+						->where( 'id', '!=', $id )
+						->update( array( 'is_default' => false ) );
+
+					$availability->is_default = true;
+				} else {
+					// If trying to unset default, we need to ensure there's always one default
+					$other_default_count = Availability_Model::where( 'user_id', $availability->user_id )
+						->where( 'id', '!=', $id )
+						->where( 'is_default', true )
+						->count();
+
+					if ( $other_default_count === 0 ) {
+						// Cannot unset default if this is the only default availability
+						return new WP_Error(
+							'rest_availability_default_required',
+							__( 'Cannot remove default status. There must be at least one default availability per user.', 'quill-booking' ),
+							array( 'status' => 400 )
+						);
+					}
+
+					$availability->is_default = false;
 				}
-					return ! empty( $value );
-			},
-			ARRAY_FILTER_USE_BOTH
-		);
+			}
 
-		$availability = array_merge( $availability, $update );
+			// Update simple fields directly
+			if ( $name ) {
+				$availability->name = $name;
+			}
 
-		Availabilities::update_availability( $availability );
+			if ( $timezone ) {
+				$availability->timezone = $timezone;
+			}
 
-		return new WP_REST_Response( $availability, 200 );
+			// Handle value field updates (weekly_hours and override)
+			if ( $weekly_hours || isset( $override ) ) {
+				// Get current value data
+				$current_value = $availability->value ?: array();
+				$value_data    = $current_value;
+
+				if ( $weekly_hours ) {
+					$value_data['weekly_hours'] = $weekly_hours;
+				}
+
+				// Always include override even if empty
+				if ( isset( $override ) ) {
+					$value_data['override'] = $override;
+				}
+
+				$availability->value = $value_data;
+			}
+
+			// Save all changes
+			$updated = $availability->save();
+
+			if ( ! $updated ) {
+				return new WP_Error(
+					'rest_availability_update_failed',
+					__( 'Failed to update availability', 'quill-booking' ),
+					array( 'status' => 500 )
+				);
+			}
+
+			$response_data = $this->prepare_availability_for_response( $availability );
+			return new WP_REST_Response( $response_data, 200 );
+
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_availability_update_failed', $e->getMessage(), array( 'status' => 500 ) );
+		}
 	}
 
 	/**
@@ -496,30 +568,33 @@ class REST_Availability_Controller extends REST_Controller {
 	public function delete_item( $request ) {
 		$id = $request->get_param( 'id' );
 
-		$availability = Availabilities::get_availability( $id );
+		$availability = Availability_Model::find( $id );
 
 		if ( ! $availability ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 404 ) );
 		}
 
-		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability['user_id'] ) {
+		if ( ! current_user_can( 'quillbooking_manage_all_availability' ) && get_current_user_id() !== $availability->user_id ) {
 			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to delete this availability.', 'quill-booking' ), array( 'status' => 403 ) );
 		}
 
-		if ( true === $availability['is_default'] ) {
+		if ( $availability->is_default ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete the default availability.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
 
-		// Get the availability with events count added
-		$availability = $this->events_details_for_availability( $availability );
+		// Check if availability has associated events
+		$events_count = $availability->events()->count();
 
-		if ( 0 > $availability['events_count'] ) {
+		if ( $events_count > 0 ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete an availability with events.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
 
-		Availabilities::delete_availability( $id );
-
-		return new WP_REST_Response( null, 204 );
+		try {
+			$availability->delete();
+			return new WP_REST_Response( null, 204 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_availability_delete_failed', $e->getMessage(), array( 'status' => 400 ) );
+		}
 	}
 
 	/**
@@ -549,20 +624,27 @@ class REST_Availability_Controller extends REST_Controller {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
 
-		$availability = Availabilities::get_availability( $availability_id );
+		$availability = Availability_Model::find( $availability_id );
 
 		if ( ! $availability ) {
 			return new WP_Error( 'rest_availability_not_found', __( 'Availability not found.', 'quill-booking' ), array( 'status' => 404 ) );
 		}
 
-		$new_id                     = substr( md5( uniqid( rand(), true ) ), 0, 8 );
-		$availability['id']         = $new_id;
-		$availability['name']      .= ' (clone)';
-		$availability['is_default'] = false;
+		$clone_data = array(
+			'user_id'    => $availability->user_id,
+			'name'       => $availability->name . ' (clone)',
+			'value'      => $availability->value,
+			'timezone'   => $availability->timezone,
+			'is_default' => false,
+		);
 
-		$cloned_availability = Availabilities::add_availability( $availability );
-
-		return new WP_REST_Response( $cloned_availability, 201 );
+		try {
+			$cloned_availability = Availability_Model::create( $clone_data );
+			$response_data       = $this->prepare_availability_for_response( $cloned_availability );
+			return new WP_REST_Response( $response_data, 201 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_availability_clone_failed', $e->getMessage(), array( 'status' => 400 ) );
+		}
 	}
 
 	/**
@@ -577,26 +659,51 @@ class REST_Availability_Controller extends REST_Controller {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
 
-		$availability = Availabilities::get_availability( $availability_id );
+		$availability = Availability_Model::find( $availability_id );
 
 		if ( ! $availability ) {
 			return new WP_Error( 'rest_availability_not_found', __( 'Availability not found.', 'quill-booking' ), array( 'status' => 404 ) );
 		}
 
-		$user_id            = $availability['user_id'];
-		$all_availabilities = Availabilities::get_availabilities();
+		$user_id = $availability->user_id;
 
-		foreach ( $all_availabilities as &$availability_data ) {
-			if ( $availability_data['user_id'] == $user_id && isset( $availability_data['is_default'] ) && $availability_data['is_default'] ) {
-				$availability_data['is_default'] = false;
-				Availabilities::update_availability( $availability_data );
-			}
+		try {
+			// Set all other availabilities for this user to not default
+			Availability_Model::where( 'user_id', $user_id )
+				->where( 'is_default', true )
+				->update( array( 'is_default' => false ) );
+
+			// Set this availability as default
+			$availability->update( array( 'is_default' => true ) );
+
+			$response_data = $this->prepare_availability_for_response( $availability );
+			return new WP_REST_Response( $response_data, 200 );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'rest_availability_set_default_failed', $e->getMessage(), array( 'status' => 400 ) );
 		}
+	}
 
-		$availability['is_default'] = true;
-		Availabilities::update_availability( $availability );
+	/**
+	 * Prepare availability for response
+	 *
+	 * @param Availability_Model $availability
+	 *
+	 * @return array
+	 */
+	private function prepare_availability_for_response( $availability ) {
+		$value_data = $availability->value ?: array();
 
-		return new WP_REST_Response( $availability, 200 );
+		return array(
+			'id'           => $availability->id,
+			'user_id'      => $availability->user_id,
+			'name'         => $availability->name,
+			'weekly_hours' => Arr::get( $value_data, 'weekly_hours', array() ),
+			'override'     => Arr::get( $value_data, 'override', array() ),
+			'timezone'     => $availability->timezone,
+			'is_default'   => $availability->is_default,
+			'created_at'   => $availability->created_at,
+			'updated_at'   => $availability->updated_at,
+		);
 	}
 
 	/**
@@ -607,9 +714,52 @@ class REST_Availability_Controller extends REST_Controller {
 	 * @return array
 	 */
 	private function events_details_for_availability( $availability ) {
-		$events                       = Event_Meta_Model::where( 'meta_key', 'availability' )->where( 'meta_value', $availability['id'] )->with( 'event' )->get();
-		$availability['events_count'] = $events->count();
-		$availability['events']       = $events;
+		$availability_model = Availability_Model::find( $availability['id'] );
+		$user_id            = $availability_model->user_id;
+
+		// Get all calendars that the user is in
+		$calendars = Calendar_Model::where( 'user_id', $user_id )->get();
+
+		if ( $calendars->isEmpty() ) {
+			$availability['events_count'] = 0;
+			$availability['events']       = array();
+			return $availability;
+		}
+
+		$total_events_count = 0;
+		$all_events         = array();
+		foreach ( $calendars as $calendar ) {
+			// Check if the calendar is team or hosts
+			if ( $calendar->type === 'host' ) {
+				// For host calendars, get events directly from availability
+				$events              = Event_Model::where( 'availability_id', $availability['id'] )->where( 'calendar_id', $calendar->id )->get();
+				$total_events_count += $events->count();
+				$all_events          = array_merge( $all_events, $events->toArray() );
+			} else {
+				// For team calendars, check availability_meta
+				$events_count = 0;
+				$events       = array();
+
+				// Get all events for this calendar
+				$calendar_events = Event_Model::where( 'calendar_id', $calendar->id )->get();
+
+				foreach ( $calendar_events as $event ) {
+					// Get availability meta from the event itself
+					$availability_meta = $event->availability_meta;
+					if ( ! $availability_meta['is_common'] && $availability_meta['hosts_schedules'][ $user_id ] === $availability['id'] ) {
+						$events_count++;
+						$events[] = $event;
+					}
+				}
+
+				$total_events_count += $events_count;
+				$all_events          = array_merge( $all_events, $events );
+			}
+		}
+
+		$availability['events_count'] = $total_events_count;
+		$availability['events']       = $all_events;
+
 		return $availability;
 	}
 }

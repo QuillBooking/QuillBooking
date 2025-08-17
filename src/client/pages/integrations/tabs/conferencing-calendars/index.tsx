@@ -34,8 +34,6 @@ const ConferencingCalendars: React.FC = () => {
 				...integration,
 			}));
 
-		console.log('Available Integrations:', availableIntegrations);
-
 		return availableIntegrations;
 	});
 	const [isLoading, setIsLoading] = useState(false);

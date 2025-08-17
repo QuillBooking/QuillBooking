@@ -148,8 +148,6 @@ const WebhookFeedsTab = forwardRef<EventWebhookHandle, EventWebhookProps>(
 			});
 		};
 
-		console.log(webhookFeeds);
-
 		const handleSave = (values: WebhookFeedType) => {
 			const updatedWebhookFeeds = editingWebhookFeed
 				? webhookFeeds?.map((feed) =>

@@ -91,7 +91,6 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 		};
 
 		const handleUpdate = (values: any, editingFieldKey: string) => {
-			console.log('Updating field', values, editingFieldKey);
 			if (!fields || !editingFieldKey) return;
 			const updatedFields = { ...fields };
 			const group = updatedFields.system[editingFieldKey]
@@ -113,8 +112,6 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 
 		const saveFields = async (fields: Fields) => {
 			try {
-				console.log('Saving fields', fields);
-
 				// Validate required data
 				if (!event) {
 					console.warn('Cannot save fields - event is undefined');
@@ -135,7 +132,6 @@ const EventFieldsTab = forwardRef<EventTabHandle, EventTabProps>(
 					},
 					onSuccess() {
 						props.setDisabled(true);
-						console.log('Fields saved successfully');
 					},
 					onError(error) {
 						console.error('API error while saving fields:', error);

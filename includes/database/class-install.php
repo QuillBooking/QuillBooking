@@ -22,6 +22,7 @@ use QuillBooking\Database\Migrations\Booking_Log_Table;
 use QuillBooking\Database\Migrations\Guests_Table;
 use QuillBooking\Database\Migrations\Tasks_Meta_Table;
 use QuillBooking\Database\Migrations\Booking_Orders_Table;
+use QuillBooking\Database\Migrations\Availability_Table;
 use QuillBooking\Availabilities;
 
 /**
@@ -42,7 +43,6 @@ class Install {
 
 		Capabilities::assign_capabilities_for_user_roles();
 		Availabilities::add_default_availability();
-
 		$tables = apply_filters(
 			'quillbooking_database_tables',
 			array(
@@ -57,6 +57,7 @@ class Install {
 				Tasks_Meta_Table::class,
 				Booking_Orders_Table::class,
 				Booking_Hosts_Table::class,
+				Availability_Table::class,
 			)
 		);
 

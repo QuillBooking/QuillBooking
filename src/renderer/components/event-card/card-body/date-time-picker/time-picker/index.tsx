@@ -78,7 +78,6 @@ const TimePicker: React.FC<TimePickerProps> = ({
 	};
 
 	const timeSlots = getTimeSlots();
-	console.log('timeSlots', timeSlots);
 	const isGroupEvent = eventType === 'group';
 
 	const formatSpotsBadge = (spots: number) => {

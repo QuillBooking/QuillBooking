@@ -340,13 +340,10 @@ const CreateEvent: React.FC<CreateEventProps> = ({
 	};
 
 	const fetchConnectedIntegrations = () => {
-		console.log('fetchConnectedIntegrations');
-		console.log(calendarId);
 		callApi({
 			path: `calendars/${calendarId}/integrations`,
 			method: 'GET',
 			onSuccess: (response) => {
-				console.log(response);
 				setEvent((prev) => ({
 					...prev,
 					connected_integrations: response,

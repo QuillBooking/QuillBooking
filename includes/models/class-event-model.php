@@ -13,6 +13,7 @@
 namespace QuillBooking\Models;
 
 use Illuminate\Support\Arr;
+use SebastianBergmann\CodeCoverage\Driver\Xdebug;
 use WPEloquent\Eloquent\Model;
 use Illuminate\Support\Str;
 use QuillBooking\Utils;
@@ -76,6 +77,9 @@ class Event_Model extends Model {
 		'created_at',
 		'updated_at',
 		'is_disabled',
+		'availability_id',
+		'availability_meta',
+		'availability_type',
 	);
 
 	/**
@@ -84,9 +88,12 @@ class Event_Model extends Model {
 	 * @var array
 	 */
 	protected $casts = array(
-		'calendar_id' => 'integer',
-		'is_disabled' => 'boolean',
-		'reserve'     => 'boolean',
+		'calendar_id'       => 'integer',
+		'is_disabled'       => 'boolean',
+		'reserve'           => 'boolean',
+		'availability_id'   => 'integer',
+		'availability_meta' => 'array',
+		'availability_type' => 'string',
 	);
 
 	/**
@@ -95,11 +102,14 @@ class Event_Model extends Model {
 	 * @var array
 	 */
 	protected $rules = array(
-		'calendar_id' => 'required|integer',
-		'name'        => 'required',
-		'type'        => 'required',
-		'duration'    => 'required',
-		'color'       => 'regex:/^#[a-fA-F0-9]{6}$/',
+		'calendar_id'       => 'required|integer',
+		'name'              => 'required',
+		'type'              => 'required',
+		'duration'          => 'required',
+		'color'             => 'regex:/^#[a-fA-F0-9]{6}$/',
+		'availability_id'   => 'required|integer',
+		'availability_meta' => 'required|array',
+		'availability_type' => 'required|string',
 	);
 
 	/**
@@ -116,6 +126,11 @@ class Event_Model extends Model {
 		'duration.required'          => 'Event duration is required',
 		'settings.location.required' => 'Event location is required',
 		'color.regex'                => 'Color must be a valid hex color',
+		'availability_id.required'   => 'Availability ID is required',
+		'availability_id.integer'    => 'Availability ID must be an integer',
+		'availability_meta.required' => 'Availability meta is required',
+		'availability_type.required' => 'Availability type is required',
+		'availability_type.string'   => 'Availability type must be a string',
 	);
 
 	/**
@@ -168,6 +183,16 @@ class Event_Model extends Model {
 		return $this->hasMany( Booking_Model::class, 'event_id' );
 	}
 
+	/**
+	 * Relationship with availability
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 */
+	public function availability() {
+		return $this->belongsTo( Availability_Model::class, 'availability_id', 'id' );
+	}
 
 	/**
 	 * Get the fields meta value.
@@ -184,14 +209,28 @@ class Event_Model extends Model {
 	 * @return string|null
 	 */
 	public function getAvailabilityAttribute() {
+		// First try meta
 		$value = $this->get_meta( 'availability' );
 
 		if ( is_array( $value ) ) {
 			return $value;
 		}
 
-		$availability = Availabilities::get_availability( $value );
-		return $availability;
+		// Try static method
+		if ( $value ) {
+			$availability = Availabilities::get_availability( $value );
+			if ( $availability ) {
+				return $availability;
+			}
+		}
+
+		// Fall back to relationship if meta doesn't work
+		$relationship_availability = $this->getRelationValue( 'availability' );
+		if ( $relationship_availability ) {
+			return $relationship_availability->toArray(); // or however you want to format it
+		}
+
+		return null;
 	}
 
 	/**
@@ -1097,7 +1136,7 @@ class Event_Model extends Model {
 	 * @return array The availability array to use
 	 */
 	private function get_effective_availability() {
-		return $this->processed_availability !== null ? $this->processed_availability : $this->availability;
+		 return $this->processed_availability !== null ? $this->processed_availability : $this->availability;
 	}
 
 	/**
@@ -1122,31 +1161,30 @@ class Event_Model extends Model {
 	}
 
 	private function getTeamAvailability( $availability, $user_id = null ) {
-		if ( $this->type === 'round-robin' || $this->type === 'collective' ) {
-			$type             = $availability['type'];
-			$is_common        = $availability['is_common'];
+		xdebug_break();
+		$type          = $this->availability_type;
+		$is_common     = $this->availability_meta['is_common'];
+		$calendar_type = $this->calendar->type;
+		if ( $calendar_type === 'team' ) {
 			$availabilities[] = $availability;
 
 			if ( $type === 'existing' && $is_common == false ) {
-				$availabilities     = array();
-				$users_availability = $availability['users_availability'];
-
-				// Collect all user availabilities
-				foreach ( $users_availability as $user_availability ) {
-					$availability_id = $user_availability['id'];
-					$user_avail      = Availabilities::get_availability( $availability_id );
+				$availabilities  = array();
+				$hosts_schedules = $this->availability_meta['hosts_schedules'];
+				// key and value
+				foreach ( $hosts_schedules as $host_schedule ) {
+					$user_avail = Availabilities::get_availability( $host_schedule );
 					if ( $user_avail ) {
 						$availabilities[] = $user_avail;
 					} else {
-						// If availability ID not found, use the direct data from users_availability
-						$availabilities[] = $user_availability;
+						continue;
 					}
 				}
 
 				if ( $user_id && $this->type === 'round-robin' ) {
 					$availabilities = array_filter(
 						$availabilities,
-						function( $availability ) use ( $user_id ) {
+						function ( $availability ) use ( $user_id ) {
 							return isset( $availability['user_id'] ) && $availability['user_id'] == $user_id;
 						}
 					);
@@ -1167,10 +1205,47 @@ class Event_Model extends Model {
 					}
 					$availability['override'] = $merged_availability['override'] ?? array();
 				}
+				$availability['users_availability'] = $availabilities;
+			} else {
+				$availabilities = array();
+				if ( $type === 'existing' ) {
+					$availability = Availabilities::get_availability( $this->availability_id );
+				} else {
+					$availability_meta                 = array();
+					$availability_meta['name']         = $this->availability_meta['custom_availability']['name'];
+					$availability_meta['weekly_hours'] = $this->availability_meta['custom_availability']['value']['weekly_hours'];
+					$availability_meta['override']     = $this->availability_meta['custom_availability']['value']['override'];
+					$availability_meta['timezone']     = $this->calendar->get_meta( 'timezone' );
+					$availability_meta['is_common']    = $this->availability_meta['is_common'];
+					$availability                      = $availability_meta;
+				}
 			}
-			$availability['users_availability'] = $availabilities;
+		} else {
+			if ( $type === 'existing' ) {
+				$availability = Availabilities::get_availability( $this->availability_id );
+			} else {
+				$availability_meta                 = array();
+				$availability_meta['name']         = $this->availability_meta['custom_availability']['name'];
+				$availability_meta['weekly_hours'] = $this->availability_meta['custom_availability']['value']['weekly_hours'];
+				$availability_meta['override']     = $this->availability_meta['custom_availability']['value']['override'];
+				$availability_meta['timezone']     = $this->calendar->get_meta( 'timezone' );
+				$availability                      = $availability_meta;
+			}
 		}
 		return $availability;
+	}
+
+	/**
+	 * Parse availability value
+	 *
+	 * @param array $value
+	 * @return array
+	 */
+	private function parseAvailabilityValue( $value ) {
+		if ( is_array( $value ) ) {
+			return $value;
+		}
+		return json_decode( $value, true );
 	}
 
 	/**

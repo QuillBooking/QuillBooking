@@ -19,12 +19,14 @@ import {
 	TabButtons,
 	UpcomingCalendarIcon,
 	AutomationIcon,
+	RevenueIcon,
 } from '@quillbooking/components';
 import {
 	ConferencingCalendars,
 	Payments,
 	SMSIntegration,
 	Automation,
+	TrackingAnalytics,
 } from './tabs';
 import { useCurrentUser, useNavigate, useNotice } from '@quillbooking/hooks';
 
@@ -66,6 +68,7 @@ const Integrations: React.FC = () => {
 				'sms-integration',
 				'payments',
 				'automation',
+				'tracking-analytics',
 			].includes(tab)
 		) {
 			setActiveTab(tab);
@@ -95,6 +98,8 @@ const Integrations: React.FC = () => {
 				return <Payments />;
 			case 'automation':
 				return <Automation />;
+			case 'tracking-analytics':
+				return <TrackingAnalytics />;
 			default:
 				return <ConferencingCalendars />;
 		}
@@ -124,6 +129,11 @@ const Integrations: React.FC = () => {
 				key: 'automation',
 				label: __('Automation', 'quillbooking'),
 				icon: <AutomationIcon width={20} height={20} />,
+			},
+			{
+				key: 'tracking-analytics',
+				label: __('Tracking & Analytics', 'quillbooking'),
+				icon: <RevenueIcon width={20} height={20} />,
 			}
 		);
 	}

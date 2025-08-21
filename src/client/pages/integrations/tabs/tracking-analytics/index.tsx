@@ -25,7 +25,13 @@ const TrackingAnalytics: React.FC = () => {
 		const availableIntegrations = Object.entries(
 			ConfigAPI.getIntegrations() || {}
 		)
-			.filter(([key]) => key === 'matomo' || key === 'google-analytics')
+			.filter(
+				([key]) =>
+					key === 'matomo' ||
+					key === 'google-analytics' ||
+					key === 'google-tag-manager' ||
+					key === 'facebook-pixel'
+			)
 			.map(([key, integration]) => ({
 				id: key,
 				...integration,

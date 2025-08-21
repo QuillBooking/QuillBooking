@@ -113,7 +113,7 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
 										<div
 											className={`text-base font-semibold ${isActive ? 'text-color-primary' : 'text-[#3F4254]'}`}
 										>
-											{integration.title ||
+											{integration.name ||
 												__(
 													id.charAt(0).toUpperCase() +
 														id.slice(1),

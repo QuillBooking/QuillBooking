@@ -16,6 +16,8 @@ import type { Integration } from '@quillbooking/config';
 import MatomoFields from './fields/MatomoFields';
 import GoogleAnalyticsFields from './fields/GoogleAnalyticsFields';
 import { useNavigate } from '@quillbooking/hooks';
+import GoogleTagManagerFields from './fields/GoogleTagManagerFields';
+import FacebookPixelFields from './fields/FacebookPixelFields';
 
 export interface ConnectionCardProps {
 	slug: string | null;
@@ -68,6 +70,24 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						handleNavigation={handleNavigation}
 					/>
 				);
+			case 'google-tag-manager':
+				return (
+					<GoogleTagManagerFields
+						fields={integration.fields}
+						calendar={calendar}
+						form={form}
+						handleNavigation={handleNavigation}
+					/>
+				);
+			case 'facebook-pixel':
+				return (
+					<FacebookPixelFields
+						fields={integration.fields}
+						calendar={calendar}
+						form={form}
+						handleNavigation={handleNavigation}
+					/>
+				);
 			default:
 				return null;
 		}
@@ -78,6 +98,10 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 			case 'matomo':
 				return null;
 			case 'google-analytics':
+				return null;
+			case 'google-tag-manager':
+				return null;
+			case 'facebook-pixel':
 				return null;
 			default:
 				return 'Save Settings';

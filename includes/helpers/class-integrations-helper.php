@@ -19,6 +19,7 @@ class Integrations_Helper {
 
 
 
+
 	/**
 	 * Check if integrations are available
 	 *
@@ -38,7 +39,7 @@ class Integrations_Helper {
 		if ( $context === 'manager' ) {
 			return array(
 
-				'google'           => array(
+				'google'             => array(
 					'name'         => 'Google',
 					'description'  => 'Google Calendar Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'google' . '/icon.svg',
@@ -48,7 +49,7 @@ class Integrations_Helper {
 					'is_global'    => false,
 				),
 
-				'outlook'          => array(
+				'outlook'            => array(
 					'name'         => 'Outlook',
 					'description'  => 'Outlook Calendar Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'outlook' . '/icon.svg',
@@ -57,7 +58,7 @@ class Integrations_Helper {
 					'has_accounts' => false,
 					'is_global'    => false,
 				),
-				'zoom'             => array(
+				'zoom'               => array(
 					'name'         => 'Zoom',
 					'description'  => 'Zoom Meeting Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'zoom' . '/icon.svg',
@@ -66,7 +67,7 @@ class Integrations_Helper {
 					'has_accounts' => false,
 					'is_global'    => false,
 				),
-				'apple'            => array(
+				'apple'              => array(
 					'name'         => 'Apple',
 					'description'  => 'Apple Calendar Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'apple' . '/icon.svg',
@@ -75,7 +76,7 @@ class Integrations_Helper {
 					'has_accounts' => false,
 					'is_global'    => false,
 				),
-				'twilio'           => array(
+				'twilio'             => array(
 					'name'         => 'Twilio',
 					'description'  => 'Twilio SMS Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'twilio' . '/icon.svg',
@@ -84,7 +85,7 @@ class Integrations_Helper {
 					'has_accounts' => false,
 					'is_global'    => true,
 				),
-				'zapier'           => array(
+				'zapier'             => array(
 					'name'         => 'Zapier',
 					'description'  => 'Zapier Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'zapier' . '/icon.svg',
@@ -93,7 +94,7 @@ class Integrations_Helper {
 					'has_accounts' => false,
 					'is_global'    => true,
 				),
-				'make'             => array(
+				'make'               => array(
 					'name'         => 'Make',
 					'description'  => 'Make Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'make' . '/icon.svg',
@@ -102,7 +103,7 @@ class Integrations_Helper {
 					'has_accounts' => false,
 					'is_global'    => true,
 				),
-				'matomo'           => array(
+				'matomo'             => array(
 					'name'         => 'Matomo',
 					'description'  => 'Matomo Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'matomo' . '/icon.svg',
@@ -111,10 +112,28 @@ class Integrations_Helper {
 					'has_accounts' => false,
 					'is_global'    => true,
 				),
-				'google-analytics' => array(
+				'google-analytics'   => array(
 					'name'         => 'Google Analytics',
 					'description'  => 'Google Analytics Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'google-analytics' . '/icon.svg',
+					'is_calendar'  => false,
+					'auth_type'    => 'api_key',
+					'has_accounts' => false,
+					'is_global'    => true,
+				),
+				'google-tag-manager' => array(
+					'name'         => 'Google Tag Manager',
+					'description'  => 'Google Tag Manager Integration',
+					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'google-tag-manager' . '/icon.svg',
+					'is_calendar'  => false,
+					'auth_type'    => 'api_key',
+					'has_accounts' => false,
+					'is_global'    => true,
+				),
+				'facebook-pixel'     => array(
+					'name'         => 'Facebook Pixel',
+					'description'  => 'Facebook Pixel Integration',
+					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'facebook-pixel' . '/icon.svg',
 					'is_calendar'  => false,
 					'auth_type'    => 'api_key',
 					'has_accounts' => false,
@@ -124,7 +143,7 @@ class Integrations_Helper {
 		} else {
 			// For event context or default
 			return array(
-				'google'           => array(
+				'google'             => array(
 					'name'            => 'Google',
 					'connected'       => false,
 					'has_accounts'    => false,
@@ -132,7 +151,7 @@ class Integrations_Helper {
 					'has_get_started' => false,
 					'has_pro_version' => false,
 				),
-				'outlook'          => array(
+				'outlook'            => array(
 					'name'            => 'Outlook',
 					'connected'       => false,
 					'has_accounts'    => false,
@@ -141,7 +160,7 @@ class Integrations_Helper {
 					'has_get_started' => false,
 					'has_pro_version' => false,
 				),
-				'apple'            => array(
+				'apple'              => array(
 					'name'            => 'Apple',
 					'connected'       => false,
 					'has_accounts'    => false,
@@ -149,7 +168,7 @@ class Integrations_Helper {
 					'has_get_started' => false,
 					'has_pro_version' => false,
 				),
-				'zoom'             => array(
+				'zoom'               => array(
 					'name'            => 'Zoom',
 					'connected'       => false,
 					'has_accounts'    => false,
@@ -157,7 +176,7 @@ class Integrations_Helper {
 					'has_get_started' => false,
 					'has_pro_version' => false,
 				),
-				'twilio'           => array(
+				'twilio'             => array(
 					'name'            => 'Twilio',
 					'connected'       => false,
 					'has_accounts'    => false,
@@ -165,7 +184,7 @@ class Integrations_Helper {
 					'has_get_started' => false,
 					'has_pro_version' => false,
 				),
-				'zapier'           => array(
+				'zapier'             => array(
 					'name'            => 'Zapier',
 					'connected'       => false,
 					'has_accounts'    => false,
@@ -173,7 +192,7 @@ class Integrations_Helper {
 					'has_get_started' => false,
 					'has_pro_version' => false,
 				),
-				'make'             => array(
+				'make'               => array(
 					'name'            => 'Make',
 					'connected'       => false,
 					'has_accounts'    => false,
@@ -181,7 +200,7 @@ class Integrations_Helper {
 					'has_get_started' => false,
 					'has_pro_version' => false,
 				),
-				'matomo'           => array(
+				'matomo'             => array(
 					'name'            => 'Matomo',
 					'connected'       => false,
 					'has_accounts'    => false,
@@ -189,8 +208,24 @@ class Integrations_Helper {
 					'has_get_started' => false,
 					'has_pro_version' => false,
 				),
-				'google-analytics' => array(
+				'google-analytics'   => array(
 					'name'            => 'Google Analytics',
+					'connected'       => false,
+					'has_accounts'    => false,
+					'has_settings'    => false,
+					'has_get_started' => false,
+					'has_pro_version' => false,
+				),
+				'google-tag-manager' => array(
+					'name'            => 'Google Tag Manager',
+					'connected'       => false,
+					'has_accounts'    => false,
+					'has_settings'    => false,
+					'has_get_started' => false,
+					'has_pro_version' => false,
+				),
+				'facebook-pixel'     => array(
+					'name'            => 'Facebook Pixel',
 					'connected'       => false,
 					'has_accounts'    => false,
 					'has_settings'    => false,

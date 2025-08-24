@@ -4,6 +4,7 @@ import { EventTypes } from '../../../../../types';
 import './style.scss';
 import { css } from '@emotion/css';
 import InfoIcon from '../../../../../icons/info-icon';
+import { doAction } from '@wordpress/hooks';
 
 interface TimeSlot {
 	time: string;
@@ -142,6 +143,9 @@ const TimePicker: React.FC<TimePickerProps> = ({
 							onClick={() => {
 								setSelectedTime(slot.time);
 								setHostIds(slot.hosts_ids);
+								doAction('QuillBooking.BookingStarted', {
+									timeSlot: slot.time,
+								});
 							}}
 						>
 							<span className="time-slot-time">{slot.time}</span>

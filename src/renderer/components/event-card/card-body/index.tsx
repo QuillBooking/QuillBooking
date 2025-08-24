@@ -298,7 +298,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 				throw new Error(data.data?.message || 'Unknown error occurred');
 			}
 
-			doAction('QuillBooking.RendererCore.CreateBooking', {
+			doAction('QuillBooking.BookingCompleted', {
 				booking: data.data.booking,
 			});
 

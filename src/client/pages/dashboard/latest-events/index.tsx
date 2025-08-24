@@ -31,7 +31,7 @@ import {
 	UpcomingCalendarIcon,
 } from '@quillbooking/components';
 import ConfigAPI from '@quillbooking/config';
-import { Event } from 'client/types';
+import { Event } from '@quillbooking/types';
 
 const MAX_EVENTS = 7; // Maximum number of events to display
 

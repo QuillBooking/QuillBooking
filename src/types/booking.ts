@@ -51,6 +51,8 @@ export interface Booking extends BookingResponse {
   order: {
     booking_id: number;
     created_at: string;
+    updated_at: string;
+    transaction_id: string;
     currency: string;
     discount: number;
     id: number;

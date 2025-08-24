@@ -13,7 +13,7 @@ import { IconType } from 'react-icons';
 /**
  * Internal dependencies
  */
-import { EventTypes, GeneralOptions } from 'client/types';
+import { EventTypes, GeneralOptions } from '@quillbooking/types';
 import {
 	AllCalendarIcon,
 	MultiSelect,

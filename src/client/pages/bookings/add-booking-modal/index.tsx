@@ -38,7 +38,7 @@ import {
 	Event,
 	EventAvailability,
 	Fields,
-} from 'client/types';
+} from '@quillbooking/types';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import { CurrentTimeInTimezone } from '@quillbooking/components';
 import QuestionsComponents from './questions';

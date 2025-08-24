@@ -11,7 +11,7 @@ import { Flex } from 'antd';
 /**
  * Internal dependencies
  */
-import { BookingsTabsTypes } from 'client/types';
+import { BookingsTabsTypes } from '@quillbooking/types';
 import {
 	AllCalendarIcon,
 	CalendarNoshowIcon,

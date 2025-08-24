@@ -18,7 +18,7 @@ import {
 } from '@quillbooking/components';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
 import { getCurrentTimezone } from '@quillbooking/utils';
-import { Calendar } from 'client/types';
+import { Calendar } from '@quillbooking/types';
 import { useEffect, useState } from '@wordpress/element';
 import { useApi } from '@quillbooking/hooks';
 

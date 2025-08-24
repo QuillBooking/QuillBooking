@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 
 /**
  * Internal dependencies
@@ -41,12 +41,17 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 	setErrorMessage,
 }) => {
 	const getDefaultAvailability = (): Availability => ({
-		id: 'default',
-		user_id: 'default',
+		id: 0,
+		user_id: 0,
 		name: __('Default', 'quillbooking'),
 		timezone: getCurrentTimezone(),
-		weekly_hours: DEFAULT_WEEKLY_HOURS,
-		override: {},
+		value: {
+			weekly_hours: DEFAULT_WEEKLY_HOURS,
+			override: {},
+		},
+		is_default: false,
+		created_at: '',
+		updated_at: '',
 	});
 
 	const { callApi, loading } = useApi();
@@ -81,7 +86,9 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 					},
 					onError: (error) => {
 						if (setErrorMessage) {
-							setErrorMessage(error.message || 'Failed to save calendar');
+							setErrorMessage(
+								error.message || 'Failed to save calendar'
+							);
 						}
 						console.error('API Error:', error);
 					},
@@ -89,13 +96,17 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 			} catch (apiError) {
 				console.error('API Call Failed:', apiError);
 				if (setErrorMessage) {
-					setErrorMessage('An unexpected error occurred while saving the calendar');
+					setErrorMessage(
+						'An unexpected error occurred while saving the calendar'
+					);
 				}
 			}
 		} catch (error) {
 			console.error('Unexpected Error in saveCalendar:', error);
 			if (setErrorMessage) {
-				setErrorMessage('An error occurred while processing your request');
+				setErrorMessage(
+					'An error occurred while processing your request'
+				);
 			}
 		}
 	};
@@ -103,7 +114,9 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 	const validate = (): boolean => {
 		if (!formData.name) {
 			if (setErrorMessage) {
-				setErrorMessage(__('Please enter a name for the calendar.', 'quillbooking'));
+				setErrorMessage(
+					__('Please enter a name for the calendar.', 'quillbooking')
+				);
 			}
 			return false;
 		}
@@ -117,14 +130,21 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 
 		if (type === 'host' && !formData.availability) {
 			if (setErrorMessage) {
-				setErrorMessage(__('Please select availability.', 'quillbooking'));
+				setErrorMessage(
+					__('Please select availability.', 'quillbooking')
+				);
 			}
 			return false;
 		}
 
-		if (type === 'team' && (!formData.members || formData.members.length === 0)) {
+		if (
+			type === 'team' &&
+			(!formData.members || formData.members.length === 0)
+		) {
 			if (setErrorMessage) {
-				setErrorMessage(__('Please select team members.', 'quillbooking'));
+				setErrorMessage(
+					__('Please select team members.', 'quillbooking')
+				);
 			}
 			return false;
 		}

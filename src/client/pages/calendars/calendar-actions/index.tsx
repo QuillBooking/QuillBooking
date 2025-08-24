@@ -18,8 +18,7 @@ import {
 	CloneIcon,
 } from '@quillbooking/components';
 import type { Calendar } from '@quillbooking/types';
-import ConfigAPI from '@quillbooking/config';
-import { useApi, useCopyToClipboard } from '@quillbooking/hooks';
+import { useApi } from '@quillbooking/hooks';
 import CloneEventModal from '../clone-event-modal'; // Import the CloneEventModal component
 import { map } from 'lodash';
 
@@ -44,8 +43,6 @@ const CalendarActions: React.FC<CalendarActionsProps> = ({
 	setErrorMessage,
 }) => {
 	const { loading } = useApi();
-	const copyToClipboard = useCopyToClipboard();
-	const siteUrl = ConfigAPI.getSiteUrl();
 	const [isModalDeleteOpen, setIsModalDeleteOpen] = useState(false);
 	const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
 

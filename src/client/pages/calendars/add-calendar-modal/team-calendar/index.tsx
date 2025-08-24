@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies
  */
 
-import { Calendar } from 'client/types';
+import { Calendar } from '@quillbooking/types';
 import { applyFilters } from '@wordpress/hooks';
 import { ProIcon } from '@quillbooking/components';
 import { Modal } from 'antd';

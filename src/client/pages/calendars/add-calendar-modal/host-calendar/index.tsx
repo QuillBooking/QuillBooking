@@ -7,7 +7,7 @@ import { useState } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Availability, Calendar } from 'client/types';
+import { Availability, Calendar } from '@quillbooking/types';
 
 /**
  * Internal dependencies
@@ -41,7 +41,7 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
 	closeHandler,
 	loading,
 	saveCalendar,
-	validateHost
+	validateHost,
 }) => {
 	const [showAvailbility, setShowAvailability] = useState(false);
 	return (
@@ -58,14 +58,14 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
 					validateHost={validateHost}
 				/>
 			) : (
-			<HostAvailability
-				closeHandler={closeHandler}
-				loading={loading}
-				open={open}
-				formData={formData}
-				saveCalendar={saveCalendar}
-				updateFormData={updateFormData}
-			/>
+				<HostAvailability
+					closeHandler={closeHandler}
+					loading={loading}
+					open={open}
+					formData={formData}
+					saveCalendar={saveCalendar}
+					updateFormData={updateFormData}
+				/>
 			)}
 		</>
 	);

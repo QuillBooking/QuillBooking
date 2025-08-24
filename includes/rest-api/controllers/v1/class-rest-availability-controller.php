@@ -451,8 +451,8 @@ class REST_Availability_Controller extends REST_Controller {
 	 */
 	public function update_item( $request ) {
 		$id           = $request->get_param( 'id' );
-		$weekly_hours = $request->get_param( 'weekly_hours' );
-		$override     = $request->get_param( 'override' );
+		$weekly_hours = $request->get_param( 'value' )['weekly_hours'];
+		$override     = $request->get_param( 'value' )['override'];
 		$name         = $request->get_param( 'name' );
 		$timezone     = $request->get_param( 'timezone' );
 		$is_default   = $request->get_param( 'is_default' );
@@ -691,18 +691,16 @@ class REST_Availability_Controller extends REST_Controller {
 	 * @return array
 	 */
 	private function prepare_availability_for_response( $availability ) {
-		$value_data = $availability->value ?: array();
 
 		return array(
-			'id'           => $availability->id,
-			'user_id'      => $availability->user_id,
-			'name'         => $availability->name,
-			'weekly_hours' => Arr::get( $value_data, 'weekly_hours', array() ),
-			'override'     => Arr::get( $value_data, 'override', array() ),
-			'timezone'     => $availability->timezone,
-			'is_default'   => $availability->is_default,
-			'created_at'   => $availability->created_at,
-			'updated_at'   => $availability->updated_at,
+			'id'         => $availability->id,
+			'user_id'    => $availability->user_id,
+			'name'       => $availability->name,
+			'value'      => $availability->value,
+			'timezone'   => $availability->timezone,
+			'is_default' => $availability->is_default,
+			'created_at' => $availability->created_at,
+			'updated_at' => $availability->updated_at,
 		);
 	}
 

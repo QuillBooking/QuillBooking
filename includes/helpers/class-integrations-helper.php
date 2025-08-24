@@ -20,6 +20,9 @@ class Integrations_Helper {
 
 
 
+
+
+
 	/**
 	 * Check if integrations are available
 	 *
@@ -40,7 +43,7 @@ class Integrations_Helper {
 			return array(
 
 				'google'             => array(
-					'name'         => 'Google',
+					'name'         => 'Google Calendar/Meet',
 					'description'  => 'Google Calendar Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'google' . '/icon.svg',
 					'is_calendar'  => true,
@@ -50,7 +53,7 @@ class Integrations_Helper {
 				),
 
 				'outlook'            => array(
-					'name'         => 'Outlook',
+					'name'         => 'Outlook Calendar/MS Teams Conferencing',
 					'description'  => 'Outlook Calendar Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'outlook' . '/icon.svg',
 					'is_calendar'  => true,
@@ -59,7 +62,7 @@ class Integrations_Helper {
 					'is_global'    => false,
 				),
 				'zoom'               => array(
-					'name'         => 'Zoom',
+					'name'         => 'Zoom Integration',
 					'description'  => 'Zoom Meeting Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'zoom' . '/icon.svg',
 					'is_calendar'  => false,
@@ -68,7 +71,7 @@ class Integrations_Helper {
 					'is_global'    => false,
 				),
 				'apple'              => array(
-					'name'         => 'Apple',
+					'name'         => 'Apple Calendar',
 					'description'  => 'Apple Calendar Integration',
 					'icon'         => QUILLBOOKING_PLUGIN_URL . 'assets/icons/' . 'apple' . '/icon.svg',
 					'is_calendar'  => true,

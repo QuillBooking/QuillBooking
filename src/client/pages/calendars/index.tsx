@@ -36,6 +36,7 @@ import {
 	ShareIcon,
 	UpcomingCalendarIcon,
 	ProVersion,
+	SettingsIcon,
 } from '@quillbooking/components';
 import CalendarActions from './calendar-actions';
 import CreateEvent from '../create-event';
@@ -119,14 +120,19 @@ const Calendars: React.FC = () => {
 			{ state: errorMessage, setState: setErrorMessage },
 		];
 
-		messages.forEach(({ state, setState }) => {
+		const cleanupFunctions = messages.map(({ state, setState }) => {
 			if (state) {
 				const timer = setTimeout(() => {
 					setState(null);
-				}, 5000); // Hide after 3 seconds
+				}, 5000); // Hide after 5 seconds
 				return () => clearTimeout(timer);
 			}
+			return undefined;
 		});
+
+		return () => {
+			cleanupFunctions.forEach((cleanup) => cleanup && cleanup());
+		};
 	}, [
 		eventStatusMessage,
 		deleteEventMessage,
@@ -507,13 +513,13 @@ const Calendars: React.FC = () => {
 								<span className="text-[20px] font-medium text-black">
 									{search
 										? __(
-											'No matching events found',
-											'quillbooking'
-										)
+												'No matching events found',
+												'quillbooking'
+											)
 										: __(
-											'No Calendars available',
-											'quillbooking'
-										)}
+												'No Calendars available',
+												'quillbooking'
+											)}
 								</span>
 								{filters.type === 'team' && (
 									<Button
@@ -587,7 +593,25 @@ const Calendars: React.FC = () => {
 																</div>
 															</a>
 														</Flex>
-														<div>
+														<Flex gap={8}>
+															<Button
+																type="text"
+																className="border-[#EDEBEB] text-color-primary-text flex items-center gap-2"
+																onClick={() =>
+																	navigate(
+																		`calendars/${calendar.id}`
+																	)
+																}
+															>
+																<SettingsIcon
+																	width={18}
+																	height={18}
+																/>
+																{__(
+																	'Host Settings',
+																	'quillbooking'
+																)}
+															</Button>
 															<Popover
 																trigger={[
 																	'click',
@@ -636,7 +660,7 @@ const Calendars: React.FC = () => {
 																	className="border-[#EDEBEB]"
 																/>
 															</Popover>
-														</div>
+														</Flex>
 													</Flex>
 												</Card>
 												<CalendarEvents

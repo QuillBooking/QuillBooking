@@ -299,7 +299,10 @@ const CardBody: React.FC<CardBodyProps> = ({
 			}
 
 			doAction('QuillBooking.BookingCompleted', {
-				booking: data.data.booking,
+				data: {
+					calendar_id: event.calendar_id,
+					event_id: event.id,
+				},
 			});
 
 			// Check if we're in inline embed mode first

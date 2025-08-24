@@ -18,7 +18,7 @@ import {
 	FieldWrapper,
 	TimezoneSelect,
 } from '@quillbooking/components';
-import { Availability } from 'client/types';
+import { Availability } from '@quillbooking/types';
 import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import { DEFAULT_WEEKLY_HOURS } from '@quillbooking/constants';
 import { getCurrentTimezone } from '@quillbooking/utils';
@@ -40,8 +40,10 @@ const AddAvailabilityScheduleModal: React.FC<AddAvailabilityModalProps> = ({
 	const [formData, setFormData] = useState<Partial<Availability>>({
 		name: '',
 		timezone: getCurrentTimezone(),
-		weekly_hours: DEFAULT_WEEKLY_HOURS,
-		override: {},
+		value: {
+			weekly_hours: DEFAULT_WEEKLY_HOURS,
+			override: {},
+		},
 	});
 	const [isDisabled, setIsDisabled] = useState(true);
 

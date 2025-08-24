@@ -386,8 +386,8 @@ class REST_Availability_Controller extends REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function create_item( $request ) {
-		$weekly_hours = $request->get_param( 'weekly_hours' );
-		$override     = $request->get_param( 'override' ) ?: array();
+		$weekly_hours = $request->get_param( 'value' )['weekly_hours'];
+		$override     = $request->get_param( 'value' )['override'];
 		$user_id      = $request->get_param( 'user_id' ) ? $request->get_param( 'user_id' ) : get_current_user_id();
 		$name         = $request->get_param( 'name' );
 		$timezone     = $request->get_param( 'timezone' );

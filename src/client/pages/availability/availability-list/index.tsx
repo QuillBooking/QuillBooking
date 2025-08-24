@@ -13,7 +13,7 @@ import { Card, List, Space, Typography, Skeleton } from 'antd';
 /**
  * Internal dependencies
  */
-import { Availability } from 'client/types';
+import { Availability } from '@quillbooking/types';
 import { useApi } from '@quillbooking/hooks';
 import {
 	ClockIcon,
@@ -156,7 +156,7 @@ const AvailabilityList: React.FC<AvailabilityListProps> = ({
 							</div>
 
 							<AvailabilityActions
-								availabilityId={availability.id || ''}
+								availabilityId={availability.id || 0}
 								availabilities={availabilities}
 								setAvailabilities={setAvailabilities}
 								isAvailabilityDefault={

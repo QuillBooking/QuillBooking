@@ -12,7 +12,7 @@ import { filter } from 'lodash';
 /**
  * Internal dependencies
  */
-import { Availability } from 'client/types';
+import { Availability } from '@quillbooking/types';
 import { useApi, useNavigate } from '@quillbooking/hooks';
 import { NavLink as Link } from '@quillbooking/navigation';
 import {
@@ -24,7 +24,7 @@ import {
 import { useState } from '@wordpress/element';
 
 interface AvailabilityActionsProps {
-	availabilityId: string;
+	availabilityId: number;
 	availabilities: Partial<Availability>[];
 	setAvailabilities: (availabilities: Partial<Availability>[]) => void;
 	isAvailabilityDefault: boolean;
@@ -50,7 +50,7 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 	const { callApi } = useApi();
 	const [showConfirmation, setShowConfirmation] = useState(false);
 
-	const deleteAvailability = async (availabilityId: string) => {
+	const deleteAvailability = async (availabilityId: number) => {
 		try {
 			if (isAvailabilityDefault) {
 				setNotice({
@@ -106,7 +106,7 @@ const AvailabilityActions: React.FC<AvailabilityActionsProps> = ({
 		}
 	};
 
-	const setCloneAvailability = async (availabilityId: string) => {
+	const setCloneAvailability = async (availabilityId: number) => {
 		try {
 			await callApi({
 				path: `availabilities/${availabilityId}/clone`,

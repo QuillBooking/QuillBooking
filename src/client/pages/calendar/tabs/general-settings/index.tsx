@@ -7,7 +7,7 @@ import { useEffect, useState } from '@wordpress/element';
 /**
  * External dependencies
  */
-import { Card, Flex, Input, Skeleton, Divider, Checkbox, Radio } from 'antd';
+import { Card, Flex, Input, Skeleton, Checkbox } from 'antd';
 
 /**
  * Internal dependencies

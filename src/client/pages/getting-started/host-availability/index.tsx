@@ -15,7 +15,7 @@ import { GettingStartedComponentProps } from '@quillbooking/types';
 
 const HostAvailability: React.FC<GettingStartedComponentProps> = ({
 	event,
-	onAvailabilityChange = () => { },
+	onAvailabilityChange = () => {},
 }) => {
 	return (
 		<Card className="bg-white">
@@ -26,7 +26,7 @@ const HostAvailability: React.FC<GettingStartedComponentProps> = ({
 				</div>
 				<Schedule
 					availability={
-						event.availability_data || {
+						event.availability_meta?.custom_availability.value || {
 							weekly_hours: {
 								monday: {
 									times: [{ start: '09:00', end: '17:00' }],

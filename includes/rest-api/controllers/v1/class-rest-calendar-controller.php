@@ -452,7 +452,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			if ( $type === 'team' ) {
 				$calendar->syncTeamMembers( $members );
 			} elseif ( $type === 'host' ) {
-				$this->create_availability( $user_id, $availability, $timezone );
+				$this->create_availability( $user_id, $availability['value'], $timezone );
 			}
 
 			$wpdb->query( 'COMMIT' );
@@ -831,7 +831,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			throw new Exception( __( 'You already have a host calendar', 'quillbooking' ), 400 );
 		}
 
-		if ( empty( $availability['weekly_hours'] ) || ! is_array( $availability['weekly_hours'] ) ) {
+		if ( empty( $availability['value']['weekly_hours'] ) || ! is_array( $availability['value']['weekly_hours'] ) ) {
 			throw new Exception( __( 'Valid weekly hours are required', 'quillbooking' ), 400 );
 		}
 	}

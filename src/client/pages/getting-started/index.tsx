@@ -21,7 +21,7 @@ import EventDetails from './event-details';
 import LocationTimezone from './event-location-timezone';
 import HostAvailability from './host-availability';
 import { getCurrentTimezone } from '@quillbooking/utils';
-import { Event } from '@quillbooking/types';
+import { Event, Availability } from '@quillbooking/types';
 
 interface FormErrors {
 	name?: string;
@@ -55,6 +55,50 @@ const GettingStarted: React.FC = () => {
 		return Boolean(applyFilters('quillbooking.integration', false));
 	};
 
+	// Create a temporary availability object for the getting started flow
+	const [temporaryAvailability] = useState<Availability>({
+		id: 0,
+		user_id: 0,
+		name: 'Default Schedule',
+		value: {
+			weekly_hours: {
+				monday: {
+					times: [{ start: '09:00', end: '17:00' }],
+					off: false,
+				},
+				tuesday: {
+					times: [{ start: '09:00', end: '17:00' }],
+					off: false,
+				},
+				wednesday: {
+					times: [{ start: '09:00', end: '17:00' }],
+					off: false,
+				},
+				thursday: {
+					times: [{ start: '09:00', end: '17:00' }],
+					off: false,
+				},
+				friday: {
+					times: [{ start: '09:00', end: '17:00' }],
+					off: false,
+				},
+				saturday: {
+					times: [{ start: '09:00', end: '17:00' }],
+					off: true,
+				},
+				sunday: {
+					times: [{ start: '09:00', end: '17:00' }],
+					off: true,
+				},
+			},
+			override: {},
+		},
+		timezone: getCurrentTimezone(),
+		is_default: true,
+		created_at: '',
+		updated_at: '',
+	});
+
 	const [event, setEvent] = useState<Omit<Event, 'id'> & { id?: number }>({
 		name: '',
 		description: '',
@@ -73,6 +117,13 @@ const GettingStarted: React.FC = () => {
 		is_disabled: false,
 		visibility: 'public',
 		dynamic_duration: false,
+		availability_type: 'custom',
+		availability_meta: {
+			custom_availability: temporaryAvailability,
+			is_common: false,
+			hosts_schedules: {},
+		},
+		availability_id: null,
 		payments_settings: {
 			type: 'native',
 			enable_payment: false,
@@ -108,6 +159,41 @@ const GettingStarted: React.FC = () => {
 			allow_additional_guests: false,
 			max_invitees: 0,
 			show_remaining: false,
+		},
+		advanced_settings: {
+			submit_button_text: '',
+			redirect_after_submit: false,
+			redirect_url: '',
+			require_confirmation: false,
+			confirmation_time: 'always',
+			confirmation_time_value: 0,
+			confirmation_time_unit: {
+				days: { label: '', disabled: false },
+				weeks: { label: '', disabled: false },
+				months: { label: '', disabled: false },
+			},
+			allow_multiple_bookings: false,
+			maximum_bookings: 0,
+			attendee_cannot_cancel: false,
+			cannot_cancel_time: 'event_start',
+			cannot_cancel_time_value: 0,
+			cannot_cancel_time_unit: {
+				days: { label: '', disabled: false },
+				weeks: { label: '', disabled: false },
+				months: { label: '', disabled: false },
+			},
+			permission_denied_message: '',
+			attendee_cannot_reschedule: false,
+			cannot_reschedule_time: 'event_start',
+			cannot_reschedule_time_value: 0,
+			cannot_reschedule_time_unit: {
+				days: { label: '', disabled: false },
+				weeks: { label: '', disabled: false },
+				months: { label: '', disabled: false },
+			},
+			reschedule_denied_message: '',
+			event_title: '',
+			redirect_query_string: '',
 		},
 		reserve: false,
 		connected_integrations: {
@@ -153,43 +239,6 @@ const GettingStarted: React.FC = () => {
 				has_pro_version: isProVersionAvailable(),
 			},
 		},
-		availability_data: {
-			id: '',
-			user_id: '',
-			name: '',
-			weekly_hours: {
-				monday: {
-					times: [{ start: '09:00', end: '17:00' }],
-					off: false,
-				},
-				tuesday: {
-					times: [{ start: '09:00', end: '17:00' }],
-					off: false,
-				},
-				wednesday: {
-					times: [{ start: '09:00', end: '17:00' }],
-					off: false,
-				},
-				thursday: {
-					times: [{ start: '09:00', end: '17:00' }],
-					off: false,
-				},
-				friday: {
-					times: [{ start: '09:00', end: '17:00' }],
-					off: false,
-				},
-				saturday: {
-					times: [{ start: '09:00', end: '17:00' }],
-					off: true,
-				},
-				sunday: {
-					times: [{ start: '09:00', end: '17:00' }],
-					off: true,
-				},
-			},
-			override: {},
-			timezone: getCurrentTimezone(),
-		},
 	});
 
 	const validateStep = useCallback(
@@ -233,7 +282,7 @@ const GettingStarted: React.FC = () => {
 		[event, touched]
 	);
 
-	const handleEventChange = (field: keyof Event, value: any) => {
+	const handleEventChange = (field: string, value: any) => {
 		setEvent((prev) => {
 			const newEvent = {
 				...prev,
@@ -268,17 +317,27 @@ const GettingStarted: React.FC = () => {
 		value: boolean | { start: string; end: string }[]
 	) => {
 		setEvent((prev) => {
-			if (!prev.availability_data) return prev;
+			if (!prev.availability_meta?.custom_availability) return prev;
 
 			const newEvent = {
 				...prev,
-				availability_data: {
-					...prev.availability_data,
-					weekly_hours: {
-						...prev.availability_data.weekly_hours,
-						[dayKey]: {
-							...prev.availability_data.weekly_hours[dayKey],
-							[field]: value,
+				availability_meta: {
+					...prev.availability_meta,
+					custom_availability: {
+						...prev.availability_meta.custom_availability,
+						value: {
+							...prev.availability_meta.custom_availability.value,
+							weekly_hours: {
+								...prev.availability_meta.custom_availability
+									.value.weekly_hours,
+								[dayKey]: {
+									...prev.availability_meta
+										.custom_availability.value.weekly_hours[
+										dayKey
+									],
+									[field]: value,
+								},
+							},
 						},
 					},
 				},
@@ -342,7 +401,7 @@ const GettingStarted: React.FC = () => {
 				type: 'host',
 				user_id: getCurrentUserId(),
 				timezone: event.calendar?.timezone || getCurrentTimezone(),
-				availability: event.availability_data,
+				availability: event.availability_meta?.custom_availability,
 			};
 
 			// Create calendar
@@ -369,7 +428,7 @@ const GettingStarted: React.FC = () => {
 									type: 'days',
 									days: 60,
 								},
-								availability_data: event.availability_data,
+								availability_meta: event.availability_meta,
 								limits: {
 									max_bookings: 0,
 									max_bookings_per_day: 0,
@@ -417,7 +476,7 @@ const GettingStarted: React.FC = () => {
 								path: 'events',
 								method: 'POST',
 								data: eventData,
-								onSuccess: (eventResponse) => {
+								onSuccess: () => {
 									message.success(
 										__(
 											'Event created successfully!',
@@ -425,19 +484,15 @@ const GettingStarted: React.FC = () => {
 										)
 									);
 									if (redirect) {
-										navigate(`calendars`, {
-											state: {
-												notice: {
-													title: __(
-														'Complete Your Setup',
-														'quillbooking'
-													),
-													message: __(
-														'The event has been created successfully. Please complete your event setup and settings to finish.',
-														'quillbooking'
-													),
-												},
-											},
+										navigate('calendars', {
+											notice_title: __(
+												'Complete Your Setup',
+												'quillbooking'
+											),
+											notice_message: __(
+												'The event has been created successfully. Please complete your event setup and settings to finish.',
+												'quillbooking'
+											),
 										});
 									}
 									resolve(response); // Resolve with calendar response
@@ -445,10 +500,10 @@ const GettingStarted: React.FC = () => {
 								onError: (error) => {
 									message.error(
 										error ||
-										__(
-											'Failed to create event',
-											'quillbooking'
-										)
+											__(
+												'Failed to create event',
+												'quillbooking'
+											)
 									);
 									console.error(
 										'Error creating event:',
@@ -464,7 +519,7 @@ const GettingStarted: React.FC = () => {
 					onError: (error) => {
 						message.error(
 							error ||
-							__('Failed to create calendar', 'quillbooking')
+								__('Failed to create calendar', 'quillbooking')
 						);
 						console.error('Error creating calendar:', error);
 						reject(error);

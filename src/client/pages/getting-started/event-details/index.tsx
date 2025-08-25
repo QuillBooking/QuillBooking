@@ -43,7 +43,7 @@ const durations = [
 
 const EventDetails: React.FC<ExtendedGettingStartedProps> = ({
 	event,
-	onEventChange = () => { },
+	onEventChange = () => {},
 	errors = {},
 }) => {
 	return (
@@ -150,9 +150,7 @@ const EventDetails: React.FC<ExtendedGettingStartedProps> = ({
 									onClick={() =>
 										onEventChange('duration', item.value)
 									}
-									bodyStyle={{
-										paddingTop: '18px',
-									}}
+									style={{ paddingTop: '18px' }}
 								>
 									<div
 										className={`font-semibold ${event.duration == item.value ? 'text-color-primary' : 'text-[#1E2125]'}`}

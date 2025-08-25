@@ -16,7 +16,6 @@ import { useApi } from '@quillbooking/hooks';
 import GeneralSettingsCard from './general-settings-card';
 import PaymentSettings from './payment-settings';
 import EmailingSettings from './emailing-settings';
-import ThemeSettings from './theme-settings';
 import { NoticeBanner } from '@quillbooking/components';
 import { NoticeMessage } from '@quillbooking/types';
 
@@ -249,10 +248,11 @@ const GeneralSettings = () => {
 					type="primary"
 					onClick={handleSave}
 					disabled={saveLoading}
-					className={`rounded-lg font-medium px-10 text-white ${saveLoading
+					className={`rounded-lg font-medium px-10 text-white ${
+						saveLoading
 							? 'bg-gray-400 cursor-not-allowed'
 							: 'bg-color-primary '
-						}`}
+					}`}
 				>
 					{__('Save', 'quillbooking')}
 				</Button>

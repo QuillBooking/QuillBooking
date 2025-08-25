@@ -16,7 +16,7 @@ import { Availability, Host } from '@quillbooking/types';
 interface SelectScheduleProps {
 	availability: Availability;
 	hosts: Host[];
-	onAvailabilityChange: (id: string) => void;
+	onAvailabilityChange: (id: number) => void;
 	title: string;
 }
 const { Text } = Typography;
@@ -33,7 +33,7 @@ const SelectSchedule: React.FC<SelectScheduleProps> = ({
 				<span className="text-red-500">*</span>
 			</Text>
 			<Select
-				value={availability?.id.toString()}
+				value={availability?.id}
 				onChange={onAvailabilityChange}
 				options={hosts.map((host) => ({
 					label: host.name,

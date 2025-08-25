@@ -83,6 +83,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 						setHostIds={setHostIds}
 						baseColor={baseColor}
 						lightColor={lightColor}
+						event={event}
 					/>
 				)}
 			</div>

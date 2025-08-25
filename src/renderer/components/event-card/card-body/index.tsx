@@ -11,7 +11,7 @@ import { Col, Row, Skeleton, Space } from 'antd';
 import { get } from 'lodash';
 import { get_location } from '@quillbooking/utils';
 import tinycolor from 'tinycolor2';
-import { applyFilters } from '@wordpress/hooks';
+import { applyFilters, doAction } from '@wordpress/hooks';
 
 interface CardBodyProps {
 	event: Event;
@@ -297,6 +297,13 @@ const CardBody: React.FC<CardBodyProps> = ({
 			if (!data.success) {
 				throw new Error(data.data?.message || 'Unknown error occurred');
 			}
+
+			doAction('QuillBooking.BookingCompleted', {
+				data: {
+					calendar_id: event.calendar_id,
+					event_id: event.id,
+				},
+			});
 
 			// Check if we're in inline embed mode first
 			const embedUrlParams = new URLSearchParams(window.location.search);

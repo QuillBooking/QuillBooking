@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Integrations Manager
  * This class is responsible for handling the integrations
@@ -19,6 +20,8 @@ use QuillBooking\Helpers\Integrations_Helper;
  * Integrations Manager class
  */
 final class Integrations_Manager extends Manager {
+
+
 	use Singleton;
 
 	/**
@@ -98,7 +101,7 @@ final class Integrations_Manager extends Manager {
 	 * @return array
 	 */
 	public function get_options() {
-		// Check if QuillBooking Pro is active
+		 // Check if QuillBooking Pro is active
 		if ( ! $this->has_integrations() ) {
 			// Return default values if pro plugin is not active
 			return Integrations_Helper::get_default_integrations( 'manager' );

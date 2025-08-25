@@ -1,4 +1,4 @@
-import { Event } from '../../../../types';
+import { RendererEvent } from '@quillbooking/types';
 import ClockIcon from '../../../../icons/clock-icon';
 import LocationIcon from '../../../../icons/location-icon';
 import './style.scss';
@@ -9,7 +9,7 @@ import { applyFilters } from '@wordpress/hooks';
 import CalendarIcon from '../../../../icons/calendar-icon';
 
 interface EventDetailsProps {
-	event: Event;
+	event: RendererEvent;
 	setSelectedDuration: (duration: number) => void;
 	selectedDuration: number;
 	step: number;

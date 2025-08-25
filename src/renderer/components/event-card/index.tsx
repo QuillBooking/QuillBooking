@@ -1,10 +1,10 @@
-import { Event } from '../../types';
+import { RendererEvent } from '@quillbooking/types';
 import CardBody from './card-body';
 import Header from './header';
 import './style.scss';
 
 interface EventCardProps {
-	event: Event;
+	event: RendererEvent;
 	ajax_url: string;
 	url: string;
 	globalCurrency: string;

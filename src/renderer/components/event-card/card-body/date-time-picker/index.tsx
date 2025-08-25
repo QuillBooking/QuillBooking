@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 import { useState } from 'react';
-import { Event } from '../../../../types';
+import { RendererEvent } from '@quillbooking/types';
 import DatePicker from './date-picker';
 import { Dayjs } from 'dayjs';
 import TimePicker from './time-picker';
@@ -10,7 +10,7 @@ import CurrentTimeInTimezone from '../../../current-time';
 import GlobalIcon from '../../../../icons/global-icon';
 
 interface DateTimePickerProps {
-	event: Event;
+	event: RendererEvent;
 	selectedDate: Dayjs | null;
 	setSelectedDate: (date: Dayjs | null) => void;
 	timeZone: string;

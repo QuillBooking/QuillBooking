@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Booking, Event } from '../../../types';
+import { RendererBooking, RendererEvent } from '@quillbooking/types';
 import DateTimePicker from './date-time-picker';
 import EventDetails from './event-details';
 import Hosts from './hosts';
@@ -14,10 +14,10 @@ import tinycolor from 'tinycolor2';
 import { applyFilters, doAction } from '@wordpress/hooks';
 
 interface CardBodyProps {
-	event: Event;
+	event: RendererEvent;
 	ajax_url: string;
 	type?: string;
-	booking?: Booking;
+	booking?: RendererBooking;
 	url: string;
 	globalCurrency: string;
 }

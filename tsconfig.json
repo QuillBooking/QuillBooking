@@ -7,10 +7,7 @@
 		"jsx": "react-jsx",
 		"target": "es2018",
 		"module": "esnext",
-		"lib": [
-			"dom",
-			"esnext"
-		],
+		"lib": ["dom", "esnext"],
 		"declaration": true,
 		"declarationMap": true,
 		"composite": true,
@@ -29,47 +26,23 @@
 		"esModuleInterop": false,
 		"resolveJsonModule": true,
 		"noImplicitAny": false,
-		"typeRoots": [
-			"./node_modules/@types"
-		],
+		"typeRoots": ["./node_modules/@types"],
 		"baseUrl": "src",
 		"skipLibCheck": true,
 		"strictNullChecks": true,
-		"types": [
-			"jest",
-			"@testing-library/jest-dom"
-		],
+		"types": ["jest", "@testing-library/jest-dom"],
 		"paths": {
-			"@quillbooking/navigation": [
-				"navigation"
-			],
-			"@quillbooking/config": [
-				"config"
-			],
-			"@quillbooking/store": [
-				"store/index.ts"
-			],
-			"@quillbooking/client": [
-				"client"
-			],
-			"@quillbooking/components": [
-				"components"
-			],
-			"@quillbooking/constants": [
-				"constants"
-			],
-			"@quillbooking/utils": [
-				"utils"
-			],
-			"@quillbooking/hooks": [
-				"hooks"
-			],
-			"@quillbooking/types": [
-				"types"
-			],
+			"@quillbooking/navigation": ["navigation"],
+			"@quillbooking/config": ["config"],
+			"@quillbooking/store": ["store/index.ts"],
+			"@quillbooking/client": ["client"],
+			"@quillbooking/components": ["components"],
+			"@quillbooking/constants": ["constants"],
+			"@quillbooking/utils": ["utils"],
+			"@quillbooking/hooks": ["hooks"],
+			"@quillbooking/types": ["types"],
+			"@quillbooking/shared-hooks": ["shared-hooks"]
 		}
 	},
-	"include": [
-		"src"
-	]
+	"include": ["src"]
 }

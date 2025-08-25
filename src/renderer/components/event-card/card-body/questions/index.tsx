@@ -1,5 +1,5 @@
 import { __ } from '@wordpress/i18n';
-import { AdvancedSettings, Fields } from '../../../../types';
+import { AdvancedSettings, Fields } from '@quillbooking/types';
 import './style.scss';
 import LeftArrowIcon from '../../../../icons/left-arrow-icon';
 import { Form, Spin } from 'antd';

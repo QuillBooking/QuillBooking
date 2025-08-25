@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 import LeftArrowIcon from '../../icons/left-arrow-icon';
-import { Booking, Fields } from '../../types';
+import { RendererBooking, Fields } from '@quillbooking/types';
 import { Form, Input } from 'antd';
 import { Dayjs } from 'dayjs';
 import { useState } from '@wordpress/element';
@@ -10,7 +10,7 @@ interface RescheduleProps {
 	setStep: (step: number) => void;
 	fields: Fields;
 	ajax_url: string;
-	booking: Booking | null;
+	booking: RendererBooking | null;
 	selectedDate: Dayjs | null;
 	selectedTime: string | null;
 	timezone: string;

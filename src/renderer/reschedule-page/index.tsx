@@ -1,4 +1,4 @@
-import { Booking, Event } from '../types';
+import { RendererBooking, RendererEvent } from '@quillbooking/types';
 // import CardBody from './card-body';
 // import Header from './header';
 import Header from '../components/event-card/header';
@@ -6,10 +6,10 @@ import './style.scss';
 import CardBody from '../components/event-card/card-body';
 
 interface ReschedulePageProps {
-	event: Event;
+	event: RendererEvent;
 	ajax_url: string;
 	type: string;
-	booking: Booking;
+	booking: RendererBooking;
 	url: string;
 	globalCurrency: string;
 	canReschedule?: boolean;

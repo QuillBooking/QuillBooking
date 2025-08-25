@@ -1,4 +1,4 @@
-import { Host } from '../../../../types';
+import { Host } from '@quillbooking/types';
 import './style.scss';
 
 interface HostsProps {
@@ -7,7 +7,7 @@ interface HostsProps {
 
 const Hosts: React.FC<HostsProps> = ({ hosts }) => {
 	return (
-		<div className='hosts-container'>
+		<div className="hosts-container">
 			{hosts?.map((host) => (
 				<div key={host.id} className="host-card">
 					<img

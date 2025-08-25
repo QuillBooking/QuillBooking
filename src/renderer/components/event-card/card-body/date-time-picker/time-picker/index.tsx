@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 import { __ } from '@wordpress/i18n';
-import { Event, EventTypes } from '../../../../../types';
+import { RendererEvent, EventTypes } from '@quillbooking/types';
 import './style.scss';
 import { css } from '@emotion/css';
 import InfoIcon from '../../../../../icons/info-icon';
@@ -28,7 +28,7 @@ interface TimePickerProps {
 	showRemaining?: boolean;
 	baseColor: string;
 	lightColor: string;
-	event: Event;
+	event: RendererEvent;
 }
 
 const TimePicker: React.FC<TimePickerProps> = ({

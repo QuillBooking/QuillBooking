@@ -6,8 +6,8 @@ import { createRoot } from '@wordpress/element';
 /**
  * Internal dependencies
  */
+import type { Config } from '@quillbooking/types';
 import './style.scss';
-import type { Config } from './types';
 import EventCard from './components/event-card';
 import ReschedulePage from './reschedule-page';
 

@@ -5,7 +5,7 @@ import './style.scss';
 import isBetween from 'dayjs/plugin/isBetween';
 import isToday from 'dayjs/plugin/isToday';
 import { __ } from '@wordpress/i18n';
-import { Event } from '../../../../../types';
+import { RendererEvent } from '@quillbooking/types';
 import { Dayjs } from 'dayjs';
 import PreviousIcon from '../../../../../icons/previous-icon';
 import NextIcon from '../../../../../icons/next-icon';
@@ -15,7 +15,7 @@ dayjs.extend(isBetween);
 dayjs.extend(isToday);
 
 interface DatePickerProps {
-	event: Event;
+	event: RendererEvent;
 	selectedDate: Dayjs | null;
 	setSelectedDate: (date: Dayjs | null) => void;
 	timeZone: string;

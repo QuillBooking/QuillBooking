@@ -5,6 +5,7 @@ export type FieldType = {
   group: string;
   event_location: string;
   placeholder: string;
+  helpText: string;
   order: number;
   enabled?: boolean;
   settings?: {

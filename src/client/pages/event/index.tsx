@@ -37,7 +37,6 @@ import {
 	AvailabilityIcon,
 	CalendarsIcon,
 	EmailNotiIcon,
-	IntegrationsIcon,
 	PaymentSettingsIcon,
 	QuestionIcon,
 	SettingsIcon,
@@ -80,7 +79,7 @@ const Event: React.FC = () => {
 	const childRef = useRef<any>(null);
 	const siteUrl = ConfigAPI.getSiteUrl();
 	const { callApi } = useApi();
-	const { errorNotice, successNotice, infoNotice } = useNotice();
+	const { errorNotice, successNotice } = useNotice();
 
 	// Use event store instead of local state
 	const {

@@ -5,6 +5,7 @@ export type NotificationType = {
   template: {
     subject: string;
     message: string;
+    type: string;
   };
   times?: Array<{ unit: string; value: number }>;
 };

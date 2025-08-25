@@ -22,26 +22,36 @@ import {
 	UnitOptions as UnitOptionsType,
 	EventLimits as EventLimitsType,
 	LimitUnit,
-} from 'client/types';
+	Availability,
+	EventAvailabilityMeta,
+	Host,
+} from '@quillbooking/types';
 import { useApi, useEvent } from '@quillbooking/hooks';
 import Shimmer from './shimmer';
 
 const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 	(props, ref) => {
 		// Event state
-		const [availabilityType, setAvailabilityType] =
-			useState<string>('existing');
-		const [availability, setAvailability] = useState(null);
-		const [availabilityMeta, setAvailabilityMeta] = useState(null);
-		const [eventAvailability, setEventAvailability] = useState(null);
+		const [availabilityType, setAvailabilityType] = useState<
+			'existing' | 'custom'
+		>('existing');
+		const [availability, setAvailability] = useState<Availability | null>(
+			null
+		);
+		const [availabilityMeta, setAvailabilityMeta] =
+			useState<EventAvailabilityMeta | null>(null);
+		const [eventAvailability, setEventAvailability] =
+			useState<Availability | null>(null);
 		const [reservetimes, setReservetimes] = useState<boolean>(false);
 		const [range, setRange] = useState<AvailabilityRange>({
 			type: 'days',
 			days: 5,
 		});
 		const [override, setDateOverrides] = useState<DateOverrides>({});
-		const [teamAvailability, setTeamAvailability] = useState<any>(null);
-		const [selectedUser, setSelectedUser] = useState<any>(null);
+		const [teamAvailability, setTeamAvailability] = useState<
+			Record<string, Availability | null>
+		>({});
+		const [selectedUser, setSelectedUser] = useState<Host | null>(null);
 		// Global settings state
 		const [startDay, setStartDay] = useState<string>('monday');
 		const [timeFormat, setTimeFormat] = useState<string>('12');
@@ -139,42 +149,57 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 			fetchRange();
 			fetchGlobalSettings();
 			if (event.availability_type === 'existing') {
-				setAvailability(event.availability);
-				setDateOverrides(event.availability.value.override);
+				setAvailability(event.availability || null);
+				setDateOverrides(event.availability?.value.override || {});
 			}
 			if (event.availability_type === 'custom') {
-				setAvailability(event.availability_meta.custom_availability);
+				setAvailability(
+					event.availability_meta?.custom_availability || null
+				);
 				setDateOverrides(
-					event.availability_meta.custom_availability.value.override
+					event.availability_meta?.custom_availability?.value
+						.override || {}
 				);
 			}
 
 			if (event.calendar.type === 'team') {
-				const availabilityObj = event.hosts?.reduce((acc, host) => {
-					const availabilityId =
-						event.availability_meta.hosts_schedules?.[host.id];
+				const availabilityObj: Record<string, Availability | null> =
+					event.hosts?.reduce(
+						(
+							acc: Record<string, Availability | null>,
+							host: Host
+						) => {
+							const availabilityId =
+								event.availability_meta?.hosts_schedules?.[
+									host.id
+								];
 
-					const foundAvailability = host.availabilities?.find(
-						(availability) => availability.id === availabilityId
-					);
+							const foundAvailability = host.availabilities?.find(
+								(availability: Availability) =>
+									availability.id === availabilityId
+							);
 
-					acc[host.id] = foundAvailability || null;
-					return acc;
-				}, {});
+							acc[host.id] = foundAvailability || null;
+							return acc;
+						},
+						{} as Record<string, Availability | null>
+					) || {};
 
 				setTeamAvailability(availabilityObj);
-				const firstHostAvailability =
-					availabilityObj[event.hosts[0].id];
-				if (event.availability_meta.is_common === false) {
-					setAvailability(firstHostAvailability);
-					setDateOverrides(
-						firstHostAvailability?.value.override || {}
-					);
+				if (event.hosts?.[0]?.id) {
+					const firstHostAvailability =
+						availabilityObj?.[event?.hosts?.[0]?.id];
+					if (event.availability_meta?.is_common === false) {
+						setAvailability(firstHostAvailability || null);
+						setDateOverrides(
+							firstHostAvailability?.value.override || {}
+						);
+					}
 				}
 			}
-			setSelectedUser(event.hosts?.[0]);
-			setEventAvailability(event.availability);
-			setAvailabilityMeta(event.availability_meta);
+			setSelectedUser(event.hosts?.[0] || null);
+			setEventAvailability(event.availability || null);
+			setAvailabilityMeta(event.availability_meta || null);
 			setAvailabilityType(event.availability_type);
 		}, [event]);
 

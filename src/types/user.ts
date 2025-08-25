@@ -1,3 +1,5 @@
+import type { Availability } from './availability';
+
 export type User = {
   ID: number;
   display_name: string;
@@ -9,9 +11,7 @@ export type Host = {
   id: number;
   name: string;
   image: string;
-  availabilities?: {
-    [key: string]: any; // Using any to avoid circular dependency with Availability
-  };
+  availabilities?: Availability[];
 };
 
 export type Guest = {

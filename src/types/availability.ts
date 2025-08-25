@@ -11,18 +11,16 @@ export interface EventMetaData {
   create_at: string;
 }
 
-// Updated availability value structure based on the JSON data
 export interface AvailabilityValue {
   weekly_hours: WeeklyHours;
   override: DateOverrides;
 }
 
-// Updated availability structure based on migration
 export interface Availability {
   id: number;
   user_id: number;
   name: string;
-  value: AvailabilityValue; // This matches the JSON structure
+  value: AvailabilityValue;
   timezone: string;
   is_default: boolean;
   created_at: string;
@@ -30,17 +28,10 @@ export interface Availability {
   events_count?: number;
 }
 
-// Custom availability structure used in event availability_meta
-export interface CustomAvailability {
-  name: string;
-  value: AvailabilityValue;
-}
-
-// Event availability meta structure based on the new JSON format
 export interface EventAvailabilityMeta {
-  custom_availability: CustomAvailability;
-  is_common: boolean;
-  hosts_schedules: Record<string, number>; // Maps host ID to availability ID
+  custom_availability: Availability;
+  is_common?: boolean;
+  hosts_schedules?: Record<string, number>;
 }
 
 export type AvailabilityRange = {

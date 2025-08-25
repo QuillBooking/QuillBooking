@@ -6,7 +6,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * External dependencies
  */
-import { Card, Skeleton, Space } from 'antd';
+import { Card } from 'antd';
 
 /**
  * Internal dependencies

@@ -11,7 +11,7 @@ import { Flex, Select, Typography } from 'antd';
 /**
  * Internal dependencies
  */
-import { Availability, Host } from 'client/types';
+import { Availability, Host } from '@quillbooking/types';
 
 interface SelectScheduleProps {
 	availability: Availability;
@@ -33,7 +33,7 @@ const SelectSchedule: React.FC<SelectScheduleProps> = ({
 				<span className="text-red-500">*</span>
 			</Text>
 			<Select
-				value={availability?.id}
+				value={availability?.id.toString()}
 				onChange={onAvailabilityChange}
 				options={hosts.map((host) => ({
 					label: host.name,

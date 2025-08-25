@@ -1,7 +1,9 @@
-import type { EventAvailabilityMeta, EventMetaData } from './availability';
+import type { Availability, EventAvailabilityMeta, EventMetaData } from './availability';
+import { Calendar } from './calendar';
 import type { LimitRule, Location, UnitOptions } from './common';
 import type { ConnectedIntegrationsFields, ConnectedIntegrationsFieldsMicrosoft } from './integrations';
 import type { PaymentsSettings } from './payments';
+import { Host } from './user';
 
 export type EventTypes = 'one-to-one' | 'group' | 'round-robin' | 'collective';
 
@@ -89,19 +91,18 @@ export type Event = {
   visibility: 'public' | 'private';
   dynamic_duration: boolean;
   location: Location[];
-  // Updated availability fields based on migration
   availability_type: 'existing' | 'custom';
   availability_meta: EventAvailabilityMeta;
   availability_id: number | null;
   created_at: string;
   updated_at: string;
-  calendar: any; // Using any to avoid circular dependency with Calendar
+  calendar: Calendar;
   additional_settings: AdditionalSettings;
   advanced_settings: AdvancedSettings;
   group_settings?: GroupSettings;
-  hosts?: any[]; // Using any to avoid circular dependency with Host
+  hosts?: Host[];
   fields?: EventMetaData[];
-  availability_data?: any; // Using any to avoid circular dependency with Availability
+  availability?: Availability;
   reserve: boolean;
   payments_settings: PaymentsSettings;
   connected_integrations: {

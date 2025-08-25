@@ -14,16 +14,48 @@ import dayjs from 'dayjs';
  */
 import { CalendarTickIcon, CardHeader } from '@quillbooking/components';
 import { RangeSection } from './sections';
-import { Availability, CustomAvailability } from 'client/types';
+import {
+	Availability,
+	AvailabilityRange,
+	DateOverrides,
+	EventAvailabilityMeta,
+	Host,
+	Event,
+} from '@quillbooking/types';
 
 // Team availability extends the base availability with users_availability
 interface TeamAvailability extends Availability {
-	users_availability: Record<number, Availability | CustomAvailability>;
+	users_availability: Record<number, Availability>;
 }
 import SingleAvailability from './components/single-availability';
 import TeamAvailability from './components/team-availability';
 
-const AvailabilitySection: React.FC<any> = ({
+const AvailabilitySection: React.FC<{
+	event: Event | null;
+	availability: Availability | null;
+	availabilityMeta: EventAvailabilityMeta | null;
+	eventAvailability: Availability | null;
+	availabilityType: 'custom' | 'existing';
+	setAvailability: (availability: Availability | null) => void;
+	setAvailabilityMeta: (availabilityMeta: EventAvailabilityMeta) => void;
+	setEventAvailability: (eventAvailability: Availability) => void;
+	setAvailabilityType: (availabilityType: 'custom' | 'existing') => void;
+	setReservetimes: (reservetimes: boolean) => void;
+	setDisabled: (disabled: boolean) => void;
+	reservetimes: boolean;
+	setRange: (range: AvailabilityRange) => void;
+	range: AvailabilityRange;
+	dateOverrides: DateOverrides;
+	setDateOverrides: (dateOverrides: DateOverrides) => void;
+	timeFormat: string;
+	startDay: string;
+	teamAvailability: Record<string, Availability | null>;
+	setTeamAvailability: (
+		teamAvailability: Record<string, Availability | null>
+	) => void;
+	selectedUser: Host | null;
+	setSelectedUser: (selectedUser: Host | null) => void;
+}> = ({
 	event,
 	availability,
 	availabilityMeta,
@@ -51,9 +83,11 @@ const AvailabilitySection: React.FC<any> = ({
 		setDisabled(false);
 
 		// Find the selected availability across all hosts
-		const selected = event.hosts
-			.flatMap((host) => host.availabilities)
-			.find((availability) => availability.id === id);
+		const selected = event?.hosts
+			?.flatMap((host) => host.availabilities || [])
+			?.find(
+				(availability: Availability) => availability.id === parseInt(id)
+			);
 
 		if (selected) {
 			setEventAvailability(selected);
@@ -62,22 +96,22 @@ const AvailabilitySection: React.FC<any> = ({
 		}
 	};
 
-	const onAvailabilityTypeChange = (value) => {
+	const onAvailabilityTypeChange = (value: 'custom' | 'existing') => {
 		setAvailabilityType(value);
-		if (value === 'custom') {
+		if (value === 'custom' && availabilityMeta?.custom_availability) {
 			setAvailability(availabilityMeta.custom_availability);
 			setDateOverrides(
-				availabilityMeta.custom_availability.value.override
+				availabilityMeta.custom_availability.value.override || {}
 			);
 		}
-		if (value === 'existing') {
+		if (value === 'existing' && eventAvailability) {
 			setAvailability(eventAvailability);
-			setDateOverrides(eventAvailability.value.override);
+			setDateOverrides(eventAvailability.value.override || {});
 		}
 		setDisabled(false);
 	};
 
-	const onRangeTypeChange = (type) => {
+	const onRangeTypeChange = (type: 'days' | 'date_range' | 'infinity') => {
 		setDisabled(false);
 		setRange({
 			type,
@@ -97,12 +131,12 @@ const AvailabilitySection: React.FC<any> = ({
 		});
 	};
 
-	const onDaysChange = (days) => {
+	const onDaysChange = (days: number) => {
 		setDisabled(false);
 		setRange({ ...range, days });
 	};
 
-	const onDateRangeChange = (start_date, end_date) => {
+	const onDateRangeChange = (start_date: string, end_date: string) => {
 		setDisabled(false);
 		setRange({ ...range, start_date, end_date });
 	};
@@ -122,7 +156,7 @@ const AvailabilitySection: React.FC<any> = ({
 				icon={<CalendarTickIcon />}
 			/>
 
-			{event.calendar.type === 'team' && (
+			{event?.calendar.type === 'team' && (
 				<Flex className="items-center mt-4">
 					<Flex vertical gap={1}>
 						<div className="text-[#09090B] text-[16px] font-semibold">
@@ -136,31 +170,32 @@ const AvailabilitySection: React.FC<any> = ({
 						</div>
 					</Flex>
 					<Switch
-						checked={availabilityMeta.is_common}
-						onChange={(value) => {
+						checked={availabilityMeta?.is_common || false}
+						onChange={(value: boolean) => {
 							setDisabled(false);
-							setAvailabilityMeta({
-								...availabilityMeta,
-								is_common: value,
-							});
-							if (!value) {
-								setAvailability(
-									teamAvailability[selectedUser.id]
-								);
+							if (availabilityMeta) {
+								setAvailabilityMeta({
+									...availabilityMeta,
+									is_common: value,
+								});
+							}
+							if (!value && selectedUser?.id) {
+								const userAvailability =
+									teamAvailability[selectedUser.id];
+								setAvailability(userAvailability);
 								setDateOverrides(
-									teamAvailability[selectedUser.id]?.value
-										.override || {}
+									userAvailability?.value.override || {}
 								);
 							}
-							if (value) {
+							if (value && eventAvailability) {
 								setAvailability(eventAvailability);
 								setDateOverrides(
-									eventAvailability.value.override
+									eventAvailability.value.override || {}
 								);
 							}
 						}}
 						className={
-							availabilityMeta.is_common
+							availabilityMeta?.is_common
 								? 'bg-color-primary'
 								: 'bg-gray-400'
 						}
@@ -168,14 +203,14 @@ const AvailabilitySection: React.FC<any> = ({
 				</Flex>
 			)}
 
-			{(event.calendar.type === 'host' ||
-				(event.calendar.type === 'team' &&
-					availabilityMeta.is_common)) && (
+			{(event?.calendar.type === 'host' ||
+				(event?.calendar.type === 'team' &&
+					availabilityMeta?.is_common)) && (
 				<SingleAvailability
 					availabilityType={availabilityType}
 					onAvailabilityTypeChange={onAvailabilityTypeChange}
 					availability={availability}
-					hosts={event.hosts || []}
+					hosts={event?.hosts || []}
 					onAvailabilityChange={onAvailabilityChange}
 					timeFormat={timeFormat}
 					startDay={startDay}
@@ -190,27 +225,28 @@ const AvailabilitySection: React.FC<any> = ({
 				/>
 			)}
 
-			{event.calendar.type === 'team' && !availabilityMeta.is_common && (
-				<TeamAvailability
-					availability={availability}
-					event={event}
-					timeFormat={timeFormat}
-					startDay={startDay}
-					dateOverrides={dateOverrides}
-					availabilityType={availabilityType}
-					availabilityMeta={availabilityMeta}
-					setAvailabilityMeta={setAvailabilityMeta}
-					setEventAvailability={setEventAvailability}
-					setDisabled={setDisabled}
-					setAvailability={setAvailability}
-					setDateOverrides={setDateOverrides}
-					teamAvailability={teamAvailability}
-					setTeamAvailability={setTeamAvailability}
-					selectedUser={selectedUser}
-					setSelectedUser={setSelectedUser}
-					eventAvailability={eventAvailability}
-				/>
-			)}
+			{event?.calendar.type === 'team' &&
+				!availabilityMeta?.is_common && (
+					<TeamAvailability
+						availability={availability}
+						event={event}
+						timeFormat={timeFormat}
+						startDay={startDay}
+						dateOverrides={dateOverrides}
+						availabilityType={availabilityType}
+						availabilityMeta={availabilityMeta}
+						setAvailabilityMeta={setAvailabilityMeta}
+						setEventAvailability={setEventAvailability}
+						setDisabled={setDisabled}
+						setAvailability={setAvailability}
+						setDateOverrides={setDateOverrides}
+						teamAvailability={teamAvailability}
+						setTeamAvailability={setTeamAvailability}
+						selectedUser={selectedUser}
+						setSelectedUser={setSelectedUser}
+						eventAvailability={eventAvailability}
+					/>
+				)}
 
 			<Card className="border-none">
 				<RangeSection

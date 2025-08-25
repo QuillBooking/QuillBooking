@@ -11,7 +11,7 @@ import { Flex, InputNumber, Select } from 'antd';
 /**
  * Internal dependencies
  */
-import { LimitBaseProps } from 'client/types';
+import { LimitBaseProps } from '@quillbooking/types';
 
 interface MinimumNoticeProps extends LimitBaseProps {}
 

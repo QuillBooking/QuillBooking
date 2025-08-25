@@ -1,5 +1,4 @@
-import { __ } from '@wordpress/i18n';
-import { Fields } from 'client/types';
+import { Fields } from '@quillbooking/types';
 import './style.scss';
 import { Form } from 'antd';
 import FormField from '../inputs';

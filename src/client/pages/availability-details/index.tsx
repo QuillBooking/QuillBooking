@@ -18,6 +18,7 @@ import { useParams } from '@quillbooking/navigation';
 import { useApi, useNavigate } from '@quillbooking/hooks';
 import type {
 	Availability,
+	AvailabilityValue,
 	DateOverrides,
 	NoticeMessage,
 } from '@quillbooking/types';
@@ -34,13 +35,29 @@ import { isValidDateOverrides } from '@quillbooking/utils';
  * Main Calendars Component.
  */
 
+// Create a type that ensures value is always present during editing
+type AvailabilityWithValue = Omit<
+	Availability,
+	'id' | 'user_id' | 'created_at' | 'updated_at'
+> & {
+	id?: number;
+	user_id?: number;
+	created_at?: string;
+	updated_at?: string;
+	value: AvailabilityValue; // This ensures value is never undefined
+};
+
 const AvailabilityDetails: React.FC = () => {
-	const [availabilityDetails, setAvailabilityDetails] = useState<
-		Partial<Availability>
-	>({
-		weekly_hours: {},
-		name: '',
-	});
+	const [availabilityDetails, setAvailabilityDetails] =
+		useState<AvailabilityWithValue>({
+			value: {
+				weekly_hours: {},
+				override: {},
+			},
+			name: '',
+			timezone: '',
+			is_default: false,
+		});
 	const [availabilityName, setAvailabilityName] = useState<string>('');
 	const [availabilityTimezone, setAvailabilityTimezone] =
 		useState<string>('');
@@ -70,7 +87,7 @@ const AvailabilityDetails: React.FC = () => {
 				setAvailabilityDetails(data);
 				setAvailabilityName(data.name);
 				setAvailabilityTimezone(data.timezone);
-				setDateOverrides(data.override);
+				setDateOverrides(data.value.override);
 				setIsDefault(data.is_default ?? false);
 				setInitialLoading(false);
 			},
@@ -163,7 +180,10 @@ const AvailabilityDetails: React.FC = () => {
 				method: 'PUT',
 				data: {
 					name: availabilityName,
-					weekly_hours: availabilityDetails.weekly_hours,
+					value: {
+						weekly_hours: availabilityDetails.value.weekly_hours,
+						override: dateOverrides,
+					},
 					override: dateOverrides,
 					timezone: availabilityTimezone,
 					is_default: isDefault,
@@ -207,11 +227,11 @@ const AvailabilityDetails: React.FC = () => {
 		value: boolean | { start: string; end: string }[]
 	) => {
 		const updatedAvailability = { ...availabilityDetails };
-		if (updatedAvailability.weekly_hours) {
+		if (updatedAvailability.value.weekly_hours) {
 			if (field === 'off' && typeof value === 'boolean') {
-				updatedAvailability.weekly_hours[day].off = value;
+				updatedAvailability.value.weekly_hours[day].off = value;
 			} else if (field === 'times' && Array.isArray(value)) {
-				updatedAvailability.weekly_hours[day].times = value;
+				updatedAvailability.value.weekly_hours[day].times = value;
 			} else {
 				return;
 			}
@@ -358,9 +378,7 @@ const AvailabilityDetails: React.FC = () => {
 
 								<Card>
 									<Schedule
-										availability={
-											availabilityDetails as Availability
-										}
+										availability={availabilityDetails.value}
 										onCustomAvailabilityChange={
 											onCustomAvailabilityChange
 										}

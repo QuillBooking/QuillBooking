@@ -22,13 +22,9 @@ import InfoItem from '../info-items';
  */
 interface BookingDetailsProps {
 	booking: Booking;
-	handleStatusUpdated?: () => void;
 }
 
-const InviteeInformation: React.FC<BookingDetailsProps> = ({
-	booking,
-	handleStatusUpdated,
-}) => {
+const InviteeInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 	return (
 		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
 			<CardHeader

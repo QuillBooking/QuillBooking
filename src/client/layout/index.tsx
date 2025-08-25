@@ -28,10 +28,9 @@ import { useLocation } from 'react-router-dom';
 /**
  * Internal dependencies
  */
-import { NavBar, SearchIcon, LogoIcon } from '@quillbooking/components';
+import { NavBar, LogoIcon } from '@quillbooking/components';
 import { Controller } from './controller';
 import './style.scss';
-import User from '../../components/icons/user.png';
 
 const AntProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	return (
@@ -93,7 +92,10 @@ const Breadcrumbs: React.FC = () => {
 	const adminPages = map(getAdminPages(), (page) => {
 		return { [page.path]: page.label };
 	});
-	const breadcrumbs = { ...storeBreadcrumbs, ...Object.assign({}, ...adminPages) };
+	const breadcrumbs = {
+		...storeBreadcrumbs,
+		...Object.assign({}, ...adminPages),
+	};
 
 	const pathnames = location.pathname.split('/').filter(Boolean);
 	const breadcrumbItems = pathnames.map((_, index) => {
@@ -102,7 +104,10 @@ const Breadcrumbs: React.FC = () => {
 		if (!title) {
 			return null;
 		}
-		return { title: <Link to={currentPath}>{title}</Link>, key: currentPath };
+		return {
+			title: <Link to={currentPath}>{title}</Link>,
+			key: currentPath,
+		};
 	});
 
 	// Check if any title is ... return null
@@ -115,36 +120,32 @@ const Breadcrumbs: React.FC = () => {
 
 	return (
 		<Breadcrumb
-			className='quillbooking-breadcrumbs'
+			className="quillbooking-breadcrumbs"
 			items={[
 				{
-					title:
-						<Link to="/">
-							{__('Home', 'quillbooking')}
-						</Link>,
-					key: '/'
+					title: <Link to="/">{__('Home', 'quillbooking')}</Link>,
+					key: '/',
 				},
 				...newBreadcrumbItems,
 			]}
 		/>
 	);
-}
+};
 
 export const Layout = (props) => {
 	return (
 		<SlotFillProvider>
 			<AntProvider>
-				<div className='flex justify-between items-center border-b px-8 py-4'>
-					<div className='flex items-center gap-4'>
-
+				<div className="flex justify-between items-center border-b px-8 py-4">
+					<div className="flex items-center gap-4">
 						<LogoIcon />
 					</div>
 				</div>
 				<div className="quillbooking-layout w-full">
-					<div className='quillbooking-layout-navbar'>
+					<div className="quillbooking-layout-navbar">
 						<NavBar />
 					</div>
-					<div className='w-full'>
+					<div className="w-full">
 						<Notices />
 						{/* <Breadcrumbs /> */}
 						<div className="quillbooking-layout__main">

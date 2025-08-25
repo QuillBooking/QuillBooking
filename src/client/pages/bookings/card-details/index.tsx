@@ -7,7 +7,7 @@ import { Flex } from 'antd';
 /**
  * Internal dependencies
  */
-import { Booking } from 'client/types';
+import { Booking } from '@quillbooking/types';
 import {
 	PriceIcon,
 	ClockIcon,

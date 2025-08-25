@@ -11,7 +11,7 @@ import { Flex, Timeline } from 'antd';
 /**
  * Internal dependencies
  */
-import { Booking, NoticeMessage } from 'client/types';
+import { Booking, NoticeMessage } from '@quillbooking/types';
 import { CompletedCalendarIcon } from '@quillbooking/components';
 import CardDetails from '../card-details';
 import { BookingActions } from '@quillbooking/components';
@@ -73,7 +73,9 @@ const BookingList: React.FC<BookingListProps> = ({
 												<BookingActions
 													booking={booking}
 													type="popover"
-													onStatusUpdated={onStatusUpdated}
+													onStatusUpdated={
+														onStatusUpdated
+													}
 													onNotice={onNotice}
 												/>
 											</Flex>

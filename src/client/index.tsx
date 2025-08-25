@@ -14,29 +14,29 @@ import { ConfigProvider } from 'antd';
 import PageLayout from './layout';
 import '../stores/core';
 import '../stores/event';
-export * from './types';
+export * from '@quillbooking/types';
 
 const appRoot = document.getElementById('quillbooking-admin-root');
 
 if (appRoot) {
-    createRoot(appRoot).render(
-        <ConfigProvider
-            theme={{
-                token: {
-                    colorPrimary: '#953AE4',
-                },
-                components: {
-                    Button: {
-                        algorithm: false,
-                    },
-                    Input: {
-                        paddingBlock: 14,
-                        paddingInline: 14,
-                    },
-                },
-            }}
-        >
-            <PageLayout />
-        </ConfigProvider>
-    );
+	createRoot(appRoot).render(
+		<ConfigProvider
+			theme={{
+				token: {
+					colorPrimary: '#953AE4',
+				},
+				components: {
+					Button: {
+						algorithm: false,
+					},
+					Input: {
+						paddingBlock: 14,
+						paddingInline: 14,
+					},
+				},
+			}}
+		>
+			<PageLayout />
+		</ConfigProvider>
+	);
 }

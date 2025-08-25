@@ -7,16 +7,7 @@ import { useEffect, useState } from '@wordpress/element';
 /**
  * External dependencies
  */
-import {
-	Input,
-	Button,
-	Card,
-	Flex,
-	Steps,
-	Modal,
-	Checkbox,
-	Select,
-} from 'antd';
+import { Input, Button, Card, Flex, Steps, Modal, Select } from 'antd';
 
 /**
  * Internal dependencies

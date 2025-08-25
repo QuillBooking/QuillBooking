@@ -66,18 +66,19 @@ const CloneEventModal: React.FC<CloneEventModalProps> = ({
 					}
 				},
 			});
-		} catch (error) {
+		} catch (error: any) {
 			if (setErrorMessage) {
 				setErrorMessage(error.message || 'Unexpected error occurred');
 			}
 		}
 	};
 
-
 	const validate = () => {
 		if (!event) {
 			if (setErrorMessage) {
-				setErrorMessage(__('Please select an event to clone.', 'quillbooking'));
+				setErrorMessage(
+					__('Please select an event to clone.', 'quillbooking')
+				);
 			}
 			return false;
 		}

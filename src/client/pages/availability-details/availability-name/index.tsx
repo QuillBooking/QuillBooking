@@ -1,22 +1,20 @@
 import { __ } from '@wordpress/i18n';
 import { Input, Switch } from 'antd';
-import { Availability } from 'client/types';
+import { Availability } from '@quillbooking/types';
 
 interface AvailabilityNameProps {
 	availabilityName: string;
-	isDefault: boolean;
 	setAvailabilityName: (name: string) => void;
 	handleNameUpdate: (name: string) => void;
 	setDefault: (availability: Availability) => void;
-  availabilityDetails: Availability;
+	availabilityDetails: Availability;
 }
 const AvailabilityName: React.FC<AvailabilityNameProps> = ({
-  availabilityName,
-  isDefault,
-  setAvailabilityName,
-  handleNameUpdate,
-  setDefault,
-  availabilityDetails,
+	availabilityName,
+	setAvailabilityName,
+	handleNameUpdate,
+	setDefault,
+	availabilityDetails,
 }) => {
 	return (
 		<>
@@ -45,7 +43,9 @@ const AvailabilityName: React.FC<AvailabilityNameProps> = ({
 							setDefault(availabilityDetails as Availability);
 						}}
 						className={
-							availabilityDetails.is_default ? 'bg-color-primary' : 'bg-gray-400'
+							availabilityDetails.is_default
+								? 'bg-color-primary'
+								: 'bg-gray-400'
 						}
 					/>
 					<p className="text-color-primary-text font-bold">

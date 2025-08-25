@@ -1,17 +1,8 @@
-/**
- * WordPress dependencies
- */
-import { __ } from '@wordpress/i18n';
-
-import { useCopyToClipboard } from '@quillbooking/hooks';
-import { CopyWhiteIcon } from '@quillbooking/components';
-
 interface InfoItemProps {
 	icon: React.ReactNode;
 	title: string;
 	content: string | number | React.ReactNode | undefined;
 	className?: string;
-	link?: boolean;
 }
 
 const InfoItem: React.FC<InfoItemProps> = ({
@@ -19,10 +10,7 @@ const InfoItem: React.FC<InfoItemProps> = ({
 	title,
 	content,
 	className,
-	link = false,
 }) => {
-	const copyToClipboard = useCopyToClipboard();
-
 	return (
 		<div
 			className={`flex gap-3 text-color-primary-text items-center ${className || ''}`}

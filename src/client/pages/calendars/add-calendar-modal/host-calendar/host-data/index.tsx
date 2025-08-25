@@ -16,7 +16,7 @@ import {
 	UpcomingCalendarOutlinedIcon,
 	UserSelect,
 } from '@quillbooking/components';
-import { Calendar } from 'client/types';
+import { Calendar } from '@quillbooking/types';
 
 interface HostDataProps {
 	formData: Partial<Calendar & { members: number[] }>;

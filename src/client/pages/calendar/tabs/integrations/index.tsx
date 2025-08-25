@@ -25,6 +25,7 @@ import {
 import { NoticeMessage } from '@quillbooking/types';
 import { SelectionCard } from '@quillbooking/components';
 import { useCalendarContext } from '../../state/context';
+import type { Integration } from '@quillbooking/config';
 
 const IntegrationCards: React.FC<{
 	hasSelectedCalendar: boolean;
@@ -73,7 +74,7 @@ const IntegrationCards: React.FC<{
 		)
 		.map(([key, integration]) => ({
 			id: key,
-			...integration,
+			...(integration as Integration),
 		}));
 	const { loading } = useApi();
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);

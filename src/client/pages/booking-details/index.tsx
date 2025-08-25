@@ -133,7 +133,6 @@ const BookingDetails: React.FC = () => {
 	const { callApi } = useApi();
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(true);
-	const [isDeleted, setIsDeleted] = useState(false);
 	const [timeFormat, setTimeFormat] = useState<string>('12'); // Default to 24-hour format
 
 	const handleStatusUpdated = (action?: string) => {
@@ -166,7 +165,6 @@ const BookingDetails: React.FC = () => {
 	};
 
 	const fetchBooking = async () => {
-		if (isDeleted) return; // Don't fetch if booking is deleted
 		setIsLoading(true);
 
 		callApi({
@@ -178,18 +176,13 @@ const BookingDetails: React.FC = () => {
 			},
 			onError: (error) => {
 				console.error(error);
-				if (!isDeleted) {
-					handleNotice({
-						type: 'error',
-						title: __('Error', 'quillbooking'),
-						message:
-							error.message ||
-							__(
-								'Error fetching booking details',
-								'quillbooking'
-							),
-					});
-				}
+				handleNotice({
+					type: 'error',
+					title: __('Error', 'quillbooking'),
+					message:
+						error.message ||
+						__('Error fetching booking details', 'quillbooking'),
+				});
 				setIsLoading(false);
 			},
 		});
@@ -230,7 +223,7 @@ const BookingDetails: React.FC = () => {
 	};
 
 	useEffect(() => {
-		if (bookingId && !isDeleted) {
+		if (bookingId) {
 			fetchBooking();
 		}
 	}, [bookingId, refresh]);
@@ -313,10 +306,7 @@ const BookingDetails: React.FC = () => {
 								<MeetingInformation booking={booking} />
 								<BookingQuestion booking={booking} />
 								<PaymentHistory booking={booking} />
-								<InviteeInformation
-									booking={booking}
-									handleStatusUpdated={handleStatusUpdated}
-								/>
+								<InviteeInformation booking={booking} />
 							</Flex>
 						)}
 

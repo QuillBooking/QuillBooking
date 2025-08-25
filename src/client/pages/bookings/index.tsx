@@ -20,7 +20,7 @@ import {
 	Event,
 	GeneralOptions,
 	NoticeMessage,
-} from 'client/types';
+} from '@quillbooking/types';
 import { useApi, useCurrentUser } from '@quillbooking/hooks';
 import BookingsHeader from './header';
 import BookingsTabs from './tabs';

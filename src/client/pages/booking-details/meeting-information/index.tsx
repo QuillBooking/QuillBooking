@@ -99,7 +99,6 @@ const MeetingInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 						/>
 					}
 					icon={<LinkIcon width={24} height={24} />}
-					link={true}
 				/>
 			</div>
 		</div>

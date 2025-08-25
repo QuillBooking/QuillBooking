@@ -18,7 +18,7 @@ import { NoticeBanner, SelectionCard } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/types';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
 
-const ConferencingCalendars: React.FC = () => {
+const TrackingAnalytics: React.FC = () => {
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<string | null>(null);
 	const [integrations, setIntegrations] = useState(() => {
@@ -27,10 +27,10 @@ const ConferencingCalendars: React.FC = () => {
 		)
 			.filter(
 				([key]) =>
-					key === 'google' ||
-					key === 'outlook' ||
-					key === 'apple' ||
-					key === 'zoom'
+					key === 'matomo' ||
+					key === 'google-analytics' ||
+					key === 'google-tag-manager' ||
+					key === 'facebook-pixel'
 			)
 			.map(([key, integration]) => ({
 				id: key,
@@ -39,7 +39,8 @@ const ConferencingCalendars: React.FC = () => {
 
 		return availableIntegrations;
 	});
-	const [isLoading, setIsLoading] = useState(false);
+
+	const [isLoading] = useState(false);
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 
 	// Use a ref to track if we're currently updating the URL to prevent loops
@@ -59,10 +60,10 @@ const ConferencingCalendars: React.FC = () => {
 			const tabParam = urlParams.get('tab');
 			const subtabParam = urlParams.get('subtab');
 
-			// If we're in the conferencing-calendars tab and have a subtab, set it as active
+			// If we're in the tracking-analytics tab and have a subtab, set it as active
 			// Only update activeTab if it's different from the current subtab to prevent infinite loops
 			if (
-				tabParam === 'conferencing-calendars' &&
+				tabParam === 'tracking-analytics' &&
 				subtabParam &&
 				activeTab !== subtabParam &&
 				lastActiveTabRef.current !== subtabParam
@@ -77,7 +78,7 @@ const ConferencingCalendars: React.FC = () => {
 
 				// Initialize URL parameters if they don't exist
 				if (
-					tabParam === 'conferencing-calendars' &&
+					tabParam === 'tracking-analytics' &&
 					!subtabParam &&
 					defaultTab
 				) {
@@ -132,9 +133,9 @@ const ConferencingCalendars: React.FC = () => {
 			// Make sure we have the tab parameter set properly first
 			if (
 				!urlParams.has('tab') ||
-				urlParams.get('tab') !== 'conferencing-calendars'
+				urlParams.get('tab') !== 'tracking-analytics'
 			) {
-				urlParams.set('tab', 'conferencing-calendars');
+				urlParams.set('tab', 'tracking-analytics');
 			}
 
 			// Now set the subtab parameter
@@ -155,9 +156,9 @@ const ConferencingCalendars: React.FC = () => {
 			window.dispatchEvent(
 				new CustomEvent('quillbooking-tab-changed', {
 					detail: {
-						tab: 'conferencing-calendars',
+						tab: 'tracking-analytics',
 						subtab: newTab,
-						source: 'conferencing-calendars-component',
+						source: 'tracking-analytics-component',
 					},
 				})
 			);
@@ -176,11 +177,11 @@ const ConferencingCalendars: React.FC = () => {
 	// Handle case when no integrations are available
 	if (integrations.length === 0) {
 		return (
-			<div className="quillbooking-conferencing-calendars w-full">
+			<div className="quillbooking-tracking-analytics w-full">
 				<div className="text-center py-8">
 					<p className="text-gray-600">
 						{__(
-							'No integrations available. Please contact your administrator.',
+							'No tracking analytics integrations available. Please contact your administrator.',
 							'quillbooking'
 						)}
 					</p>
@@ -190,7 +191,7 @@ const ConferencingCalendars: React.FC = () => {
 	}
 
 	return (
-		<div className="quillbooking-conferencing-calendars grid grid-cols-2 gap-5 w-full">
+		<div className="quillbooking-tracking-analytics grid grid-cols-2 gap-5 w-full">
 			{notice && (
 				<div className="col-span-2">
 					<NoticeBanner
@@ -200,7 +201,7 @@ const ConferencingCalendars: React.FC = () => {
 				</div>
 			)}
 			<SelectionCard
-				integrations={integrations}
+				integrations={integrations as any}
 				activeTab={activeTab}
 				setActiveTab={handleTabChange}
 				isLoading={isLoading}
@@ -208,9 +209,9 @@ const ConferencingCalendars: React.FC = () => {
 			{activeTab && (
 				<ConnectionCard
 					slug={activeTab}
-					integration={integrations.find(
-						(int) => int.id === activeTab
-					)}
+					integration={
+						integrations.find((int) => int.id === activeTab) as any
+					}
 					isLoading={isLoading}
 				/>
 			)}
@@ -218,4 +219,4 @@ const ConferencingCalendars: React.FC = () => {
 	);
 };
 
-export default ConferencingCalendars;
+export default TrackingAnalytics;

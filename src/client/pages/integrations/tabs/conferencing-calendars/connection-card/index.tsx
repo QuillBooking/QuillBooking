@@ -20,7 +20,6 @@ import OutlookFields from './fields/OutlookFields';
 import AppleFields from './fields/AppleFields';
 import { addQueryArgs } from '@wordpress/url';
 import { applyFilters } from '@wordpress/hooks';
-// import ZapierFields from './fields/ZapierFields';
 
 const { Text } = Typography;
 
@@ -248,15 +247,6 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 						handleNavigation={handleNavigation}
 					/>
 				);
-			// case 'zapier':
-			// 	return (
-			// 		<ZapierFields
-			// 			fields={integration.fields}
-			// 			calendar={calendar}
-			// 			form={form}
-			// 			handleNavigation={handleNavigation}
-			// 		/>
-			// 	);
 			default:
 				return null;
 		}

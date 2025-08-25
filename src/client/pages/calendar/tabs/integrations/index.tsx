@@ -65,7 +65,13 @@ const IntegrationCards: React.FC<{
 
 	const [activeTab, setActiveTab] = useState<string | null>(null);
 	const integrations = Object.entries(ConfigAPI.getIntegrations() || {})
-		.filter(([key]) => key !== 'twilio' && key !== 'zapier')
+		.filter(
+			([key]) =>
+				key === 'google' ||
+				key === 'outlook' ||
+				key === 'apple' ||
+				key === 'zoom'
+		)
 		.map(([key, integration]) => ({
 			id: key,
 			...(integration as Integration),

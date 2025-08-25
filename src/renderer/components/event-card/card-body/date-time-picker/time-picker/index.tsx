@@ -1,9 +1,10 @@
 import { Dayjs } from 'dayjs';
 import { __ } from '@wordpress/i18n';
-import { EventTypes } from '../../../../../types';
+import { Event, EventTypes } from '../../../../../types';
 import './style.scss';
 import { css } from '@emotion/css';
 import InfoIcon from '../../../../../icons/info-icon';
+import { doAction } from '@wordpress/hooks';
 
 interface TimeSlot {
 	time: string;
@@ -27,6 +28,7 @@ interface TimePickerProps {
 	showRemaining?: boolean;
 	baseColor: string;
 	lightColor: string;
+	event: Event;
 }
 
 const TimePicker: React.FC<TimePickerProps> = ({
@@ -39,6 +41,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
 	showRemaining,
 	baseColor,
 	lightColor,
+	event,
 }) => {
 	const getTimeSlots = (): TimeSlot[] => {
 		if (!selectedAvailability) {
@@ -142,6 +145,12 @@ const TimePicker: React.FC<TimePickerProps> = ({
 							onClick={() => {
 								setSelectedTime(slot.time);
 								setHostIds(slot.hosts_ids);
+								doAction('QuillBooking.BookingStarted', {
+									data: {
+										calendar_id: event.calendar_id,
+										event_id: event.id,
+									},
+								});
 							}}
 						>
 							<span className="time-slot-time">{slot.time}</span>

@@ -29,7 +29,7 @@ import {
 	NoticeBanner,
 	Locations,
 } from '@quillbooking/components';
-import { EventTabHandle } from 'client/types';
+import { EventTabHandle } from '@quillbooking/types';
 import TeamAssignment from './team-assignment';
 
 const EventDetailsShimmer = () => {
@@ -121,12 +121,11 @@ interface EventDetailsProps {
 	onKeepDialogOpen: () => void;
 	notice: { title: string; message: string } | null;
 	clearNotice: () => void;
-	disabled: boolean;
 	setDisabled: (disabled: boolean) => void;
 }
 
 const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
-	({ onKeepDialogOpen, notice, clearNotice, disabled, setDisabled }, ref) => {
+	({ onKeepDialogOpen, notice, clearNotice, setDisabled }, ref) => {
 		// Use event store instead of context
 		const {
 			currentEvent: event,
@@ -312,7 +311,6 @@ const EventDetails = forwardRef<EventTabHandle, EventDetailsProps>(
 					<Flex vertical gap={20}>
 						<EventInfo
 							name={event.name}
-							hosts={event.hosts || []}
 							description={event.description}
 							color={event.color}
 							onChange={handleChange}

@@ -15,7 +15,7 @@ import {
 	EmailNotificationIcon,
 	NotificationRow,
 } from '@quillbooking/components';
-import { NotificationType } from 'client/types';
+import { NotificationType } from '@quillbooking/types';
 
 interface OtherNotificationsProps {
 	notificationSettings: Record<string, NotificationType>;

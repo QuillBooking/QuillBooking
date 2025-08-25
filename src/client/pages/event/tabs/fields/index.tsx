@@ -25,7 +25,7 @@ import {
 	ProIcon,
 	QuestionOutlineIcon,
 } from '@quillbooking/components';
-import { EventTabHandle, EventTabProps, Fields } from 'client/types';
+import { EventTabHandle, EventTabProps, Fields } from '@quillbooking/types';
 import Question from './question';
 import { applyFilters } from '@wordpress/hooks';
 import { Link } from 'react-router-dom';

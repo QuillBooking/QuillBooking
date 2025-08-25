@@ -17,7 +17,7 @@ import {
 	NoticeComponent,
 	NotificationRow,
 } from '@quillbooking/components';
-import { NotificationType } from 'client/types';
+import { NotificationType } from '@quillbooking/types';
 
 interface EmailTabsProps {
 	isNoticeVisible: boolean;

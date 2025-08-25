@@ -12,7 +12,7 @@ import { Checkbox, Form, InputNumber } from 'antd';
  * Internal dependencies
  */
 import './style.scss';
-import { FieldsGroup } from 'client/types';
+import { FieldsGroup } from '@quillbooking/types';
 import CommonInput from './common-input';
 import { BiPlus } from 'react-icons/bi';
 import { TrashIcon } from '../../../../../../../components';

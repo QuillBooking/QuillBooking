@@ -18,7 +18,6 @@ import { Card, Flex, Switch } from 'antd';
  * Internal dependencies
  */
 import { useApi, useEvent, useNotice } from '@quillbooking/hooks';
-import { useEventContext } from '../../state/context';
 import { NotificationType } from '@quillbooking/types';
 import { CardHeader, EditNotificationIcon } from '@quillbooking/components';
 import EmailNotificationCard from './email-notification-card';
@@ -81,7 +80,7 @@ interface EmailNotificationsTabProps {
 const EmailNotificationTab = forwardRef<
 	EmailNotificationsTabHandle,
 	EmailNotificationsTabProps
->(({ disabled, setDisabled }, ref) => {
+>((props, ref) => {
 	const { currentEvent: event } = useEvent();
 	const { callApi, loading } = useApi();
 	const { successNotice } = useNotice();
@@ -176,7 +175,7 @@ const EmailNotificationTab = forwardRef<
 							'quillbooking'
 						)
 					);
-					setDisabled(true);
+					props.setDisabled(true);
 					setNotificationSettings(notificationSettings);
 				},
 				onError(error) {
@@ -240,7 +239,7 @@ const EmailNotificationTab = forwardRef<
 						setNotifications={(updatedNotifications) => {
 							setNotificationSettings(updatedNotifications);
 						}}
-						setDisabled={setDisabled}
+						setDisabled={props.setDisabled}
 					/>
 				)}
 			</Card>

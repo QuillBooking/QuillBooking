@@ -37,7 +37,6 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 	setDisabled,
 }) => {
 	const [mergeTagModal, setMergeTagModal] = useState<boolean>(false);
-	const [focused, setFocused] = useState(false);
 
 	// Get current notification directly from the parent state
 	const notification = notifications[notificationKey];
@@ -191,8 +190,6 @@ const EmailNotificationCard: React.FC<EmailNotificationCardProps> = ({
 						emails={notification.recipients || []}
 						onChange={handleRecipientsChange}
 						autoFocus={false}
-						onFocus={() => setFocused(true)}
-						onBlur={() => setFocused(false)}
 						getLabel={(email, index, removeEmail) => {
 							return (
 								<div data-tag key={index}>

@@ -7,7 +7,7 @@ import { __ } from '@wordpress/i18n';
  * External dependencies
  */
 import { Select } from 'antd';
-import { FieldsGroup } from 'client/types';
+import { FieldsGroup } from '@quillbooking/types';
 import { TagComponent } from '@quillbooking/components';
 
 interface QuestionInfoProps {
@@ -81,22 +81,23 @@ const QuestionInfo: React.FC<QuestionInfoProps> = ({
 							type: value,
 						};
 
-						if(value === 'number') {
+						if (value === 'number') {
 							updatedField.settings = {
 								...updatedField.settings,
 								min: 0,
 								max: 100,
-							}
+							};
 						}
 
-						if (value === 'select' || value === 'multiple_select' || value === 'radio' ) {
+						if (
+							value === 'select' ||
+							value === 'multiple_select' ||
+							value === 'radio'
+						) {
 							updatedField.settings = {
 								...updatedField.settings,
-								options: [
-									"Option 1",
-									"Option 2"
-								]
-							}
+								options: ['Option 1', 'Option 2'],
+							};
 						}
 						setType(value);
 						onUpdate(updatedField, fieldKey);

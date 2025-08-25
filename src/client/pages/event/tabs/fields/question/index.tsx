@@ -14,7 +14,7 @@ import { Card } from 'antd';
 import QuestionInfo from './question-info';
 import QuestionActions from './question-actions';
 import QuestionInputs from './question-inputs';
-import { FieldsGroup } from 'client/types';
+import { FieldsGroup } from '@quillbooking/types';
 
 interface QuestionProps {
 	fieldKey: string;

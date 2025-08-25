@@ -341,7 +341,6 @@ const Event: React.FC = () => {
 				<EventDetails
 					onKeepDialogOpen={() => setOpen(true)}
 					ref={childRef}
-					disabled={saveDisabled}
 					setDisabled={setSaveDisabled}
 					notice={notice}
 					clearNotice={() => setNotice(null)}

@@ -8,6 +8,7 @@ export type NotificationType = {
     type: string;
   };
   times?: Array<{ unit: string; value: number }>;
+  recipients?: Array<string>;
 };
 
 export type NoticeMessage = {

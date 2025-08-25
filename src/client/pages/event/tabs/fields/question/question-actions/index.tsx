@@ -13,7 +13,7 @@ import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
  * Internal dependencies
  */
 import { TrashIcon } from '@quillbooking/components';
-import { FieldsGroup } from 'client/types';
+import { FieldsGroup } from '@quillbooking/types';
 
 interface QuestionActionsProps {
 	fieldKey: string;

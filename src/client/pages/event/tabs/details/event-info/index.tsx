@@ -20,16 +20,13 @@ import {
 interface EventInfoProps {
 	name: string;
 	description?: string | null;
-	hosts: { id: number | string; name: string }[];
 	color: string;
 	onChange: (key: string, value: any) => void;
-	disabled?: boolean;
 }
 
 const EventInfo: React.FC<EventInfoProps> = ({
 	name,
 	description,
-	hosts,
 	color,
 	onChange,
 }) => {

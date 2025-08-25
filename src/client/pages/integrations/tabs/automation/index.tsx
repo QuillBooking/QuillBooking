@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 /**
  * Internal dependencies
  */
-import ConfigAPI from '@quillbooking/config';
+import ConfigAPI, { Integration } from '@quillbooking/config';
 import ConnectionCard from './connection-card/index';
 import { NoticeBanner, SelectionCard } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/types';
@@ -28,7 +28,7 @@ const Automation: React.FC = () => {
 			.filter(([key]) => key === 'zapier' || key === 'make')
 			.map(([key, integration]) => ({
 				id: key,
-				...integration,
+				...(integration as Integration),
 			}));
 
 		return availableIntegrations;

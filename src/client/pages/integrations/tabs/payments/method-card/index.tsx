@@ -17,7 +17,7 @@ import paypal from '@quillbooking/assets/icons/paypal/paypal_vertical.png';
 // @ts-ignore
 import stripe from '@quillbooking/assets/icons/stripe/stripe.png';
 import type { PaymentGateway } from '@quillbooking/config';
-import { ProGlobalIntegrations } from '../../../../../../components';
+import { ProGlobalIntegrations } from '@quillbooking/components';
 
 export interface PaymentGatewayCardProps {
 	slug: string | null;

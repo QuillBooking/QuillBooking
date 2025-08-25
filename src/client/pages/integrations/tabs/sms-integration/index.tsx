@@ -20,7 +20,7 @@ import {
 /**
  * Internal dependencies
  */
-import ConfigAPI from '@quillbooking/config';
+import ConfigAPI, { Integration } from '@quillbooking/config';
 import { useApi, useNotice } from '@quillbooking/hooks';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
 import { applyFilters } from '@wordpress/hooks';
@@ -29,9 +29,9 @@ import { ProGlobalIntegrations } from '@quillbooking/components';
 const { Text } = Typography;
 
 const SMSIntegration: React.FC = () => {
-	const integrations = Object.entries(ConfigAPI.getIntegrations()).filter(
-		([key]) => key == 'twilio'
-	);
+	const integrations = Object.entries(ConfigAPI.getIntegrations())
+		.filter(ConfigAPI.getIntegrations())
+		.filter(([key]) => key == 'twilio') as [string, Integration][];
 
 	// Add safety check for integrations
 	const integration = integrations[0][1];

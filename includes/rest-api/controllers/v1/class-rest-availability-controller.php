@@ -582,14 +582,15 @@ class REST_Availability_Controller extends REST_Controller {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete the default availability.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
 
-		// Check if availability has associated events
-		$events_count = $availability->events()->count();
+		$events_data = $this->get_availability_events_data( $availability->id );
 
-		if ( $events_count > 0 ) {
+		if ( $events_data['events_count'] > 0 ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Sorry, you cannot delete an availability with events.', 'quill-booking' ), array( 'status' => 400 ) );
 		}
 
 		try {
+			$this->replace_availability_references_before_delete( $availability );
+
 			$availability->delete();
 			return new WP_REST_Response( null, 204 );
 		} catch ( Exception $e ) {
@@ -705,32 +706,35 @@ class REST_Availability_Controller extends REST_Controller {
 	}
 
 	/**
-	 * Get availability events details
+	 * Get events data for availability
 	 *
-	 * @param array $availability Availability.
+	 * @since 1.0.0
 	 *
-	 * @return array
+	 * @param string $availability_id Availability ID.
+	 * @return array Array containing events_count and events
 	 */
-	private function events_details_for_availability( $availability ) {
-		$availability_model = Availability_Model::find( $availability['id'] );
+	private function get_availability_events_data( $availability_id ) {
+		$availability_model = Availability_Model::find( $availability_id );
 		$user_id            = $availability_model->user_id;
 
 		// Get all calendars that the user is in
 		$calendars = Calendar_Model::where( 'user_id', $user_id )->get();
 
 		if ( $calendars->isEmpty() ) {
-			$availability['events_count'] = 0;
-			$availability['events']       = array();
-			return $availability;
+			return array(
+				'events_count' => 0,
+				'events'       => array(),
+			);
 		}
 
 		$total_events_count = 0;
 		$all_events         = array();
+
 		foreach ( $calendars as $calendar ) {
 			// Check if the calendar is team or hosts
 			if ( $calendar->type === 'host' ) {
 				// For host calendars, get events directly from availability
-				$events              = Event_Model::where( 'availability_id', $availability['id'] )->where( 'calendar_id', $calendar->id )->get();
+				$events              = Event_Model::where( 'availability_id', $availability_id )->where( 'calendar_id', $calendar->id )->where( 'availability_type', 'existing' )->get();
 				$total_events_count += $events->count();
 				$all_events          = array_merge( $all_events, $events->toArray() );
 			} else {
@@ -739,12 +743,12 @@ class REST_Availability_Controller extends REST_Controller {
 				$events       = array();
 
 				// Get all events for this calendar
-				$calendar_events = Event_Model::where( 'calendar_id', $calendar->id )->get();
+				$calendar_events = Event_Model::where( 'calendar_id', $calendar->id )->where( 'availability_type', 'existing' )->get();
 
 				foreach ( $calendar_events as $event ) {
 					// Get availability meta from the event itself
 					$availability_meta = $event->availability_meta;
-					if ( ! $availability_meta['is_common'] && $availability_meta['hosts_schedules'][ $user_id ] === $availability['id'] ) {
+					if ( ! $availability_meta['is_common'] && $availability_meta['hosts_schedules'][ $user_id ] === $availability_id ) {
 						$events_count++;
 						$events[] = $event;
 					}
@@ -755,9 +759,91 @@ class REST_Availability_Controller extends REST_Controller {
 			}
 		}
 
-		$availability['events_count'] = $total_events_count;
-		$availability['events']       = $all_events;
+		return array(
+			'events_count' => $total_events_count,
+			'events'       => $all_events,
+		);
+	}
+
+	/**
+	 * Get events details for availability
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $availability Availability.
+	 *
+	 * @return array
+	 */
+	private function events_details_for_availability( $availability ) {
+		$events_data = $this->get_availability_events_data( $availability['id'] );
+
+		$availability['events_count'] = $events_data['events_count'];
+		$availability['events']       = $events_data['events'];
 
 		return $availability;
+	}
+
+	/**
+	 * Replace availability references in events before deleting availability
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param Availability_Model $availability The availability being deleted.
+	 * @return void
+	 */
+	private function replace_availability_references_before_delete( $availability ) {
+		// Get the user's default availability
+		$default_availability = Availability_Model::getUserDefault( $availability->user_id );
+
+		if ( ! $default_availability ) {
+			// If no default availability exists, create one or handle error
+			error_log( "QuillBooking: No default availability found for user {$availability->user_id} when deleting availability {$availability->id}" );
+			return;
+		}
+
+		$user_id = $availability->user_id;
+
+		// Get all calendars that the user is in
+		$calendars = Calendar_Model::where( 'user_id', $user_id )->get();
+
+		foreach ( $calendars as $calendar ) {
+			if ( $calendar->type === 'host' ) {
+				$host_events = Event_Model::where( 'availability_id', $availability->id )
+					->where( 'calendar_id', $calendar->id )
+					->where( 'availability_type', 'custom' )
+					->get();
+
+				foreach ( $host_events as $event ) {
+					$event->availability_id = $default_availability->id;
+					$event->save();
+				}
+			} else {
+				$team_events = Event_Model::where( 'calendar_id', $calendar->id )->where( 'availability_type', 'custom' )->get();
+
+				foreach ( $team_events as $event ) {
+					$availability_meta = $event->availability_meta;
+
+					if ( $availability_meta['is_common'] ) {
+						// Replace the availability_id with default
+						if ( $event->availability_id === $availability->id ) {
+							$event->availability_id = $default_availability->id;
+							$event->save();
+						}
+					}
+
+					// Also check hosts_schedules for this specific availability
+					if ( isset( $availability_meta['hosts_schedules'][ $user_id ] ) &&
+						 $availability_meta['hosts_schedules'][ $user_id ] === $availability->id ) {
+
+						$availability_meta['hosts_schedules'][ $user_id ] = $default_availability->id;
+						$event->availability_meta                         = $availability_meta;
+						$event->save();
+					}
+				}
+			}
+		}
+
+		// Log the replacement for debugging
+		error_log( "QuillBooking: Replaced availability {$availability->id} references with default availability {$default_availability->id} for user {$availability->user_id}" );
 	}
 }

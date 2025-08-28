@@ -23,7 +23,7 @@ if ( ! defined( 'QUILLBOOKING_PLUGIN_FILE' ) ) {
 
 // Plugin version.
 if ( ! defined( 'QUILLBOOKING_VERSION' ) ) {
-	define( 'QUILLBOOKING_VERSION', '1.0.3' );
+	define( 'QUILLBOOKING_VERSION', '1.1.0' );
 }
 
 // Plugin Folder Path.

@@ -429,7 +429,7 @@ class Install {
 						if ( ! empty( $hosts_schedules ) ) {
 							// Update availability meta to include hosts_schedules
 							$availability_meta_value['hosts_schedules'] = $hosts_schedules;
-							$availability_meta_value['is_common'] = false; // Individual schedules, not common
+							$availability_meta_value['is_common'] = true; // Individual schedules, not common
 							
 							error_log( "QuillBooking Migration: Updated availability meta for round-robin event {$event_id}: " . print_r( $availability_meta_value, true ) );
 						}

@@ -243,10 +243,17 @@ const Calendars: React.FC = () => {
 		fetchCalendars();
 	}, [search, filters, update, selectedUser]);
 
-	const handleSaved = () => {
-		fetchCalendars();
+	const handleSaved = (calendarType?: string) => {
 		// Update host select key to force re-render of the component
 		setHostSelectKey((prevKey) => prevKey + 1);
+
+		// Switch to the appropriate tab based on the created calendar type first
+		if (calendarType) {
+			setFilters({ ...filters, type: calendarType });
+		} else {
+			// If no calendar type provided, just trigger a refresh
+			setUpdate((prev) => !prev);
+		}
 	};
 
 	const updateEvents = () => {

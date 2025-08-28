@@ -17,7 +17,7 @@ import { DEFAULT_WEEKLY_HOURS } from '../../../../constants';
 interface AddCalendarModalProps {
 	open: boolean;
 	onClose: () => void;
-	onSaved: () => void;
+	onSaved: (calendarType?: string) => void;
 	type: string;
 	excludedUsers: number[];
 	setCreateCalendarMessage: (message: boolean) => void;
@@ -81,7 +81,7 @@ const AddCalendarModal: React.FC<AddCalendarModalProps> = ({
 					data: formData,
 					onSuccess: () => {
 						closeHandler();
-						onSaved();
+						onSaved(type);
 						setCreateCalendarMessage(true);
 					},
 					onError: (error) => {

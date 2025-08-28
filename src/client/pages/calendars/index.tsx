@@ -513,13 +513,13 @@ const Calendars: React.FC = () => {
 								<span className="text-[20px] font-medium text-black">
 									{search
 										? __(
-												'No matching events found',
-												'quillbooking'
-											)
+											'No matching events found',
+											'quillbooking'
+										)
 										: __(
-												'No Calendars available',
-												'quillbooking'
-											)}
+											'No Calendars available',
+											'quillbooking'
+										)}
 								</span>
 								{filters.type === 'team' && (
 									<Button

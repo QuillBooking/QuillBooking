@@ -92,7 +92,6 @@ class Event_Model extends Model {
 		'is_disabled'       => 'boolean',
 		'reserve'           => 'boolean',
 		'availability_id'   => 'integer',
-		'availability_meta' => 'array',
 		'availability_type' => 'string',
 	);
 
@@ -172,6 +171,8 @@ class Event_Model extends Model {
 		return $this->hasMany( Event_Meta_Model::class, 'event_id' );
 	}
 
+
+
 	/**
 	 * Relationship with bookings
 	 *
@@ -203,34 +204,15 @@ class Event_Model extends Model {
 		return $this->get_meta( 'fields' );
 	}
 
+
+
 	/**
 	 * Get the availability meta value.
 	 *
 	 * @return string|null
 	 */
-	public function getAvailabilityAttribute() {
-		// First try meta
-		$value = $this->get_meta( 'availability' );
-
-		if ( is_array( $value ) ) {
-			return $value;
-		}
-
-		// Try static method
-		if ( $value ) {
-			$availability = Availabilities::get_availability( $value );
-			if ( $availability ) {
-				return $availability;
-			}
-		}
-
-		// Fall back to relationship if meta doesn't work
-		$relationship_availability = $this->getRelationValue( 'availability' );
-		if ( $relationship_availability ) {
-			return $relationship_availability->toArray(); // or however you want to format it
-		}
-
-		return null;
+	public function getAvailabilityMetaAttribute() {
+		return $this->attributes['availability_meta'] ? maybe_unserialize( $this->attributes['availability_meta'] ) : array();
 	}
 
 	/**

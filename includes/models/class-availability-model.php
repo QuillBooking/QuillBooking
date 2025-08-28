@@ -62,7 +62,6 @@ class Availability_Model extends Model {
 		'user_id'    => 'integer',
 		'timezone'   => 'string',
 		'is_default' => 'boolean',
-		'value'      => 'array',
 	);
 
 	/**
@@ -110,14 +109,27 @@ class Availability_Model extends Model {
 		return $this->hasMany( Event_Model::class, 'availability_id', 'id' );
 	}
 
+	public function getValueAttribute() {
+		return $this->attributes['value'] ? maybe_unserialize( $this->attributes['value'] ) : array();
+	}
+
 	/**
 	 * Get the parsed value data
 	 *
 	 * @return array
 	 */
 	public function getValueDataAttribute() {
-		return $this->value ?: array();
+		// Access raw attribute directly to avoid loops
+		$raw_value = $this->attributes['value'] ?? '';
+		
+		if ( empty( $raw_value ) ) {
+			return array();
+		}
+		
+		$unserialized = maybe_unserialize( $raw_value );
+		return is_array( $unserialized ) ? $unserialized : array();
 	}
+
 
 	/**
 	 * Get weekly hours from value data
@@ -275,6 +287,17 @@ class Availability_Model extends Model {
 		return self::where( 'user_id', $user_id )
 		->where( 'is_default', true )
 		->first();
+	}
+
+	/**
+	 * Get user's default availability
+	 *
+	 * @param int $user_id
+	 * @return self|null
+	 */
+	public static function getUserDefaultAvailabilityId( $user_id ) {
+		$default_availability = self::getUserDefault( $user_id );
+		return $default_availability ? $default_availability->id : null;
 	}
 
 	/**

@@ -20,6 +20,7 @@ interface CardBodyProps {
 	booking?: RendererBooking;
 	url: string;
 	globalCurrency: string;
+	timeFormat: string;
 }
 
 // Shimmer Loader Component with Tailwind CSS
@@ -86,6 +87,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 	booking,
 	url,
 	globalCurrency,
+	timeFormat,
 }) => {
 	const baseColor = tinycolor(event.color);
 	const lightColor = baseColor.lighten(40).toString();
@@ -539,6 +541,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 						selectedDuration={selectedDuration}
 						baseColor={event.color}
 						lightColor={lightColor}
+						timeFormat={timeFormat}
 					/>
 				)}
 			</div>

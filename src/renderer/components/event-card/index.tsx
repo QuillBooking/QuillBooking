@@ -8,6 +8,7 @@ interface EventCardProps {
 	ajax_url: string;
 	url: string;
 	globalCurrency: string;
+	timeFormat: string;
 }
 
 const EventCard: React.FC<EventCardProps> = ({
@@ -15,6 +16,7 @@ const EventCard: React.FC<EventCardProps> = ({
 	ajax_url,
 	url,
 	globalCurrency,
+	timeFormat,
 }) => {
 	return (
 		<div className="event-card-container">
@@ -25,6 +27,7 @@ const EventCard: React.FC<EventCardProps> = ({
 					ajax_url={ajax_url}
 					url={url}
 					globalCurrency={globalCurrency}
+					timeFormat={timeFormat}
 				/>
 			</div>
 		</div>

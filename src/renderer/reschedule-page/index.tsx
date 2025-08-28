@@ -14,6 +14,7 @@ interface ReschedulePageProps {
 	globalCurrency: string;
 	canReschedule?: boolean;
 	rescheduleDeniedMessage?: string;
+	timeFormat: string;
 }
 
 const ReschedulePage: React.FC<ReschedulePageProps> = ({
@@ -25,6 +26,7 @@ const ReschedulePage: React.FC<ReschedulePageProps> = ({
 	globalCurrency,
 	canReschedule = true,
 	rescheduleDeniedMessage = '',
+	timeFormat,
 }) => {
 	// If rescheduling is not allowed, show denial message
 	if (!canReschedule) {
@@ -54,6 +56,7 @@ const ReschedulePage: React.FC<ReschedulePageProps> = ({
 					booking={booking}
 					url={url}
 					globalCurrency={globalCurrency}
+					timeFormat={timeFormat}
 				/>
 			</div>
 		</div>

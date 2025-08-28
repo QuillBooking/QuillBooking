@@ -4,7 +4,7 @@
  * Plugin Name:       Quill Booking
  * Plugin URI:        https://quillbooking.com/
  * Description:       Quill Booking is a booking plugin for WordPress.
- * Version:           1.0.3
+ * Version:           1.1.0
  * Author:            quillbooking.com
  * Author URI:        http://quillbooking.com
  * Text Domain:       quillbooking

@@ -22,6 +22,7 @@ if (schedule) {
 			ajax_url={config.ajax_url}
 			url={config.url}
 			globalCurrency={config.global_settings.payments.currency}
+			timeFormat={config.global_settings.general.time_format}
 		/>
 	);
 }
@@ -37,6 +38,7 @@ if (reschedule) {
 			globalCurrency={config.global_settings.payments.currency}
 			canReschedule={config.can_reschedule}
 			rescheduleDeniedMessage={config.reschedule_denied_message}
+			timeFormat={config.global_settings.general.time_format}
 		/>
 	);
 }

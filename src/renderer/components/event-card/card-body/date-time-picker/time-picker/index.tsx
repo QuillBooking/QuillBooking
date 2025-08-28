@@ -1,4 +1,5 @@
 import { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { __ } from '@wordpress/i18n';
 import { RendererEvent, EventTypes } from '@quillbooking/types';
 import './style.scss';
@@ -29,6 +30,7 @@ interface TimePickerProps {
 	baseColor: string;
 	lightColor: string;
 	event: RendererEvent;
+	timeFormat: string;
 }
 
 const TimePicker: React.FC<TimePickerProps> = ({
@@ -42,7 +44,15 @@ const TimePicker: React.FC<TimePickerProps> = ({
 	baseColor,
 	lightColor,
 	event,
+	timeFormat,
 }) => {
+	// Helper function to format time based on timeFormat prop
+	const formatTimeDisplay = (time: string) => {
+		// time is in HH:mm format
+		const displayFormat = timeFormat === '24' ? 'HH:mm' : 'hh:mm A';
+		return dayjs(time, 'HH:mm').format(displayFormat);
+	};
+
 	const getTimeSlots = (): TimeSlot[] => {
 		if (!selectedAvailability) {
 			return [];
@@ -153,7 +163,9 @@ const TimePicker: React.FC<TimePickerProps> = ({
 								});
 							}}
 						>
-							<span className="time-slot-time">{slot.time}</span>
+							<span className="time-slot-time">
+								{formatTimeDisplay(slot.time)}
+							</span>
 							{isGroupEvent &&
 								showRemaining &&
 								slot.remaining > 0 &&

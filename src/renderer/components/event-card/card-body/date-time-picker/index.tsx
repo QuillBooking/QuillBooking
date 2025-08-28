@@ -23,6 +23,7 @@ interface DateTimePickerProps {
 	lightColor: string;
 	setIsLoading: (isLoading: boolean) => void;
 	setHostIds: (hostIds: number[]) => void;
+	timeFormat: string;
 }
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
@@ -39,6 +40,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 	baseColor,
 	lightColor,
 	setIsLoading,
+	timeFormat,
 }) => {
 	const [selectedAvailability, setSelectedAvailability] = useState<
 		string | null
@@ -84,6 +86,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 						baseColor={baseColor}
 						lightColor={lightColor}
 						event={event}
+						timeFormat={timeFormat}
 					/>
 				)}
 			</div>

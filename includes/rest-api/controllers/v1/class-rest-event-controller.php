@@ -430,6 +430,7 @@ class REST_Event_Controller extends REST_Controller {
 			}
 
 			if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_calendars' ) ) {
+				error_log( 'QuillBooking Event Controller: Permission denied for user ' . get_current_user_id() . ' to access events' );
 				return new WP_Error( 'rest_event_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
 			}
 
@@ -455,6 +456,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			return new WP_REST_Response( $events_data, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Event Controller Error in get_items: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -499,12 +501,14 @@ class REST_Event_Controller extends REST_Controller {
 			$color             = $request->get_param( 'color' ) ?: '#953AE4'; // Default color if not provided
 
 			if ( empty( $location ) ) {
+				error_log( 'QuillBooking Event Controller: Event location is required for event creation' );
 				return new WP_Error( 'rest_event_error', __( 'Event location is required.', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
 			$calendar = Calendar_Model::find( $calendar_id );
 			if ( ! $calendar ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Calendar not found for event creation with ID: ' . $calendar_id );
 				return new WP_Error( 'rest_event_error', __( 'You must add event to a calendar.', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
@@ -513,6 +517,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			if ( ( 'host' === $calendar->type && ! in_array( $type, $host_events ) ) || ( 'team' === $calendar->type && ! in_array( $type, $team_events ) ) ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Invalid event type ' . $type . ' for calendar type ' . $calendar->type );
 				return new WP_Error( 'rest_event_error', __( 'Invalid event type.', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
@@ -520,6 +525,7 @@ class REST_Event_Controller extends REST_Controller {
 			if ( 'team' === $calendar->type && in_array( $type, $team_events ) ) {
 				if ( empty( $hosts ) || ! is_array( $hosts ) || count( $hosts ) === 0 ) {
 					$wpdb->query( 'ROLLBACK' );
+					error_log( 'QuillBooking Event Controller: Team events require at least one host to be selected for calendar ID: ' . $calendar_id );
 					return new WP_Error( 'rest_event_error', __( 'Team events require at least one host to be selected.', 'quillbooking' ), array( 'status' => 400 ) );
 				}
 			}
@@ -532,6 +538,7 @@ class REST_Event_Controller extends REST_Controller {
 				// If validation fails, block the create operation and return error
 				if ( is_wp_error( $validation_result ) ) {
 					$wpdb->query( 'ROLLBACK' );
+					error_log( 'QuillBooking Event Controller: Payment validation failed: ' . $validation_result->get_error_message() );
 					return $validation_result;
 				}
 			}
@@ -553,6 +560,7 @@ class REST_Event_Controller extends REST_Controller {
 				$default_availability = Availability_Model::where( 'user_id', $calendar->user_id )->where( 'is_default', 1 )->first();
 				if ( ! $default_availability ) {
 					$wpdb->query( 'ROLLBACK' );
+					error_log( 'QuillBooking Event Controller: Default availability not found for user ID: ' . $calendar->user_id );
 					return new WP_Error( 'rest_event_error', __( 'Default availability not found', 'quillbooking' ), array( 'status' => 500 ) );
 				}
 				$event_data['availability_id']   = $default_availability->id;
@@ -566,6 +574,8 @@ class REST_Event_Controller extends REST_Controller {
 				}
 			}
 
+			$event_data['availability_meta'] = maybe_serialize( $event_data['availability_meta'] );
+
 			$event_data = array_filter( $event_data );
 			$event      = Event_Model::create( $event_data );
 			$event->setEventRangeAttribute(
@@ -576,6 +586,7 @@ class REST_Event_Controller extends REST_Controller {
 			);
 			if ( ! $event->id ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Failed to create event in database' );
 				return new WP_Error( 'rest_event_error', __( 'Event not created', 'quillbooking' ), array( 'status' => 500 ) );
 			}
 
@@ -604,6 +615,7 @@ class REST_Event_Controller extends REST_Controller {
 		} catch ( Exception $e ) {
 			global $wpdb;
 			$wpdb->query( 'ROLLBACK' );
+			error_log( 'QuillBooking Event Controller Error in create_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -634,6 +646,7 @@ class REST_Event_Controller extends REST_Controller {
 			$ids = $request->get_param( 'ids' );
 
 			if ( ! $ids ) {
+				error_log( 'QuillBooking Event Controller: No event IDs provided for deletion' );
 				return new WP_Error( 'rest_event_error', __( 'No events to delete', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
@@ -641,6 +654,7 @@ class REST_Event_Controller extends REST_Controller {
 				$event = Event_Model::find( $id );
 
 				if ( ! $event ) {
+					error_log( 'QuillBooking Event Controller: Event not found for deletion with ID: ' . $id );
 					return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 				}
 
@@ -649,6 +663,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			return new WP_REST_Response( $ids, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Event Controller Error in delete_items: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -681,6 +696,7 @@ class REST_Event_Controller extends REST_Controller {
 			$event = Event_Model::with( 'calendar', 'availability' )->where( 'id', $id )->first();
 
 			if ( ! $event ) {
+				error_log( 'QuillBooking Event Controller: Event not found with ID: ' . $id );
 				return new WP_Error(
 					'rest_event_not_found',
 					__( 'Event not found', 'quillbooking' ),
@@ -713,6 +729,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			return new WP_REST_Response( $event, 200 );
 		} catch ( \Throwable $e ) { // Catch Throwable
+			error_log( 'QuillBooking Event Controller Error in get_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -731,6 +748,7 @@ class REST_Event_Controller extends REST_Controller {
 			$event = Event_Model::find( $id );
 
 			if ( ! $event ) {
+				error_log( 'QuillBooking Event Controller: Event not found for range retrieval with ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
@@ -740,6 +758,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			return new WP_REST_Response( $data, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Event Controller Error in get_item_range: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -758,11 +777,13 @@ class REST_Event_Controller extends REST_Controller {
 			$event = Event_Model::find( $id );
 
 			if ( ! $event ) {
+				error_log( 'QuillBooking Event Controller: Event not found for fields retrieval with ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			return new WP_REST_Response( $event->fields, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Event Controller Error in get_fields: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -824,6 +845,7 @@ class REST_Event_Controller extends REST_Controller {
 			$event = Event_Model::with( 'calendar' )->find( $id );
 			if ( ! $event ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Event not found for update with ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
@@ -835,6 +857,7 @@ class REST_Event_Controller extends REST_Controller {
 				// If validation fails, block the update and return error
 				if ( is_wp_error( $validation_result ) ) {
 					$wpdb->query( 'ROLLBACK' );
+					error_log( 'QuillBooking Event Controller: Payment validation failed during update: ' . $validation_result->get_error_message() );
 					return $validation_result;
 				}
 			}
@@ -857,7 +880,7 @@ class REST_Event_Controller extends REST_Controller {
 				'sms_notifications'   => $sms_notifications,
 				'payments_settings'   => $payments_settings,
 				'dynamic_duration'    => $dynamic_duration,
-				'availability_meta'   => $availability_meta,
+				'availability_meta'   => maybe_serialize( $availability_meta ),
 				'availability_type'   => $availability_type,
 				'availability_id'     => $event_availability['id'],
 			);
@@ -871,6 +894,7 @@ class REST_Event_Controller extends REST_Controller {
 				$exists = Event_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
 				if ( $exists ) {
 					$wpdb->query( 'ROLLBACK' );
+					error_log( 'QuillBooking Event Controller: Event slug already exists: ' . $slug );
 					return new WP_Error( 'rest_event_error', __( 'Event slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
 				}
 
@@ -902,6 +926,7 @@ class REST_Event_Controller extends REST_Controller {
 			$result = $this->handle_availability_update( $event, $availability_type, $availability_meta, $event_availability, $team_availability );
 			if ( is_wp_error( $result ) ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Availability update failed: ' . $result->get_error_message() );
 				return $result;
 			}
 
@@ -913,6 +938,7 @@ class REST_Event_Controller extends REST_Controller {
 		} catch ( Exception $e ) {
 			global $wpdb;
 			$wpdb->query( 'ROLLBACK' );
+			error_log( 'QuillBooking Event Controller Error in update_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -937,12 +963,14 @@ class REST_Event_Controller extends REST_Controller {
 
 			if ( ! $event ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Event not found for availability update with ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			$result = $this->update_event_host_availability( $availability );
 			if ( is_wp_error( $result ) ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Host availability update failed: ' . $result->get_error_message() );
 				return $result;
 			}
 
@@ -951,6 +979,7 @@ class REST_Event_Controller extends REST_Controller {
 		} catch ( Exception $e ) {
 			global $wpdb;
 			$wpdb->query( 'ROLLBACK' );
+			error_log( 'QuillBooking Event Controller Error in update_item_availability: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -974,6 +1003,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			if ( ! $event ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Event not found for fields update with ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
@@ -984,6 +1014,7 @@ class REST_Event_Controller extends REST_Controller {
 		} catch ( Exception $e ) {
 			global $wpdb;
 			$wpdb->query( 'ROLLBACK' );
+			error_log( 'QuillBooking Event Controller Error in update_fields: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -1020,6 +1051,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			if ( ! $event ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Event not found for deletion with ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
@@ -1035,6 +1067,7 @@ class REST_Event_Controller extends REST_Controller {
 		} catch ( Exception $e ) {
 			global $wpdb;
 			$wpdb->query( 'ROLLBACK' );
+			error_log( 'QuillBooking Event Controller Error in delete_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -1071,6 +1104,7 @@ class REST_Event_Controller extends REST_Controller {
 
 			if ( ! $event ) {
 				$wpdb->query( 'ROLLBACK' );
+				error_log( 'QuillBooking Event Controller: Event not found for duplication with ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
@@ -1081,6 +1115,7 @@ class REST_Event_Controller extends REST_Controller {
 		} catch ( Exception $e ) {
 			global $wpdb;
 			$wpdb->query( 'ROLLBACK' );
+			error_log( 'QuillBooking Event Controller Error in duplicate_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -1113,17 +1148,20 @@ class REST_Event_Controller extends REST_Controller {
 			$event = Event_Model::find( $id );
 
 			if ( ! $event ) {
+				error_log( 'QuillBooking Event Controller: Event not found for meta retrieval with ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			$meta = $event->{$key};
 
 			if ( ! isset( $event->{$key} ) ) {
+				error_log( 'QuillBooking Event Controller: Meta key not found: ' . $key . ' for event ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Meta not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			return new WP_REST_Response( $meta, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Event Controller Error in get_meta: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -1143,102 +1181,122 @@ class REST_Event_Controller extends REST_Controller {
 			$status = $request->get_param( 'status' );
 			$event  = Event_Model::find( $id );
 			if ( ! $event ) {
+				error_log( 'QuillBooking Event Controller: Event not found for disable status update with ID: ' . $id );
 				return new WP_Error( 'rest_event_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 			$event->is_disabled = $status;
 			$event->save();
 			return new WP_REST_Response( $event, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Event Controller Error in disable_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_event_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
 
 	// Update event availability
 	private function update_event_host_availability( $event_availability ) {
-		// Check if event_availability is provided and not empty
-		if ( empty( $event_availability ) ) {
-			return true; // Nothing to update
-		}
-		// Find the availability record
-		$availability = Availability_Model::where( 'id', $event_availability['id'] )->first();
-
-		if ( ! $availability ) {
-			return new WP_Error(
-				'rest_event_error',
-				__( 'Availability record not found', 'quillbooking' ),
-				array( 'status' => 404 )
-			);
-		}
-
-		// Update the availability record using Eloquent
 		try {
-			// If event_availability contains the value data directly
-			if ( isset( $event_availability['value'] ) ) {
-				$availability->value = $event_availability['value'];
+			// Check if event_availability is provided and not empty
+			if ( empty( $event_availability ) ) {
+				return true; // Nothing to update
 			}
+			// Find the availability record
+			$availability = Availability_Model::where( 'id', $event_availability['id'] )->first();
 
-			// Update other fields if provided
-			if ( isset( $event_availability['name'] ) ) {
-				$availability->name = $event_availability['name'];
-			}
-
-			if ( isset( $event_availability['timezone'] ) ) {
-				$availability->timezone = $event_availability['timezone'];
-			}
-
-			// Save the changes
-			$updated = $availability->save();
-
-			if ( ! $updated ) {
+			if ( ! $availability ) {
+				error_log( 'QuillBooking Event Controller: Availability record not found with ID: ' . $event_availability['id'] );
 				return new WP_Error(
 					'rest_event_error',
-					__( 'Failed to update availability', 'quillbooking' ),
-					array( 'status' => 500 )
+					__( 'Availability record not found', 'quillbooking' ),
+					array( 'status' => 404 )
 				);
 			}
 
-			return $availability;
+			// Update the availability record using Eloquent
+			try {
+				// If event_availability contains the value data directly
+				if ( isset( $event_availability['value'] ) ) {
+					$availability->value = $event_availability['value'];
+				}
+
+				// Update other fields if provided
+				if ( isset( $event_availability['name'] ) ) {
+					$availability->name = $event_availability['name'];
+				}
+
+				if ( isset( $event_availability['timezone'] ) ) {
+					$availability->timezone = $event_availability['timezone'];
+				}
+
+				// Save the changes
+				$updated = $availability->save();
+
+				if ( ! $updated ) {
+					error_log( 'QuillBooking Event Controller: Failed to update availability record with ID: ' . $event_availability['id'] );
+					return new WP_Error(
+						'rest_event_error',
+						__( 'Failed to update availability', 'quillbooking' ),
+						array( 'status' => 500 )
+					);
+				}
+
+				return $availability;
+			} catch ( Exception $e ) {
+				error_log( 'QuillBooking Event Controller Error updating availability: ' . $e->getMessage() . ' | Availability ID: ' . $event_availability['id'] );
+				return new WP_Error(
+					'rest_event_error',
+					$e->getMessage(),
+					array( 'status' => 500 )
+				);
+			}
 		} catch ( Exception $e ) {
-			return new WP_Error(
-				'rest_event_error',
-				$e->getMessage(),
-				array( 'status' => 500 )
-			);
+			error_log( 'QuillBooking Event Controller Error in update_event_host_availability: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
+			throw $e;
 		}
 	}
 
 	// Update event availability
 	private function update_event_team_availability( $event, $team_availability ) {
-		foreach ( $team_availability as $user_id => $availabilityData ) {
-			$model = Availability_Model::find( $availabilityData['id'] );
-			if ( ! $model ) {
-				return new WP_Error(
-					'rest_event_error',
-					__( 'Availability not found', 'quillbooking' ),
-					array( 'status' => 404 )
-				);
+		try {
+			foreach ( $team_availability as $user_id => $availabilityData ) {
+				$model = Availability_Model::find( $availabilityData['id'] );
+				if ( ! $model ) {
+					error_log( 'QuillBooking Event Controller: Availability not found for team member with ID: ' . $availabilityData['id'] );
+					return new WP_Error(
+						'rest_event_error',
+						__( 'Availability not found', 'quillbooking' ),
+						array( 'status' => 404 )
+					);
+				}
+				$model->value = $availabilityData['value'];
+				$model->save();
 			}
-			$model->value = $availabilityData['value'];
-			$model->save();
+		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Event Controller Error in update_event_team_availability: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
+			throw $e;
 		}
 	}
 
-
 	// Handle availability updates based on calendar type and settings
 	private function handle_availability_update( $event, $availability_type, $availability_meta, $event_availability, $team_availability ) {
-		if ( $event->calendar->type === 'host' && $availability_type === 'existing' ) {
-			return $this->update_event_host_availability( $event_availability );
-		}
+		try {
+			if ( $event->calendar->type === 'host' && $availability_type === 'existing' ) {
+				return $this->update_event_host_availability( $event_availability );
+			}
 
-		if ( $event->calendar->type === 'team' && $availability_meta['is_common'] === true && $availability_type === 'existing' ) {
-			return $this->update_event_host_availability( $event_availability );
-		}
+			if ( $event->calendar->type === 'team' && $availability_meta['is_common'] === true && $availability_type === 'existing' ) {
+				return $this->update_event_host_availability( $event_availability );
+			}
 
-		if ( $event->calendar->type === 'team' && $availability_meta['is_common'] === false ) {
-			return $this->update_event_team_availability( $event, $team_availability );
-		}
+			if ( $event->calendar->type === 'team' && $availability_meta['is_common'] === false ) {
+				return $this->update_event_team_availability( $event, $team_availability );
+			}
 
-		return true; // No specific availability update needed
+			return true; // No specific availability update needed
+		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Event Controller Error in handle_availability_update: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
+			throw $e;
+		}
 	}
 
 	/**
@@ -1295,6 +1353,7 @@ class REST_Event_Controller extends REST_Controller {
 				200
 			);
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Event Controller Error in get_latest_events: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}

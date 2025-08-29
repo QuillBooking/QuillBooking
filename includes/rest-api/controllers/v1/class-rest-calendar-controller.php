@@ -346,6 +346,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			}
 
 			if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'quillbooking_read_all_calendars' ) ) {
+				error_log( 'QuillBooking Calendar Controller: Permission denied for user ' . get_current_user_id() . ' to access calendars' );
 				return new WP_Error( 'rest_calendar_error', __( 'You do not have permission', 'quillbooking' ), array( 'status' => 403 ) );
 			}
 
@@ -386,6 +387,7 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			return new WP_REST_Response( $calendars, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Calendar Controller Error in get_items: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -427,6 +429,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			$availability = $request->get_param( 'availability' );
 
 			if ( ! in_array( $type, array( 'team', 'host' ), true ) ) {
+				error_log( 'QuillBooking Calendar Controller: Invalid calendar type provided: ' . $type );
 				throw new Exception( __( 'Invalid calendar type', 'quillbooking' ), 400 );
 			}
 
@@ -460,6 +463,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			return new WP_REST_Response( $calendar, 200 );
 		} catch ( Exception $e ) {
 			$wpdb->query( 'ROLLBACK' );
+			error_log( 'QuillBooking Calendar Controller Error in create_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -490,6 +494,7 @@ class REST_Calendar_Controller extends REST_Controller {
 		try {
 			$ids = $request->get_param( 'ids' );
 			if ( empty( $ids ) ) {
+				error_log( 'QuillBooking Calendar Controller: No calendar IDs provided for deletion' );
 				return new WP_Error( 'rest_calendar_error', __( 'IDs are required', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
@@ -497,6 +502,7 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			return new WP_REST_Response( array( 'message' => __( 'Calendars deleted successfully', 'quillbooking' ) ), 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Calendar Controller Error in delete_items: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -529,11 +535,13 @@ class REST_Calendar_Controller extends REST_Controller {
 			$calendar = Calendar_Model::find( $id );
 
 			if ( ! $calendar ) {
+				error_log( 'QuillBooking Calendar Controller: Calendar not found with ID: ' . $id );
 				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			return new WP_REST_Response( $calendar, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Calendar Controller Error in get_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -565,6 +573,11 @@ class REST_Calendar_Controller extends REST_Controller {
 			$id       = $request->get_param( 'id' );
 			$calendar = Calendar_Model::select( 'id' )->find( $id );
 
+			if ( ! $calendar ) {
+				error_log( 'QuillBooking Calendar Controller: Calendar not found for team retrieval with ID: ' . $id );
+				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );
+			}
+
 			$calendar_team = $calendar->getTeamMembers();
 
 			$users = array();
@@ -584,6 +597,7 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			return new WP_REST_Response( $users, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Calendar Controller Error in get_item_team: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_team_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -616,11 +630,13 @@ class REST_Calendar_Controller extends REST_Controller {
 			}
 
 			if ( ! $calendar ) {
+				error_log( 'QuillBooking Calendar Controller: Calendar not found for update with ID: ' . $id );
 				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			if ( $members && 'team' === $calendar->type ) {
 				if ( empty( $members ) ) {
+					error_log( 'QuillBooking Calendar Controller: Team members cannot be empty for calendar ID: ' . $id );
 					return new WP_Error( 'rest_calendar_error', __( "Team members can't be empty", 'quillbooking' ), array( 'status' => 400 ) );
 				}
 
@@ -629,6 +645,7 @@ class REST_Calendar_Controller extends REST_Controller {
 					->get();
 
 				if ( $calendars->count() !== count( $members ) ) {
+					error_log( 'QuillBooking Calendar Controller: Invalid host selection for team calendar ID: ' . $id );
 					return new WP_Error( 'rest_calendar_error', __( 'Please make sure that you selected the right hosts', 'quillbooking' ), array( 'status' => 400 ) );
 				}
 			}
@@ -641,6 +658,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			if ( ! empty( $slug ) ) {
 				$exists = Calendar_Model::where( 'slug', $slug )->where( 'id', '!=', $id )->first();
 				if ( $exists ) {
+					error_log( 'QuillBooking Calendar Controller: Calendar slug already exists: ' . $slug );
 					return new WP_Error( 'rest_calendar_error', __( 'Calendar slug already exists', 'quillbooking' ), array( 'status' => 400 ) );
 				}
 
@@ -675,6 +693,7 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			return new WP_REST_Response( $calendar, 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Calendar Controller Error in update_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -708,6 +727,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			$calendar = Calendar_Model::find( $id );
 
 			if ( ! $calendar ) {
+				error_log( 'QuillBooking Calendar Controller: Calendar not found for deletion with ID: ' . $id );
 				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
@@ -715,6 +735,7 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			return new WP_REST_Response( array( 'message' => __( 'Calendar deleted successfully', 'quillbooking' ) ), 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Calendar Controller Error in delete_item: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -749,15 +770,18 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			$calendar = Calendar_Model::find( $id );
 			if ( ! $calendar ) {
+				error_log( 'QuillBooking Calendar Controller: Calendar not found for event cloning with ID: ' . $id );
 				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
 			if ( ! $event_id ) {
+				error_log( 'QuillBooking Calendar Controller: No event IDs provided for cloning' );
 				return new WP_Error( 'rest_calendar_error', __( 'Event are required', 'quillbooking' ), array( 'status' => 400 ) );
 			}
 
 			$event = Event_Model::find( $event_id )->first();
 			if ( ! $event ) {
+				error_log( 'QuillBooking Calendar Controller: Event not found for cloning with ID: ' . $event_id );
 				return new WP_Error( 'rest_calendar_error', __( 'Event not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
@@ -797,6 +821,7 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			return new WP_REST_Response( array( 'message' => __( 'Events cloned successfully', 'quillbooking' ) ), 200 );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Calendar Controller Error in clone_events: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -823,15 +848,18 @@ class REST_Calendar_Controller extends REST_Controller {
 	private function validate_host_calendar( $user_id, $availability ) {
 		// Check if user exists
 		if ( empty( $user_id ) || ! User_Model::where( 'ID', $user_id )->exists() ) {
+			error_log( 'QuillBooking Calendar Controller: Invalid user ID for host calendar: ' . $user_id );
 			throw new Exception( __( 'Invalid user ID. User does not exist.', 'quillbooking' ), 400 );
 		}
 
 		// Check for existing host calendar
 		if ( Calendar_Model::where( 'user_id', $user_id )->where( 'type', 'host' )->exists() ) {
+			error_log( 'QuillBooking Calendar Controller: User already has a host calendar: ' . $user_id );
 			throw new Exception( __( 'You already have a host calendar', 'quillbooking' ), 400 );
 		}
 
 		if ( empty( $availability['value']['weekly_hours'] ) || ! is_array( $availability['value']['weekly_hours'] ) ) {
+			error_log( 'QuillBooking Calendar Controller: Invalid weekly hours for host calendar user: ' . $user_id );
 			throw new Exception( __( 'Valid weekly hours are required', 'quillbooking' ), 400 );
 		}
 	}
@@ -841,6 +869,7 @@ class REST_Calendar_Controller extends REST_Controller {
 	 */
 	private function validate_team_calendar( $members ) {
 		if ( empty( $members ) ) {
+			error_log( 'QuillBooking Calendar Controller: Team members are required for team calendar' );
 			throw new Exception( __( 'Team members are required', 'quillbooking' ), 400 );
 		}
 
@@ -849,6 +878,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			->pluck( 'ID' );
 
 		if ( count( $valid_members ) !== count( $members ) ) {
+			error_log( 'QuillBooking Calendar Controller: Invalid team member selection. Expected: ' . count( $members ) . ', Found: ' . count( $valid_members ) );
 			throw new Exception( __( 'Invalid team member selection', 'quillbooking' ), 400 );
 		}
 	}
@@ -858,34 +888,39 @@ class REST_Calendar_Controller extends REST_Controller {
 	 * Handle availability creation
 	 */
 	private function create_availability( $user_id, $availability_data, $timezone ) {
-		// Check if user already has a default availability
-		$existing_availability = Availability_Model::where( 'user_id', $user_id )->where( 'is_default', 1 )->first();
+		try {
+			// Check if user already has a default availability
+			$existing_availability = Availability_Model::where( 'user_id', $user_id )->where( 'is_default', 1 )->first();
 
-		$availability_name = 'Default Availability';
-		$is_default        = 1;
+			$availability_name = 'Default Availability';
+			$is_default        = 1;
 
-		if ( $existing_availability ) {
-			$availability_name = 'Weekly Hours';
-			$is_default        = 0;
+			if ( $existing_availability ) {
+				$availability_name = 'Weekly Hours';
+				$is_default        = 0;
+			}
+
+			// Prepare value data as JSON
+			$value_data = array(
+				'weekly_hours' => $availability_data['weekly_hours'] ?? array(),
+				'override'     => $availability_data['override'] ?? array(),
+			);
+
+			$new_availability = Availability_Model::create(
+				array(
+					'user_id'    => $user_id,
+					'name'       => $availability_name,
+					'value'      => maybe_serialize( $value_data ),
+					'timezone'   => $timezone,
+					'is_default' => $is_default,
+				)
+			);
+
+			return $new_availability;
+		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Calendar Controller Error in create_availability: ' . $e->getMessage() . ' | User ID: ' . $user_id . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
+			throw $e;
 		}
-
-		// Prepare value data as JSON
-		$value_data = array(
-			'weekly_hours' => $availability_data['weekly_hours'] ?? array(),
-			'override'     => $availability_data['override'] ?? array(),
-		);
-
-		$new_availability = Availability_Model::create(
-			array(
-				'user_id'    => $user_id,
-				'name'       => $availability_name,
-				'value'      => $value_data,
-				'timezone'   => $timezone,
-				'is_default' => $is_default,
-			)
-		);
-
-		return $new_availability;
 	}
 
 	/**
@@ -902,6 +937,7 @@ class REST_Calendar_Controller extends REST_Controller {
 			$calendar    = Calendar_Model::find( $calendar_id );
 
 			if ( ! $calendar ) {
+				error_log( 'QuillBooking Calendar Controller: Calendar not found for integrations with ID: ' . $calendar_id );
 				return new WP_Error( 'rest_calendar_error', __( 'Calendar not found', 'quillbooking' ), array( 'status' => 404 ) );
 			}
 
@@ -1047,6 +1083,7 @@ class REST_Calendar_Controller extends REST_Controller {
 
 			return rest_ensure_response( $connected_integrations );
 		} catch ( Exception $e ) {
+			error_log( 'QuillBooking Calendar Controller Error in get_item_integrations: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine() );
 			return new WP_Error( 'rest_calendar_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}

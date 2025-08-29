@@ -11,7 +11,7 @@ const TeamTab: React.FC = () => {
 					<ProTab
 						title={__('Team', 'quillbooking')}
 						description={__(
-							'Grant Team Members Access to FluentBookings for Calendar and Booking Management.',
+							'Grant Team Members Access to Quill Booking for Calendar and Booking Management.',
 							'quillbooking'
 						)}
 						icon={<TeamMembersIcon />}

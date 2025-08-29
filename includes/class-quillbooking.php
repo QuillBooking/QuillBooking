@@ -22,6 +22,7 @@ use QuillBooking\Webhook_Feeds;
 use QuillBooking\Admin\Admin;
 use QuillBooking\Admin\Admin_Loader;
 use QuillBooking\Site\Site;
+use QuillBooking\Database\Install;
 
 /**
  * Main QuillBooking Class
@@ -112,7 +113,7 @@ class QuillBooking {
 	 */
 	private function init_objects() {
 		$this->tasks = new Tasks( 'quillbooking' );
-
+		Install::init();
 		Admin::instance();
 		Admin_Loader::instance();
 		REST_API::instance();

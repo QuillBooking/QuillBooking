@@ -341,6 +341,7 @@ const Calendars: React.FC = () => {
 					<Flex gap={12}>
 						<Button
 							type="text"
+							disabled={loading} // Disable when loading
 							onClick={() =>
 								setFilters({ ...filters, type: 'host' })
 							}
@@ -354,6 +355,7 @@ const Calendars: React.FC = () => {
 						</Button>
 						<Button
 							type="text"
+							disabled={loading} // Disable when loading
 							onClick={() =>
 								setFilters({ ...filters, type: 'team' })
 							}

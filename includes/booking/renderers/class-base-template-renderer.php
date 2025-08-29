@@ -76,7 +76,7 @@ abstract class Base_Template_Renderer {
 	 * Get event hosts data
 	 */
 	protected function get_event_hosts( $event ) {
-		$ids   = $event->getTeamMembersAttribute() ?: array( $event->user->ID );
+		$ids   = $event->getTeamMembersAttribute() ?: array( $event->user_id );
 		$ids   = is_array( $ids ) ? $ids : array( $ids );
 		$hosts = array();
 

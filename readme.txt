@@ -6,7 +6,7 @@ Tags: Calendly, appointment scheduling, booking system, calendar management, eve
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -215,6 +215,14 @@ Yes, Quill Booking maintains full GDPR compliance with enterprise-grade security
 
 == Changelog ==
 
+= 1.1.0 = 
+* Added collective team events
+* Added tracking with Google Analytics
+* Added tracking with Google Tag Manager
+* Added tracking with Facebook Pixel
+* Added tracking with Matomo
+* Added automation with Make
+* Fixed issue with 12 hrs format
 = 1.0.3 = 
 * Fixing issues with location merge tag
 * Fixing some descriptions for the email notifications

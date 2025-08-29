@@ -129,7 +129,7 @@ class Install {
 	 * Availability migration
 	 * Migrate availability data from wp_options and events_meta to new table structure
 	 *
-	 * @since 2.0.0
+	 * @since 1.1.0
 	 */
 	private static function availability_migration() {
 		global $wpdb;
@@ -137,7 +137,7 @@ class Install {
 		$version = get_option( 'quillbooking_version' );
 		
 		// Only run migration for versions before 2.0.0
-		if ( $version && version_compare( $version, '2.0.0', '>=' ) ) {
+		if ( $version && version_compare( $version, '1.1.0', '>=' ) ) {
 			return;
 		}
 		

@@ -45,7 +45,7 @@ class Reschedule_Page_Renderer extends Base_Template_Renderer {
 		$event                    = $booking->event;
 		$event->hosts             = $this->get_event_hosts( $event );
 		$event->fields            = $event->getFieldsAttribute();
-		$event->availability_data = $event->getAvailabilityAttribute();
+		$event->availability_data = maybe_unserialize( $event->availability );
 		$event->reserve           = $event->getReserveTimesAttribute();
 		$event->advanced_settings = $event->getAdvancedSettingsAttribute();
 

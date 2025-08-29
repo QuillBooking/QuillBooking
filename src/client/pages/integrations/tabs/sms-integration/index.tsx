@@ -30,7 +30,6 @@ const { Text } = Typography;
 
 const SMSIntegration: React.FC = () => {
 	const integrations = Object.entries(ConfigAPI.getIntegrations())
-		.filter(ConfigAPI.getIntegrations())
 		.filter(([key]) => key == 'twilio') as [string, Integration][];
 
 	// Add safety check for integrations
@@ -90,7 +89,7 @@ const SMSIntegration: React.FC = () => {
 				setLoadingAccount(false);
 				errorNotice(
 					error?.message ||
-						__('Failed to fetch Twilio account', 'quillbooking')
+					__('Failed to fetch Twilio account', 'quillbooking')
 				);
 			},
 		});
@@ -122,7 +121,7 @@ const SMSIntegration: React.FC = () => {
 			onError(error) {
 				errorNotice(
 					error.message ||
-						__('Failed to save Twilio account', 'quillbooking')
+					__('Failed to save Twilio account', 'quillbooking')
 				);
 				setSaving(false);
 			},
@@ -153,10 +152,10 @@ const SMSIntegration: React.FC = () => {
 			onError(error) {
 				errorNotice(
 					error.message ||
-						__(
-							'Failed to disconnect Twilio account',
-							'quillbooking'
-						)
+					__(
+						'Failed to disconnect Twilio account',
+						'quillbooking'
+					)
 				);
 				setSaving(false);
 			},

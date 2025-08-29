@@ -266,10 +266,10 @@ class Availability_Model extends Model {
 			'user_id'    => $user_id,
 			'name'       => $default_data['name'],
 			'value'      =>
-				array(
+				maybe_serialize(array(
 					'weekly_hours' => $default_data['weekly_hours'],
 					'override'     => $default_data['override'],
-				),
+				))	,
 			'timezone'   => 'UTC',
 			'is_default' => true,
 		);

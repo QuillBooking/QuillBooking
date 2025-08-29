@@ -1216,7 +1216,7 @@ class REST_Event_Controller extends REST_Controller {
 			try {
 				// If event_availability contains the value data directly
 				if ( isset( $event_availability['value'] ) ) {
-					$availability->value = $event_availability['value'];
+					$availability->value = maybe_serialize( $event_availability['value'] );
 				}
 
 				// Update other fields if provided

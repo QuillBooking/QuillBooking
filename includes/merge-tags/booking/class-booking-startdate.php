@@ -75,34 +75,47 @@ class Booking_StartDate extends Merge_Tag {
 	 * @return string
 	 */
 	public function get_value( $booking, $options = array() ) {
-		if (empty($booking->start_time)) {
-			return ''; 
-		}
-		
-		try {
-			$start_time = new \DateTime($booking->start_time);
-		} catch (\Exception $e) {
+		if ( empty( $booking->start_time ) ) {
 			return '';
 		}
 
-		$timezone = Arr::get($options, 'timezone', 'attendee');
-		$format   = Arr::get($options, 'format', 'F j, Y');
+		try {
+			$start_time = new \DateTime( $booking->start_time );
+		} catch ( \Exception $e ) {
+			return '';
+		}
 
-		switch ($timezone) {
+		$timezone = Arr::get( $options, 'timezone', 'attendee' );
+		$format   = Arr::get( $options, 'format', $this->get_default_format() );
+
+		switch ( $timezone ) {
 			case 'attendee':
-				if (! empty($booking->timezone)) {
-					$start_time->setTimezone(new \DateTimeZone($booking->timezone));
+				if ( ! empty( $booking->timezone ) ) {
+					$start_time->setTimezone( new \DateTimeZone( $booking->timezone ) );
 				}
 				break;
 			case 'host':
-				$host_timezone = isset($booking->event->availability['timezone']) ? $booking->event->availability['timezone'] : 'UTC';
-				$start_time->setTimezone(new \DateTimeZone($host_timezone));
+				$host_timezone = isset( $booking->event->availability['timezone'] ) ? $booking->event->availability['timezone'] : 'UTC';
+				$start_time->setTimezone( new \DateTimeZone( $host_timezone ) );
 				break;
 			case 'utc':
-				$start_time->setTimezone(new \DateTimeZone('UTC'));
+				$start_time->setTimezone( new \DateTimeZone( 'UTC' ) );
 				break;
 		}
 
-		return $start_time->format($format);
+		return $start_time->format( $format );
+	}
+
+	/**
+	 * Get default format based on global time format setting
+	 *
+	 * @return string
+	 */
+	private function get_default_format() {
+		$global_settings = get_option( 'quillbooking_settings', array() );
+		$time_format     = $global_settings['general']['time_format'] ?? '12';
+
+		// Return appropriate PHP date format based on time format setting
+		return $time_format === '24' ? 'F j, Y, H:i' : 'F j, Y, g:i A';
 	}
 }

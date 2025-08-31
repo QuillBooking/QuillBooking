@@ -15,17 +15,9 @@ class Confirm_Page_Renderer extends Base_Template_Renderer {
 	}
 
 	public function render( $booking ) {
-		$booking_array          = $this->dataFormatter->format_booking_data( $booking );
-		$booking_array['hosts'] = array();
-
-		foreach ( $booking->hosts as $host ) {
-			$booking_array['hosts'][] = array(
-				'name'  => $host->display_name ?? $host->name ?? '',
-				'image' => $host->image ?? ( $host->avatar ?? '' ),
-				'email' => $host->user_email ?? $host->email ?? '',
-			);
-		}
-		// $this->get_event_hosts( $booking );
+		$time_format            = $this->get_time_format();
+		$booking_array          = $this->dataFormatter->format_booking_data( $booking, $time_format );
+		$booking_array['hosts'] = $this->format_hosts_data( $booking );
 
 		// Get advanced settings and merge tags manager
 		$advanced_settings = $booking_array['event']['advanced_settings'] ?? array();

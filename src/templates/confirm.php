@@ -9,6 +9,10 @@ $location    = $booking_array['location_value'] ?? '';
 $description = $booking_array['description'] ?? $booking_array['event']['description'] ?? '';
 $timezone    = $booking_array['timezone'] ?? 'UTC';
 
+// Get global time format setting
+$global_settings = get_option( 'quillbooking_settings', array() );
+$time_format     = $global_settings['general']['time_format'] ?? '12';
+
 // Convert UTC time to user's timezone (same logic as your render_generic_page method)
 try {
 	$start_dt = new DateTime( $start_time, new DateTimeZone( 'UTC' ) );

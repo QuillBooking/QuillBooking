@@ -20,8 +20,9 @@ class Cancel_Page_Renderer extends Base_Template_Renderer {
 		$fields       = $event->getFieldsAttribute();
 		$other_fields = $fields['other'];
 
-		$booking_array          = $this->dataFormatter->format_booking_data( $booking );
-		$booking_array['hosts'] = $this->get_event_hosts( $booking->event );
+		$time_format            = $this->get_time_format();
+		$booking_array          = $this->dataFormatter->format_booking_data( $booking, $time_format );
+		$booking_array['hosts'] = $this->format_hosts_data( $booking );
 
 		$template_path = QUILLBOOKING_PLUGIN_DIR . 'src/templates/cancel.php';
 

@@ -331,8 +331,8 @@ class Event_Fields {
 			<p>Your booking has been confirmed successfully. Below are the details of your booking:</p>
 			<h2 style="color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Booking Details</h2>
 			<p><strong>Event Name:</strong> {{booking:event_name}}</p>
-			<p><strong>Start Time:</strong> {{booking:start_time format="F j, Y, g:i a" timezone="attendee"}}</p>
-			<p><strong>End Time:</strong> {{booking:end_time format="F j, Y, g:i a" timezone="attendee"}}</p>
+			<p><strong>Start Time:</strong> {{booking:start_time timezone="attendee"}}</p>
+			<p><strong>End Time:</strong> {{booking:end_time timezone="attendee"}}</p>
 			<p><strong>Location:</strong> {{booking:event_location}}</p>
 			<h2 style="color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Host Details</h2>
 			<p><strong>Name:</strong> {{host:name}}</p>
@@ -352,8 +352,8 @@ class Event_Fields {
 			<p>A new booking has been successfully created for your event. Below are the details of the booking:</p>
 			<h2 style="color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Booking Details</h2>
 			<p><strong>Event Name:</strong> {{booking:event_name}}</p>
-			<p><strong>Start Time:</strong> {{booking:start_time format="F j, Y, g:i a" timezone="host"}}</p>
-			<p><strong>End Time:</strong> {{booking:end_time format="F j, Y, g:i a" timezone="host"}}</p>
+			<p><strong>Start Time:</strong> {{booking:start_time timezone="host"}}</p>
+			<p><strong>End Time:</strong> {{booking:end_time timezone="host"}}</p>
 			<p><strong>Location:</strong> {{booking:event_location}}</p>
 			<h2 style="color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Guest Details</h2>
 			<p><strong>Name:</strong> {{guest:name}}</p>
@@ -555,8 +555,8 @@ class Event_Fields {
 			<p>Here are the details of the booking:</p>
 			<ul>
 				<li><strong>Booking Name:</strong> {{booking:name}}</li>
-				<li><strong>Start Time:</strong> {{booking:start_time format="F j, Y g:i A" timezone="host"}}</li>
-				<li><strong>End Time:</strong> {{booking:end_time format="F j, Y g:i A" timezone="host"}}</li>
+				<li><strong>Start Time:</strong> {{booking:start_time timezone="host"}}</li>
+				<li><strong>End Time:</strong> {{booking:end_time timezone="host"}}</li>
 				<li><strong>Guest Name:</strong> {{guest:name}}</li>
 				<li><strong>Guest Email:</strong> {{guest:email}}</li>
 			</ul>
@@ -572,8 +572,8 @@ class Event_Fields {
 			<p>Booking Details:</p>
 			<ul>
 				<li><strong>Event Name:</strong> {{booking:event_name}}</li>
-				<li><strong>Start Time:</strong> {{booking:start_time format="F j, Y g:i A" timezone="attendee"}}</li>
-				<li><strong>End Time:</strong> {{booking:end_time format="F j, Y g:i A" timezone="attendee"}}</li>
+				<li><strong>Start Time:</strong> {{booking:start_time timezone="attendee"}}</li>
+				<li><strong>End Time:</strong> {{booking:end_time timezone="attendee"}}</li>
 				<li><strong>Host Name:</strong> {{host:name}}</li>
 			</ul>
 			<p>
@@ -587,8 +587,8 @@ class Event_Fields {
 			<p>Booking Details:</p>
 			<ul>
 				<li><strong>Event Name:</strong> {{booking:event_name}}</li>
-				<li><strong>Start Time:</strong> {{booking:start_time format="F j, Y g:i A" timezone="attendee"}}</li>
-				<li><strong>End Time:</strong> {{booking:end_time format="F j, Y g:i A" timezone="attendee"}}</li>
+				<li><strong>Start Time:</strong> {{booking:start_time timezone="attendee"}}</li>
+				<li><strong>End Time:</strong> {{booking:end_time timezone="attendee"}}</li>
 				<li><strong>Host Name:</strong> {{host:name}}</li>
 			</ul>
 			<p>You will receive a confirmation email once the host confirms the booking.</p>
@@ -600,8 +600,8 @@ class Event_Fields {
 			<p>Here are the details of your booking:</p>
 			<ul>
 				<li><strong>Booking Name:</strong> {{booking:name}}</li>
-				<li><strong>Start Time:</strong> {{booking:start_time format="F j, Y g:i A" timezone="attendee"}}</li>
-				<li><strong>End Time:</strong> {{booking:end_time format="F j, Y g:i A" timezone="attendee"}}</li>
+				<li><strong>Start Time:</strong> {{booking:start_time timezone="attendee"}}</li>
+				<li><strong>End Time:</strong> {{booking:end_time timezone="attendee"}}</li>
 			</ul>
 			<p>If you have any questions, please contact the organizer.</p>
 		</div>';
@@ -710,21 +710,21 @@ class Event_Fields {
 	 * @return string
 	 */
 	public function get_sms_notification_template( $template ) {
-		$attendee_confirmation = 'Dear {{guest:name}}, Your booking for the event "{{booking:event_name}}" scheduled from {{booking:start_time format="F j, Y g:i A" timezone="attendee"}} to {{booking:end_time format="F j, Y g:i A" timezone="attendee"}} ({{booking:timezone}}) has been successfully created.';
+		$attendee_confirmation = 'Dear {{guest:name}}, Your booking for the event "{{booking:event_name}}" scheduled from {{booking:start_time timezone="attendee"}} to {{booking:end_time timezone="attendee"}} ({{booking:timezone}}) has been successfully created.';
 
-		$host_confirmation = 'Dear {{host:name}}, A new booking has been successfully created for the event "{{booking:event_name}}" scheduled from {{booking:start_time format="F j, Y g:i A" timezone="host"}} to {{booking:end_time format="F j, Y g:i A" timezone="host"}} ({{host:timezone}}). If you need further details, please check the booking in your dashboard. Thank you.';
+		$host_confirmation = 'Dear {{host:name}}, A new booking has been successfully created for the event "{{booking:event_name}}" scheduled from {{booking:start_time timezone="host"}} to {{booking:end_time timezone="host"}} ({{host:timezone}}). If you need further details, please check the booking in your dashboard. Thank you.';
 
-		$organizer_sms_cancellation = 'Dear {{host:name}}, The attendee {{guest:name}} has canceled their booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time format="F j, Y g:i A" timezone="host"}}. If you need further details, please check the booking in your dashboard. Thank you.';
+		$organizer_sms_cancellation = 'Dear {{host:name}}, The attendee {{guest:name}} has canceled their booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time timezone="host"}}. If you need further details, please check the booking in your dashboard. Thank you.';
 
-		$attendee_sms_cancellation = 'Dear {{guest:name}}, Your booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time format="F j, Y g:i A" timezone="attendee"}} has been canceled. If you have any questions, please contact the organizer.';
+		$attendee_sms_cancellation = 'Dear {{guest:name}}, Your booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time timezone="attendee"}} has been canceled. If you have any questions, please contact the organizer.';
 
-		$organizer_sms_reschedule = 'Dear {{host:name}}, The attendee {{guest:name}} has rescheduled their booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time format="F j, Y g:i A" timezone="host"}}. If you need further details, please check the booking in your dashboard. Thank you.';
+		$organizer_sms_reschedule = 'Dear {{host:name}}, The attendee {{guest:name}} has rescheduled their booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time timezone="host"}}. If you need further details, please check the booking in your dashboard. Thank you.';
 
-		$attendee_sms_reschedule = 'Dear {{guest:name}}, Your booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time format="F j, Y g:i A" timezone="attendee"}} has been rescheduled. If you have any questions, please contact the organizer.';
+		$attendee_sms_reschedule = 'Dear {{guest:name}}, Your booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time timezone="attendee"}} has been rescheduled. If you have any questions, please contact the organizer.';
 
-		$organizer_sms_reminder = 'Dear {{host:name}}, Just a reminder that you have a booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time format="F j, Y g:i A" timezone="host"}}.';
+		$organizer_sms_reminder = 'Dear {{host:name}}, Just a reminder that you have a booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time timezone="host"}}.';
 
-		$attendee_sms_reminder = 'Dear {{guest:name}}, Just a reminder that you have a booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time format="F j, Y g:i A" timezone="attendee"}}.';
+		$attendee_sms_reminder = 'Dear {{guest:name}}, Just a reminder that you have a booking for the event "{{booking:event_name}}" scheduled for {{booking:start_time timezone="attendee"}}.';
 
 		$templates = array(
 			'attendee_confirmation'  => $attendee_confirmation,

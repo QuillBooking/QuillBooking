@@ -22,6 +22,35 @@ abstract class Base_Template_Renderer {
 	}
 
 	/**
+	 * Get global time format setting
+	 */
+	protected function get_time_format(): string {
+		// Get global settings - using the correct option name
+		$global_settings = get_option( 'quillbooking_settings', array() );
+		return $global_settings['general']['time_format'] ?? '12';
+	}
+
+	/**
+	 * Format hosts data for templates
+	 *
+	 * @param object $booking Booking object with hosts
+	 * @return array Formatted hosts array
+	 */
+	protected function format_hosts_data( $booking ): array {
+		$hosts = array();
+
+		foreach ( $booking->hosts as $host ) {
+			$hosts[] = array(
+				'name'  => $host->display_name ?? $host->name ?? '',
+				'image' => $host->image ?? ( $host->avatar ?? '' ),
+				'email' => $host->user_email ?? $host->email ?? '',
+			);
+		}
+
+		return $hosts;
+	}
+
+	/**
 	 * Get common head HTML
 	 */
 	protected function get_head( $title = '' ) {

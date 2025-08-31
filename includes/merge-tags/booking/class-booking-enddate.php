@@ -72,48 +72,55 @@ class Booking_EndDate extends Merge_Tag {
 	 *
 	 * @return string
 	 */
-	public function get_value($booking, $options = array())
-	{
-	
-		if (empty($booking->end_time)) {
+	public function get_value( $booking, $options = array() ) {
+
+		if ( empty( $booking->end_time ) ) {
 			return '';
 		}
 
-		$timezone = Arr::get($options, 'timezone', 'attendee');
-		$format   = Arr::get($options, 'format', 'F j, Y');
+		$timezone = Arr::get( $options, 'timezone', 'attendee' );
+		$format   = Arr::get( $options, 'format', $this->get_default_format() );
 
 		try {
-			$end_time = new \DateTime($booking->end_time);
-		} catch (\Exception $e) {
-			return ''; 
+			$end_time = new \DateTime( $booking->end_time );
+		} catch ( \Exception $e ) {
+			return '';
 		}
 
-	
-		if (empty($booking->timezone)) {
-			$booking->timezone = 'UTC'; 
+		if ( empty( $booking->timezone ) ) {
+			$booking->timezone = 'UTC';
 		}
 
-	
-		switch ($timezone) {
+		switch ( $timezone ) {
 			case 'attendee':
-			
-				$end_time->setTimezone(new \DateTimeZone($booking->timezone));
+				$end_time->setTimezone( new \DateTimeZone( $booking->timezone ) );
 				break;
 			case 'host':
-			
-				if (isset($booking->event->availability['timezone'])) {
-					$end_time->setTimezone(new \DateTimeZone($booking->event->availability['timezone']));
+				if ( isset( $booking->event->availability['timezone'] ) ) {
+					$end_time->setTimezone( new \DateTimeZone( $booking->event->availability['timezone'] ) );
 				} else {
-			
-					$end_time->setTimezone(new \DateTimeZone('UTC'));
+
+					$end_time->setTimezone( new \DateTimeZone( 'UTC' ) );
 				}
 				break;
 			case 'utc':
-		
-				$end_time->setTimezone(new \DateTimeZone('UTC'));
+				$end_time->setTimezone( new \DateTimeZone( 'UTC' ) );
 				break;
 		}
 
-		return $end_time->format($format);
+		return $end_time->format( $format );
+	}
+
+	/**
+	 * Get default format based on global time format setting
+	 *
+	 * @return string
+	 */
+	private function get_default_format() {
+		$global_settings = get_option( 'quillbooking_settings', array() );
+		$time_format     = $global_settings['general']['time_format'] ?? '12';
+
+		// Return appropriate PHP date format based on time format setting
+		return $time_format === '24' ? 'F j, Y, H:i' : 'F j, Y, g:i A';
 	}
 }

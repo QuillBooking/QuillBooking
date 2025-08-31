@@ -23,9 +23,13 @@ const { Text } = Typography;
 
 interface MeetingActivitiesProps {
 	booking: Booking;
+	timeFormat: string;
 }
 
-const MeetingActivities: React.FC<MeetingActivitiesProps> = ({ booking }) => {
+const MeetingActivities: React.FC<MeetingActivitiesProps> = ({
+	booking,
+	timeFormat,
+}) => {
 	return (
 		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5 max-h-[500px] overflow-y-auto">
 			<CardHeader
@@ -60,7 +64,7 @@ const MeetingActivities: React.FC<MeetingActivitiesProps> = ({ booking }) => {
 									month: 'long', // "March"
 									hour: 'numeric',
 									minute: '2-digit',
-									hour12: true, // AM/PM format
+									hour12: timeFormat === '12', // Use global time format setting
 								});
 
 								return <p>{formattedDate}</p>;

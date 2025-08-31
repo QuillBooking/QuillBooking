@@ -277,6 +277,7 @@ const AvailabilityLimits = forwardRef<EventTabHandle, EventTabProps>(
 					setLimits={setLimits}
 					limits={limits}
 					setDisabled={props.setDisabled}
+					timeFormat={timeFormat}
 				/>
 			</div>
 		);

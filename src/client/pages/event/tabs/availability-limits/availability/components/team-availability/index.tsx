@@ -189,6 +189,7 @@ const TeamAvailability = ({
 					setDateOverrides={setDateOverrides}
 					setDisabled={setDisabled}
 					updatedAvailabilities={updatedAvailabilities}
+					timeFormat={timeFormat}
 				/>
 			</div>
 		</>

@@ -14,11 +14,14 @@ import { Card, Flex, Switch } from 'antd';
 import type { LimitBaseProps } from '@quillbooking/types';
 import { SelectTimezone } from '@quillbooking/components';
 
-interface SelectTimezoneProps extends LimitBaseProps { }
+interface SelectTimezoneProps extends LimitBaseProps {
+	timeFormat: string;
+}
 
 const TimezoneSection: React.FC<SelectTimezoneProps> = ({
 	limits,
 	handleChange,
+	timeFormat,
 }) => {
 	return (
 		<Card className="mt-4">
@@ -52,6 +55,7 @@ const TimezoneSection: React.FC<SelectTimezoneProps> = ({
 					handleChange={(value) =>
 						handleChange('timezone_lock', 'timezone', value)
 					}
+					timeFormat={timeFormat}
 				/>
 			)}
 		</Card>

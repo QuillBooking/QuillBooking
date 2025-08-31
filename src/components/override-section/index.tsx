@@ -14,6 +14,7 @@ interface OverrideSectionProps {
 	setDateOverrides: (overrides: DateOverrides) => void;
 	setDisabled: (value: boolean) => void;
 	updatedAvailabilities?: (newOverrides: DateOverrides) => void;
+	timeFormat: string;
 }
 
 const OverrideSection: React.FC<OverrideSectionProps> = ({
@@ -21,6 +22,7 @@ const OverrideSection: React.FC<OverrideSectionProps> = ({
 	setDateOverrides,
 	setDisabled,
 	updatedAvailabilities,
+	timeFormat,
 }) => {
 	const onAddOverride = () => {
 		setDisabled(false);
@@ -157,7 +159,12 @@ const OverrideSection: React.FC<OverrideSectionProps> = ({
 									getPopupContainer={(trigger) =>
 										trigger.parentElement || document.body
 									}
-									format="hh:mm A"
+									format={
+										timeFormat === '24'
+											? 'HH:mm'
+											: 'hh:mm A'
+									}
+									use12Hours={timeFormat === '12'}
 									value={[
 										dayjs(time.start, 'HH:mm'),
 										dayjs(time.end, 'HH:mm'),

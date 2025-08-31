@@ -1,17 +1,17 @@
+import { __ } from '@wordpress/i18n';
 import { isToday, isTomorrow } from 'date-fns';
 import { format, fromZonedTime, toZonedTime } from 'date-fns-tz';
-import { __ } from '@wordpress/i18n';
 
 import type { Booking, DateOverrides, Location } from '../types';
 
-export const getCurrentTimeInTimezone = (timezone: string): string => {
+export const getCurrentTimeInTimezone = (timezone: string, timeFormat: string = '12'): string => {
 	const options: Intl.DateTimeFormatOptions = {
 		year: 'numeric',
 		month: 'long',
 		day: 'numeric',
 		hour: 'numeric',
 		minute: '2-digit',
-		hour12: true,
+		hour12: timeFormat === '12',
 		timeZone: timezone,
 	};
 	return new Date().toLocaleString('en-US', options);
@@ -19,6 +19,28 @@ export const getCurrentTimeInTimezone = (timezone: string): string => {
 
 export const getCurrentTimezone = (): string => {
 	return Intl.DateTimeFormat().resolvedOptions().timeZone;
+};
+
+/**
+ * Format time string based on timeFormat preference
+ * @param time - Time string in HH:mm format
+ * @param timeFormat - '12' for 12-hour format, '24' for 24-hour format
+ * @returns Formatted time string
+ */
+export const formatTime = (time: string, timeFormat: string = '12'): string => {
+	if (!time) return '';
+
+	// Handle time parsing - support both HH:mm and H:mm formats
+	const [h, m] = time.split(':').map(Number);
+
+	if (timeFormat === '24') {
+		return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+	}
+
+	// 12-hour format
+	const ampm = h >= 12 ? 'PM' : 'AM';
+	const hour12 = h % 12 === 0 ? 12 : h % 12;
+	return `${hour12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
 };
 
 export const convertTimezone = (

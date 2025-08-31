@@ -38,6 +38,7 @@ interface EventLimitsProps {
 		options: SetStateAction<UnitOptionsType>
 	) => void;
 	setDisabled: (value: boolean) => void;
+	timeFormat: string;
 }
 /**
  * Event limits Component.
@@ -50,6 +51,7 @@ const EventLimits: React.FC<EventLimitsProps> = ({
 	setBookingDurationOptions,
 	setBookingFrequencyOptions,
 	setDisabled,
+	timeFormat,
 }) => {
 	const handleChange = (
 		section: keyof EventLimitsType,
@@ -212,7 +214,11 @@ const EventLimits: React.FC<EventLimitsProps> = ({
 				unitOptions={bookingDurationOptions}
 				setBookingDuration={setBookingDurationOptions}
 			/>
-			<TimezoneSection limits={limits} handleChange={handleChange} />
+			<TimezoneSection
+				limits={limits}
+				handleChange={handleChange}
+				timeFormat={timeFormat}
+			/>
 		</Card>
 	);
 };

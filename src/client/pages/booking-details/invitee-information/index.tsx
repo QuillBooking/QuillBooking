@@ -15,6 +15,7 @@ import {
 	TimezoneIcon,
 } from '@quillbooking/components';
 import { CardHeader } from '@quillbooking/components';
+import { convertTimezone, getCurrentTimezone } from '@quillbooking/utils';
 import InfoItem from '../info-items';
 
 /*
@@ -22,9 +23,13 @@ import InfoItem from '../info-items';
  */
 interface BookingDetailsProps {
 	booking: Booking;
+	timeFormat: string;
 }
 
-const InviteeInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
+const InviteeInformation: React.FC<BookingDetailsProps> = ({
+	booking,
+	timeFormat,
+}) => {
 	return (
 		<div className="border px-10 py-8 rounded-2xl flex flex-col gap-5">
 			<CardHeader
@@ -65,7 +70,28 @@ const InviteeInformation: React.FC<BookingDetailsProps> = ({ booking }) => {
 				<InfoItem
 					icon={<ClockIcon width={24} height={24} />}
 					title={__('Booked At', 'quillbooking')}
-					content={booking.created_at}
+					content={(() => {
+						if (!booking.created_at) return '';
+
+						const { date, time } = convertTimezone(
+							booking.created_at,
+							getCurrentTimezone()
+						);
+
+						// Convert to Date object and format properly
+						const formattedDate = new Date(
+							`${date} ${time}`
+						).toLocaleString('en-US', {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric',
+							hour: 'numeric',
+							minute: '2-digit',
+							hour12: timeFormat === '12', // Use global time format setting
+						});
+
+						return formattedDate;
+					})()}
 				/>
 			</div>
 		</div>

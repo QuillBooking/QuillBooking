@@ -21,6 +21,7 @@ import {
 	convertTimezone,
 	getCurrentTimezone,
 	groupBookingsByDate,
+	formatTime,
 } from '@quillbooking/utils';
 import AddBookingModal from '../bookings/add-booking-modal';
 import BookingList from './booking-list';
@@ -58,18 +59,6 @@ function getNextTenDays(): DayInfo[] {
 	return days;
 }
 
-function formatTime(time: string, timeFormat: string): string {
-	if (!time) return '';
-	const [h, m] = time.split(':').map(Number);
-	if (timeFormat === '12') {
-		const ampm = h >= 12 ? 'PM' : 'AM';
-		const hour12 = h % 12 === 0 ? 12 : h % 12;
-		return `${hour12.toString().padStart(2, '0')}:${m
-			.toString()
-			.padStart(2, '0')} ${ampm}`;
-	}
-	return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-}
 const days = getNextTenDays();
 
 const ShimmerLoader = () => (
@@ -306,7 +295,10 @@ const BookingDetails: React.FC = () => {
 								<MeetingInformation booking={booking} />
 								<BookingQuestion booking={booking} />
 								<PaymentHistory booking={booking} />
-								<InviteeInformation booking={booking} />
+								<InviteeInformation
+									booking={booking}
+									timeFormat={timeFormat}
+								/>
 							</Flex>
 						)}
 
@@ -322,7 +314,12 @@ const BookingDetails: React.FC = () => {
 									{formatTime(endTime, timeFormat)}
 								</p>
 							</div>
-							{booking && <MeetingActivities booking={booking} />}
+							{booking && (
+								<MeetingActivities
+									booking={booking}
+									timeFormat={timeFormat}
+								/>
+							)}
 							<BookingList
 								bookings={Object.values(bookings)[0] || []}
 								setSelectedDate={setSelectedDate}

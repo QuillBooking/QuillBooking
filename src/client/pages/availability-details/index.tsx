@@ -394,6 +394,7 @@ const AvailabilityDetails: React.FC = () => {
 											setAvailabilityTimezone(value);
 											setIsSaveBtnDisabled(false);
 										}}
+										timeFormat={timeFormat}
 									/>
 								</Card>
 							</Flex>
@@ -403,6 +404,7 @@ const AvailabilityDetails: React.FC = () => {
 								dateOverrides={dateOverrides || {}}
 								setDateOverrides={setDateOverrides}
 								setDisabled={() => setIsSaveBtnDisabled(false)}
+								timeFormat={timeFormat}
 							/>
 						</div>
 					</>

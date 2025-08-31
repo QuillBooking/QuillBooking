@@ -40,6 +40,7 @@ interface OverrideModalProps {
 		value: string
 	) => void;
 	onToggleUnavailable: () => void;
+	timeFormat: string;
 }
 
 const OverrideModal: React.FC<OverrideModalProps> = ({
@@ -54,6 +55,7 @@ const OverrideModal: React.FC<OverrideModalProps> = ({
 	onRemoveTimeSlot,
 	onUpdateTimeSlot,
 	onToggleUnavailable,
+	timeFormat,
 }) => {
 	return (
 		<Modal
@@ -91,7 +93,10 @@ const OverrideModal: React.FC<OverrideModalProps> = ({
 										value?.format('HH:mm') || '09:00'
 									)
 								}
-								format="HH:mm"
+								format={
+									timeFormat === '24' ? 'HH:mm' : 'hh:mm A'
+								}
+								use12Hours={timeFormat === '12'}
 							/>
 							<Text>-</Text>
 							<TimePicker
@@ -103,7 +108,10 @@ const OverrideModal: React.FC<OverrideModalProps> = ({
 										value?.format('HH:mm') || '17:00'
 									)
 								}
-								format="HH:mm"
+								format={
+									timeFormat === '24' ? 'HH:mm' : 'hh:mm A'
+								}
+								use12Hours={timeFormat === '12'}
 							/>
 							<Button
 								danger

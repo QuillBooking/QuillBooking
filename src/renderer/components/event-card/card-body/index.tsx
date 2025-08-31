@@ -471,6 +471,7 @@ const CardBody: React.FC<CardBodyProps> = ({
 					selectedTime={selectedTime}
 					booking={booking ?? null}
 					globalCurrency={globalCurrency}
+					timeFormat={timeFormat}
 				/>
 				{selectedTime && step === 2 ? (
 					type === 'reschedule' ? (

@@ -14,17 +14,20 @@ import {
 interface CurrentTimeInTimezoneProps
 	extends React.HTMLAttributes<HTMLDivElement> {
 	currentTimezone?: string;
+	timeFormat?: string;
 }
 
 const CurrentTimeInTimezone: React.FC<CurrentTimeInTimezoneProps> = ({
 	currentTimezone,
+	timeFormat = '12',
 	...rest
 }) => {
 	return (
 		<div {...rest}>
-				{getCurrentTimeInTimezone(
-					currentTimezone || getCurrentTimezone()
-				)}
+			{getCurrentTimeInTimezone(
+				currentTimezone || getCurrentTimezone(),
+				timeFormat
+			)}
 		</div>
 	);
 };

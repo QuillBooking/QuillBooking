@@ -117,6 +117,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 								: timeZone
 						}
 						className="time-container"
+						timeFormat={timeFormat}
 					/>
 				</div>
 			</div>

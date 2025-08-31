@@ -17,6 +17,7 @@ interface EventDetailsProps {
 	selectedTime: string | null; // time string like '14:30'
 	booking?: any; // Optional booking data, if needed
 	globalCurrency: string;
+	timeFormat: string;
 }
 
 const EventDetails: React.FC<EventDetailsProps> = ({
@@ -28,17 +29,22 @@ const EventDetails: React.FC<EventDetailsProps> = ({
 	selectedTime,
 	booking, // Optional booking data, if needed
 	globalCurrency,
+	timeFormat,
 }) => {
 	const isMultiDurations =
 		event.additional_settings.allow_attendees_to_select_duration;
+
+	// Helper function to format time based on timeFormat prop
+	const formatTimeDisplay = (time: string) => {
+		const displayFormat = timeFormat === '24' ? 'HH:mm' : 'hh:mm A';
+		return dayjs(time, 'HH:mm').format(displayFormat);
+	};
 
 	let timeRangeText = '';
 	if (selectedDate && selectedTime) {
 		const time = dayjs(selectedTime, 'HH:mm'); // parse string
 		const endTime = time.add(selectedDuration, 'minute');
-		timeRangeText = `${time.format('HH:mm')} - ${endTime.format(
-			'HH:mm'
-		)}, ${selectedDate.format('dddd, MMMM DD, YYYY')}`;
+		timeRangeText = `${formatTimeDisplay(selectedTime)} - ${formatTimeDisplay(endTime.format('HH:mm'))}, ${selectedDate.format('dddd, MMMM DD, YYYY')}`;
 	}
 
 	// Use the WordPress filter to render the price display component

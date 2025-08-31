@@ -413,7 +413,7 @@ class REST_Availability_Controller extends REST_Controller {
 		$availability_data = array(
 			'user_id'    => $user_id,
 			'name'       => $name,
-			'value'      => $value_data,
+			'value'      => maybe_serialize( $value_data ),
 			'timezone'   => $timezone,
 			'is_default' => false,
 		);
@@ -521,7 +521,7 @@ class REST_Availability_Controller extends REST_Controller {
 					$value_data['override'] = $override;
 				}
 
-				$availability->value = $value_data;
+				$availability->value = maybe_serialize( $value_data );
 			}
 
 			// Save all changes
@@ -634,7 +634,7 @@ class REST_Availability_Controller extends REST_Controller {
 		$clone_data = array(
 			'user_id'    => $availability->user_id,
 			'name'       => $availability->name . ' (clone)',
-			'value'      => $availability->value,
+			'value'      => maybe_serialize( $availability->value ),
 			'timezone'   => $availability->timezone,
 			'is_default' => false,
 		);
@@ -747,7 +747,7 @@ class REST_Availability_Controller extends REST_Controller {
 
 				foreach ( $calendar_events as $event ) {
 					// Get availability meta from the event itself
-					$availability_meta = $event->availability_meta;
+					$availability_meta = maybe_unserialize( $event->availability_meta );
 					if ( ! $availability_meta['is_common'] && $availability_meta['hosts_schedules'][ $user_id ] === $availability_id ) {
 						$events_count++;
 						$events[] = $event;

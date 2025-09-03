@@ -48,7 +48,7 @@ class Updater {
 
 		// add additional messages to pro plugin row.
 		add_action(
-			'in_plugin_update_message-quillbooking-pro/quillbooking-pro.php',
+			'in_plugin_update_message-QuillBooking-pro/quillbooking-pro.php',
 			array( $this, 'add_in_plugin_update_message' ),
 			10
 		);
@@ -80,8 +80,8 @@ class Updater {
 
 		// base dir of plugins (with trailing slash) instead of WP_PLUGIN_DIR.
 		$plugins_dir      = trailingslashit( dirname( dirname( QUILLBOOKING_PLUGIN_FILE ) ) );
-		$plugin_file      = 'quillbooking-pro/quillbooking-pro.php';
-		$full_plugin_file = $plugins_dir . 'quillbooking-pro/quillbooking-pro.php';
+		$plugin_file      = 'QuillBooking-pro/quillbooking-pro.php';
+		$full_plugin_file = $plugins_dir . 'QuillBooking-pro/quillbooking-pro.php';
 		$plugin_exists    = file_exists( $full_plugin_file );
 		$plugin_data      = $plugin_exists ? get_plugin_data( $full_plugin_file ) : array();
 		$plugin_slug      = 'quillbooking-pro';

@@ -52,7 +52,7 @@
   },
   "scripts": {
     "dev": "npm run dev-client && npm run dev-config",
-    "build": "npm run build-client && npm run build-config",
+    "build": "npm run build-client && npm run build-config && npm run build-renderer",
     "dev-client": "wp-scripts start src/client/index.tsx --output-path=build/client",
     "build-client": "wp-scripts build src/client/index.tsx --output-path=build/client",
     "dev-config": "wp-scripts start src/config/index.ts --output-path=build/config",

@@ -3,7 +3,7 @@
  * Plugin Name:       Quill Booking
  * Plugin URI:        https://quillbooking.com/
  * Description:       Quill Booking is a booking plugin for WordPress.
- * Version:           1.1.0
+ * Version:           1.2.1
  * Author:            quillbooking.com
  * Author URI:        http://quillbooking.com
  * Text Domain:       quillbooking
@@ -22,7 +22,7 @@ if ( ! defined( 'QUILLBOOKING_PLUGIN_FILE' ) ) {
 
 // Plugin version.
 if ( ! defined( 'QUILLBOOKING_VERSION' ) ) {
-	define( 'QUILLBOOKING_VERSION', '1.1.0' );
+	define( 'QUILLBOOKING_VERSION', '1.2.1' );
 }
 
 // Plugin Folder Path.

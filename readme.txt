@@ -6,7 +6,7 @@ Tags: Calendly, appointment scheduling, booking system, calendar management, eve
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -214,6 +214,12 @@ Quill Booking integrates with leading payment processors including Stripe, PayPa
 Yes, Quill Booking maintains full GDPR compliance with enterprise-grade security protocols to protect client information and maintain regulatory compliance.
 
 == Changelog ==
+
+= 1.2.1 = 03-Sep-2025
+* Fixed the 12hrs format issue
+
+= 1.2.0 = 31-Aug-2025
+* Urgent fix for the availability issue
 
 = 1.1.0 = 
 * Added collective team events

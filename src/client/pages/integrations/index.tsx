@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect } from '@wordpress/element';
 
 /**
  * External dependencies
@@ -28,7 +28,12 @@ import {
 	Automation,
 	TrackingAnalytics,
 } from './tabs';
-import { useCurrentUser, useNavigate, useNotice } from '@quillbooking/hooks';
+import {
+	useCurrentUser,
+	useNavigate,
+	useNotice,
+	useTabs,
+} from '@quillbooking/hooks';
 
 /**
  * Integration component
@@ -40,11 +45,26 @@ const Integrations: React.FC = () => {
 	const canManageAllCalendars = useCurrentUser().hasCapability(
 		'quillbooking_manage_all_calendars'
 	);
-	const [activeTab, setActiveTab] = useState<string>(
-		'conferencing-calendars'
-	);
 	const navigate = useNavigate();
 	const { errorNotice } = useNotice();
+
+	// Valid tabs based on user capabilities
+	const validTabs = canManageAllCalendars
+		? [
+				'conferencing-calendars',
+				'sms-integration',
+				'payments',
+				'automation',
+				'tracking-analytics',
+			]
+		: ['conferencing-calendars'];
+
+	const { activeTab, handleTabChange } = useTabs({
+		defaultTab: 'conferencing-calendars',
+		validTabs,
+		urlParam: 'tab',
+		updateUrl: true,
+	});
 
 	useEffect(() => {
 		if (!isAdmin()) {
@@ -57,36 +77,7 @@ const Integrations: React.FC = () => {
 			navigate('calendars');
 			return;
 		}
-		// Get the tab from URL search params on component mount
-		const searchParams = new URLSearchParams(window.location.search);
-
-		const tab = searchParams.get('tab');
-		if (
-			tab &&
-			[
-				'conferencing-calendars',
-				'sms-integration',
-				'payments',
-				'automation',
-				'tracking-analytics',
-			].includes(tab)
-		) {
-			setActiveTab(tab);
-		}
 	}, []);
-
-	const handleTabChange = (key: string) => {
-		setActiveTab(key);
-		// Update URL search params when tab changes
-		const searchParams = new URLSearchParams(window.location.search);
-		// remove if have subtab
-		if (searchParams.has('subtab')) {
-			searchParams.delete('subtab');
-		}
-		searchParams.set('tab', key);
-		const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
-		window.history.pushState({}, '', newUrl);
-	};
 
 	const renderTabContent = () => {
 		switch (activeTab) {

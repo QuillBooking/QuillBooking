@@ -6,3 +6,4 @@ export { default as useNavigate } from './navigate';
 export { default as useCurrentUser } from './current-user';
 export { default as useGlobalSettings } from './global-settings';
 export { default as useEvent } from './event';
+export { default as useTabs } from './use-tabs';

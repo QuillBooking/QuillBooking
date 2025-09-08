@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useEffect, useState, useRef } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 
 /**
  * External dependencies
@@ -13,7 +13,7 @@ import { Card, Button, Flex, Form, Skeleton, Typography, Spin } from 'antd';
  * Internal dependencies
  */
 import type { Integration } from '@quillbooking/config';
-import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
+import { useApi, useNotice, useNavigate, useTabs } from '@quillbooking/hooks';
 import ZoomFields from './fields/ZoomFields';
 import GoogleFields from './fields/GoogleFields';
 import OutlookFields from './fields/OutlookFields';
@@ -49,69 +49,23 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	const { successNotice, errorNotice } = useNotice();
 	const [saving, setSaving] = useState(false);
 	const [calendar, setCalendar] = useState<any>(null);
-	const [previousSlug, setPreviousSlug] = useState<string | null>(slug);
-	const [loadingAccount, setLoadingAccount] = useState(true);
 	const [isProVersion, setIsProVersion] = useState<boolean>(false);
 	const [hasConnectedZoomAccounts, setHasConnectedZoomAccounts] =
 		useState<boolean>(false);
 
-	// Use a ref to track the last processed slug to prevent redundant updates
-	const lastProcessedSlugRef = useRef<string | null>(slug);
+	// Use useTabs hook for tab management
+	const { activeTab } = useTabs({
+		defaultTab: slug || '',
+		urlParam: 'subtab',
+		updateUrl: false, // Parent component handles URL updates
+	});
 
 	// Reset form when integration changes
 	useEffect(() => {
-		if (slug !== previousSlug) {
+		if (slug) {
 			form.resetFields();
-			setPreviousSlug(slug);
-			lastProcessedSlugRef.current = slug;
 		}
-	}, [slug, previousSlug, form]);
-
-	// Listen for tab changes from URL
-	useEffect(() => {
-		const handleTabChange = (event?: Event | CustomEvent<any>) => {
-			// Check if this is a custom event with detail
-			const customEvent = event as CustomEvent<any>;
-			if (customEvent.detail) {
-				// If this event was triggered by the parent component, ignore it to prevent loops
-				if (
-					customEvent.detail.source ===
-					'conferencing-calendars-component'
-				) {
-					return;
-				}
-			}
-
-			// Get the subtab from the URL
-			const urlParams = new URLSearchParams(window.location.search);
-			const subtabParam = urlParams.get('subtab');
-
-			// Only update if the subtab is different from both current slug and previous slug
-			// and hasn't been processed yet
-			if (
-				subtabParam &&
-				subtabParam !== slug &&
-				subtabParam !== previousSlug &&
-				subtabParam !== lastProcessedSlugRef.current
-			) {
-				lastProcessedSlugRef.current = subtabParam;
-				setPreviousSlug(subtabParam);
-			}
-		};
-
-		// Add event listener for URL changes
-		window.addEventListener('popstate', handleTabChange);
-		// Listen for custom event from parent component
-		window.addEventListener('quillbooking-tab-changed', handleTabChange);
-
-		return () => {
-			window.removeEventListener('popstate', handleTabChange);
-			window.removeEventListener(
-				'quillbooking-tab-changed',
-				handleTabChange
-			);
-		};
-	}, [slug, previousSlug]);
+	}, [slug, form]);
 
 	useEffect(() => {
 		fetchCalendars();
@@ -122,7 +76,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 
 	// Set form values for non-Zoom integrations (Zoom handles its own form values)
 	useEffect(() => {
-		if (slug === 'zoom') {
+		const currentTab = activeTab || slug;
+		if (currentTab === 'zoom') {
 			return;
 		}
 
@@ -139,7 +94,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 				cache_time: CACHE_TIME_OPTIONS[1].value,
 			});
 		}
-	}, [integration, form, slug, CACHE_TIME_OPTIONS]);
+	}, [integration, form, activeTab, slug, CACHE_TIME_OPTIONS]);
 
 	const fetchCalendars = () => {
 		callApi({
@@ -151,14 +106,12 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 					const currentCalendar = response.data[0];
 					setCalendar(currentCalendar);
 				} else {
-					setLoadingAccount(false);
 					errorNotice(
 						__('No calendars found for this user', 'quillbooking')
 					);
 				}
 			},
 			onError: (error) => {
-				setLoadingAccount(false);
 				errorNotice(
 					error.message ||
 						__('Failed to fetch calendars', 'quillbooking')
@@ -167,19 +120,20 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 		});
 	};
 
-	const handleSaveSettings = (values: any) => {
+	const handleSaveSettings = () => {
+		const currentTab = activeTab || slug;
 		const formValues = form.getFieldsValue();
 		const processedValues = applyFilters(
 			'quillbooking.before_save_settings',
 			formValues,
 			form,
-			slug,
+			currentTab,
 			CACHE_TIME_OPTIONS
 		);
 
 		setSaving(true);
 		callApi({
-			path: `integrations/${slug}`,
+			path: `integrations/${currentTab}`,
 			method: 'POST',
 			data: { settings: { app: processedValues } },
 			onSuccess() {
@@ -209,7 +163,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	};
 
 	const renderFields = () => {
-		switch (slug) {
+		const currentTab = activeTab || slug;
+		switch (currentTab) {
 			case 'zoom':
 				return (
 					<ZoomFields
@@ -253,7 +208,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	};
 
 	const getSubmitButtonText = () => {
-		switch (slug) {
+		const currentTab = activeTab || slug;
+		switch (currentTab) {
 			case 'zoom':
 				// Hide button when there are connected Zoom accounts
 				return hasConnectedZoomAccounts
@@ -303,8 +259,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 								form={form}
 								layout="vertical"
 								onFinish={handleSaveSettings}
-								className={`${slug}-form`}
-								name={`${slug}-connection-form`}
+								className={`${activeTab || slug}-form`}
+								name={`${activeTab || slug}-connection-form`}
 								preserve={false}
 							>
 								{renderFields()}
@@ -314,7 +270,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 											type="primary"
 											htmlType="submit"
 											loading={saving || loading}
-											className={`${slug}-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
+											className={`${activeTab || slug}-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
 											icon={
 												saving || loading ? (
 													<Spin

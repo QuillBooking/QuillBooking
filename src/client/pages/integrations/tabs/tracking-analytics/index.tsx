@@ -2,12 +2,11 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useState, useEffect, useRef } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 
 /**
  * External dependencies
  */
-import { useNavigate } from 'react-router-dom';
 
 /**
  * Internal dependencies
@@ -17,10 +16,9 @@ import ConnectionCard from './connection-card';
 import { NoticeBanner, SelectionCard } from '@quillbooking/components';
 import type { NoticeMessage } from '@quillbooking/types';
 import IntegrationsShimmerLoader from '../../shimmer-loader';
+import { useTabs } from '../../../../../hooks';
 
 const TrackingAnalytics: React.FC = () => {
-	const navigate = useNavigate();
-	const [activeTab, setActiveTab] = useState<string | null>(null);
 	const [integrations, setIntegrations] = useState(() => {
 		const availableIntegrations = Object.entries(
 			ConfigAPI.getIntegrations() || {}
@@ -43,132 +41,24 @@ const TrackingAnalytics: React.FC = () => {
 	const [isLoading] = useState(false);
 	const [notice, setNotice] = useState<NoticeMessage | null>(null);
 
-	// Use a ref to track if we're currently updating the URL to prevent loops
-	const isUpdatingUrl = useRef(false);
-	// Use a ref to store the last active tab to prevent redundant updates
-	const lastActiveTabRef = useRef<string | null>(null);
+	// Get default tab from integrations
+	const defaultTab = integrations.length > 0 ? integrations[0].id : 'google';
+	const validTabs = integrations.map((integration) => integration.id);
 
-	// Handle URL parameters for tab and subtab
+	const { activeTab, handleTabChange } = useTabs({
+		defaultTab,
+		validTabs,
+		urlParam: 'subtab',
+		updateUrl: true,
+		preventUrlLoops: true,
+	});
+
+	// Update activeTab when integrations change and no tab is selected
 	useEffect(() => {
-		const handleURLChange = () => {
-			// If we're currently updating the URL, don't respond to the URL change
-			if (isUpdatingUrl.current) {
-				return;
-			}
-
-			const urlParams = new URLSearchParams(window.location.search);
-			const tabParam = urlParams.get('tab');
-			const subtabParam = urlParams.get('subtab');
-
-			// If we're in the tracking-analytics tab and have a subtab, set it as active
-			// Only update activeTab if it's different from the current subtab to prevent infinite loops
-			if (
-				tabParam === 'tracking-analytics' &&
-				subtabParam &&
-				activeTab !== subtabParam &&
-				lastActiveTabRef.current !== subtabParam
-			) {
-				lastActiveTabRef.current = subtabParam;
-				setActiveTab(subtabParam);
-			} else if (integrations.length > 0 && !activeTab) {
-				// Otherwise set first integration as default
-				const defaultTab = integrations[0].id;
-				lastActiveTabRef.current = defaultTab;
-				setActiveTab(defaultTab);
-
-				// Initialize URL parameters if they don't exist
-				if (
-					tabParam === 'tracking-analytics' &&
-					!subtabParam &&
-					defaultTab
-				) {
-					try {
-						isUpdatingUrl.current = true;
-						const newUrlParams = new URLSearchParams(
-							window.location.search
-						);
-						newUrlParams.set('subtab', defaultTab);
-						const newUrl = `${window.location.pathname}?${newUrlParams.toString()}`;
-						window.history.pushState({}, '', newUrl);
-					} finally {
-						// Always reset the flag when done
-						setTimeout(() => {
-							isUpdatingUrl.current = false;
-						}, 0);
-					}
-				}
-			}
-		};
-
-		// Initial setup
-		handleURLChange();
-
-		// Add event listener for URL changes
-		window.addEventListener('popstate', handleURLChange);
-
-		// Clean up
-		return () => {
-			window.removeEventListener('popstate', handleURLChange);
-		};
-	}, [integrations, activeTab]);
-
-	// Handle tab change
-	const handleTabChange = (newTab: string) => {
-		// Don't update if the tab is already active
-		if (activeTab === newTab || lastActiveTabRef.current === newTab) {
-			return;
+		if (integrations.length > 0 && !activeTab) {
+			handleTabChange(integrations[0].id);
 		}
-
-		// Update our refs and state
-		lastActiveTabRef.current = newTab;
-		setActiveTab(newTab);
-
-		// Mark that we're updating the URL to prevent loops
-		try {
-			isUpdatingUrl.current = true;
-
-			// Update only the subtab parameter while preserving other URL parameters
-			const urlParams = new URLSearchParams(window.location.search);
-
-			// Make sure we have the tab parameter set properly first
-			if (
-				!urlParams.has('tab') ||
-				urlParams.get('tab') !== 'tracking-analytics'
-			) {
-				urlParams.set('tab', 'tracking-analytics');
-			}
-
-			// Now set the subtab parameter
-			urlParams.set('subtab', newTab);
-
-			// Keep the current URL path and only update the search params
-			const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-
-			// Use navigate to update URL or fallback to history API
-			if (navigate) {
-				navigate(newUrl, { replace: true });
-			} else {
-				window.history.pushState({}, '', newUrl);
-			}
-
-			// Dispatch a custom event to notify other components about the tab change
-			// Include a flag to indicate this event was triggered by this component
-			window.dispatchEvent(
-				new CustomEvent('quillbooking-tab-changed', {
-					detail: {
-						tab: 'tracking-analytics',
-						subtab: newTab,
-						source: 'tracking-analytics-component',
-					},
-				})
-			);
-		} finally {
-			// Always reset the flag when done, using setTimeout to ensure it happens after event processing
-			setTimeout(() => {
-				isUpdatingUrl.current = false;
-			}, 0);
-		}
-	};
+	}, [integrations, activeTab, handleTabChange]);
 
 	if (isLoading) {
 		return <IntegrationsShimmerLoader />;

@@ -34,6 +34,7 @@ use QuillBooking\Payment_Gateway\Payment_Validator;
  */
 class REST_Event_Controller extends REST_Controller {
 
+
 	/**
 	 * REST Base
 	 *

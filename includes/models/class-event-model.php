@@ -33,7 +33,6 @@ class Event_Model extends Model {
 
 
 
-
 	/**
 	 * Cached processed availability to avoid database updates during computation
 	 *
@@ -111,7 +110,7 @@ class Event_Model extends Model {
 		'duration'          => 'required',
 		'color'             => 'regex:/^#[a-fA-F0-9]{6}$/',
 		'availability_id'   => 'required|integer',
-		'availability_meta' => 'required|string',
+		'availability_meta' => 'required|array',
 		'availability_type' => 'required|string',
 	);
 
@@ -216,7 +215,18 @@ class Event_Model extends Model {
 	 * @return string|null
 	 */
 	public function getAvailabilityMetaAttribute() {
-		return $this->attributes['availability_meta'] ? maybe_unserialize( $this->attributes['availability_meta'] ) : array();
+		if ( ! $this->attributes['availability_meta'] ) {
+			return array();
+		}
+
+		$data = maybe_unserialize( $this->attributes['availability_meta'] );
+
+		// Handle double serialization case (when controller pre-serializes data)
+		if ( is_string( $data ) && is_serialized( $data ) ) {
+			$data = maybe_unserialize( $data );
+		}
+
+		return $data ?: array();
 	}
 
 	/**
@@ -1159,6 +1169,7 @@ class Event_Model extends Model {
 	}
 
 	private function getTeamAvailability( $availability, $user_id = null ) {
+		xdebug_break();
 		$type          = $this->availability_type;
 		$is_common     = $this->availability_meta['is_common'];
 		$calendar_type = $this->calendar->type;

@@ -30,6 +30,10 @@ use QuillBooking\Helpers\Integrations_Helper;
  */
 class Event_Model extends Model {
 
+
+
+
+
 	/**
 	 * Cached processed availability to avoid database updates during computation
 	 *
@@ -107,7 +111,7 @@ class Event_Model extends Model {
 		'duration'          => 'required',
 		'color'             => 'regex:/^#[a-fA-F0-9]{6}$/',
 		'availability_id'   => 'required|integer',
-		'availability_meta' => 'required|array',
+		'availability_meta' => 'required|string',
 		'availability_type' => 'required|string',
 	);
 
@@ -213,6 +217,16 @@ class Event_Model extends Model {
 	 */
 	public function getAvailabilityMetaAttribute() {
 		return $this->attributes['availability_meta'] ? maybe_unserialize( $this->attributes['availability_meta'] ) : array();
+	}
+
+	/**
+	 * Set the event availability meta
+	 *
+	 * @param array $value
+	 * @return void
+	 */
+	public function setAvailabilityMetaAttribute( $value ) {
+		$this->attributes['availability_meta'] = maybe_serialize( $value );
 	}
 
 	/**
@@ -639,7 +653,7 @@ class Event_Model extends Model {
 								if ( isset( $account['config']['default_calendar'] ) ) {
 									// Check if Teams is explicitly enabled in the account settings
 									$teams_enabled = isset( $account['config']['settings']['enable_teams'] ) &&
-									$account['config']['settings']['enable_teams'] === true;
+										$account['config']['settings']['enable_teams'] === true;
 									break;
 								}
 							}
@@ -663,8 +677,10 @@ class Event_Model extends Model {
 							} else {
 								$has_default_calendar = false;
 								foreach ( $accounts as $account ) {
-									if ( isset( $account['config']['default_calendar'] ) &&
-									 ! empty( $account['config']['default_calendar']['calendar_id'] ) ) {
+									if (
+										isset( $account['config']['default_calendar'] ) &&
+										! empty( $account['config']['default_calendar']['calendar_id'] )
+									) {
 										$has_default_calendar = true;
 										break;
 									}
@@ -681,7 +697,7 @@ class Event_Model extends Model {
 			}
 
 			if ( $this->calendar->type === 'team' ) {
-					$teams_enabled = true;
+				$teams_enabled = true;
 			}
 
 			$connected_integrations[ $slug ] = array(

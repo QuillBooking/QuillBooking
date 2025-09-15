@@ -79,17 +79,25 @@ export const useTabs = ({
                 setActiveTab(defaultTab);
 
                 // Initialize URL with default tab if updateUrl is enabled
-                if (updateUrl && preventUrlLoops) {
-                    try {
-                        isUpdatingUrl.current = true;
+                if (updateUrl) {
+                    if (preventUrlLoops) {
+                        try {
+                            isUpdatingUrl.current = true;
+                            const newUrlParams = new URLSearchParams(window.location.search);
+                            newUrlParams.set(urlParam, defaultTab);
+                            const newUrl = `${window.location.pathname}?${newUrlParams.toString()}`;
+                            window.history.pushState({}, '', newUrl);
+                        } finally {
+                            setTimeout(() => {
+                                isUpdatingUrl.current = false;
+                            }, 0);
+                        }
+                    } else {
+                        // For non-loop-prevention mode, just update URL normally
                         const newUrlParams = new URLSearchParams(window.location.search);
                         newUrlParams.set(urlParam, defaultTab);
                         const newUrl = `${window.location.pathname}?${newUrlParams.toString()}`;
                         window.history.pushState({}, '', newUrl);
-                    } finally {
-                        setTimeout(() => {
-                            isUpdatingUrl.current = false;
-                        }, 0);
                     }
                 }
             }
@@ -138,12 +146,16 @@ export const useTabs = ({
             if (newTab === defaultTab) {
                 // Remove tab param if switching to default tab
                 urlParams.delete(urlParam);
-                // Also remove subtab if it exists
-                urlParams.delete('subtab');
+                // Only remove subtab if this is managing the main tab parameter
+                if (urlParam === 'tab') {
+                    urlParams.delete('subtab');
+                }
             } else {
                 urlParams.set(urlParam, newTab);
-                // Remove subtab when changing main tabs
-                urlParams.delete('subtab');
+                // Only remove subtab when changing main tabs
+                if (urlParam === 'tab') {
+                    urlParams.delete('subtab');
+                }
             }
 
             const newUrl = `${window.location.pathname}?${urlParams.toString()}`;

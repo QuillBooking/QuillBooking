@@ -13,7 +13,7 @@ import { Card, Button, Flex, Form, Skeleton, Typography, Spin } from 'antd';
  * Internal dependencies
  */
 import type { Integration } from '@quillbooking/config';
-import { useApi, useNotice, useNavigate, useTabs } from '@quillbooking/hooks';
+import { useApi, useNotice, useNavigate } from '@quillbooking/hooks';
 import ZoomFields from './fields/ZoomFields';
 import GoogleFields from './fields/GoogleFields';
 import OutlookFields from './fields/OutlookFields';
@@ -53,12 +53,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	const [hasConnectedZoomAccounts, setHasConnectedZoomAccounts] =
 		useState<boolean>(false);
 
-	// Use useTabs hook for tab management
-	const { activeTab } = useTabs({
-		defaultTab: slug || '',
-		urlParam: 'subtab',
-		updateUrl: false, // Parent component handles URL updates
-	});
+	// Use the slug prop directly since parent handles tab management
 
 	// Reset form when integration changes
 	useEffect(() => {
@@ -76,8 +71,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 
 	// Set form values for non-Zoom integrations (Zoom handles its own form values)
 	useEffect(() => {
-		const currentTab = activeTab || slug;
-		if (currentTab === 'zoom') {
+		if (slug === 'zoom') {
 			return;
 		}
 
@@ -94,7 +88,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 				cache_time: CACHE_TIME_OPTIONS[1].value,
 			});
 		}
-	}, [integration, form, activeTab, slug, CACHE_TIME_OPTIONS]);
+	}, [integration, form, slug, CACHE_TIME_OPTIONS]);
 
 	const fetchCalendars = () => {
 		callApi({
@@ -121,19 +115,18 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	};
 
 	const handleSaveSettings = () => {
-		const currentTab = activeTab || slug;
 		const formValues = form.getFieldsValue();
 		const processedValues = applyFilters(
 			'quillbooking.before_save_settings',
 			formValues,
 			form,
-			currentTab,
+			slug,
 			CACHE_TIME_OPTIONS
 		);
 
 		setSaving(true);
 		callApi({
-			path: `integrations/${currentTab}`,
+			path: `integrations/${slug}`,
 			method: 'POST',
 			data: { settings: { app: processedValues } },
 			onSuccess() {
@@ -163,8 +156,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	};
 
 	const renderFields = () => {
-		const currentTab = activeTab || slug;
-		switch (currentTab) {
+		switch (slug) {
 			case 'zoom':
 				return (
 					<ZoomFields
@@ -208,8 +200,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 	};
 
 	const getSubmitButtonText = () => {
-		const currentTab = activeTab || slug;
-		switch (currentTab) {
+		switch (slug) {
 			case 'zoom':
 				// Hide button when there are connected Zoom accounts
 				return hasConnectedZoomAccounts
@@ -259,8 +250,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 								form={form}
 								layout="vertical"
 								onFinish={handleSaveSettings}
-								className={`${activeTab || slug}-form`}
-								name={`${activeTab || slug}-connection-form`}
+								className={`${slug}-form`}
+								name={`${slug}-connection-form`}
 								preserve={false}
 							>
 								{renderFields()}
@@ -270,7 +261,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 											type="primary"
 											htmlType="submit"
 											loading={saving || loading}
-											className={`${activeTab || slug}-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
+											className={`${slug}-submit-btn bg-color-primary hover:bg-color-primary-dark flex items-center h-10`}
 											icon={
 												saving || loading ? (
 													<Spin

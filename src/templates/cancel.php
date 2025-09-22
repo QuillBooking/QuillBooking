@@ -88,8 +88,8 @@ $status              = $booking_array['status'] ?? '';
 								?>
 							required<?php endif; ?>></textarea>
 					</div>
-					<?php if ( $cancellation_reason['helpText'] ) : ?>
-						<p class="help-text"><?php echo $cancellation_reason['helpText']; ?></p>
+					<?php if ( isset( $cancellation_reason['helpText'] ) && $cancellation_reason['helpText'] ) : ?>
+						<p class="help-text"><?php echo esc_html( $cancellation_reason['helpText'] ); ?></p>
 					<?php endif; ?>
 				<?php endif; ?>
 

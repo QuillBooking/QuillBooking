@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name:       Quill Booking
  * Plugin URI:        https://quillbooking.com/
@@ -58,6 +59,16 @@ add_filter( 'doing_it_wrong_trigger_error', 'quillbooking_suppress_translation_n
 // Load textdomain immediately before QuillBooking initializes
 quillbooking_load_textdomain_early();
 
+// Require autoload.
+require_once QUILLBOOKING_PLUGIN_DIR . 'includes/autoload.php';
+
+error_log( 'QUILLBOOKING_PLUGIN_DIR: ' . QUILLBOOKING_PLUGIN_DIR );
+// Register activation hook
+register_activation_hook(
+	QUILLBOOKING_PLUGIN_FILE,
+	array( QuillBooking\Database\Install::class, 'install' )
+);
+
 // Initialize QuillBooking on plugins_loaded as normal
 add_action( 'plugins_loaded', 'quillbooking_initialize_main' );
 
@@ -68,19 +79,19 @@ add_action( 'plugins_loaded', 'quillbooking_initialize_main' );
  */
 function quillbooking_pre_init() {
 	global $wp_version;
-	
+
 	// Get unmodified $wp_version.
 	include ABSPATH . WPINC . '/version.php';
-	
+
 	// Strip '-src' from the version string. Messes up version_compare().
 	$version = str_replace( '-src', '', $wp_version );
-	
+
 	// Check for minimum WordPress version.
 	if ( version_compare( $version, QUILLBOOKING_MIN_WP_VERSION, '<' ) ) {
 		add_action( 'admin_notices', 'quillbooking_wordpress_version_notice' );
 		return;
 	}
-	
+
 	// Check for minimum PHP version.
 	if ( version_compare( phpversion(), QUILLBOOKING_MIN_PHP_VERSION, '<' ) ) {
 		add_action( 'admin_notices', 'quillbooking_php_version_notice' );
@@ -113,14 +124,9 @@ function quillbooking_load_textdomain_early() {
  * Initialize QuillBooking after textdomain is ready
  */
 function quillbooking_initialize_main() {
-	// Require autoload.
-	require_once QUILLBOOKING_PLUGIN_DIR . 'includes/autoload.php';
-	
 	// QuillBooking initialization
 	QuillBooking\QuillBooking::instance();
-	
-	register_activation_hook( QUILLBOOKING_PLUGIN_FILE, array( QuillBooking\Database\Install::class, 'install' ) );
-	
+
 	do_action( 'quillbooking_loaded' );
 }
 

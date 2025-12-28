@@ -33,6 +33,7 @@ class Event_Model extends Model {
 
 
 
+
 	/**
 	 * Cached processed availability to avoid database updates during computation
 	 *
@@ -1169,7 +1170,6 @@ class Event_Model extends Model {
 	}
 
 	private function getTeamAvailability( $availability, $user_id = null ) {
-		xdebug_break();
 		$type          = $this->availability_type;
 		$is_common     = $this->availability_meta['is_common'];
 		$calendar_type = $this->calendar->type;

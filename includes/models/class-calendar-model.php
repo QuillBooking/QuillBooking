@@ -299,16 +299,39 @@ class Calendar_Model extends Model {
 	}
 
 	/**
-	 * Boot
+	 * Override save method to ensure events are registered
 	 *
-	 * @since 1.0.0
-	 *
-	 * @return void
+	 * @param array $options
+	 * @return bool
 	 */
-	public static function boot() {
-		 parent::boot();
+	public function save( array $options = array() ) {
+		// Ensure events are registered if this is a new calendar
+		if ( ! $this->exists ) {
+			$dispatcher = static::getEventDispatcher();
+			$model_name = static::class;
+			$event_name = "eloquent.creating: {$model_name}";
+			$listeners  = $dispatcher->getListeners( $event_name );
 
-		static::creating(
+			// If no listeners, re-register events on current dispatcher
+			if ( count( $listeners ) === 0 ) {
+				$this->registerEventsOnDispatcher( $dispatcher, $model_name );
+			}
+		}
+
+		return parent::save( $options );
+	}
+
+		/**
+		 * Register events on a specific dispatcher
+		 *
+		 * @param object $dispatcher Event dispatcher instance
+		 * @param string $model_name Model class name
+		 * @return void
+		 */
+	private function registerEventsOnDispatcher( $dispatcher, $model_name ) {
+		// Creating event
+		$dispatcher->listen(
+			"eloquent.creating: {$model_name}",
 			function ( $calendar ) {
 				$calendar->hash_id = Utils::generate_hash_key();
 				$originalSlug      = $slug = Str::slug( $calendar->name );
@@ -337,25 +360,46 @@ class Calendar_Model extends Model {
 			}
 		);
 
-		static::retrieved(
+		$dispatcher->listen(
+			"eloquent.deleting: {$model_name}",
+			function ( $calendar ) {
+				$calendar->meta()->delete();
+				$calendar->bookings()->delete();
+			}
+		);
+		$dispatcher->listen(
+			"eloquent.retrieved: {$model_name}",
 			function ( $calendar ) {
 				if ( 'team' === $calendar->type ) {
 					$calendar->team_members = $calendar->getTeamMembers();
 				}
 			}
 		);
+	}
 
-		static::deleting(
-			function ( $calendar ) {
-				$calendar->meta()->delete();
-				$calendar->bookings()->delete();
+		/**
+		 * Boot
+		 *
+		 * @since 1.0.0
+		 *
+		 * @return void
+		 */
+	public static function boot() {
+		global $quillbooking_calendar_events_registered;
+		parent::boot();
+		if ( $quillbooking_calendar_events_registered ) {
+			return;
+		}
+		$quillbooking_calendar_events_registered = true;
+		// Get the event dispatcher
+		$dispatcher = static::getEventDispatcher();
+		if ( ! $dispatcher ) {
+			return;
+		}
 
-				$calendar->events()->each(
-					function ( $event ) {
-						$event->delete();
-					}
-				);
-			}
-		);
+		// Register events directly with the dispatcher
+		$model_name = static::class;
+		$instance   = new static();
+		$instance->registerEventsOnDispatcher( $dispatcher, $model_name );
 	}
 }

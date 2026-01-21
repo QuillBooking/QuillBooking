@@ -77,10 +77,13 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 
 		if (integration?.settings?.app) {
 			const appSettings = integration.settings.app as Record<string, any>;
+			// Convert cache_time to string to match Select options
+			const cacheTime = appSettings.cache_time 
+				? String(appSettings.cache_time) 
+				: CACHE_TIME_OPTIONS[1].value;
 			form.setFieldsValue({
 				...appSettings,
-				cache_time:
-					appSettings.cache_time ?? CACHE_TIME_OPTIONS[1].value,
+				cache_time: cacheTime,
 			});
 		} else {
 			// If no settings exist yet, initialize with default cache_time
@@ -171,8 +174,6 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 				return (
 					<GoogleFields
 						CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS}
-						calendar={calendar}
-						form={form}
 						handleNavigation={handleNavigation}
 					/>
 				);
@@ -180,8 +181,6 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 				return (
 					<OutlookFields
 						CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS}
-						calendar={calendar}
-						form={form}
 						handleNavigation={handleNavigation}
 					/>
 				);
@@ -189,8 +188,6 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 				return (
 					<AppleFields
 						CACHE_TIME_OPTIONS={CACHE_TIME_OPTIONS}
-						calendar={calendar}
-						form={form}
 						handleNavigation={handleNavigation}
 					/>
 				);
@@ -210,7 +207,7 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 			case 'google':
 			case 'outlook':
 			case 'apple':
-				return `Update ${integration.name} Caching Time`;
+				return ``;
 			default:
 				return 'Save Settings';
 		}

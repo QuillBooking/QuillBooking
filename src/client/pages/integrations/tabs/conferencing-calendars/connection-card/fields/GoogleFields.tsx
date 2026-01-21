@@ -4,8 +4,6 @@ import { ProGlobalIntegrations } from '@quillbooking/components';
 
 const GoogleFields = ({
 	CACHE_TIME_OPTIONS,
-	form,
-	calendar,
 	handleNavigation,
 }) => {
 	const googleList = {
@@ -21,7 +19,7 @@ const GoogleFields = ({
 	return applyFilters(
 		'quillbooking.googleFields',
 		<ProGlobalIntegrations list={googleList} />,
-		{ CACHE_TIME_OPTIONS, form, calendar, handleNavigation }
+		{ CACHE_TIME_OPTIONS, handleNavigation }
 	) as React.ReactNode;
 };
 

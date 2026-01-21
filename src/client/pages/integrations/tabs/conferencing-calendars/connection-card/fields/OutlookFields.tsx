@@ -4,8 +4,6 @@ import { ProGlobalIntegrations } from '@quillbooking/components';
 
 const OutlookFields = ({
 	CACHE_TIME_OPTIONS,
-	form,
-	calendar,
 	handleNavigation,
 }) => {
 	const outlookList = {
@@ -21,7 +19,7 @@ const OutlookFields = ({
 	return applyFilters(
 		'quillbooking.outlookFields',
 		<ProGlobalIntegrations list={outlookList} />,
-		{ CACHE_TIME_OPTIONS, form, calendar, handleNavigation }
+		{ CACHE_TIME_OPTIONS, handleNavigation }
 	) as React.ReactNode;
 };
 

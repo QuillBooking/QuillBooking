@@ -4,8 +4,6 @@ import { ProGlobalIntegrations } from '@quillbooking/components';
 
 const AppleFields = ({
 	CACHE_TIME_OPTIONS,
-	form,
-	calendar,
 	handleNavigation,
 }) => {
 	const appleList = {
@@ -21,7 +19,7 @@ const AppleFields = ({
 	return applyFilters(
 		'quillbooking.appleFields',
 		<ProGlobalIntegrations list={appleList} />,
-		{ CACHE_TIME_OPTIONS, form, calendar, handleNavigation }
+		{ CACHE_TIME_OPTIONS, handleNavigation }
 	) as React.ReactNode;
 };
 

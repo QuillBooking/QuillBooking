@@ -2495,9 +2495,9 @@ class Event_Model extends Model {
 			throw new \Exception( __( 'Calendar does not exist', 'quillbooking' ) );
 		}
 
-		// Check if user is team member
+		// Check if user is team member or admin
 		$user = Team_Model::find( $this->calendar->user_id );
-		if ( ! $user->is_team_member() ) {
+		if ( ! $user->is_team_member() && ! $user->is_admin ) {
 			throw new \Exception( __( 'User is not a team member', 'quillbooking' ) );
 		}
 

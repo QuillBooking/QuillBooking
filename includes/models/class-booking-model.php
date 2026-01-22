@@ -377,10 +377,11 @@ class Booking_Model extends Model {
 	public function getCancelUrl() {
 		return add_query_arg(
 			array(
-				'quillbooking_action' => 'cancel',
-				'id'                  => $this->hash_id,
+				'quillbooking' => '1',
+				'type'         => 'cancel',
+				'id'           => $this->hash_id,
 			),
-			$this->event_url
+			home_url()
 		);
 	}
 
@@ -392,10 +393,11 @@ class Booking_Model extends Model {
 	public function getRescheduleUrl() {
 		return add_query_arg(
 			array(
-				'quillbooking_action' => 'reschedule',
-				'id'                  => $this->hash_id,
+				'quillbooking' => '1',
+				'type'         => 'reschedule',
+				'id'           => $this->hash_id,
 			),
-			$this->event_url
+			home_url()
 		);
 	}
 
@@ -416,10 +418,11 @@ class Booking_Model extends Model {
 	public function getConfirmUrl() {
 		return add_query_arg(
 			array(
-				'quillbooking_action' => 'confirm',
-				'id'                  => $this->hash_id,
+				'quillbooking' => '1',
+				'type'         => 'confirm',
+				'id'           => $this->hash_id,
 			),
-			$this->event_url
+			home_url()
 		);
 	}
 

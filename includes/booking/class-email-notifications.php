@@ -56,14 +56,16 @@ final class Email_Notifications {
 	 * @since 1.0.0
 	 */
 	public function init_hooks() {
-		add_action( 'quillbooking_booking_created', array( $this, 'send_booking_created_email' ) );
-		add_action( 'quillbooking_booking_attendee_cancelled', array( $this, 'send_attendee_cancelled_email' ) );
-		add_action( 'quillbooking_booking_organizer_cancelled', array( $this, 'send_organizer_cancelled_email' ) );
-		add_action( 'quillbooking_booking_organizer_rescheduled', array( $this, 'send_organizer_rescheduled_email' ) );
-		add_action( 'quillbooking_booking_attendee_rescheduled', array( $this, 'send_attendee_rescheduled_email' ) );
-		add_action( 'quillbooking_booking_pending', array( $this, 'send_booking_pending_email' ) );
-		add_action( 'quillbooking_booking_confirmed', array( $this, 'send_booking_confirmed_email' ) );
-		add_action( 'quillbooking_booking_rejected', array( $this, 'send_booking_rejected_email' ) );
+		// Use priority 99 to ensure emails are sent AFTER all integrations have processed
+		// (e.g., Zoom/Google Meet creating meetings and updating location with meeting links)
+		add_action( 'quillbooking_booking_created', array( $this, 'send_booking_created_email' ), 99 );
+		add_action( 'quillbooking_booking_attendee_cancelled', array( $this, 'send_attendee_cancelled_email' ), 99 );
+		add_action( 'quillbooking_booking_organizer_cancelled', array( $this, 'send_organizer_cancelled_email' ), 99 );
+		add_action( 'quillbooking_booking_organizer_rescheduled', array( $this, 'send_organizer_rescheduled_email' ), 99 );
+		add_action( 'quillbooking_booking_attendee_rescheduled', array( $this, 'send_attendee_rescheduled_email' ), 99 );
+		add_action( 'quillbooking_booking_pending', array( $this, 'send_booking_pending_email' ), 99 );
+		add_action( 'quillbooking_booking_confirmed', array( $this, 'send_booking_confirmed_email' ), 99 );
+		add_action( 'quillbooking_booking_rejected', array( $this, 'send_booking_rejected_email' ), 99 );
 
 		add_action( 'init', array( $this, 'send_reminder_emails' ) );
 	}
@@ -543,6 +545,10 @@ final class Email_Notifications {
 	private function send_email( $booking, $template, $email ) {
 		$subject = Arr::get( $template, 'subject' );
 		$body    = Arr::get( $template, 'message' );
+
+		// Refresh booking from database to get the latest data
+		// (e.g., meeting links added by integrations like Zoom/Google Meet)
+		$booking = Booking_Model::find( $booking->id );
 
 		$subject = $this->merge_tags_manager->process_merge_tags( $subject, $booking );
 		$body    = $this->merge_tags_manager->process_merge_tags( $body, $booking );

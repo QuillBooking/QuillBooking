@@ -82,7 +82,8 @@ class Booking_EndDate extends Merge_Tag {
 		$format   = Arr::get( $options, 'format', $this->get_default_format() );
 
 		try {
-			$end_time = new \DateTime( $booking->end_time );
+			// Database stores times in UTC, so we need to create DateTime with UTC timezone
+			$end_time = new \DateTime( $booking->end_time, new \DateTimeZone( 'UTC' ) );
 		} catch ( \Exception $e ) {
 			return '';
 		}

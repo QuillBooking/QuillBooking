@@ -80,7 +80,8 @@ class Booking_StartDate extends Merge_Tag {
 		}
 
 		try {
-			$start_time = new \DateTime( $booking->start_time );
+			// Database stores times in UTC, so we need to create DateTime with UTC timezone
+			$start_time = new \DateTime( $booking->start_time, new \DateTimeZone( 'UTC' ) );
 		} catch ( \Exception $e ) {
 			return '';
 		}

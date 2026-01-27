@@ -680,13 +680,16 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return void
 	 */
 	protected function apply_date_range_filter( $query, $year, $month, $day ) {
+		// Database stores times in UTC, so we need to create the date range in UTC
+		$utc_timezone = new \DateTimeZone( 'UTC' );
+
 		if ( ! empty( $day ) ) {
 			// Specific day
-			$start_date = new DateTime( "$year-$month-$day 00:00:00" );
-			$end_date   = new DateTime( "$year-$month-$day 23:59:59" );
+			$start_date = new DateTime( "$year-$month-$day 00:00:00", $utc_timezone );
+			$end_date   = new DateTime( "$year-$month-$day 23:59:59", $utc_timezone );
 		} else {
 			// Full month
-			$start_date = new DateTime( "$year-$month-01 00:00:00" );
+			$start_date = new DateTime( "$year-$month-01 00:00:00", $utc_timezone );
 			$end_date   = clone $start_date;
 			$end_date->modify( 'last day of this month' )->setTime( 23, 59, 59 );
 		}
@@ -941,9 +944,10 @@ class REST_Booking_Controller extends REST_Controller {
 			$year  = $this->validate_year( $year );
 			$month = $this->validate_month( $month );
 
-			// Create start and end dates for the month
-			$start_date = new DateTime( "$year-$month-01 00:00:00" );
-			$end_date   = clone $start_date;
+			// Create start and end dates for the month in UTC (DB stores times in UTC)
+			$utc_timezone = new \DateTimeZone( 'UTC' );
+			$start_date   = new DateTime( "$year-$month-01 00:00:00", $utc_timezone );
+			$end_date     = clone $start_date;
 			$end_date->modify( 'last day of this month' )->setTime( 23, 59, 59 );
 
 			// Get days in this month
@@ -1108,8 +1112,9 @@ class REST_Booking_Controller extends REST_Controller {
 	 * @return array|null Array with start and end dates formatted for SQL, or null if invalid period
 	 */
 	protected function get_period_date_range( $period ) {
-		$now  = current_time( 'mysql' );
-		$date = new DateTime( $now );
+		// Use UTC timezone since database stores times in UTC
+		$utc_timezone = new \DateTimeZone( 'UTC' );
+		$date         = new DateTime( 'now', $utc_timezone );
 
 		switch ( $period ) {
 			case 'this_week':
@@ -1336,11 +1341,14 @@ class REST_Booking_Controller extends REST_Controller {
 		$month   = $month ?? (int) date( 'n' );
 		$quarter = $quarter ?? (int) ceil( date( 'n' ) / 3 );
 
+		// Use UTC timezone since database stores times in UTC
+		$utc_timezone = new \DateTimeZone( 'UTC' );
+
 		switch ( $period ) {
 			case 'weekly':
 				// Get the date for the first day of the specified week
 				$current_week = (int) date( 'W' );
-				$date         = new DateTime();
+				$date         = new DateTime( 'now', $utc_timezone );
 				$date->setISODate( $year, $current_week );
 				$date->setTime( 0, 0, 0 );
 
@@ -1351,7 +1359,7 @@ class REST_Booking_Controller extends REST_Controller {
 				break;
 
 			case 'monthly':
-				$start = new DateTime( sprintf( '%d-%02d-01 00:00:00', $year, $month ) );
+				$start = new DateTime( sprintf( '%d-%02d-01 00:00:00', $year, $month ), $utc_timezone );
 				$end   = clone $start;
 				$end->modify( 'last day of this month' );
 				$end->setTime( 23, 59, 59 );
@@ -1362,22 +1370,22 @@ class REST_Booking_Controller extends REST_Controller {
 				$first_month = ( ( $quarter - 1 ) * 3 ) + 1;
 				$last_month  = $first_month + 2;
 
-				$start = new DateTime( sprintf( '%d-%02d-01 00:00:00', $year, $first_month ) );
-				$end   = new DateTime( sprintf( '%d-%02d-01 00:00:00', $year, $last_month ) );
+				$start = new DateTime( sprintf( '%d-%02d-01 00:00:00', $year, $first_month ), $utc_timezone );
+				$end   = new DateTime( sprintf( '%d-%02d-01 00:00:00', $year, $last_month ), $utc_timezone );
 				$end->modify( 'last day of this month' );
 				$end->setTime( 23, 59, 59 );
 				break;
 
 			case 'yearly':
-				$start = new DateTime( sprintf( '%d-01-01 00:00:00', $year ) );
-				$end   = new DateTime( sprintf( '%d-12-31 23:59:59', $year ) );
+				$start = new DateTime( sprintf( '%d-01-01 00:00:00', $year ), $utc_timezone );
+				$end   = new DateTime( sprintf( '%d-12-31 23:59:59', $year ), $utc_timezone );
 				break;
 
 			default:
 				// Default to current month if invalid period
 				$current_year  = (int) date( 'Y' );
 				$current_month = (int) date( 'm' );
-				$start         = new DateTime( sprintf( '%d-%02d-01 00:00:00', $current_year, $current_month ) );
+				$start         = new DateTime( sprintf( '%d-%02d-01 00:00:00', $current_year, $current_month ), $utc_timezone );
 				$end           = clone $start;
 				$end->modify( 'last day of this month' );
 				$end->setTime( 23, 59, 59 );

@@ -473,8 +473,7 @@ class License {
 		// update option.
 		update_option( 'quillbooking_license', $license );
 
-		// clear plugin update cache.
-		Updater::instance()->clear_pro_update_cache();
+		// Updater removed for WordPress.org compliance.
 
 		return array( 'success' => true );
 	}
@@ -624,8 +623,7 @@ class License {
 		// update option.
 		update_option( 'quillbooking_license', $license );
 
-		// clear plugin update cache.
-		Updater::instance()->clear_pro_update_cache();
+		// Updater removed for WordPress.org compliance.
 
 		// return new license info.
 		wp_send_json_success( $this->get_license_info(), 200 );
@@ -672,8 +670,7 @@ class License {
 
 			delete_option( 'quillbooking_license' );
 
-			// clear plugin update cache.
-			Updater::instance()->clear_pro_update_cache();
+			// Updater removed for WordPress.org compliance.
 		}
 
 		wp_send_json_success( esc_html__( 'License removed successfully', 'quillbooking' ), 200 );

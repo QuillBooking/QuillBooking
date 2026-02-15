@@ -7,7 +7,6 @@
 
 namespace QuillBooking\Site;
 use QuillBooking\Site\License;
-use QuillBooking\Site\Updater;
 
 /**
  * Site class
@@ -42,7 +41,7 @@ class Site {
 	 */
 	private function __construct() {
 		License::instance();
-		Updater::instance();
+		// Updater removed for WordPress.org compliance.
 	}
 
 	/**

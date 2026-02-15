@@ -1,12 +1,12 @@
 
-=== Quill Booking - Calendly Alternative for WordPress - Professional Appointment Scheduling & Event Management Solution ===
-Contributors: mdmag, quillforms
+=== Quill Booking - Professional Appointment Scheduling & Event Management Solution ===
+Contributors: mdmag
 Author URI: https://quillbooking.com/
 Tags: Calendly, appointment scheduling, booking system, calendar management, event booking, professional scheduling
 Requires at least: 6.0
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -214,6 +214,16 @@ Quill Booking integrates with leading payment processors including Stripe, PayPa
 Yes, Quill Booking maintains full GDPR compliance with enterprise-grade security protocols to protect client information and maintain regulatory compliance.
 
 == Changelog ==
+
+= 1.2.5 = 15-Feb 2026
+Making sure the plugin aligns with WordPress guidelines.
+
+= 1.2.4 = 27-Jan-2026
+* Fixed the issue with the timezones.
+
+= 1.2.2 = 27-Jan-2026
+* Fixed the issue with the booking link in emails
+* Make sure links are right in integration with third party services
 
 = 1.2.1 = 03-Sep-2025
 * Fixed the 12hrs format issue

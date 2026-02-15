@@ -1,5 +1,5 @@
 
-=== Quill Booking - Professional Appointment Scheduling & Event Management Solution ===
+=== Quill Booking - Appointment Scheduling & Event Management Solution ===
 Contributors: mdmag
 Author URI: https://quillbooking.com/
 Tags: Calendly, appointment scheduling, booking system, calendar management, event booking, professional scheduling
